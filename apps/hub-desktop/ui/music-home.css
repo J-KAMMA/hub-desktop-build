@@ -1,0 +1,105 @@
+/* 音楽のホームと作品詳細。色は tokens.css のトークンだけを使う。
+   Hub のオリジナル（ヒーロー・棚）が主役、外部（YouTube）は下の別の節で一段低い行にする。 */
+.mw-art { position: relative; display: grid; place-items: center; overflow: hidden; flex: none; background: var(--interactive); color: var(--muted); }
+.mw-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.mw-art::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px var(--media-outline); pointer-events: none; }
+.mw-art-letter { font-weight: var(--weight-bold); font-size: 1.6em; letter-spacing: 0; }
+.mw-art-tile { width: 56px; height: 56px; font-size: var(--type-caption); }
+.mw-art-card { width: 100%; aspect-ratio: 1 / 1; border-radius: var(--radius-md); font-size: var(--type-title2); }
+.mw-art-row { width: 40px; height: 40px; border-radius: var(--radius-xs); font-size: var(--type-subhead); }
+.mw-art-hero { width: 200px; height: 200px; border-radius: var(--radius-lg); font-size: var(--type-display); box-shadow: var(--elevation-2); }
+.mw-art-bar { width: 44px; height: 44px; border-radius: var(--radius-xs); font-size: var(--type-subhead); }
+
+.mh { display: grid; gap: var(--space-5); }
+.mh-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-3); }
+#hub-shell .view .mh-greeting { margin: 0; color: var(--muted); font-size: var(--type-subhead); line-height: var(--lh-subhead); font-weight: var(--weight-regular); }
+#hub-shell .view .mh-search { display: flex; align-items: center; gap: var(--space-2); box-sizing: border-box; height: var(--control-h); min-height: 0; padding: 0 var(--space-1) 0 var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-pill); background: var(--interactive); }
+#hub-shell .view .mh-search input[type="search"] { box-sizing: border-box; width: 240px; max-width: 46vw; height: calc(var(--control-h) - 2px); min-height: 0; padding-block: 0; border: 0; outline: 0; background: none; color: var(--text); font: inherit; font-size: var(--type-subhead); }
+#hub-shell .view .mh-search .head-action { box-sizing: border-box; height: calc(var(--control-h) - 2px); min-height: 0; padding-block: 0; }
+#hub-shell .view .mh-search:focus-within { border-color: var(--line-strong); }
+
+/* ヒーロー：注目のオリジナル1曲 */
+.mh-hero { display: flex; align-items: center; gap: var(--space-5); padding: var(--space-4); border-radius: var(--radius-lg); background: var(--content-nested); }
+.mh-hero.is-empty { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-1); max-width: none; margin: 0; padding: var(--space-4) var(--space-5); text-align: left; }
+.mh-hero-copy { display: grid; gap: var(--space-2); min-width: 0; align-content: center; }
+.mh-hero-badge { justify-self: start; padding: 2px var(--space-2); border-radius: var(--radius-pill); background: var(--interactive); color: var(--text); font-size: var(--type-caption); line-height: var(--lh-caption); font-weight: var(--weight-semibold); }
+.mh-hero-title { margin: 0; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; font-size: var(--type-title1); line-height: var(--lh-title1); font-weight: var(--weight-bold); font-feature-settings: "palt"; overflow-wrap: anywhere; }
+.mh-hero-artist { margin: 0; color: var(--muted); font-size: var(--type-headline); line-height: var(--lh-headline); }
+.mh-hero-artist:empty { display: none; }
+.mh-hero-actions { display: flex; align-items: center; gap: var(--space-3); margin-top: var(--space-1); }
+.mh-hero-play { display: grid; place-items: center; width: 48px; height: 48px; padding: 0 0 0 2px; border: 0; border-radius: 50%; background: var(--action); color: var(--action-text); font-size: var(--type-headline); cursor: pointer; }
+.mh-hero-play:hover { background: var(--action-hover); }
+
+/* オリジナルの棚 */
+.mh-shelf { display: grid; gap: var(--space-3); }
+.mh-shelf-title { margin: 0; font-size: var(--type-title3); line-height: var(--lh-title3); font-weight: var(--weight-semibold); font-feature-settings: "palt"; }
+.mh-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--space-4); }
+.mh-card { position: relative; border-radius: var(--radius-md); transition: background var(--dur-fast) var(--ease-out); }
+.mh-card:hover, .mh-card:focus-within { background: var(--interactive-hover); }
+.mh-card-open { display: grid; gap: var(--space-1); width: 100%; padding: var(--space-3); border: 0; border-radius: var(--radius-md); background: none; color: var(--text); text-align: left; cursor: pointer; }
+.mh-card-open .mw-art-card { margin-bottom: var(--space-2); }
+.mh-card-title, .mh-card-artist { display: block; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.mh-card-title { font-size: var(--type-body); line-height: var(--lh-subhead); font-weight: var(--weight-semibold); }
+.mh-card-artist { color: var(--muted); font-size: var(--type-subhead); line-height: var(--lh-subhead); }
+.mh-card-origin { display: block; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: var(--type-caption); }
+.mh-card-play { position: absolute; right: 20px; bottom: 76px; width: 44px; height: 44px; padding: 0 0 0 2px; border: 0; border-radius: 50%; background: var(--action); color: var(--action-text); font-size: var(--type-body); cursor: pointer; box-shadow: var(--elevation-1); display: none; }
+.mh-card:hover .mh-card-play, .mh-card:focus-within .mh-card-play { display: grid; place-items: center; }
+.mh-card-play:hover { background: var(--action-hover); }
+.mh-skeleton-card { aspect-ratio: 1 / 1; border-radius: var(--radius-md); }
+
+/* 外部（YouTube）の節：区切り線と余白の下、行 56・絵 40 */
+.mh-external { display: grid; gap: var(--space-2); margin-top: var(--space-5); padding-top: var(--space-6); border-top: 1px solid var(--line); }
+.mh-external-head { display: flex; align-items: center; gap: var(--space-3); }
+.mh-chip { padding: 2px var(--space-2); border-radius: var(--radius-pill); background: var(--interactive); color: var(--muted); font-size: var(--type-caption); line-height: var(--lh-caption); font-weight: var(--weight-semibold); }
+.mh-ext-list { display: grid; }
+.mh-ext-row { position: relative; display: flex; align-items: center; min-height: 56px; border-radius: var(--radius-sm); }
+.mh-ext-row:hover, .mh-ext-row:focus-within { background: var(--interactive-hover); }
+.mh-ext-open { display: flex; flex: 1; align-items: center; gap: var(--space-3); min-width: 0; min-height: 56px; padding: 0 var(--space-3); border: 0; border-radius: var(--radius-sm); background: none; color: var(--text); text-align: left; cursor: pointer; }
+.mh-ext-copy { display: grid; flex: 1; min-width: 0; }
+.mh-ext-title, .mh-ext-artist { display: block; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.mh-ext-title { font-size: var(--type-body); line-height: var(--lh-subhead); font-weight: var(--weight-semibold); }
+.mh-ext-artist { color: var(--muted); font-size: var(--type-subhead); line-height: var(--lh-subhead); }
+.mh-ext-host { overflow: hidden; color: var(--muted); font-size: var(--type-caption); line-height: var(--lh-caption); text-overflow: ellipsis; white-space: nowrap; }
+.mh-ext-duration { flex: none; min-width: var(--space-6); color: var(--muted); font-size: var(--type-subhead); line-height: var(--lh-subhead); text-align: right; font-variant-numeric: tabular-nums; }
+.mh-ext-open:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.mh-ext-play { flex: none; width: 32px; height: 32px; margin-right: var(--space-2); padding: 0 0 0 2px; border: 0; border-radius: 50%; background: var(--action); color: var(--action-text); font-size: var(--type-caption); cursor: pointer; opacity: 0; pointer-events: none; transition: opacity var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out); }
+.mh-ext-row:hover .mh-ext-play, .mh-ext-row:focus-within .mh-ext-play, .mh-ext-play:focus-visible { opacity: 1; pointer-events: auto; }
+.mh-ext-play:hover { background: var(--action-hover); }
+.mh-ext-play:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.mh-external-folded summary { display: flex; align-items: center; min-height: var(--control-h); padding: 0 var(--space-3); border-radius: var(--radius-sm); color: var(--muted); font-size: var(--type-subhead); cursor: pointer; }
+.mh-external-folded summary:hover { background: var(--interactive-hover); color: var(--text); }
+
+/* 作品詳細：操作は1行、再生 48・ほかは 32 高で中央にそろえる */
+.mw-detail { display: grid; gap: var(--space-4); }
+.mw-hero { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-5); }
+.mw-hero-text { display: grid; gap: var(--space-2); min-width: 0; flex: 1 1 260px; }
+.mw-kind { color: var(--muted); font-size: var(--type-caption); font-weight: var(--weight-semibold); }
+.mw-title { margin: 0; font-size: var(--type-title1); line-height: var(--lh-title1); font-weight: var(--weight-bold); font-feature-settings: "palt"; overflow-wrap: anywhere; }
+.mw-credits, .mw-description { margin: 0; color: var(--muted); font-size: var(--type-subhead); line-height: var(--lh-subhead); }
+.mw-description { color: var(--text); max-width: 60ch; }
+.mw-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.mw-actions > * { align-self: center; margin: 0; }
+.mw-actions .head-action, .mw-actions .ghost, .mw-actions button:not(.mw-play) { min-height: var(--control-h); }
+.mw-play { display: grid; place-items: center; width: 48px; height: 48px; padding: 0 0 0 2px; border: 0; border-radius: 50%; background: var(--action); color: var(--action-text); font-size: var(--type-headline); cursor: pointer; }
+.mw-play:hover:not(:disabled) { background: var(--action-hover); }
+.mw-play:disabled { background: var(--interactive); color: var(--muted); cursor: not-allowed; }
+.mw-play[aria-pressed="true"] { padding: 0; font-size: var(--type-body); }
+.mw-play-note { color: var(--muted); font-size: var(--type-caption); }
+.mw-links { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.mw-link { border: 1px solid var(--line); }
+.mw-player-panel { max-width: 720px; border-radius: var(--radius-md); background: var(--surface-sunken); overflow: hidden; }
+.mw-player-panel[hidden] { display: none; }
+
+.yt-player { position: relative; width: 100%; aspect-ratio: 16 / 9; background: var(--surface-sunken); }
+.yt-player iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+.yt-now-bar { position: fixed; bottom: 0; z-index: 26; display: flex; align-items: center; gap: var(--space-3); min-height: 64px; padding: var(--space-2) var(--space-5); border: 1px solid var(--line); background: var(--panel); box-shadow: var(--elevation-2); }
+.yt-now-bar[hidden] { display: none; }
+#music-player:not([hidden]) ~ .yt-now-bar { bottom: 94px; }
+.yt-now-text { display: grid; min-width: 0; flex: 1; }
+.yt-now-text strong { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: var(--type-subhead); }
+.yt-now-text .meta { margin: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.yt-now-close { min-height: var(--control-h); padding: 0 var(--space-4); border: 1px solid var(--line-strong); border-radius: var(--radius-pill); background: var(--interactive); color: var(--text); font-size: var(--type-caption); font-weight: var(--weight-semibold); cursor: pointer; }
+.yt-now-close:hover { background: var(--interactive-hover); }
+
+.music-tab[hidden], #music-home[hidden] { display: none; }

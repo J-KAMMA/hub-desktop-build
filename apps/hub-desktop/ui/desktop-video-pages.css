@@ -1,0 +1,82 @@
+/* 動画のいいね・チャンネルページ・ショートの縦フィード。色は意味トークンだけを使う。 */
+
+/* いいね・フォロー */
+#hub-shell .vid-like { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: 0; }
+#hub-shell .vid-like-button { display: inline-flex; align-items: center; gap: var(--space-2); }
+#hub-shell .vid-like-button .vid-like-mark { color: var(--muted); }
+#hub-shell .vid-like-button.is-liked .vid-like-mark { color: var(--text); }
+#hub-shell .vid-like-button.is-liked { background: var(--selected); }
+#hub-shell .vid-like-button:disabled { opacity: .6; cursor: not-allowed; }
+#hub-shell .vid-like-note, #hub-shell .vid-follow-note { font-size: var(--type-caption); }
+#hub-shell .vid-like-note:empty, #hub-shell .vid-follow-note:empty { display: none; }
+#hub-shell .vid-follow { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-left: var(--space-2); }
+#hub-shell .vid-watch-channel-link { padding: 0; border: 0; background: transparent; color: var(--text); font-size: var(--type-subhead); font-weight: var(--weight-bold); cursor: pointer; }
+#hub-shell .vid-watch-channel-link:hover { text-decoration: underline; }
+#hub-shell .vid-watch-channel-link:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: var(--radius-xs); }
+
+/* チャンネルページ */
+#hub-shell #video-channel[hidden] { display: none; }
+#hub-shell .vid-channel { display: grid; gap: var(--space-5); margin-top: var(--space-3); }
+#hub-shell .vid-channel-head { display: flex; align-items: flex-start; gap: var(--space-5); }
+#hub-shell .vid-channel-avatar { flex: none; width: 88px; height: 88px; overflow: hidden; border-radius: 50%; }
+#hub-shell .vid-channel-avatar img { width: 100%; height: 100%; object-fit: cover; }
+#hub-shell .vid-channel-copy { display: grid; min-width: 0; gap: var(--space-1); }
+#hub-shell .vid-channel-name { margin: 0; font-size: var(--type-display); line-height: var(--lh-display); font-weight: var(--weight-bold); overflow-wrap: anywhere; }
+#hub-shell .vid-channel-bio { margin: var(--space-2) 0 0; max-width: var(--measure-reading); line-height: var(--lh-body); white-space: pre-wrap; overflow-wrap: anywhere; }
+#hub-shell .vid-channel-copy .vid-follow { margin: var(--space-2) 0 0; }
+#hub-shell .vid-channel-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-5) var(--space-3); }
+#hub-shell .vid-channel-more { justify-self: center; }
+#hub-shell .vid-channel .vh-card.is-locked { opacity: .85; cursor: not-allowed; }
+#hub-shell .vid-channel .vh-card.is-locked:hover { transform: none; }
+#hub-shell .vid-channel .video-thumbnail { position: relative; }
+#hub-shell .vid-lock { position: absolute; right: var(--space-2); bottom: var(--space-2); padding: 2px var(--space-2); border-radius: var(--radius-pill); background: var(--surface-raised); color: var(--text); font-size: var(--type-caption); font-weight: var(--weight-semibold); }
+
+/* ショートの縦フィード：1画面に1本。再生枠は 200×200 以上を保つ。 */
+#hub-shell #videos-results.vid-shorts-mode { display: block; }
+#hub-shell .vid-shorts-feed {
+  --vid-short-h: clamp(420px, calc(100vh - 300px), 860px);
+  height: var(--vid-short-h);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: thin;
+  border-radius: var(--radius-lg);
+  background: var(--surface-sunken);
+}
+/* 曲の再生バー（下に固定、94px）が出ているときは、その分だけ縮めて情報行を隠さない。 */
+#hub-shell.app-shell:has(#music-player:not([hidden])) .vid-shorts-feed { --vid-short-h: clamp(360px, calc(100vh - 400px), 780px); }
+#hub-shell .vid-shorts-feed:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+#hub-shell .vid-short { display: grid; grid-template-rows: minmax(0, 1fr) auto; justify-items: center; gap: var(--space-3); height: var(--vid-short-h); box-sizing: border-box; padding: var(--space-4) var(--space-4) var(--space-3); scroll-snap-align: start; scroll-snap-stop: always; }
+#hub-shell .vid-short-stage { position: relative; height: 100%; max-width: 100%; aspect-ratio: 9 / 16; min-width: 200px; min-height: 200px; overflow: hidden; border-radius: var(--radius-md); background: var(--surface-raised); }
+#hub-shell .vid-short-poster { position: absolute; inset: 0; width: 100%; height: 100%; }
+#hub-shell .vid-short-poster img { width: 100%; height: 100%; object-fit: cover; }
+#hub-shell .vid-short-stage .vid-short-slot { position: absolute; inset: 0; width: auto; height: auto; aspect-ratio: auto; border-radius: 0; min-width: 200px; min-height: 200px; }
+#hub-shell .vid-short-open, #hub-shell .vid-short-open:active:not(:disabled) { position: absolute; top: auto; left: 50%; bottom: var(--space-4); height: auto; transform: translateX(-50%); }
+#hub-shell .vid-short-info { display: grid; justify-items: start; gap: var(--space-1); width: min(100%, calc(var(--vid-short-h) * 9 / 16 + 120px)); min-width: 0; }
+#hub-shell .vid-short-title { max-width: 100%; overflow: hidden; font-size: var(--type-headline); line-height: var(--lh-headline); text-overflow: ellipsis; white-space: nowrap; }
+#hub-shell .vid-short-channel { padding: 0; border: 0; background: transparent; color: var(--muted); font-size: var(--type-subhead); cursor: pointer; }
+#hub-shell button.vid-short-channel:hover { text-decoration: underline; }
+#hub-shell .vid-short-actions { min-height: var(--control-h); }
+#hub-shell .vid-short-actions:empty { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  #hub-shell .vid-shorts-feed { scroll-behavior: auto; }
+}
+
+/* Hub動画のスタジオ（video-studio.mjs）。色は意味のトークンだけ。 */
+.nv-studio { display: grid; gap: 16px; max-width: 720px; }
+.nv-card { display: grid; gap: 10px; padding: 16px; border: 1px solid var(--divider); border-radius: var(--radius-md); }
+.nv-card__title { margin: 0; font-size: var(--type-headline, 1em); }
+.nv-note { margin: 0; color: var(--text-secondary); font-size: var(--type-caption, 0.8em); }
+.nv-note--error { color: var(--danger-text); }
+.nv-input { width: 100%; box-sizing: border-box; }
+.nv-drop { padding: 18px; border: 1px dashed var(--divider); border-radius: var(--radius-md); text-align: center; }
+.nv-meter { height: 8px; border-radius: var(--radius-sm); background: var(--divider); overflow: hidden; }
+.nv-meter > span { display: block; height: 100%; background: var(--emphasis); }
+.nv-quota__head { display: flex; justify-content: space-between; }
+.nv-list { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.nv-item { display: grid; gap: 6px; padding-bottom: 12px; border-bottom: 1px solid var(--divider); }
+.nv-item__head { display: flex; justify-content: space-between; gap: 8px; }
+.nv-state--processing, .nv-state--upload_issued { color: var(--warning-text); }
+.nv-state--published { color: var(--positive-text); }
+.nv-state--rejected, .nv-state--failed, .nv-state--unpublished { color: var(--danger-text); }
+.nv-actions, .nv-checks { display: flex; flex-wrap: wrap; gap: 8px; }

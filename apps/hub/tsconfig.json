@@ -1,0 +1,62 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "es2022"
+    ],
+    "allowJs": false,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "allowImportingTsExtensions": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    }
+  },
+  "include": [
+    ".next-dev/types/**/*.ts",
+    ".next/types/**/*.ts",
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "components/**/*.ts",
+    "components/**/*.tsx",
+    "lib/**/*.ts",
+    "lib/**/*.tsx",
+    "proxy.ts",
+    "next-env.d.ts",
+    "open-next.config.ts",
+    "scripts/**/*.ts",
+    "types/**/*.ts",
+    ".next-dev/dev/types/**/*.ts",
+    ".next-hub-b/types/**/*.ts",
+    ".next-hub-b/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "audit_jkamma",
+    "audit_jkamma/**",
+    "sekai_seifu_hub_zip",
+    "sekai_seifu_hub_zip/**",
+    ".next/cache",
+    "dist",
+    "build",
+    "out",
+    "coverage"
+  ]
+}

@@ -1,0 +1,795 @@
+/* Hub Desktop レーン D2（人と会話）専用：フィード・投稿・通知・メッセージ・プロフィール。
+   色は tokens.css のトークンだけを使う（生の 16 進・rgb() は書かない）。
+   古い規則（styles.css・hub-design.css）と同じ特異度で後から勝つため、行の規則は :is() で
+   画面ごとの入れ物を束ね、入れ子の & で書く。 */
+
+/* ---- 本文の幅：中身は列の中央（DESKTOP_SPEC §2.1）。フィードは列いっぱい（上限 --width-collection）、
+   通知は共通の一覧幅（960）、プロフィールは 680 ----
+   2026-10-17 所有者の指摘「タイムラインの余白が多すぎる」：600 の列は広い窓で左右に 300px 近い空きを残したので、
+   列の幅に合わせて広げ、左右の空きは --pane-gutter（＋スクロールバー分）だけにする。 */
+#hub-shell .view:not(#view-browser):not(#view-ai):is(#view-feed) {
+  max-width: var(--width-collection);
+  margin-inline: auto;
+  padding-inline: var(--pane-gutter);
+}
+#hub-shell .view:not(#view-browser):not(#view-ai):is(#view-notifications) {
+  max-width: 960px;
+  margin-inline: auto;
+  padding-inline: var(--pane-gutter);
+}
+#hub-shell .view:not(#view-browser):not(#view-ai):is(#view-profile) {
+  max-width: none;
+  margin-inline: auto;
+  padding-inline: 0;
+}
+
+/* 見出しの行は行の顔と同じ左右 16（窓が狭く列が窓いっぱいになっても端に付かない） */
+#hub-shell .view:not(#view-browser):not(#view-ai):is(#view-feed, #view-notifications, #view-profile) .view-head { padding-inline: var(--space-4); }
+
+/* ---- 行：投稿（フィード・プロフィール・詳細の返信）と通知 ---- */
+/* feed-list の ID は 16 進の色に見える綴りなので、色の検査に掛からないよう先頭の f を \66 と書く。 */
+#hub-shell :is(#view-feed #\66 eed-list, #view-profile #profile-posts, #view-notifications #notifications-list, #view-detail #detail-content, #view-feed .social-stream-list) {
+  & .post {
+    position: relative;
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr);
+    column-gap: var(--space-3);
+    align-items: start;
+    margin: 0;
+    padding: var(--space-3) var(--space-4);
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    cursor: pointer;
+    transition: background-color var(--dur-fast) var(--ease-out);
+  }
+  & .post:hover { background: var(--content-surface-hover); }
+  & .post:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+  & .post.detail-primary-post { cursor: default; }
+  & .post.detail-primary-post:hover { background: transparent; }
+
+  /* 頭字の顔は色で塗らない：--interactive 地に --text 600 */
+  & .post-avatar {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--avatar-bg, var(--interactive));
+    color: var(--avatar-fg, var(--text));
+    font-size: var(--type-body);
+    font-weight: var(--weight-semibold);
+    line-height: 1;
+    overflow: hidden;
+  }
+  & .post-avatar.has-image { background: transparent; }
+
+  & .post-content { min-width: 0; }
+  /* 名前の行：名前 15/600、ハンドル・時刻 13 muted を 1 行（基線をそろえる） */
+  & .post-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    min-width: 0;
+    min-height: 20px;
+    padding-right: 36px; /* 「…」の分 */
+    line-height: 20px;
+  }
+  & .post-author-link {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    min-width: 0;
+    max-width: none;
+    flex: 0 1 auto;
+    min-height: 0;
+    height: var(--hit-min);
+    margin: -4px 0;
+    padding: 0;
+    font: inherit;
+    line-height: 20px;
+  }
+  & .post-head strong {
+    flex: 0 1 auto;
+    max-width: none;
+    font-size: var(--type-callout);
+    font-weight: var(--weight-semibold);
+    color: var(--text);
+  }
+  & .post-head .meta {
+    margin: 0;
+    font-size: var(--type-subhead);
+    line-height: 20px;
+    font-weight: var(--weight-regular);
+    color: var(--muted);
+  }
+  & .post-author-link > .meta { flex: 0 1 auto; max-width: none; }
+  & .post-head .when {
+    flex: none;
+    max-width: none;
+    margin: 0;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  & .post-head .when::before {
+    content: "";
+    display: inline-block;
+    width: 3px;
+    height: 3px;
+    margin: 0 var(--space-2) 3px 2px;
+    border-radius: 50%;
+    background: currentColor;
+    vertical-align: middle;
+  }
+  & .post-body {
+    margin: 2px 0 0;
+    color: var(--text);
+    font-size: var(--type-body);
+    line-height: var(--lh-body);
+    font-weight: var(--weight-regular);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  & .post-body:empty { display: none; }
+
+  /* 引用・返信元 */
+  & .post-referenced {
+    margin: var(--space-3) 0 0;
+    padding: var(--space-3);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: transparent;
+  }
+  & .post-referenced:hover { background: var(--interactive); }
+  & .post-referenced-title { font-size: var(--type-subhead); }
+  & .post-referenced-body { font-size: var(--type-subhead); }
+  /* 札は本文（と画像）の後ろ。本文の頭は 3 行まで */
+  & .post-referenced { display: grid; gap: 2px; width: 100%; max-width: 560px; text-align: start; }
+  & .post-referenced-label { color: var(--muted); font-size: var(--type-caption); }
+  & .post-referenced-body { display: -webkit-box; overflow: hidden; color: var(--muted); -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+
+  /* 添付（2026-10-18）：幅は最大 560。1 枚は縦横比を保って高さ最大 510、2 枚は横並び、
+     3 枚は左の 1 枚を縦に通し、4 枚は 2×2。2〜4 枚の枠は 16:9。押すと拡大表示。 */
+  & .post-images {
+    display: grid;
+    gap: 2px;
+    width: fit-content;
+    max-width: min(100%, 560px);
+    margin-top: var(--space-3);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    outline: 1px solid var(--media-outline);
+    outline-offset: -1px;
+    background: var(--interactive);
+  }
+  & .post-images img { display: block; border: 0; border-radius: 0; cursor: zoom-in; }
+  & .post-images img:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+  & .post-images--1 img { width: auto; height: auto; max-width: 100%; max-height: 510px; object-fit: contain; }
+  & .post-images:is(.post-images--2, .post-images--3, .post-images--4) {
+    width: min(100%, 560px);
+    grid-template-columns: 1fr 1fr;
+    aspect-ratio: 16 / 9;
+  }
+  & .post-images:is(.post-images--3, .post-images--4) { grid-template-rows: 1fr 1fr; }
+  & .post-images:is(.post-images--2, .post-images--3, .post-images--4) img { width: 100%; height: 100%; min-height: 0; max-height: none; object-fit: cover; }
+  & .post-images--3 img:first-child { grid-row: 1 / 3; }
+
+  /* 投稿詳細の主役：本文をひと回り大きく、下に日時の全体と反応の数（Web の投稿詳細と同じ並び） */
+  & .post.detail-primary-post .post-body { font-size: var(--type-headline); line-height: var(--lh-headline); }
+  & .post-stamp { margin: var(--space-3) 0 0; color: var(--muted); font-size: var(--type-subhead); font-variant-numeric: tabular-nums; }
+  & .post-counts { display: flex; flex-wrap: wrap; gap: var(--space-4); margin: var(--space-3) 0 0; padding: var(--space-3) 0; border-block: 1px solid var(--line); color: var(--muted); font-size: var(--type-subhead); }
+  & .post-counts[hidden] { display: none; }
+  & .post-counts b { color: var(--text); font-weight: var(--weight-bold); font-variant-numeric: tabular-nums; }
+
+  & .post-tags { margin: var(--space-2) 0 0; }
+  & .post-tag { min-height: var(--hit-min); font-size: var(--type-subhead); }
+
+  /* 操作行：返信・リポスト・いいね・保存・共有を最大 420 で均等。高さ 36、記号 18、件数 13 */
+  & .post-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 420px;
+    margin: var(--space-1) 0 0 -8px;
+    padding: 0;
+    gap: 0;
+  }
+  & .post-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--space-1);
+    min-width: 36px;
+    height: 36px;
+    min-height: 36px;
+    padding: 0 var(--space-2);
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--muted);
+    font-size: var(--type-subhead);
+    font-variant-numeric: tabular-nums;
+    transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), transform var(--dur-press) var(--ease-out);
+  }
+  & .post-action:hover { background: var(--interactive); color: var(--text); }
+  & .post-action:active { transform: scale(.97); }
+  & .post-action svg { width: 18px; height: 18px; }
+  & .post-action-count { font-weight: var(--weight-regular); }
+  & .post-action-count:empty { display: none; }
+  & .post-actions .is-liked,
+  & .post-actions .post-action:has(.ic[fill="currentColor"]).is-liked { color: var(--reaction-like); }
+  & .post-action.is-liked:hover { background: color-mix(in srgb, var(--reaction-like) 14%, transparent); }
+  & .post-actions .is-reposted { color: var(--positive-text); }
+  & .post-actions .is-saved { color: var(--text); }
+  & .post-repost-wrap > .post-action { width: auto; height: 36px; }
+
+  /* 「…」：編集・削除・報告はここへ。行の右上に重ね、普段は薄く、hover と焦点で出す */
+  & .post-more-wrap { position: absolute; top: 6px; right: 8px; }
+  & .post-more {
+    display: grid;
+    place-items: center;
+    width: var(--control-h);
+    height: var(--control-h);
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--muted);
+    opacity: 0;
+    cursor: pointer;
+    transition: opacity var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out);
+  }
+  & .post:hover .post-more,
+  & .post:focus-within .post-more,
+  & .post-more[aria-expanded="true"] { opacity: 1; }
+  & .post-more:hover { background: var(--interactive); color: var(--text); }
+  & .post-more svg { width: 18px; height: 18px; }
+  & .post-more-menu { right: 0; left: auto; }
+
+  & .post-edit-box { font-size: var(--type-body); line-height: var(--lh-body); }
+
+  /* 本文中のリンクの札：記号＋題＋種別。外部は域名 */
+  & .post-body .content-reference-link.ref-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    width: 100%;
+    max-width: 100%;
+    min-height: 56px;
+    margin: var(--space-2) 0 0;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--text);
+    text-decoration: none;
+    white-space: normal;
+    overflow: hidden;
+  }
+  & .post-body .content-reference-link.ref-card:hover { background: var(--interactive); }
+  /* 札の前後の改行（文字は残し、見えなくする） */
+  & .ref-gap { display: none; }
+  & .ref-tile {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    background: var(--content-nested);
+    color: var(--muted);
+  }
+  & .ref-tile svg { width: 20px; height: 20px; }
+  & .ref-copy { display: grid; min-width: 0; line-height: 1.35; }
+  & .ref-title {
+    overflow: hidden;
+    font-size: var(--type-callout);
+    font-weight: var(--weight-semibold);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  & .ref-meta { font-size: var(--type-subhead); color: var(--muted); }
+}
+
+/* 「…」のメニュー（既存の .post-repost-menu をデスクトップの面へ） */
+#hub-shell .post-repost-menu {
+  min-width: 160px;
+  padding: var(--space-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--material-sheet-solid);
+  box-shadow: var(--elevation-1);
+}
+#hub-shell .post-repost-menu button {
+  min-height: 28px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-xs);
+  font-size: var(--type-subhead);
+}
+
+/* 失敗の知らせ */
+#hub-shell .post.action-error::after { font-size: var(--type-caption); color: var(--danger-text); }
+
+/* ---- 骨組み：完成形と同じ寸法 ---- */
+#hub-shell .skeleton-post { display: grid; grid-template-columns: 40px minmax(0, 1fr); column-gap: var(--space-3); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--line); }
+#hub-shell .skeleton-post .post-avatar { width: var(--avatar-40); height: var(--avatar-40); }
+#hub-shell .skeleton-post .skeleton-line { height: var(--space-3); margin-top: var(--space-3); }
+#hub-shell .skeleton-post .skeleton-line:first-child { height: var(--space-4); margin-top: var(--space-1); }
+
+/* ---- フィードの上：投稿欄だけ。表示元・接続先は「…」の先、作品・研究の更新は 1 行 ---- */
+#hub-shell #view-feed .hub-network-bar,
+#hub-shell #view-feed .source-summary,
+#hub-shell #view-feed .hub-peer-status { display: none; }
+#hub-shell #view-feed.show-sources .hub-network-bar,
+#hub-shell #view-feed.show-sources .source-summary:not(:empty),
+#hub-shell #view-feed.show-sources .hub-peer-status:not([hidden]) { display: block; }
+
+#hub-shell #view-feed .composer {
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+#hub-shell #view-feed .composer-avatar { width: 40px; height: 40px; }
+#hub-shell #view-feed .composer textarea {
+  height: 40px;
+  min-height: 40px;
+  padding: var(--space-2) 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: var(--type-body);
+  line-height: var(--lh-body);
+}
+#hub-shell #view-feed .composer.open textarea { height: 96px; }
+/* 残り文字数（ハブの上限500字と同じ数え方）。20字を切ると注意色、超えると危険色。 */
+#hub-shell #view-feed .composer-count { flex: none; margin: 0; font-variant-numeric: tabular-nums; }
+#hub-shell #view-feed .composer-count.composer-count--low { color: var(--warning-text); }
+#hub-shell #view-feed .composer-count.warning { color: var(--danger); }
+
+#hub-shell #view-feed .research-feed-updates {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+}
+#hub-shell #view-feed .research-feed-updates > h3 {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  margin: 0;
+  padding: 0 var(--space-4);
+  font-size: 0;
+  cursor: pointer;
+}
+#hub-shell #view-feed .research-feed-updates > h3::after {
+  content: "新しい作品 " attr(data-count-text) " ›";
+  font-size: var(--type-subhead);
+  font-weight: var(--weight-semibold);
+  color: var(--muted);
+}
+#hub-shell #view-feed .research-feed-updates > h3:hover::after { color: var(--text); }
+#hub-shell #view-feed .research-feed-updates:not(.is-open) > :not(h3) { display: none; }
+#hub-shell #view-feed .research-feed-updates.is-open { padding-bottom: var(--space-2); }
+#hub-shell #view-feed .research-feed-updates.is-open > h3::after { content: "新しい作品 " attr(data-count-text) " ⌄"; }
+
+/* 新着の知らせ：上端に貼り付く丸いチップ。押すまで差し込まない */
+#hub-shell #view-feed .feed-fresh {
+  position: sticky;
+  top: var(--space-2);
+  z-index: 4;
+  display: flex;
+  justify-content: center;
+  height: 0;
+  margin: 0;
+  overflow: visible;
+}
+#hub-shell #view-feed .feed-fresh[hidden] { display: none; }
+#hub-shell #view-feed .feed-fresh button {
+  min-height: var(--control-h);
+  margin-top: var(--space-2);
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--action);
+  color: var(--action-text);
+  font-size: var(--type-subhead);
+  font-weight: var(--weight-semibold);
+  box-shadow: var(--elevation-1);
+}
+
+/* 「もっと見る」は下端の手前で自動で読まれる。探さなくてよいよう静かにしておく */
+#hub-shell #view-feed .feed-more { display: flex; justify-content: center; padding: var(--space-3) 0; }
+#hub-shell #view-feed .feed-more button,
+#hub-shell #view-feed .social-stream .actions button { min-height: var(--hit-min); font-size: var(--type-subhead); }
+
+/* ---- 通知：行 = 左 32 に種類の記号、右に顔・文・時刻。未読は左端の点 ---- */
+#hub-shell #view-notifications #notifications-list {
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  & .post.notif { grid-template-columns: 32px minmax(0, 1fr); align-items: center; min-height: 64px; box-shadow: none; padding-left: var(--space-5); }
+  & .post.notif.unread { box-shadow: none; }
+  & .post.notif.unread::before {
+    content: "";
+    position: absolute;
+    left: var(--space-2);
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--emphasis);
+    transform: translateY(-50%);
+  }
+  & .notif-kind { display: grid; place-items: center; width: 32px; color: var(--text); }
+  & .notif-kind svg { width: 32px; height: 32px; }
+  & .notif-kind-social_reaction { color: var(--reaction-like); }
+  & .post.notif .post-content { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: var(--space-2); row-gap: 2px; align-items: start; padding-right: var(--space-8); }
+  & .notif-avatars { display: flex; grid-column: 1; grid-row: 1 / span 2; }
+  & .post.notif .post-body { grid-column: 2; grid-row: 1; align-self: center; font-size: var(--type-body); line-height: var(--lh-body); }
+  & .notif-avatars .post-avatar {
+    width: 32px;
+    height: 32px;
+    margin-left: -8px;
+    border: 2px solid var(--bg);
+    box-shadow: none;
+    font-size: var(--type-subhead);
+  }
+  & .notif-avatars .post-avatar:first-child { margin-left: 0; }
+  & .post.notif .post-body { margin: 0; }
+  & .post.notif .when { grid-column: 3; grid-row: 1; align-self: center; justify-self: end; margin: 0; font-size: var(--type-caption); line-height: var(--lh-caption); color: var(--muted); text-align: end; }
+  & .post.notif .when::before { content: none; }
+  & .notif-excerpt { grid-column: 2 / 4; grid-row: 2; }
+  /* 既読の押し手は静かに：地も枠も無く、行に乗ったときと焦点のときだけ地を出す（押せば行を開いても既読になる） */
+  & .notification-read { position: absolute; top: var(--space-2); right: var(--space-4); min-height: var(--hit-min); margin: 0; padding: 0 var(--space-3); border: 0; background: transparent; color: var(--muted); font-size: var(--type-subhead); box-shadow: none; }
+  & .post.notif:hover .notification-read,
+  & .notification-read:focus-visible { background: var(--interactive); color: var(--text); }
+  & .notif-kind-social_repost { color: var(--positive-text); }
+  & .notif-kind-followed { color: var(--action); }
+}
+#hub-shell #notifications-list .state-panel { margin: var(--space-4) auto; padding-top: var(--space-7); }
+#hub-shell #notifications-list .empty-state { padding: var(--space-7) var(--space-4); }
+#hub-shell #notifications-list .empty-state .empty-icon svg { width: 48px; height: 48px; }
+#hub-shell #notifications-list .empty-state strong { font-size: var(--type-headline); font-weight: var(--weight-semibold); }
+
+/* 「…」の入れ物（通知の既読化） */
+#hub-shell .head-more { position: relative; }
+#hub-shell .head-more[hidden] { display: none; }
+#hub-shell .head-more-menu { top: calc(100% + 4px); right: 0; left: auto; }
+
+/* ---- メッセージ：左に会話の一覧 320、右に会話。<1000 は 1 列 ---- */
+#hub-shell .view:not(#view-browser):not(#view-ai)#view-messages {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  height: calc(100vh - var(--toolbar-height, 44px));
+}
+#hub-shell .view.on:not(#view-browser):not(#view-ai)#view-messages { display: flex; flex-direction: column; }
+#hub-shell .view:not(#view-browser):not(#view-ai)#view-messages .view-head { margin: 0; padding-inline: var(--space-4); border-bottom: 0; }
+#hub-shell #view-messages #messages-list > .empty-state { display: none; }
+#hub-shell #view-messages .messages-layout,
+#hub-shell .app-shell.messages-active #view-messages .messages-layout {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 0;
+  min-height: 0;
+  height: auto;
+  flex: 1 1 auto;
+}
+#hub-shell #view-messages .messages-side {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  border-right: 1px solid var(--line);
+}
+#hub-shell #view-messages #messages-state { margin: 0; padding: var(--space-3) var(--space-4); }
+#hub-shell #view-messages #messages-state:empty { display: none; }
+#hub-shell #view-messages #messages-list { display: block; }
+#hub-shell #view-messages .conversation {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  height: 72px;
+  padding: 0 var(--space-4);
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+#hub-shell #view-messages .conversation:hover { background: var(--content-surface-hover); }
+#hub-shell #view-messages .conversation.active { background: var(--selected); }
+#hub-shell #view-messages .conversation.unread { background: transparent; }
+#hub-shell #view-messages .conversation .post-avatar {
+  width: 36px;
+  height: 36px;
+  background: var(--avatar-bg, var(--interactive));
+  color: var(--avatar-fg, var(--text));
+  font-size: var(--type-subhead);
+  font-weight: var(--weight-semibold);
+}
+#hub-shell #view-messages .conversation-content { display: grid; gap: 2px; min-width: 0; align-content: center; }
+#hub-shell #view-messages .conversation-head { display: flex; align-items: baseline; gap: var(--space-2); }
+#hub-shell #view-messages .conversation-head strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#hub-shell #view-messages .conversation.unread .conversation-head strong { font-weight: var(--weight-semibold); }
+#hub-shell #view-messages .conversation-head .when { margin-left: auto; color: var(--muted); font-size: var(--type-caption); line-height: var(--lh-caption); text-align: end; }
+#hub-shell #view-messages .conversation-preview { margin: 0; overflow: hidden; color: var(--muted); font-size: var(--type-subhead); font-weight: var(--weight-regular); line-height: var(--lh-subhead); text-overflow: ellipsis; white-space: nowrap; }
+#hub-shell #view-messages .conversation.unread .conversation-preview { color: var(--muted); font-weight: var(--weight-regular); }
+/* 未読は右の点（数は読み上げに残す） */
+#hub-shell #view-messages .conversation .nav-badge {
+  width: 8px;
+  min-width: 8px;
+  height: 8px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--action);
+  font-size: 0;
+  overflow: hidden;
+}
+
+#hub-shell #view-messages .messages-thread {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+#hub-shell #view-messages .messages-thread > #thread-state {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--line);
+  font-size: var(--type-subhead);
+  font-weight: var(--weight-semibold);
+  color: var(--text);
+}
+#hub-shell #view-messages .messages-thread > #thread-state:empty { display: none; }
+#hub-shell #view-messages #thread-list {
+  flex: 1;
+  max-height: none;
+  gap: 2px;
+  padding: var(--space-4);
+}
+/* 会話を選んでいない右の面は、上から3分の1ほどの位置に共通の案内を置く（画面中央には寄せない）。 */
+#hub-shell #view-messages #thread-list > .state-panel {
+  margin: 0 auto;
+}
+#hub-shell #view-messages .bubble-row { display: flex; align-items: flex-end; gap: var(--space-2); }
+#hub-shell #view-messages .bubble-row.own { justify-content: flex-end; }
+/* 相手の吹き出しの顔：連なりの最後だけ見せ、ほかは同じ幅の場所だけ取る */
+#hub-shell #view-messages .bubble-avatar { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--interactive); color: var(--text); font-size: var(--type-caption); font-weight: var(--weight-semibold); overflow: hidden; }
+#hub-shell #view-messages .bubble-avatar img { width: 100%; height: 100%; object-fit: cover; }
+#hub-shell #view-messages .bubble-row:not(.grp-last) .bubble-avatar { visibility: hidden; }
+#hub-shell #view-messages .msg-read { margin: 2px 0 0; text-align: end; color: var(--muted); font-size: var(--type-caption); }
+#hub-shell #view-messages .bubble-row.grp-first { margin-top: var(--space-3); }
+#hub-shell #view-messages .bubble {
+  max-width: 70%;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-lg);
+  background: var(--content-nested);
+  color: var(--text);
+  font-size: var(--type-body);
+  line-height: var(--lh-body);
+}
+#hub-shell #view-messages .bubble-row.own .bubble { background: var(--action); color: var(--action-text); }
+/* 同じ人の連なりは、間の角を 6 に詰める */
+#hub-shell #view-messages .bubble-row:not(.own).grp-mid .bubble { border-top-left-radius: var(--radius-xs); }
+#hub-shell #view-messages .bubble-row:not(.own):not(.grp-last) .bubble { border-bottom-left-radius: var(--radius-xs); }
+#hub-shell #view-messages .bubble-row.own.grp-mid .bubble { border-top-right-radius: var(--radius-xs); }
+#hub-shell #view-messages .bubble-row.own:not(.grp-last) .bubble { border-bottom-right-radius: var(--radius-xs); }
+#hub-shell #view-messages .bubble .when { display: none; margin: 2px 0 0; font-size: var(--type-caption); line-height: var(--lh-caption); color: inherit; opacity: .7; }
+#hub-shell #view-messages .bubble-row.grp-last .bubble .when { display: block; }
+#hub-shell #view-messages .msg-date { margin: var(--space-3) 0 var(--space-1); text-align: center; font-size: var(--type-caption); color: var(--muted); }
+
+/* 入力欄：下端に貼り付く。Enter で送り、Shift+Enter で改行 */
+#hub-shell #view-messages #thread-form {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--line);
+  background: var(--material-bar-solid);
+}
+#hub-shell #view-messages #thread-form #thread-attach { display: contents; }
+#hub-shell #view-messages #thread-form .composer-images-wrap { flex: none; max-width: 50%; }
+#hub-shell #view-messages .messages-thread > p.meta[role="status"] { margin: 0; padding: 0 var(--space-4) var(--space-2); font-size: var(--type-caption); }
+#hub-shell #view-messages .messages-thread > p.meta[role="status"]:empty { display: none; }
+#hub-shell #view-messages #thread-form .composer-image-add { min-height: var(--control-h-lg); }
+#hub-shell #view-messages #thread-form[hidden] { display: none; }
+#hub-shell #view-messages #thread-input {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--control-h-lg);
+  max-height: 112px;
+  padding: 7px var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--type-body);
+  line-height: var(--lh-body);
+  resize: none;
+  field-sizing: content;
+}
+#hub-shell #view-messages #thread-input:focus { border-color: var(--line-strong); outline: none; box-shadow: none; }
+#hub-shell #view-messages #thread-form > button[type="submit"] { min-height: var(--control-h-lg); }
+@media (max-width: 999px) {
+  #hub-shell #view-messages .messages-layout,
+  #hub-shell .app-shell.messages-active #view-messages .messages-layout { grid-template-columns: 1fr; }
+  #hub-shell #view-messages .messages-side { border-right: 0; }
+}
+
+/* ---- プロフィール：表紙 3:1（最大 200）＋顔 96 が表紙へ 48 食い込む ---- */
+#hub-shell #view-profile .profile-card {
+  position: relative;
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+#hub-shell #view-profile .profile-card[hidden] { display: none; }
+#hub-shell #view-profile .profile-cover {
+  width: 100%;
+  aspect-ratio: 3 / 1;
+  max-height: 200px;
+  background: var(--content-nested);
+  overflow: hidden;
+}
+#hub-shell #view-profile .profile-cover img { display: block; width: 100%; height: 100%; object-fit: cover; }
+#hub-shell #view-profile .profile-top { display: flex; align-items: flex-start; justify-content: space-between; padding-right: var(--space-4); }
+#hub-shell #view-profile .profile-top .ds-btn { margin-top: var(--space-3); background: var(--interactive); }
+#hub-shell #view-profile .profile-top .ds-btn[hidden] { display: none; }
+#hub-shell #view-profile .profile-avatar {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 96px;
+  height: 96px;
+  margin: -48px 0 0 var(--space-4);
+  border: 4px solid var(--bg);
+  border-radius: 50%;
+  background: var(--interactive);
+  color: var(--text);
+  font-size: var(--type-title1);
+  font-weight: var(--weight-semibold);
+  overflow: hidden;
+}
+#hub-shell #view-profile .profile-avatar.has-image { background: var(--bg); }
+#hub-shell #view-profile .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+#hub-shell #view-profile .profile-info { padding: var(--space-2) var(--space-4) var(--space-3); }
+#hub-shell #view-profile #profile-name { margin: 0; font-size: var(--type-title2); line-height: var(--lh-title2); font-weight: var(--weight-bold); font-feature-settings: "palt"; }
+#hub-shell #view-profile #profile-handle { margin: 0; font-size: var(--type-callout); color: var(--muted); }
+#hub-shell #view-profile .profile-bio { margin: var(--space-3) 0 0; font-size: var(--type-body); line-height: var(--lh-body); }
+#hub-shell #view-profile #profile-joined { margin: var(--space-2) 0 0; font-size: var(--type-subhead); }
+#hub-shell #view-profile .profile-stats { display: flex; flex-wrap: wrap; gap: var(--space-4); margin: var(--space-3) 0 0; font-size: var(--type-body); color: var(--muted); }
+#hub-shell #view-profile .profile-stat b { color: var(--text); font-weight: var(--weight-bold); font-variant-numeric: tabular-nums; }
+#hub-shell #view-profile #profile-state:empty { display: none; }
+#hub-shell #view-profile #profile-posts {
+  margin: 0;
+  overflow: visible;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* ---- 画像の拡大表示（openMediaLightbox）。#hub-shell の外の dialog に付く ---- */
+dialog.media-lightbox {
+  width: 100vw;
+  max-width: none;
+  height: 100vh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--media-app-text);
+}
+dialog.media-lightbox::backdrop { background: color-mix(in srgb, var(--media-app-bg) 92%, transparent); }
+dialog.media-lightbox figure { display: grid; place-items: center; gap: var(--space-2); width: 100%; height: 100%; margin: 0; padding: var(--space-7) 72px; box-sizing: border-box; }
+dialog.media-lightbox figure img { display: block; max-width: 100%; max-height: calc(100vh - 128px); object-fit: contain; border-radius: var(--radius-sm); }
+dialog.media-lightbox figcaption { max-width: 720px; color: var(--media-app-text); font-size: var(--type-subhead); text-align: center; }
+dialog.media-lightbox figcaption[hidden] { display: none; }
+dialog.media-lightbox :is(.media-lightbox-close, .media-lightbox-prev, .media-lightbox-next) {
+  position: fixed;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--media-badge-bg);
+  color: var(--media-badge-text);
+  font-size: var(--type-title2);
+  line-height: 1;
+  cursor: pointer;
+}
+dialog.media-lightbox :is(.media-lightbox-close, .media-lightbox-prev, .media-lightbox-next):hover:not(:disabled) { background: color-mix(in srgb, var(--media-app-text) 18%, var(--media-app-bg)); }
+dialog.media-lightbox :is(.media-lightbox-prev, .media-lightbox-next):disabled { opacity: .35; cursor: default; }
+dialog.media-lightbox :is(.media-lightbox-prev, .media-lightbox-next)[hidden] { display: none; }
+dialog.media-lightbox .media-lightbox-close { top: 12px; left: 12px; }
+dialog.media-lightbox .media-lightbox-prev { top: 50%; left: 16px; transform: translateY(-50%); }
+dialog.media-lightbox .media-lightbox-next { top: 50%; right: 16px; transform: translateY(-50%); }
+dialog.media-lightbox .media-lightbox-count { position: fixed; top: 20px; left: 50%; margin: 0; transform: translateX(-50%); color: var(--media-app-text); font-size: var(--type-subhead); font-variant-numeric: tabular-nums; }
+dialog.media-lightbox .media-lightbox-count[hidden] { display: none; }
+
+/* コミュニティの一覧：参加中の札（右列と同じ memberships で判定）。 */
+#hub-shell .result-card .card-badge {
+  display: inline-block;
+  margin-left: var(--space-2);
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--selected);
+  color: var(--text);
+  font-size: var(--type-caption);
+  font-weight: 600;
+  line-height: 18px;
+  vertical-align: 2px;
+}
+
+/* 通知の元の投稿の本文の頭（X の灰色の引用）。2行で切る。 */
+#hub-shell .notif .notif-excerpt {
+  display: -webkit-box;
+  margin: 2px 0 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--type-body);
+  line-height: var(--lh-body);
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.rail-item-quote {
+  display: block;
+  overflow: hidden;
+  margin-top: 2px;
+  padding-left: var(--space-2);
+  border-left: 2px solid var(--line);
+  color: var(--muted);
+  font-size: var(--type-caption);
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 返信の行の「返信先 @handle」。 */
+#hub-shell .post .post-reply-to {
+  margin: 0 0 2px;
+  color: var(--muted);
+  font-size: var(--type-callout, 13px);
+  line-height: 1.45;
+}
+#hub-shell .post .post-reply-to a { color: var(--accent-link); text-decoration: none; cursor: pointer; }
+#hub-shell .post .post-reply-to a:hover { text-decoration: underline; }

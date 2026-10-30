@@ -1,0 +1,39 @@
+/* 音楽のアーティスト・アルバムの頁と、再生リスト・お気に入りの行の表紙。色は tokens.css のトークンだけを使う。 */
+
+/* 再生リスト・お気に入り・あとで見るの行：表紙 + 本文 */
+.media-item-row { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: var(--space-3); align-items: start; }
+.media-item-row > * { grid-column: 2; min-width: 0; }
+.media-item-row > .media-item-cover { grid-column: 1; grid-row: 1 / span 4; }
+.media-item-cover { display: block; width: 56px; }
+.media-item-cover[data-kind="video"] { width: 120px; }
+.media-item-cover .mw-art { width: 56px; height: 56px; border-radius: var(--radius-xs); }
+.media-item-cover .video-thumbnail { width: 100%; border-radius: var(--radius-xs); }
+.media-item-row strong { overflow-wrap: anywhere; }
+
+/* 行の中の名前（アーティスト・アルバム）。押すと頁を開く */
+.music-name-link { cursor: pointer; }
+.music-name-link:hover { text-decoration: underline; }
+.music-name-link:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: var(--radius-xs); }
+
+/* 作品詳細の入口 */
+.mw-links { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+/* アーティスト・アルバムの頁 */
+.mc { display: grid; gap: var(--space-4); }
+.mc-hero { align-items: flex-end; }
+.mc-cover { width: 200px; height: 200px; }
+.mc-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--space-1); }
+.mc-status { margin: 0; min-height: 1.4em; }
+.mc-tracks { list-style: none; margin: 0; padding: 0; display: grid; }
+.mc-track { display: grid; grid-template-columns: 28px 40px minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-2); border-bottom: 1px solid var(--line); }
+.mc-track:hover { background: var(--interactive); border-radius: var(--radius-sm); }
+.mc-no { color: var(--muted); font-size: var(--type-subhead); font-weight: var(--weight-regular); text-align: right; font-variant-numeric: tabular-nums; }
+.mc-text { display: grid; gap: 2px; min-width: 0; }
+.mc-title, .mc-link { appearance: none; border: 0; background: none; padding: 0; margin: 0; min-height: 0; height: auto; font: inherit; line-height: 1.35; color: inherit; text-align: left; cursor: pointer; }
+.mc-title { font-size: var(--type-body); font-weight: var(--weight-semibold); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-link { color: var(--muted); font-size: var(--type-subhead); }
+.mc-title:hover, .mc-link:hover { text-decoration: underline; }
+.mc-title:focus-visible, .mc-link:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: var(--radius-xs); }
+.mc-sub { color: var(--muted); font-size: var(--type-subhead); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-empty { margin: 0; }
+.media-item-row .actions { flex-wrap: wrap; }

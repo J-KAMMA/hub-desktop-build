@@ -1,0 +1,300 @@
+/* ブラウザの外郭の仕上げ（2026-10-15 旦那様の依頼「ブラウザのデザインを改善して」）。
+   読み込みは最後。色は tokens.css のトークンだけ。焦点は線と面の変化で示し、青い輪は出さない。
+   見た目だけを変える。保護・権限・Hub の拒否・ダウンロードの方針には触れない。 */
+
+/* ===== 右上の群：保護・ダウンロード・AI・メニュー（各 32 角、記号 18、間 4） ===== */
+#hub-shell.browser-active #view-browser :is(.browser-strip > button, #browser-protection) {
+  position: relative;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), transform var(--dur-press) var(--ease-out);
+}
+#hub-shell.browser-active #view-browser :is(.browser-strip > button, #browser-protection):hover:not(:disabled) { background: var(--interactive); color: var(--text); }
+#hub-shell.browser-active #view-browser :is(.browser-strip > button, #browser-protection):active:not(:disabled) { background: var(--interactive-hover); transform: scale(.97); }
+#hub-shell.browser-active #view-browser :is(.browser-strip > button, #browser-protection):focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+#hub-shell.browser-active #view-browser :is(.browser-strip > button, #browser-protection)[aria-expanded="true"] { background: var(--interactive); color: var(--text); }
+#hub-shell.browser-active #view-browser :is(.browser-strip > button, #browser-protection) svg { width: 18px; height: 18px; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* 保護の状態を盾の見た目で示す（色は増やさない）：オンは塗り、オフは破線、確認できないときは薄く。 */
+#view-browser #browser-protection[data-state="on"] { color: var(--text); }
+#view-browser #browser-protection[data-state="on"] svg path { fill: color-mix(in srgb, currentColor 16%, transparent); }
+#view-browser #browser-protection[data-state="off"] svg path { stroke-dasharray: 3 2.4; }
+#view-browser #browser-protection[data-state="unknown"] svg { opacity: .6; }
+
+/* ダウンロードの数（進行中だけ）。 */
+#view-browser .browser-download-badge {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  min-width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--text);
+  color: var(--bg);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+  line-height: 16px;
+  text-align: center;
+  pointer-events: none;
+}
+#view-browser .browser-download-badge[hidden] { display: none; }
+
+/* ===== アドレスバー ===== */
+#hub-shell.browser-active #view-browser #browser-form {
+  transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+#hub-shell.browser-active #view-browser #browser-form:hover { background: var(--interactive-hover); }
+#hub-shell.browser-active #view-browser #browser-form:focus-within {
+  border-color: var(--line-strong);
+  background: var(--surface-raised);
+}
+#hub-shell #view-browser #browser-form > #browser-url::placeholder { color: var(--muted); opacity: 1; }
+#hub-shell #view-browser #browser-form > #browser-url::selection { background: color-mix(in srgb, var(--text) 18%, transparent); }
+
+/* サイトの情報：鍵（保護された通信）／注意の三角（保護されていない通信）／調整の記号（ページなし）。 */
+#hub-shell #view-browser #browser-form > #browser-scheme {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--muted);
+  font-style: normal;
+  transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+#hub-shell #view-browser #browser-form > #browser-scheme svg { width: 16px; height: 16px; stroke-width: 1.8; }
+#hub-shell #view-browser #browser-form > #browser-scheme:hover { background: var(--interactive-hover); color: var(--text); }
+#hub-shell #view-browser #browser-form > #browser-scheme:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+#hub-shell #view-browser #browser-form > #browser-scheme[data-state="insecure"] { color: var(--warning-text); background: var(--warning-bg); }
+#hub-shell #view-browser #browser-form > #browser-scheme[data-state="insecure"]:hover { background: var(--warning-bg); color: var(--warning-text); }
+#hub-shell #view-browser #browser-form > #browser-fav { color: var(--muted); transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
+#hub-shell #view-browser #browser-form > #browser-fav:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+#hub-shell #view-browser #browser-form > #browser-fav.is-on { color: var(--text); }
+#hub-shell #view-browser #browser-form > #browser-fav.is-on svg path { fill: currentColor; }
+
+/* ===== 帯の下に開く面（候補・メニュー・保護・ダウンロード・権限・検索） =====
+   ページの描画面を動かさないため帯のまま置く。中身は中央の 640 に揃え、面は一枚の --material-sheet-solid にする。 */
+#view-browser :is(#browser-suggestions, #browser-protection-panel, #browser-permissions, #browser-find-bar, #browser-session-notice) {
+  box-sizing: border-box;
+  padding-inline: max(var(--space-3), calc((100% - 640px) / 2));
+  background: var(--material-sheet-solid);
+  border-bottom: 1px solid var(--line);
+}
+#view-browser #browser-suggestions { padding-block: var(--space-2); }
+/* ≡ のメニューは帯ではなく、ページの右上に浮かぶ面（位置は browser-workspace.mjs が決める）。 */
+#hub-shell #view-browser #browser-menu { width: 360px; padding: var(--space-2); border: 0; border-radius: var(--radius-md); background: var(--material-sheet-solid); box-shadow: var(--elevation-2); }
+#view-browser #browser-protection-panel { padding-block: var(--space-3); }
+
+#view-browser #browser-suggestions { display: grid; gap: 2px; }
+#view-browser #browser-suggestions[hidden] { display: none; }
+#view-browser .browser-suggestion {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 36px;
+  padding: 6px var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  font-size: var(--type-subhead);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+#view-browser .browser-suggestion:hover,
+#view-browser .browser-suggestion[aria-selected="true"] { background: var(--interactive); }
+#view-browser .browser-suggestion strong { flex: 0 1 auto; min-width: 0; font-weight: var(--weight-regular); }
+#view-browser .browser-suggestion small,
+#view-browser .browser-suggestion span:not(:first-child) { flex: 1 1 0; min-width: 0; overflow: hidden; color: var(--muted); font-size: var(--type-caption); text-overflow: ellipsis; white-space: nowrap; }
+
+#view-browser .browser-menu-head { background: var(--interactive); border-radius: var(--radius-sm); }
+#view-browser .browser-menu-head > .browser-menu-tab { border-radius: var(--radius-xs); }
+#view-browser .browser-menu-head > .browser-menu-tab.is-active { background: var(--surface-raised) !important; color: var(--text); box-shadow: var(--elevation-1); }
+#view-browser .browser-menu-row,
+#view-browser .browser-menu-open { border-radius: var(--radius-sm); }
+#view-browser #browser-menu button:not(.browser-menu-tab, .browser-menu-open, .browser-main-item, .browser-tab-close):not([role="menuitem"]) { border-radius: var(--radius-sm); }
+#view-browser .browser-protection-toggle { min-height: var(--control-h); }
+#view-browser :is(.browser-protection-close, .browser-protection-recheck) { border: 0; border-radius: var(--radius-sm); }
+#view-browser .browser-download-row { padding: var(--space-2) 0; border-bottom: 1px solid var(--line); }
+#view-browser .browser-download-row:last-of-type { border-bottom: 0; }
+#view-browser .browser-download-row progress { width: 100%; height: 4px; accent-color: var(--text); }
+
+/* ===== 縦のタブ（左の列：固定／細い帯） ===== */
+.app-shell.browser-active .sidebar-tab {
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+}
+.app-shell.browser-active .sidebar-tab:hover { background: var(--interactive); color: var(--text); }
+/* 選んでいるタブは色ではなく面と影で分ける。 */
+.app-shell.browser-active .sidebar-tab.is-active,
+.app-shell.browser-active .sidebar-tab:has([aria-current="page"]) { background: var(--selected); color: var(--text); box-shadow: var(--elevation-1); }
+.app-shell.browser-active .browser-tab-select { border-radius: var(--radius-sm); }
+.app-shell.browser-active .browser-tab-title { font-size: var(--type-subhead); line-height: var(--lh-subhead); }
+.app-shell.browser-active .browser-tab-badge {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  overflow: hidden;
+  border-radius: var(--radius-xs);
+  background: var(--interactive);
+  color: var(--text);
+  font-size: var(--type-caption);
+  line-height: 16px;
+}
+.app-shell.browser-active .browser-tab-badge:has(img) { background: transparent; }
+.app-shell.browser-active .browser-tab-badge img { display: block; width: 16px; height: 16px; object-fit: contain; border-radius: var(--radius-xs); }
+.app-shell.browser-active .browser-tab-select > .browser-tab-text ~ .browser-tab-badge { background: transparent; color: var(--muted); }
+/* タブの×（2026-10-29）：押せる円は 28、記号は 18。選んでいるタブでは常に見え、ほかは hover と焦点のときだけ。 */
+.app-shell.browser-active .sidebar-tab > .browser-tab-close {
+  flex: 0 0 var(--tap-close);
+  width: var(--tap-close);
+  height: var(--tap-close);
+  min-width: var(--tap-close);
+  min-height: var(--tap-close);
+  margin-right: var(--space-1);
+  border-radius: 50%;
+  font-size: var(--tap-close-glyph);
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out);
+}
+.app-shell.browser-active .sidebar-tab:hover > .browser-tab-close,
+.app-shell.browser-active .sidebar-tab.is-active > .browser-tab-close,
+.app-shell.browser-active .sidebar-tab:focus-within > .browser-tab-close { opacity: 1; }
+.app-shell.browser-active .sidebar-tab > .browser-tab-close:hover { background: var(--interactive-hover); color: var(--text); }
+.app-shell.browser-active .sidebar-tab > .browser-tab-close:active { background: var(--selected); color: var(--text); }
+.app-shell.browser-active .sidebar-tab > .browser-tab-close:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring); outline-offset: calc(var(--focus-ring-offset) * -1); }
+.app-shell.browser-active .sidebar-tab > .browser-tab-select { min-width: 0; }
+/* 「⋯」は右クリックとメニューキーで開く。矢印キーで届いたときだけ見せる（列の幅を題名に譲る）。 */
+.app-shell.browser-active .sidebar-tab > .browser-tab-options { width: 0; min-width: 0; margin: 0; padding: 0; overflow: hidden; opacity: 0; pointer-events: none; }
+.app-shell.browser-active .sidebar-tab > .browser-tab-options:focus-visible { width: var(--tap-close); min-width: var(--tap-close); margin-right: 2px; opacity: 1; pointer-events: auto; }
+
+/* 新しいタブ（列の下）：記号＋字＋ Ctrl T。「閉じたタブを復元」はメニューと Ctrl+Shift+T へ移した。 */
+@media (min-width: 721px) {
+  .app-shell.browser-active .sidebar > #sidebar-tabs #browser-restore { display: none; }
+}
+#hub-shell #sidebar-new-tab { color: var(--muted); border-radius: var(--radius-sm); transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
+#hub-shell #sidebar-new-tab:hover { background: var(--interactive); color: var(--text); }
+#hub-shell #sidebar-new-tab:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+#hub-shell #sidebar-new-tab kbd { border: 0; background: var(--interactive); color: var(--muted); }
+
+/* ===== 横のタブ（設定で選んだとき）：高さ 40 の段。各タブは 120〜220。 ===== */
+.app-shell.browser-active.browser-tabs-horizontal #browser-tabbar {
+  box-sizing: border-box;
+  height: 40px;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+}
+.app-shell.browser-active #browser-tabbar #sidebar-tabs { flex: 1 1 auto; align-items: center; gap: 2px; width: 100%; max-height: 40px; padding: 0 var(--space-2); }
+.app-shell.browser-active #browser-tabbar #sidebar-tabs-list { flex: 0 1 auto; min-width: 0; gap: 2px; scrollbar-width: none; }
+.app-shell.browser-active #browser-tabbar #sidebar-tabs-list::-webkit-scrollbar { display: none; }
+.app-shell.browser-active #browser-tabbar .sidebar-tab { flex: 0 1 220px; width: 220px; min-width: 120px; height: 32px; min-height: 32px; border-radius: var(--radius-sm); }
+.app-shell.browser-active #browser-tabbar .browser-tab-select { height: 32px; min-height: 32px; padding: 0 var(--space-1) 0 var(--space-3); gap: var(--space-2); border-radius: var(--radius-sm); }
+.app-shell.browser-active #browser-tabbar .sidebar-tab.is-active { background: var(--surface-raised); box-shadow: var(--elevation-1); }
+.app-shell.browser-active #browser-tabbar #sidebar-new-tab { display: grid; place-items: center; flex: none; width: 32px; height: 32px; min-height: 32px; margin: 0 0 0 2px; padding: 0; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--muted); }
+.app-shell.browser-active #browser-tabbar #sidebar-new-tab svg { width: 18px; height: 18px; }
+.app-shell.browser-active #browser-tabbar #sidebar-new-tab :is(.sidebar-new-tab-label, .sidebar-new-tab-keys) { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  #hub-shell.browser-active #view-browser :is(.browser-strip > button, #browser-protection),
+  #hub-shell.browser-active #view-browser #browser-form,
+  .app-shell.browser-active .sidebar-tab,
+  .app-shell.browser-active .sidebar-tab > .browser-tab-close { transition: none; }
+  #hub-shell.browser-active #view-browser :is(.browser-strip > button, #browser-protection):active:not(:disabled) { transform: none; }
+}
+
+/* ===== 面の中の文字と押し手（ダウンロード・サイトの情報・権限） ===== */
+#hub-shell #view-browser #browser-menu .browser-menu-empty { margin: var(--space-1) var(--space-2); color: var(--muted); font-size: var(--type-subhead); line-height: var(--lh-subhead); }
+#hub-shell #view-browser #browser-menu .browser-site-info { gap: var(--space-1); padding: var(--space-1) 0; }
+#hub-shell #view-browser #browser-menu .browser-site-info-host { padding: 0 var(--space-2); color: var(--text); font-size: var(--type-body); font-weight: var(--weight-semibold); line-height: var(--lh-body); }
+#hub-shell #view-browser #browser-menu :is(.browser-site-info, .browser-settings) > button,
+#hub-shell #view-browser #browser-menu > button:not(.browser-menu-tab) {
+  min-height: var(--control-h);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  font-size: var(--type-subhead);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+#hub-shell #view-browser #browser-menu :is(.browser-site-info, .browser-settings) > button:hover:not(:disabled),
+#hub-shell #view-browser #browser-menu > button:not(.browser-menu-tab):hover:not(:disabled) { background: var(--interactive); }
+#hub-shell #view-browser #browser-menu :is(.browser-site-info, .browser-settings) > button:disabled,
+#hub-shell #view-browser #browser-menu > button:disabled { color: var(--muted); opacity: .6; cursor: default; }
+#hub-shell #view-browser #browser-menu :is(.browser-site-info, .browser-settings) > button:focus-visible,
+#hub-shell #view-browser #browser-menu > button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+
+/* 横のタブでも閉じるは hover・選択中・焦点のときだけ出す（縦と同じ）。 */
+.app-shell.browser-active #browser-tabbar .sidebar-tab:not(:hover, .is-active, :focus-within) > .browser-tab-close:not(.browser-tab-options) { opacity: 0; }
+
+/* 休止中のタブは薄くするが、「休止中」の文字は読める濃さで残す。 */
+.app-shell.browser-active .sidebar-tab.is-discarded { opacity: .78; }
+.app-shell.browser-active .sidebar-tab.is-discarded .browser-tab-badge { filter: grayscale(1); }
+.browser-tab-sleeping { color: var(--text); font-weight: 600; }
+
+/* 音のアイコンは押してミュートを切り替える。縦でも横でも常に見せる。 */
+.sidebar-tab > .browser-tab-audio { display: grid; flex-shrink: 0; width: 20px; height: 20px; min-height: 20px; place-items: center; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--muted); font-size: var(--type-caption); cursor: pointer; }
+.sidebar-tab > .browser-tab-audio:hover { background: var(--interactive-hover); color: var(--text); }
+.sidebar-tab > .browser-tab-audio:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+.sidebar-tab > .browser-tab-audio .browser-tab-badge { background: transparent; }
+.app-shell.browser-tabs-peek:not(.browser-tabs-peek-open) .sidebar-tab > .browser-tab-audio { display: none; }
+
+/* 縦の列を畳んでいてもアイコンだけで休止中と分かるよう、右下に「休」の札を付ける。 */
+.sidebar-tab.is-discarded .browser-tab-select > .browser-tab-badge { position: relative; overflow: visible; }
+.sidebar-tab.is-discarded .browser-tab-select > .browser-tab-badge::after { content: "休"; position: absolute; right: -6px; bottom: -5px; display: grid; place-items: center; width: 12px; height: 12px; border: 1px solid var(--line-strong); border-radius: 50%; background: var(--panel); color: var(--text); font-size: var(--type-caption); font-weight: 700; line-height: 1; }
+
+
+/* ===== 押しやすさ（2026-10-29 所有者指定「ブラウザのボタンが小さい」）=====
+   戻る・進む・再読み込み・ホーム・サイドバー・新しいタブ・メニュー・ダウンロード・星・右列の小さな操作は、押せる大きさ 32 以上
+   （上の帯は 36）、記号は 20。ホバー・押下・焦点・無効の状態を持つ。窓の操作（最小化・最大化・閉じる）と窓を動かす領域には触れない。 */
+#hub-shell .app-toolbar .toolbar-button,
+#hub-shell.browser-active .app-toolbar :is(#browser-back, #browser-forward, #browser-reload) {
+  width: var(--tap-height);
+  min-width: var(--tap-height);
+  height: var(--tap-height);
+  min-height: var(--tap-height);
+  border-radius: var(--radius-sm);
+}
+#hub-shell .app-toolbar .toolbar-button svg { width: var(--tap-icon); height: var(--tap-icon); }
+#hub-shell .app-toolbar .toolbar-button:hover:not(:disabled) { background: var(--interactive); color: var(--text); }
+#hub-shell .app-toolbar .toolbar-button:active:not(:disabled) { background: var(--interactive-hover); }
+#hub-shell .app-toolbar .toolbar-button:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring); outline-offset: calc(var(--focus-ring-offset) * -1); }
+#hub-shell .app-toolbar .toolbar-button:disabled { opacity: .4; cursor: default; }
+
+#hub-shell.browser-active #view-browser :is(.browser-strip > button, #browser-protection) {
+  flex: 0 0 var(--tap-height);
+  width: var(--tap-height);
+  min-width: var(--tap-height);
+  height: var(--tap-height);
+  min-height: var(--tap-height);
+}
+#hub-shell.browser-active #view-browser #browser-zoom { flex-basis: 48px; width: 48px; min-width: 48px; }
+#hub-shell.browser-active #view-browser :is(.browser-strip > button, #browser-protection) svg { width: var(--tap-icon); height: var(--tap-icon); }
+#hub-shell.browser-active #view-browser :is(.browser-strip > button, #browser-protection):disabled { opacity: .4; cursor: default; }
+#hub-shell.browser-active #view-browser :is(.browser-strip > button, #browser-protection):focus-visible { outline-width: var(--focus-ring-width); outline-offset: calc(var(--focus-ring-offset) * -1); }
+/* アドレスバーの中（バーは高さ 34、枠 1 を除いた 32 がそのまま押せる円）。 */
+#hub-shell #view-browser #browser-form > :is(#browser-scheme, #browser-fav) { width: var(--tap-compact); min-width: var(--tap-compact); height: var(--tap-compact); min-height: var(--tap-compact); border-radius: 50%; }
+#hub-shell #view-browser #browser-form > #browser-scheme svg { width: 16px; height: 16px; }
+#hub-shell #view-browser #browser-form > #browser-fav svg { width: var(--tap-icon); height: var(--tap-icon); }
+#hub-shell #view-browser #browser-form > #browser-fav:active { background: var(--interactive-hover); }
+#hub-shell #view-browser #browser-form > #browser-scheme:active { background: var(--interactive-hover); }
+/* 横のタブの＋と、縦の列の＋。 */
+.app-shell.browser-active #browser-tabbar #sidebar-new-tab { width: var(--tap-compact); min-width: var(--tap-compact); height: var(--tap-compact); min-height: var(--tap-compact); }
+.app-shell.browser-active #browser-tabbar #sidebar-new-tab svg { width: var(--tap-icon); height: var(--tap-icon); }
+#hub-shell #sidebar-new-tab:active { background: var(--interactive-hover); }

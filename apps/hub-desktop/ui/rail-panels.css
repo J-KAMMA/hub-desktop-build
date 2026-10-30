@@ -1,0 +1,119 @@
+/* 右列の投稿・通知・メッセージ・コミュニティ・音楽（rail-panels.mjs）。
+   色は意味トークンだけ。行の間隔は右列の既存の行（14px の詰め・下線）に合わせる。 */
+
+.rail-view .rail-item.rail-row {
+  position: relative;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: var(--space-3);
+  row-gap: 0;
+  padding: var(--space-3) var(--space-3);
+}
+.rail-view .rail-item.rail-row:not(:has(.rail-row-avatar)) { grid-template-columns: minmax(0, 1fr) auto; }
+.rail-row-main { display: grid; min-width: 0; gap: 3px; }
+.rail-view .rail-row .rail-item-text { -webkit-line-clamp: 2; }
+.rail-view .rail-row.is-unread .rail-item-head strong { font-weight: var(--weight-bold); }
+
+.rail-row-avatar {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--interactive);
+  color: var(--text);
+  font-size: var(--type-subhead);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+}
+.rail-row-avatar.has-image { background: var(--surface-sunken); }
+.rail-row-avatar img { display: block; width: 32px; height: 32px; object-fit: cover; }
+.rail-row-avatar.is-icon { border-radius: var(--radius-md); color: var(--muted); }
+.rail-row-avatar .ic { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
+.rail-row-dot {
+  align-self: center;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--action);
+}
+.rail-row-count {
+  align-self: center;
+  min-width: 20px;
+  padding: 1px var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--action);
+  color: var(--action-text);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-semibold);
+  line-height: 18px;
+  text-align: center;
+}
+
+.rail-summary,
+.rail-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--line);
+}
+.rail-summary .meta { margin: 0; font-size: var(--type-caption); }
+.rail-view .rail-list > .rail-section-head { border-bottom: 0; padding-top: var(--space-3); padding-bottom: var(--space-1); }
+.rail-view .rail-list > .rail-section-head h3 { margin: 0; color: var(--muted); font-size: var(--type-caption); font-weight: var(--weight-semibold); }
+.rail-head-action {
+  min-height: 28px;
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--action);
+  font-size: var(--type-caption);
+  cursor: pointer;
+}
+.rail-head-action:hover:not(:disabled) { background: var(--interactive); }
+.rail-head-action:disabled { color: var(--muted); cursor: default; }
+
+/* 読み込み中：行と同じ形の下地。 */
+.rail-skeleton { display: grid; }
+.rail-skeleton-row { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: var(--space-3); padding: var(--space-3) var(--space-3); border-bottom: 1px solid var(--line); }
+.rail-skeleton-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--interactive); }
+.rail-skeleton-lines { height: 32px; border-radius: var(--radius-sm); background: linear-gradient(var(--interactive) 0 10px, transparent 10px 18px, var(--interactive) 18px 26px, transparent 26px); background-size: 70% 100%, 100% 100%; background-repeat: no-repeat; }
+@media (prefers-reduced-motion: no-preference) {
+  .rail-skeleton { animation: rail-skeleton-pulse 1.2s ease-in-out 3 alternate; }
+}
+@keyframes rail-skeleton-pulse { to { opacity: .55; } }
+
+.rail-view .rail-state--signedOut { background: var(--surface-sunken); }
+.rail-view .rail-state--error { border-color: var(--warning-line); }
+
+/* 再生中のカード。中央の再生欄を押すだけで、YouTube の再生枠は動かさない。 */
+.rail-view .rail-now-playing { display: grid; gap: var(--space-3); margin: var(--space-2) var(--space-3); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-sunken); }
+.rail-now-top { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; gap: var(--space-3); }
+.rail-now-top .rail-row-avatar { width: 40px; height: 40px; background: var(--interactive); color: var(--text); }
+.rail-now-text { display: grid; min-width: 0; gap: 1px; }
+.rail-now-text strong { overflow: hidden; font-size: var(--type-subhead); text-overflow: ellipsis; white-space: nowrap; }
+.rail-now-text .meta { margin: 0; overflow: hidden; font-size: var(--type-caption); text-overflow: ellipsis; white-space: nowrap; }
+.rail-now-state { color: var(--muted); font-size: var(--type-caption); font-weight: var(--weight-semibold); }
+.rail-view .rail-now-playing .rail-playback-controls { display: flex; justify-content: center; gap: var(--space-2); }
+.rail-view .rail-now-playing .rail-playback-controls button { display: grid; width: 36px; height: 36px; place-items: center; padding: 0; border: 0; border-radius: 50%; background: var(--interactive); color: var(--text); font-size: var(--type-subhead); cursor: pointer; }
+.rail-view .rail-now-playing .rail-playback-controls button.is-primary { background: var(--action); color: var(--action-text); }
+.rail-view .rail-now-playing .rail-playback-controls button:hover:not(:disabled) { background: var(--interactive-hover); }
+.rail-view .rail-now-playing .rail-playback-controls button.is-primary:hover:not(:disabled) { background: var(--action-hover); }
+.rail-view .rail-now-playing .rail-playback-controls button:disabled { opacity: .45; cursor: default; }
+
+/* 通知の顔の右下に種類の記号（いいね・返信・リポスト・フォロー・メンション・保存） */
+.rail-row-face { position: relative; display: block; width: 32px; height: 32px; }
+.rail-row-kind { position: absolute; right: -4px; bottom: -4px; display: grid; width: 18px; height: 18px; place-items: center; border: 2px solid var(--panel); border-radius: 50%; background: var(--surface-raised); color: var(--muted); }
+.rail-row-kind .ic { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.rail-row-kind--heart { color: var(--reaction-like); }
+.rail-row-kind--heart .ic { fill: currentColor; }
+.rail-row-kind--repost { color: var(--positive-text); }
+.rail-row-kind--follow,
+.rail-row-kind--mention,
+.rail-row-kind--reply { color: var(--action); }
+/* 投稿の行の下の小さな事実（返信・リポスト・いいねの数、画像の枚数） */
+.rail-row-facts { color: var(--muted); font-size: var(--type-caption); line-height: 16px; font-variant-numeric: tabular-nums; }

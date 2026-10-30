@@ -1,0 +1,10 @@
+{
+  "name": "hub-desktop-build-mirror",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "workspaces": ["packages/content-tags"],
+  "devDependencies": {
+    "@mozilla/readability": "0.6.0",
+    "esbuild": "0.28.1"
+  }
+}

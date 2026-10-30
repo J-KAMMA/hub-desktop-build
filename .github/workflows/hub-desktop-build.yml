@@ -1,0 +1,61 @@
+name: Hub Desktop build
+
+# Builds the Hub Desktop release binary on a GitHub-hosted runner so the heavy
+# Rust build stays off the developer PC. Uses no secrets and no Git LFS.
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 90
+    env:
+      CARGO_INCREMENTAL: "0"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          lfs: false
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.14.0
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable branch
+        with:
+          toolchain: 1.97.1
+      - name: Install bundler dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            apps/hub-desktop/src-tauri/target
+          key: hub-desktop-cargo-${{ runner.os }}-${{ hashFiles('apps/hub-desktop/src-tauri/Cargo.lock') }}
+          restore-keys: |
+            hub-desktop-cargo-${{ runner.os }}-
+      - name: Build release binary
+        working-directory: apps/hub-desktop/src-tauri
+        run: cargo build --release
+      - name: Hash binary
+        shell: pwsh
+        working-directory: apps/hub-desktop/src-tauri/target/release
+        run: |
+          $h = (Get-FileHash hub-local-runner.exe -Algorithm SHA256).Hash.ToLower()
+          "$h  hub-local-runner.exe" | Set-Content -Encoding ascii hub-local-runner.exe.sha256
+          Get-Content hub-local-runner.exe.sha256
+          "SHORT_SHA=$('${{ github.sha }}'.Substring(0,7))" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: hub-local-runner-${{ env.SHORT_SHA }}
+          path: |
+            apps/hub-desktop/src-tauri/target/release/hub-local-runner.exe
+            apps/hub-desktop/src-tauri/target/release/hub-local-runner.exe.sha256
+          retention-days: 7
+          if-no-files-found: error

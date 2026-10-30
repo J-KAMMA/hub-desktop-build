@@ -1,0 +1,255 @@
+{
+  "status": "static resource/dependency preparation; no downloaded JavaScript executed; no YouTube playback verification",
+  "resources": 30,
+  "roots": [
+    "trusted-replace-xhr-response.js",
+    "trusted-rpfr.js",
+    "set.js",
+    "json-prune.js",
+    "json-prune-fetch-response.js",
+    "json-edit-fetch-response.js",
+    "rpnt.js",
+    "trusted-edit-inbound-object.js",
+    "nano-stb.js",
+    "json-prune-xhr-response.js",
+    "rmnt.js",
+    "trusted-prevent-dom-bypass.js"
+  ],
+  "scriptletRules": 36,
+  "selectedRules": 48,
+  "resourceMetadata": [
+    {
+      "name": "trusted-replace-xhr-response.js",
+      "declaration": "trustedReplaceXhrResponse",
+      "file": "ublock-src-js-resources-scriptlets.js",
+      "world": "MAIN",
+      "requiresTrust": true
+    },
+    {
+      "name": "match-object-properties.fn",
+      "declaration": "matchObjectPropertiesFn",
+      "file": "ublock-src-js-resources-utils.js",
+      "world": "MAIN",
+      "requiresTrust": false
+    },
+    {
+      "name": "safe-self.fn",
+      "declaration": "safeSelf",
+      "file": "ublock-src-js-resources-safe-self.js",
+      "world": "MAIN",
+      "requiresTrust": false
+    },
+    {
+      "name": "parse-properties-to-match.fn",
+      "declaration": "parsePropertiesToMatchFn",
+      "file": "ublock-src-js-resources-utils.js",
+      "world": "MAIN",
+      "requiresTrust": false
+    },
+    {
+      "name": "trusted-replace-fetch-response.js",
+      "declaration": "trustedReplaceFetchResponse",
+      "file": "ublock-src-js-resources-scriptlets.js",
+      "world": "MAIN",
+      "requiresTrust": true
+    },
+    {
+      "name": "replace-fetch-response.fn",
+      "declaration": "replaceFetchResponseFn",
+      "file": "ublock-src-js-resources-scriptlets.js",
+      "world": "MAIN",
+      "requiresTrust": false
+    },
+    {
+      "name": "collate-fetch-arguments.fn",
+      "declaration": "collateFetchArgumentsFn",
+      "file": "ublock-src-js-resources-utils.js",
+      "world": "MAIN",
+      "requiresTrust": false
+    },
+    {
+      "name": "set-constant.js",
+      "declaration": "setConstant",
+      "file": "ublock-src-js-resources-set-constant.js",
+      "world": "MAIN",
+      "requiresTrust": false
+    },
+    {
+      "name": "set-constant.fn",
+      "declaration": "setConstantFn",
+      "file": "ublock-src-js-resources-set-constant.js",
+      "world": "MAIN",
+      "requiresTrust": false
+    },
+    {
+      "name": "run-at.fn",
+      "declaration": "runAt",
+      "file": "ublock-src-js-resources-run-at.js",
+      "world": "MAIN",
+      "requiresTrust": false
+    },
+    {
+      "name": "validate-constant.fn",
+      "declaration": "validateConstantFn",
+      "file": "ublock-src-js-resources-set-constant.js",
+      "world": "MAIN",
+      "requiresTrust": false
+    },
+    {
+      "name": "json-prune.js",
+      "declaration": "jsonPrune",
+      "file": "ublock-src-js-resources-json-prune.js",
+      "world": "MAIN",
+      "requiresTrust": false
+    },
+    {
+      "name": "object-prune.fn",
+      "declaration": "objectPruneFn",
+      "file": "ublock-src-js-resources-object-prune.js",
+      "world": "MAIN",
+      "requiresTrust": false
+    },
+    {
+      "name": "matches-stack-trace.fn",
+      "declaration": "matchesStackTraceFn",
+      "file": "ublock-src-js-resources-stack-trace.js",
+      "world": "MAIN",
+      "requiresTrust": false
+    },
+    {
+      "name": "get-exception-token.fn",
+      "declaration": "getExceptionTokenFn",
+      "file": "ublock-src-js-resources-utils.js",
+      "world": "MAIN",
+      "requiresTrust": false
+    },
+    {
+      "name": "get-random-token.fn",
+      "declaration": "getRandomTokenFn",
+      "file": "ublock-src-js-resources-utils.js",
+      "world": "MAIN",
+      "requiresTrust": false
+    },
+    {
+      "name": "object-find-owner.fn",
+      "declaration": "objectFindOwnerFn",
+      "file": "ublock-src-js-resources-object-prune.js",
+      "world": "MAIN",
+      "requiresTrust": false
+    },
+    {
+      "name": "proxy-apply.fn",
+      "declaration": "proxyApplyFn",
+      "file": "ublock-src-js-resources-proxy-apply.js",
+      "world": "MAIN",
+      "requiresTrust": false
+    },
+    {
+      "name": "json-prune-fetch-response.js",
+      "declaration": "jsonPruneFetchResponse",
+      "file": "ublock-src-js-resources-json-prune.js",
+      "world": "MAIN",
+      "requiresTrust": false
+    },
+    {
+      "name": "json-edit-fetch-response.js",
+      "declaration": "jsonEditFetchResponse",
+      "file": "ublock-src-js-resources-json-edit.js",
+      "world": "MAIN",
+      "requiresTrust": false
+    },
+    {
+      "name": "json-edit-fetch-response.fn",
+      "declaration": "jsonEditFetchResponseFn",
+      "file": "ublock-src-js-resources-json-edit.js",
+      "world": "MAIN",
+      "requiresTrust": false
+    },
+    {
+      "name": "jsonpath.fn",
+      "declaration": "JSONPath",
+      "file": "ublock-src-js-jsonpath.js",
+      "world": "MAIN",
+      "requiresTrust": false
+    },
+    {
+      "name": "trusted-replace-node-text.js",
+      "declaration": "replaceNodeText",
+      "file": "ublock-src-js-resources-scriptlets.js",
+      "world": "ISOLATED",
+      "requiresTrust": true
+    },
+    {
+      "name": "replace-node-text.fn",
+      "declaration": "replaceNodeTextFn",
+      "file": "ublock-src-js-resources-scriptlets.js",
+      "world": "MAIN",
+      "requiresTrust": false
+    },
+    {
+      "name": "trusted-edit-inbound-object.js",
+      "declaration": "trustedEditInboundObject",
+      "file": "ublock-src-js-resources-json-edit.js",
+      "world": "MAIN",
+      "requiresTrust": true
+    },
+    {
+      "name": "edit-inbound-object.fn",
+      "declaration": "editInboundObjectFn",
+      "file": "ublock-src-js-resources-json-edit.js",
+      "world": "MAIN",
+      "requiresTrust": false
+    },
+    {
+      "name": "adjust-setTimeout.js",
+      "declaration": "adjustSetTimeout",
+      "file": "ublock-src-js-resources-scriptlets.js",
+      "world": "MAIN",
+      "requiresTrust": false
+    },
+    {
+      "name": "json-prune-xhr-response.js",
+      "declaration": "jsonPruneXhrResponse",
+      "file": "ublock-src-js-resources-json-prune.js",
+      "world": "MAIN",
+      "requiresTrust": false
+    },
+    {
+      "name": "remove-node-text.js",
+      "declaration": "removeNodeText",
+      "file": "ublock-src-js-resources-scriptlets.js",
+      "world": "ISOLATED",
+      "requiresTrust": false
+    },
+    {
+      "name": "trusted-prevent-dom-bypass.js",
+      "declaration": "trustedPreventDomBypass",
+      "file": "ublock-src-js-resources-scriptlets.js",
+      "world": "MAIN",
+      "requiresTrust": true
+    }
+  ],
+  "unsupported": [
+    {
+      "file": "uassets-filters-filters.txt",
+      "line": 51,
+      "filter": "||youtube.com/youtubei/v1/get_watch?$xhr,1p,replace=/\"adPlacements\"/\"no_ads\"/",
+      "active": true,
+      "reason": "network response replacement requires response-body hook; not network blocking"
+    },
+    {
+      "file": "uassets-filters-filters.txt",
+      "line": 52,
+      "filter": "||youtube.com/youtubei/v1/get_watch?$xhr,1p,replace=/\"adSlots\"/\"no_ads\"/",
+      "active": true,
+      "reason": "network response replacement requires response-body hook; not network blocking"
+    }
+  ],
+  "wrapperRequirements": [
+    "honor MAIN versus ISOLATED root worlds; JSON format itself carries no world; provided separate rule files",
+    "MAIN world at document creation, on YouTube domains only; iframe policy still requires root review",
+    "const scriptletGlobals = new Map() before generated script, avoid enabling debug logging",
+    "trusted upstream rules require ParseOptions.permissions bit 0; do not enable globally for user lists",
+    "apply scriptlet/cosmetic exceptions; do not inject every rule indiscriminately"
+  ]
+}

@@ -1,0 +1,300 @@
+/* ===== 内側左列（.sidebar）2026-10-15 作り直し =====
+   今の画面の中の行き先と一覧だけを置く。題の段は列の中身の名前（本文の見出しと同じ語にしない）。
+   行 32・字 13/400（選択中 600＋--selected）・見出し 12/600 muted・件数は右に 12 muted（DESKTOP_SPEC §3.13）。
+   色は意味のあるトークンだけ。焦点の輪は中立の --focus-ring。 */
+@media (min-width: 721px) {
+  #hub-shell .sidebar > .brand {
+    display: flex;
+    height: 44px;
+    min-height: 44px;
+    flex: none;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 0 var(--space-4);
+    border-bottom: 0;
+    background: transparent;
+  }
+  #hub-shell .sidebar > .brand h1 {
+    min-width: 0;
+    flex: 1;
+    margin: 0;
+    overflow: hidden;
+    color: var(--muted);
+    font-size: var(--type-subhead);
+    font-weight: var(--weight-regular);
+    letter-spacing: 0;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* ブラウザのタブの列は自分の段を持つ（細くする・検索）ので題は出さない。 */
+  #hub-shell.browser-active .sidebar > .brand { display: none; }
+
+  #hub-shell .sidebar > #sidebar-context { gap: 1px; padding: 0 var(--space-2) var(--space-3); }
+  #hub-shell #sidebar-context .nav-group {
+    margin: var(--space-5) var(--space-3) var(--space-1);
+    color: var(--muted);
+    font-size: var(--type-subhead);
+    font-weight: var(--weight-regular);
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  #hub-shell #sidebar-context .nav-group:first-child { margin-top: var(--space-1); }
+
+  #hub-shell #sidebar-context .sidebar-context-item {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-height: 40px;
+    flex: none;
+    padding: 0 var(--space-3);
+    overflow: hidden;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text);
+    font-size: var(--type-body);
+    font-weight: var(--weight-regular);
+    line-height: 40px;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  #hub-shell #sidebar-context .sidebar-context-item:has(> span) { display: flex; align-items: center; gap: var(--space-2); }
+  #hub-shell #sidebar-context .sidebar-context-item:hover { background: var(--interactive); color: var(--text); }
+  #hub-shell #sidebar-context .sidebar-context-item:is(.on, [aria-current="true"], [aria-current="page"]) { background: var(--selected); color: var(--text); font-weight: var(--weight-regular); box-shadow: none; }
+  #hub-shell #sidebar-context .sidebar-context-item:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+  #hub-shell #sidebar-context .sidebar-item-label { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #hub-shell #sidebar-context :is(.sidebar-item-meta, .video-category-count) {
+    max-width: 50%;
+    flex: none;
+    overflow: hidden;
+    color: var(--muted);
+    font-size: var(--type-caption);
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* DM・メール・連絡先の切り替え（同じ受信トレイの中の段）。 */
+  #hub-shell #sidebar-context .sidebar-switch {
+    display: grid;
+    flex: none;
+    box-sizing: border-box;
+    height: var(--control-h);
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    gap: 2px;
+    margin: var(--space-1) var(--space-1) var(--space-2);
+    padding: 2px;
+    border-radius: var(--radius-sm);
+    background: var(--interactive);
+  }
+  #hub-shell #sidebar-context .sidebar-switch > button {
+    height: 100%;
+    min-height: 0;
+    padding: 0 var(--space-2);
+    border: 0;
+    border-radius: var(--radius-xs);
+    background: transparent;
+    color: var(--muted);
+    font-size: var(--type-caption);
+    font-weight: var(--weight-medium);
+  }
+  #hub-shell #sidebar-context .sidebar-switch > button:hover { color: var(--text); }
+  #hub-shell #sidebar-context .sidebar-switch > button[aria-pressed="true"] { background: var(--surface-raised); color: var(--text); box-shadow: var(--elevation-1); }
+  #hub-shell #sidebar-context .sidebar-switch > button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+}
+
+/* DM の会話の一覧は列が開いているあいだ列の中に置く。本文は会話だけの1列になる。 */
+@media (min-width: 861px) {
+  #hub-shell.sidebar-holds-messages #view-messages .messages-layout { grid-template-columns: minmax(0, 1fr); }
+  #hub-shell #sidebar-context .messages-side { min-height: 0; flex: 1; margin: 0; overflow-y: auto; border: 0; }
+  #hub-shell #sidebar-context #messages-state { margin: 0; padding: var(--space-2) var(--space-3); color: var(--muted); font-size: var(--type-caption); }
+  #hub-shell #sidebar-context #messages-state:empty { display: none; }
+  #hub-shell #sidebar-context #messages-list { display: grid; gap: 1px; }
+  #hub-shell #sidebar-context #messages-list .conversation {
+    display: grid;
+    width: 100%;
+    min-height: 52px;
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text);
+    text-align: left;
+  }
+  #hub-shell #sidebar-context #messages-list .conversation:hover { background: var(--interactive); }
+  #hub-shell #sidebar-context #messages-list .conversation.active { background: var(--selected); }
+  #hub-shell #sidebar-context #messages-list .conversation:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+  #hub-shell #sidebar-context #messages-list .conversation .post-avatar { width: 36px; height: 36px; background: var(--avatar-bg, var(--interactive)); color: var(--avatar-fg, var(--text)); font-size: var(--type-subhead); font-weight: var(--weight-semibold); }
+  #hub-shell #sidebar-context #messages-list .conversation-content { display: grid; min-width: 0; gap: 1px; }
+  #hub-shell #sidebar-context #messages-list .conversation-head { display: flex; min-width: 0; align-items: baseline; gap: var(--space-2); }
+  #hub-shell #sidebar-context #messages-list .conversation-head strong { min-width: 0; overflow: hidden; font-size: var(--type-body); font-weight: var(--weight-semibold); text-overflow: ellipsis; white-space: nowrap; }
+  #hub-shell #sidebar-context #messages-list .conversation-head .when { margin-left: auto; flex: none; color: var(--muted); font-size: var(--type-caption); line-height: var(--lh-caption); text-align: end; }
+  #hub-shell #sidebar-context #messages-list .conversation-preview { margin: 0; overflow: hidden; color: var(--muted); font-size: var(--type-subhead); font-weight: 400; line-height: var(--lh-subhead); text-overflow: ellipsis; white-space: nowrap; }
+  #hub-shell #sidebar-context #messages-list .conversation .nav-badge { width: 8px; min-width: 8px; height: 8px; padding: 0; overflow: hidden; border-radius: 50%; background: var(--action); font-size: 0; }
+  #hub-shell #sidebar-context .messages-side .empty-state { display: block; margin: var(--space-3) 0; padding: var(--space-2) var(--space-3); color: var(--muted); font-size: var(--type-caption); text-align: left; }
+  #hub-shell #sidebar-context .messages-side .empty-state svg { display: none; }
+
+  /* 列が本文のタブを持つあいだ、本文の同じタブは出さない。 */
+  #hub-shell:not(.sidebar-collapsed) #view-market > .segmented { display: none; }
+}
+
+/* 中身の無い画面では左上の切り替えを押せない。畳んだ印（地の色）も出さない。 */
+#hub-shell.sidebar-empty-view .app-toolbar #toolbar-sidebar:disabled { background: transparent; }
+
+/* ===== 動画・音楽・フィード・記事の列（2026-10-15、旦那様の参考画面に合わせた骨組み） =====
+   上の段：記号24＋名前の行（高さ44・角12）。区切りは細い線。節の見出しは押せるとき「›」つき。
+   フォロー中：28の丸い顔＋名前（省略記号）。選択中・ホバーは面を塗る。色はトークンだけ。 */
+@media (min-width: 721px) {
+  #hub-shell #sidebar-context .sidebar-context-item.sidebar-nav-row {
+    display: flex;
+    min-height: 40px;
+    align-items: center;
+    gap: var(--space-3);
+    padding: 0 var(--space-3);
+    border-radius: var(--radius-sm);
+    font-size: var(--type-body);
+    line-height: 1.3;
+  }
+  #hub-shell #sidebar-context .sidebar-icon {
+    width: 18px;
+    height: 18px;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  #hub-shell #sidebar-context .sidebar-nav-row[aria-current="true"] .sidebar-icon { stroke-width: 2.1; }
+  #hub-shell #sidebar-context .sidebar-context-item.sidebar-channel-row {
+    display: flex;
+    min-height: 40px;
+    align-items: center;
+    gap: var(--space-3);
+    padding: 0 var(--space-3);
+    border-radius: var(--radius-sm);
+    font-size: var(--type-body);
+    line-height: 1.3;
+  }
+  #hub-shell #sidebar-context .sidebar-avatar {
+    display: grid;
+    width: 28px;
+    height: 28px;
+    flex: none;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 50%;
+    background: var(--interactive);
+    color: var(--text);
+    font-size: var(--type-caption);
+    font-weight: 600;
+  }
+  #hub-shell #sidebar-context .sidebar-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  #hub-shell #sidebar-context .sidebar-divider {
+    flex: none;
+    width: calc(100% + 2 * var(--space-2));
+    height: 0;
+    margin: var(--space-2) calc(-1 * var(--space-2));
+    border: 0;
+  }
+  #hub-shell #sidebar-context .sidebar-heading {
+    display: flex;
+    min-height: 40px;
+    flex: none;
+    align-items: center;
+    gap: var(--space-1);
+    margin: 0;
+    padding: 0 var(--space-3);
+    border: 0;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--text);
+    font-size: var(--type-body);
+    font-weight: var(--weight-medium);
+    text-align: left;
+  }
+  #hub-shell #sidebar-context .sidebar-heading.is-link { cursor: pointer; }
+  #hub-shell #sidebar-context .sidebar-heading.is-link:hover,
+  #hub-shell #sidebar-context .sidebar-heading[aria-current="true"] { background: var(--interactive); }
+  #hub-shell #sidebar-context .sidebar-heading:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+  #hub-shell #sidebar-context .sidebar-heading-chevron { color: var(--muted); font-size: var(--type-headline); font-weight: 400; line-height: 1; }
+  #hub-shell #sidebar-context .sidebar-note { margin: 0; padding: var(--space-1) var(--space-3) var(--space-2); color: var(--muted); font-size: var(--type-caption); }
+  #hub-shell #sidebar-context .sidebar-more-sentinel { flex: none; height: 1px; }
+
+  /* 本文の上の横一列のチップ。選択中は反転（--text の地に --bg の字）。溢れたら端に送りボタン。 */
+  #hub-shell .sidebar-chip-strip { position: relative; display: flex; align-items: center; gap: var(--space-2); min-width: 0; margin: 0 0 var(--space-4); }
+  #hub-shell .sidebar-chip-strip[hidden] { display: none; }
+  #hub-shell .sidebar-chip-track { display: flex; min-width: 0; flex: 1; gap: var(--space-2); overflow-x: auto; scrollbar-width: none; scroll-behavior: smooth; }
+  #hub-shell .sidebar-chip-track::-webkit-scrollbar { display: none; }
+  #hub-shell .sidebar-chip {
+    height: 32px;
+    min-height: 32px;
+    flex: none;
+    padding: 0 var(--space-3);
+    border: 0;
+    border-radius: var(--radius-xs);
+    background: var(--interactive);
+    color: var(--text);
+    font-size: var(--type-subhead);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  #hub-shell .sidebar-chip:hover { background: var(--interactive-hover); }
+  #hub-shell .sidebar-chip[aria-pressed="true"] { background: var(--text); color: var(--bg); }
+  #hub-shell .sidebar-chip:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  #hub-shell .sidebar-chip-step {
+    display: grid;
+    width: 32px;
+    height: 32px;
+    min-height: 32px;
+    flex: none;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text);
+  }
+  #hub-shell .sidebar-chip-step[hidden] { display: none; }
+  #hub-shell .sidebar-chip-step:hover { background: var(--interactive); }
+  #hub-shell .sidebar-chip-step:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+  #hub-shell .sidebar-chip-step .sidebar-icon { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  #hub-shell .sidebar-chip-step.is-next .sidebar-icon { transform: scaleX(-1); }
+
+  /* ショート：縦長（9:16）の札。ホームの棚と、ショートの一覧の両方。 */
+  #hub-shell .video-shorts-shelf { margin: 0 0 var(--space-6); }
+  #hub-shell .video-shorts-head { display: flex; align-items: center; justify-content: space-between; margin: 0 0 var(--space-3); }
+  #hub-shell .video-shorts-title { display: flex; align-items: center; gap: var(--space-2); margin: 0; font-size: var(--type-title3, 20px); font-weight: var(--weight-medium); }
+  #hub-shell .video-shorts-title .sidebar-icon { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  #hub-shell .video-shorts-more { height: 32px; padding: 0 var(--space-3); border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--text); font-size: var(--type-subhead); font-weight: 600; }
+  #hub-shell .video-shorts-more:hover { background: var(--interactive); }
+  #hub-shell .video-shorts-row { display: grid; grid-auto-columns: minmax(150px, 180px); grid-auto-flow: column; gap: var(--space-3); overflow-x: auto; padding-bottom: var(--space-1); scrollbar-width: thin; }
+  #hub-shell #videos-results.video-shorts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--space-4); }
+  #hub-shell .video-short-card { display: grid; min-width: 0; gap: var(--space-2); padding: 0; border: 0; background: transparent; color: var(--text); text-align: left; cursor: pointer; }
+  #hub-shell .video-short-frame { display: block; overflow: hidden; border-radius: var(--radius-md); }
+  #hub-shell .video-short-frame .video-thumbnail { display: block; width: 100%; aspect-ratio: 9 / 16; }
+  #hub-shell .video-short-frame img { width: 100%; height: 100%; object-fit: cover; }
+  #hub-shell .video-short-name { display: -webkit-box; overflow: hidden; font-size: var(--type-subhead); font-weight: 500; line-height: 1.35; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  #hub-shell .video-short-card:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: var(--radius-md); }
+
+  #hub-shell .music-side-panel { display: grid; gap: var(--space-3); }
+  #hub-shell .music-side-panel[hidden] { display: none; }
+  #hub-shell .music-side-title { margin: 0; font-size: var(--type-title3); font-weight: var(--weight-medium); }
+}
+@media (min-width: 861px) {
+  /* 保存した記事・下書きは列のマイページにあるので、見出しの横には出さない。 */
+  #hub-shell:not(.sidebar-collapsed) #view-articles :is(#articles-saved, #articles-drafts) { display: none; }
+}
+
+/* ===== 静かな面（2026-10-24）：見出し・節のあいだの飾りの線を引かず、密な一覧の行の線だけ --line を薄めて残す ===== */
+#hub-shell #view-feed #composer { border-bottom: 0; }
+#hub-shell :is(.music-tabs, .hub-network-bar, .hub-search-filter-panel, .newtab-sections h2) { border-bottom: 0; }
+#hub-shell .view:is(#view-feed, #view-profile, #view-notifications, #view-search, #view-hubpedia) :is(.post, .social-stream-card, .result-card, .distributed-resource) {
+  border-bottom-color: color-mix(in srgb, var(--line) 55%, transparent);
+}

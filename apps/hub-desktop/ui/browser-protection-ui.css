@@ -1,0 +1,15 @@
+/* Append to browser-ui.css. Normal-flow panel changes the existing native stage rect. */
+#view-browser #browser-protection { color:var(--text); }
+#view-browser #browser-protection[aria-expanded="true"] { background:var(--interactive); color:var(--text); }
+#view-browser #browser-protection svg { width:17px; height:17px; }
+#view-browser #browser-protection-panel { flex:none; min-width:0; max-height:min(320px,40vh); overflow:auto; padding:var(--space-3) var(--space-3); background:var(--panel); border-bottom:1px solid var(--line); }
+#view-browser .browser-protection-heading { display:flex; align-items:center; justify-content:space-between; gap:var(--space-3); }
+#view-browser .browser-protection-toggle { display:flex; align-items:center; gap:var(--space-2); padding:var(--space-2) 0; color:var(--text); cursor:pointer; }
+#view-browser .browser-protection-toggle input { margin:0; accent-color:var(--text); }
+#view-browser .browser-protection-note { margin:var(--space-1) 0; color:var(--muted); font-size:var(--type-caption); line-height:1.5; overflow-wrap:anywhere; }
+#view-browser :is(.browser-protection-close,.browser-protection-recheck) { min-height:28px; padding:var(--space-1) var(--space-2); color:var(--text); background:var(--interactive); font-size:var(--type-caption); }
+#view-browser :is(.browser-protection-close,.browser-protection-recheck):hover { background:var(--interactive-hover); }
+#view-browser .browser-autoplay { margin-top:var(--space-2); padding-top:var(--space-2); border-top:1px solid var(--line); }
+#view-browser .browser-autoplay-sites summary { padding:var(--space-1) 0; color:var(--muted); font-size:var(--type-caption); cursor:pointer; }
+#view-browser .browser-autoplay-sites ul { display:grid; gap:var(--space-1); margin:var(--space-1) 0 0; padding:0; list-style:none; }
+#view-browser .browser-autoplay-sites li { display:flex; align-items:center; justify-content:space-between; gap:var(--space-2); color:var(--text); font-size:var(--type-caption); }

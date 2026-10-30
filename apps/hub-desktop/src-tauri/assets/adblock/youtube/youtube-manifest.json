@@ -1,0 +1,405 @@
+{
+  "generatedAt": "2026-10-08T12:34:52.047Z",
+  "sources": [
+    "brave-source-manifest.json",
+    "uassets-source.json",
+    "ublock-source.json"
+  ],
+  "hashes": [
+    {
+      "file": "adblock-rust-tree.json",
+      "bytes": 71841,
+      "sha256": "e5b97196e54581934b168e1cdc6e8d0869cf0b05553b0cdeb796530c7dd6698b"
+    },
+    {
+      "file": "ASSET-STATUS.md",
+      "bytes": 2586,
+      "sha256": "2a1c6c251df67dcc5e1b50f5565b9efa03257808bcc6fdccdc1e4b199e3b10b4"
+    },
+    {
+      "file": "ATTRIBUTION.txt",
+      "bytes": 770,
+      "sha256": "5e595f4df492f3f95e1e2fdd1abedcbfb7d3d38b74e710f9e487584b0462f2d1"
+    },
+    {
+      "file": "baseline-network.json",
+      "bytes": 983,
+      "sha256": "01ee6f482c7595dff666613ab854fe4e8a2195e8739af36b3abc447f5b366d50"
+    },
+    {
+      "file": "baseline-network.mjs",
+      "bytes": 6218,
+      "sha256": "950e32b8730729690679e0f83750f81c810d192def18479e1df5068bffadaee0"
+    },
+    {
+      "file": "brave-build.js",
+      "bytes": 197,
+      "sha256": "6aee2cfef8202e39d895820591861f71bebe53ab3c259bfdaeece1c2331901b3"
+    },
+    {
+      "file": "brave-dist-resources.json",
+      "bytes": 596542,
+      "sha256": "d085eb0754b7a54d9e1a18a0314b1946b066f61a15457de834d98beb53b4e40f"
+    },
+    {
+      "file": "brave-index.js",
+      "bytes": 744,
+      "sha256": "7453bb4997ab9f4fe9f7c0f8751eb36f12a7b88bccf0a3e2260f565f509e2a20"
+    },
+    {
+      "file": "brave-LICENSE",
+      "bytes": 16725,
+      "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5"
+    },
+    {
+      "file": "brave-metadata.json",
+      "bytes": 3579,
+      "sha256": "55cee92553104a062569994c9289b24ee960f7d3041135f9ec02a2357cefd8e3"
+    },
+    {
+      "file": "brave-package.json",
+      "bytes": 722,
+      "sha256": "db2b61871ec9b0a9601e8712fee7b284cd8ef603c01a1ecf4db09547c0248a59"
+    },
+    {
+      "file": "brave-README.md",
+      "bytes": 6016,
+      "sha256": "70b90e1622bbdbcdc8dd0274347b247c775418e9e3632cd66299240a8ac1675e"
+    },
+    {
+      "file": "brave-source-manifest.json",
+      "bytes": 2056,
+      "sha256": "290a580a56eb62b6ec94ad0274f5a5d5d896d4c2295807fd1084082417c32df8"
+    },
+    {
+      "file": "brave-verify.js",
+      "bytes": 4154,
+      "sha256": "974af703da0452d6da3a99976d2dac4f0b665ecfd9d776dfac3618a59d79ec29"
+    },
+    {
+      "file": "generated-syntax-result.json",
+      "bytes": 418,
+      "sha256": "ef4e8feea6cb23ce5f559e221dff26cfca20bf1bfe5fb6aaa148b14d7a979eda"
+    },
+    {
+      "file": "prepare-youtube-resources.mjs",
+      "bytes": 9053,
+      "sha256": "622dd428611214a6fc761b709aa3cdf1f11bf9d027faa124d783a17fa6e7ff5c"
+    },
+    {
+      "file": "resource-compatibility-result.json",
+      "bytes": 3893,
+      "sha256": "06d0d044cbf3cd79a8ea49193ca91db222b1f3397ddeec79e591f33385adbe09"
+    },
+    {
+      "file": "resource-compatibility.exe",
+      "bytes": 9347584,
+      "sha256": "7aa2f1df9b4f92f7523d746efe9d46cab22cf4af5e576f04c85c970d52f5c896"
+    },
+    {
+      "file": "resource-compatibility.pdb",
+      "bytes": 39587840,
+      "sha256": "57f4e7bfe06c0e4e0f01ff662837faae4222777c1776847078cc4c3f8535aad5"
+    },
+    {
+      "file": "resource-compatibility.rs",
+      "bytes": 4196,
+      "sha256": "21d40d175282093389ef31b543cf54a8d109aaa2427a19560f15e40d00b10882"
+    },
+    {
+      "file": "uassets-filters-filters-2025.txt",
+      "bytes": 168443,
+      "sha256": "b1b88fd80cd3f3a2b685e9cbf78f507a1722e19caeec970ff08bf0200caafcfa"
+    },
+    {
+      "file": "uassets-filters-filters-2026.txt",
+      "bytes": 93225,
+      "sha256": "b7242b81705929459c111adaf91229a8883ee635a5e169a0038e7ef0b8c876ed"
+    },
+    {
+      "file": "uassets-filters-filters.txt",
+      "bytes": 473227,
+      "sha256": "998bbf5a93077463a7121f4e8e36d53fa2e1659d8dd84596c873850e5c123484"
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "bytes": 82531,
+      "sha256": "7d833d6ff21a396beb70703eb84805ac82bc3b80c7201db15cb5cd349a5e9227"
+    },
+    {
+      "file": "uassets-filters-unbreak.txt",
+      "bytes": 280508,
+      "sha256": "033eb8693e29c2e725517f94d89babdae877dd55bcabb035dcea47ee5ba721ea"
+    },
+    {
+      "file": "uassets-LICENSE",
+      "bytes": 35141,
+      "sha256": "589ed823e9a84c56feb95ac58e7cf384626b9cbf4fda2a907bc36e103de1bad2"
+    },
+    {
+      "file": "uassets-README.md",
+      "bytes": 2936,
+      "sha256": "8f17353e6f8147dccb4d269ee04bd668442ef367b2c0bafea3b4b6116e013a47"
+    },
+    {
+      "file": "uassets-source.json",
+      "bytes": 181,
+      "sha256": "52dcd2daed946e899dbdd29ae710a8babf322abf0dfb5a86e36788c2cf45128e"
+    },
+    {
+      "file": "uassets-tree.json",
+      "bytes": 30060,
+      "sha256": "f6a0b2874104bb12b2ffcdaee9dbdc05ebf3f49261d2910cbae76df1824554d4"
+    },
+    {
+      "file": "ublock-LICENSE.txt",
+      "bytes": 35126,
+      "sha256": "e73d33841f942fa73aa5a63d4a6399cc39a29564db1dbca0915485842fcb236d"
+    },
+    {
+      "file": "ublock-source.json",
+      "bytes": 175,
+      "sha256": "e9477275b9cfbbf91182aa6fb959b0434ff14a68d328bdd9fea1b5cb3dfe9a54"
+    },
+    {
+      "file": "ublock-src-js-arglist-parser.js",
+      "bytes": 4803,
+      "sha256": "57dbdf89705f59d79bb20189c8b1c784ea4105323d0bcd07eec74e818cc8c106"
+    },
+    {
+      "file": "ublock-src-js-jsonpath.js",
+      "bytes": 23140,
+      "sha256": "e540f29cc99c4c27a86711ad2ad2d61a4640c445595b97cf27160563acfc82db"
+    },
+    {
+      "file": "ublock-src-js-make-scriptlets.js",
+      "bytes": 12614,
+      "sha256": "a2f1ed34051db828c7547dca1eaa3def5ed0b34e22cf74f1d6fa3b7d7f4b0d55"
+    },
+    {
+      "file": "ublock-src-js-resources-abort-current-script.js",
+      "bytes": 4329,
+      "sha256": "820b2234576b91a7d71b8ff380a03d604a561a83a0ad7334900d146b616e380d"
+    },
+    {
+      "file": "ublock-src-js-resources-attribute.js",
+      "bytes": 10460,
+      "sha256": "c8cfbf5f44baa8d80f8150218540d50fce0a6d4f65823ec15648ae105603a90e"
+    },
+    {
+      "file": "ublock-src-js-resources-base.js",
+      "bytes": 1405,
+      "sha256": "5eb0f5c20866149f99537e64959c51c466f9b43cd4fde1682ae0534a4096a4b8"
+    },
+    {
+      "file": "ublock-src-js-resources-cookie.js",
+      "bytes": 13633,
+      "sha256": "31cf19e9dd0f6e5c957e9e952647e1bc7094ff603303924625c3c530a009a315"
+    },
+    {
+      "file": "ublock-src-js-resources-create-html.js",
+      "bytes": 5074,
+      "sha256": "0d8025aa3748395c6d0c7bd1b7487a2d2d8b1632e109b509576341cb7254fedf"
+    },
+    {
+      "file": "ublock-src-js-resources-href-sanitizer.js",
+      "bytes": 5856,
+      "sha256": "b17df68062d8d87240c970763c10e891224961759b6178cb7c58e1ade2ed7bfc"
+    },
+    {
+      "file": "ublock-src-js-resources-json-edit.js",
+      "bytes": 51712,
+      "sha256": "5ec5a938646cfa2508e99061d412706a17ee8c5824ca38bc81e2eab8e20db884"
+    },
+    {
+      "file": "ublock-src-js-resources-json-prune.js",
+      "bytes": 9860,
+      "sha256": "e4f13cc99cb4ae8428de4889135ed5f62e30f02c397f3f5f4b2941189bd76ced"
+    },
+    {
+      "file": "ublock-src-js-resources-localstorage.js",
+      "bytes": 6536,
+      "sha256": "ea2ebb44b8189fb4c98e08a86c2ac6afde781c6b3d6af03195b8fcaeaef89ced"
+    },
+    {
+      "file": "ublock-src-js-resources-noeval.js",
+      "bytes": 1947,
+      "sha256": "0b42472114120bd586410d0bbfd912c198de1abb0b3b62d11183ff6b893e5731"
+    },
+    {
+      "file": "ublock-src-js-resources-object-prune.js",
+      "bytes": 9102,
+      "sha256": "fc68ac88bcadc6774c0a1a3d87b142a9062d804dc5f0f87bb18a7d48c690d135"
+    },
+    {
+      "file": "ublock-src-js-resources-parse-replace.js",
+      "bytes": 1935,
+      "sha256": "fca20f23d68dfc906a02838330e26d1123dce48fcdaa086b37dba5c0d5b38e57"
+    },
+    {
+      "file": "ublock-src-js-resources-prevent-addeventlistener.js",
+      "bytes": 6370,
+      "sha256": "ce919028953e4cb4a49db61e0649d475ccab7b3cf150c77aeb001305a384b8c8"
+    },
+    {
+      "file": "ublock-src-js-resources-prevent-bab.js",
+      "bytes": 3283,
+      "sha256": "ef5762c46a193211b335e0cb2ea439865cb98cb9cd4df8a90b159ddd35a66094"
+    },
+    {
+      "file": "ublock-src-js-resources-prevent-clipboard-write.js",
+      "bytes": 5913,
+      "sha256": "1c1fbb9c8f28e2b9617f6859a91ec42ffeafd4e36611ec4b0a923005570f5cb0"
+    },
+    {
+      "file": "ublock-src-js-resources-prevent-dialog.js",
+      "bytes": 2234,
+      "sha256": "904fcae08eb72ea2e1624650c7e24741fc80f717f8c2438367807fbca195821d"
+    },
+    {
+      "file": "ublock-src-js-resources-prevent-fetch.js",
+      "bytes": 6587,
+      "sha256": "46ab941003b999cb506201c786eaf428e78a4c3e519656f45361d7b0a1b6c887"
+    },
+    {
+      "file": "ublock-src-js-resources-prevent-innerHTML.js",
+      "bytes": 4129,
+      "sha256": "18719306c7beb87b5f09d5b241cf2ec893638e3fb96a93d2218cbde217bbee2d"
+    },
+    {
+      "file": "ublock-src-js-resources-prevent-navigation.js",
+      "bytes": 2252,
+      "sha256": "bd7031b200172aca316b489e4b4e95a52e891b1098b83c483a45f8cf7995ac49"
+    },
+    {
+      "file": "ublock-src-js-resources-prevent-settimeout.js",
+      "bytes": 7926,
+      "sha256": "4a5152c4cc9715183bc9e49c4e4e27a87f02b978de89b71c6a1586cc9cc15f95"
+    },
+    {
+      "file": "ublock-src-js-resources-prevent-xhr.js",
+      "bytes": 12276,
+      "sha256": "3619684e46f0cfc7a9f48553cc8e8f193c807b61a07e4b9e9a7ff043c242d9bf"
+    },
+    {
+      "file": "ublock-src-js-resources-proxy-apply.js",
+      "bytes": 6376,
+      "sha256": "7fb12b6e29dcdae0dcaa5709e76271bf6152eb0dfc7e55894ffceb3eafd8a4ca"
+    },
+    {
+      "file": "ublock-src-js-resources-replace-argument.js",
+      "bytes": 4968,
+      "sha256": "667a602eee73ced208f9f42a6eba85300a0fb81b6dedbd6abbbc1a974a6cde10"
+    },
+    {
+      "file": "ublock-src-js-resources-run-at.js",
+      "bytes": 2949,
+      "sha256": "12daa1b79691095b8ba782b77122ef68923ff2dd1020f3b1b008fc33adf95a6c"
+    },
+    {
+      "file": "ublock-src-js-resources-safe-self.js",
+      "bytes": 7994,
+      "sha256": "e7b95af1ff71e4571c62339dc39fd530dce1599da27a887761a4dd25526aa35f"
+    },
+    {
+      "file": "ublock-src-js-resources-scriptlets.js",
+      "bytes": 71994,
+      "sha256": "8c414bbfa63fbd7d1e5586d9938f9ba97f4c61d7d1c6050764efd0b76126a215"
+    },
+    {
+      "file": "ublock-src-js-resources-set-constant.js",
+      "bytes": 9880,
+      "sha256": "827d8ca244d2fbcdb967592c9247958e9e6eb7ebbe7186d0165015093ced0ab9"
+    },
+    {
+      "file": "ublock-src-js-resources-shared.js",
+      "bytes": 1448,
+      "sha256": "26b04fa095d81230f46ac90addf6810a01bbf096f06afd14304dfbb9001995e2"
+    },
+    {
+      "file": "ublock-src-js-resources-spoof-css.js",
+      "bytes": 6544,
+      "sha256": "dd30b098802b23ef0b46c62d9242c0af49997a6d66afac54493791d7fbcee225"
+    },
+    {
+      "file": "ublock-src-js-resources-stack-trace.js",
+      "bytes": 5075,
+      "sha256": "7a912904f5816f09605cbafa6e40be595e520f96eeb8e267e4f628f29a9767db"
+    },
+    {
+      "file": "ublock-src-js-resources-utils.js",
+      "bytes": 15938,
+      "sha256": "17b876f443cbf999cfaef3c4f610f46d5e7ea719c8516aea8473c739d02e3fda"
+    },
+    {
+      "file": "ublock-src-js-resources-vod.js",
+      "bytes": 6324,
+      "sha256": "8de2a299d79f51336ebaa5ac66c2c8f73e0ca34dfe562e1e18da557d0b594899"
+    },
+    {
+      "file": "ublock-tree.json",
+      "bytes": 375724,
+      "sha256": "bd5bb4645b824ec7b05713c63f4988b54c57d0e9520a9259077ec3cc112bd8b5"
+    },
+    {
+      "file": "verify-generated-syntax.mjs",
+      "bytes": 1137,
+      "sha256": "6a4028882150e52969712dcdf07196d21fa15ffa751d656bea062d63e154e3cf"
+    },
+    {
+      "file": "youtube-compatibility.json",
+      "bytes": 7750,
+      "sha256": "6da196ce5836a3ef8101fc91decb099f9bfd73e79e843328bbeaba73835f7221"
+    },
+    {
+      "file": "youtube-cosmetic.chromium.txt",
+      "bytes": 208,
+      "sha256": "00be651b5e3a0cbaa444673ea0747a9c826343ffe425ece1bd3ce7be59d12a58"
+    },
+    {
+      "file": "youtube-generated-script.isolated.static.js",
+      "bytes": 16170,
+      "sha256": "3b5f62493849e4429f70f2b90fe5a6866c10fadfac27405801fc914654e4d570"
+    },
+    {
+      "file": "youtube-generated-script.main.static.js",
+      "bytes": 68351,
+      "sha256": "2382d9a7db4b4564486cd3a902c187689235187c17c8194c1fd9312b85a054cc"
+    },
+    {
+      "file": "youtube-generated-script.static.js",
+      "bytes": 76476,
+      "sha256": "b6e470cd1861be6818390cb86a8d8cbd265e776924d813bc51ddd959d4119167"
+    },
+    {
+      "file": "youtube-resources.json",
+      "bytes": 103344,
+      "sha256": "dcf02958baf835c0df06d362cbc1f63e128d8f6f7f91728234609ab34301ae58"
+    },
+    {
+      "file": "youtube-rules.chromium.txt",
+      "bytes": 9175,
+      "sha256": "981a676fad7ea2087a1d0a17ecb206777361f620a7d204189ca016c4af51a60c"
+    },
+    {
+      "file": "youtube-rules.provenance.json",
+      "bytes": 18522,
+      "sha256": "794c0a682c3c4937bd62e4359aaa1a330900bbe3c3ed59a5e109d2d99ae59124"
+    },
+    {
+      "file": "youtube-scriptlets.chromium.txt",
+      "bytes": 8373,
+      "sha256": "120f68261223f4616cc4e72d1b787e93269f2cbd18eb50bbc156b20fbac198c2"
+    },
+    {
+      "file": "youtube-scriptlets.isolated.chromium.txt",
+      "bytes": 3393,
+      "sha256": "6b21884ce579ed9da7348a264e331e8d25adeb68e4d53bbdee1075f29932cba1"
+    },
+    {
+      "file": "youtube-scriptlets.main.chromium.txt",
+      "bytes": 4900,
+      "sha256": "fbf4e1a230140195ca41d29c70d9ab124d62246cba1d540b49040d2b9fc98c56"
+    }
+  ]
+}

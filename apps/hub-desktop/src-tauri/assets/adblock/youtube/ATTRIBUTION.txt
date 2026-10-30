@@ -1,0 +1,7 @@
+uBlock Origin resource source: https://github.com/gorhill/uBlock/tree/562f5731509386f9eb40fc79a1a6d14ded207a61/src/js/resources
+Copyright 2014-present Raymond Hill and contributors; GPL-3.0-or-later; see ublock-LICENSE.txt and retained original source files.
+Derived Resource JSON preserves function declarations; converted statically by prepare-youtube-resources.mjs.
+uAssets filters: https://github.com/uBlockOrigin/uAssets/tree/5d93a8f7fcc36057407d6700bb0075c68f890624/filters
+GPL-3.0; see uassets-LICENSE and retained original filters.
+Brave adblock-resources: https://github.com/brave/adblock-resources/tree/6da9b247c3368baa8b4f24cd02046e18702a6527
+MPL-2.0; see brave-LICENSE. Brave custom resources retained for comparison only, not merged into YouTube resources.

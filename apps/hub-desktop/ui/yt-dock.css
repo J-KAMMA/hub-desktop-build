@@ -1,0 +1,22 @@
+/* 動画・音楽で共有する再生枠（yt-dock.mjs）。視聴画面では置き場に重ね、離れたら本文の右下の動かせる小窓（356×200、16:9）。 */
+.yt-player-slot { width: 100%; aspect-ratio: 16 / 9; border-radius: var(--radius-md); background: var(--surface-sunken); }
+.yt-dock { position: fixed; z-index: 30; display: flex; flex-direction: column; overflow: hidden; border-radius: var(--radius-md); background: var(--surface-sunken); }
+.yt-dock[hidden] { display: none; }
+.yt-dock-head { display: none; }
+.yt-dock-body { position: relative; }
+.yt-dock-body .yt-player { width: 100%; height: 100%; aspect-ratio: auto; border-radius: 0; }
+.yt-dock-body iframe { display: block; width: 100%; height: 100%; border: 0; }
+
+.yt-dock.is-mini { z-index: 60; background: var(--material-sheet-solid); box-shadow: var(--elevation-2); }
+.yt-dock.is-mini .yt-dock-head { display: flex; flex: 0 0 auto; align-items: center; gap: var(--space-1); height: 40px; padding: 0 var(--space-1) 0 var(--space-3); cursor: grab; user-select: none; touch-action: none; }
+.yt-dock.is-dragging .yt-dock-head { cursor: grabbing; }
+.yt-dock.is-dragging .yt-dock-body { pointer-events: none; }
+.yt-dock-text { display: flex; min-width: 0; flex: 1; flex-direction: column; justify-content: center; line-height: 1.2; }
+.yt-dock-text strong, .yt-dock-text .meta { display: block; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.yt-dock-text strong { font-size: var(--type-subhead); font-weight: var(--weight-semibold); }
+.yt-dock-text .meta { font-size: var(--type-caption); }
+/* 押す所は 32×32 以上。本文の末尾に小窓の分の余白を足して、最後の投稿まで見えるようにする。 */
+.yt-dock-head button { display: inline-grid; flex: none; place-items: center; min-width: 32px; height: 32px; padding: 0 var(--space-2); border: 0; border-radius: var(--radius-xs); background: transparent; color: var(--muted); font-size: var(--type-subhead); font-weight: var(--weight-semibold); cursor: pointer; }
+.yt-dock-head button:hover { background: var(--interactive-hover); color: var(--text); }
+.yt-dock-close { width: 32px; padding: 0; font-size: var(--type-headline); line-height: 1; }
+body.has-mini-dock .workspace-main::after { content: ""; display: block; height: var(--mini-dock-reserve, 0); pointer-events: none; }

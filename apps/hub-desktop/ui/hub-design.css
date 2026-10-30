@@ -1,0 +1,786 @@
+/* Hub Desktop の共通の見た目。styles.css の後に読み込み、画面ごとにばらついた
+   幅・見出し・ボタン・入力・カードを一つの段階へ揃える。色は styles.css の
+   意味トークンだけを使う（ライト・ダークは styles.css 側で切り替わる）。
+   ブラウザとAIの作業画面は独自の配置を持つので対象外にする。 */
+
+/* 画面の幅は2種類だけ。読む画面は狭く、一覧と道具の画面は広く。 */
+#hub-shell .view:not(#view-browser):not(#view-ai) {
+  width: 100%;
+  max-width: var(--width-collection);
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-6) var(--space-7);
+  border-inline: 0;
+  box-sizing: border-box;
+}
+#hub-shell .view:not(#view-browser):not(#view-ai):is(#view-feed, #view-threads, #view-detail, #view-profile, #view-notifications, #view-home, #view-wallet, #view-settings, #view-cart, #view-order, #view-compute, #view-mail) {
+  max-width: calc(var(--width-reading) + 2 * var(--space-6));
+  /* 広い画面と左端をそろえる（画面を替えても見出しが横へ動かない）。 */
+  margin-left: max(0px, calc((100% - var(--width-collection)) / 2));
+  margin-right: auto;
+}
+
+/* 見出し行：題名と操作を一行に。下線は引かず、余白で区切る。 */
+#hub-shell .view:not(#view-browser):not(#view-ai) .view-head {
+  position: static;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 40px;
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+#hub-shell .view-head h2 {
+  margin: 0;
+  font-size: var(--text-title);
+  font-weight: var(--weight-medium);
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+#hub-shell .view-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+/* ボタンは3種類：主（approve）、副（head-action・deny）、文字だけ（ghost）。 */
+#hub-shell .view :is(.approve, .deny, .head-action, .ghost) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--tap-height);
+  height: auto;
+  margin: 0;
+  padding: 0 var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  font-size: var(--type-callout);
+  font-weight: var(--type-callout-weight);
+  line-height: var(--lh-callout);
+  white-space: nowrap;
+  cursor: pointer;
+}
+#hub-shell .view .approve {
+  background: var(--action);
+  color: var(--action-text);
+}
+#hub-shell .view .approve:hover:not(:disabled) { background: var(--action-hover); }
+#hub-shell .view .approve:active:not(:disabled) { background: var(--action-active); }
+#hub-shell .view :is(.deny, .head-action) {
+  background: var(--interactive);
+  color: var(--text);
+}
+#hub-shell .view :is(.deny, .head-action):hover:not(:disabled) { background: var(--interactive-hover); }
+#hub-shell .view .ghost {
+  background: transparent;
+  color: var(--muted);
+}
+#hub-shell .view .ghost:hover:not(:disabled) { background: var(--interactive); color: var(--text); }
+#hub-shell .view :is(.approve, .deny, .head-action, .ghost):disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+#hub-shell .view :is(.approve, .deny, .head-action, .ghost):focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* 入力欄と選択欄は同じ高さ・角・地。選択欄は標準の見た目をやめて矢印を描く。 */
+#hub-shell .view :is(input[type="text"], input[type="search"], input[type="url"], input[type="number"], input[type="email"], input:not([type]), select),
+#hub-shell .sidebar select {
+  box-sizing: border-box;
+  min-height: var(--control-height);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background-color: var(--surface-sunken);
+  color: var(--text);
+  font-size: var(--type-subhead);
+}
+#hub-shell .view textarea {
+  box-sizing: border-box;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background-color: var(--surface-sunken);
+  color: var(--text);
+  font-size: var(--text-body);
+  line-height: 1.6;
+}
+#hub-shell .view select,
+#hub-shell .sidebar select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 30px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 15px) 50%, calc(100% - 10px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+/* 焦点：入力欄は枠線を中立の焦点色に替えるだけ。輪も影も出さない（DESKTOP_SPEC §1.6）。 */
+#hub-shell .view :is(input[type="text"], input[type="search"], input[type="url"], input[type="number"], input[type="email"], input:not([type]), select, textarea):focus,
+#hub-shell .sidebar select:focus {
+  border-color: var(--focus-ring);
+  box-shadow: none;
+  outline: none;
+}
+
+/* 検索行：入力が伸び、ボタンは右に並ぶ。 */
+#hub-shell .view .searchbar {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  margin: 0 0 var(--space-4);
+}
+#hub-shell .view .searchbar :is(input, select) { flex: 1 1 auto; min-width: 0; }
+#hub-shell .view .searchbar select { flex: 0 0 auto; }
+
+/* カードは角と余白を一つに。影と枠を重ねない。 */
+#hub-shell .view :is(.card, .hero-card, .locked-card) {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--content-surface);
+  box-shadow: none;
+}
+#hub-shell .view .result-grid { gap: var(--space-3); }
+
+/* 補足の文は小さく一段下げる。 */
+#hub-shell .view .meta {
+  margin: 0 0 var(--space-3);
+  color: var(--muted);
+  font-size: var(--text-meta);
+  line-height: 1.6;
+}
+#hub-shell .view .meta:empty { display: none; }
+
+/* 切替（segmented・scopes）は一行の小さな切替に。 */
+#hub-shell .view :is(.segmented, .scopes) {
+  position: static;
+  display: inline-flex;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  gap: 2px;
+  margin: 0 0 var(--space-4);
+  padding: 3px;
+  border-radius: calc(var(--radius-control) + 2px);
+  background: var(--interactive);
+  backdrop-filter: none;
+}
+#hub-shell .view :is(.segmented, .scopes) button {
+  min-height: 28px;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--type-subhead);
+  font-weight: 600;
+}
+#hub-shell .view :is(.segmented, .scopes) button:is(.on, [aria-pressed="true"], [aria-selected="true"]) {
+  background: var(--content-surface);
+  color: var(--text);
+}
+
+/* 表示元・接続先の行は見出しのすぐ下に細く置く。 */
+#hub-shell .view .hub-network-bar {
+  margin: calc(-1 * var(--space-2)) 0 var(--space-4);
+  padding: 0;
+  border: 0;
+  font-size: var(--text-meta);
+  color: var(--muted);
+}
+#hub-shell .view .hub-network-bar select { min-height: 28px; font-size: var(--type-caption); }
+
+/* 空の状態は枠を描かず、中央に静かに。 */
+#hub-shell .view .empty-state {
+  margin: var(--space-5) 0;
+  padding: var(--space-7) var(--space-5);
+  border: 0;
+  background: transparent;
+}
+
+/* 左の内側の列：題名を一段小さくし、開発用の環境表示は出さない。 */
+#hub-shell .sidebar .brand h1 {
+  font-size: var(--type-headline);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+#hub-shell .sidebar .brand .environment { display: none; }
+#hub-shell .sidebar-context-item {
+  min-height: 34px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-control);
+  font-size: var(--type-subhead);
+}
+
+/* ===== 画面ごとの調整（各グループは自分の区画の中だけを書き換える） ===== */
+/* --- A: 交流（feed / threads / community / lists / bookmarks / notifications） --- */
+/* 混在フィードのスレッド・コミュニティ投稿：一行の補足、題名、全体を押して開く。 */
+#hub-shell #view-feed .social-stream-card {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  transition: background-color .14s ease;
+}
+#hub-shell #view-feed .social-stream-card:hover { background: var(--interactive); }
+#hub-shell #view-feed .social-stream-card .social-stream-kind { margin: 0; }
+#hub-shell #view-feed .social-stream-card h3 { margin: 0; font-size: var(--text-section); font-weight: 600; line-height: 1.45; }
+#hub-shell #view-feed .social-stream-card .post-body { margin: 0; color: var(--muted); font-size: var(--type-subhead); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+#hub-shell #view-feed .social-stream-card .social-stream-open { justify-self: start; min-height: 26px; margin-top: var(--space-1); padding: 0 var(--space-2); font-size: var(--type-caption); }
+#hub-shell #view-feed .social-stream-item > .social-stream-kind { margin: var(--space-3) 0 0; }
+#hub-shell .view-head .notif-unread { margin: 0; }
+/* 招待からの参加は閉じている間、小さな文字の開閉だけを見せる。 */
+#hub-shell #view-community details.community-invite:not([open]) {
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+#hub-shell #view-community details.community-invite > summary {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  color: var(--muted);
+  font-size: var(--type-subhead);
+  cursor: pointer;
+}
+#hub-shell #view-community details.community-invite > summary:hover { color: var(--text); }
+/* --- end A --- */
+/* --- B: 作品（videos / music / articles / hubpedia / books） --- */
+/* 検索行は共通の形に戻す（styles.css の丸い一体型を打ち消す）。 */
+#hub-shell :is(#video-search, #music-search, #music-catalog-search, #articles-search, #hubpedia-search) { width: 100%; max-width: none; margin: 0 0 var(--space-4); gap: var(--space-2); }
+#hub-shell :is(#video-search, #music-search) input { min-height: var(--control-height); border-radius: var(--radius-control); padding-inline: var(--space-3); background: var(--surface-sunken); }
+#hub-shell #video-search button, #hub-shell #music-search button { min-height: var(--control-height); padding-inline: var(--space-3); border: 1px solid transparent; border-radius: var(--radius-control); font-size: var(--type-subhead); }
+#hub-shell #video-search button.head-action, #hub-shell #music-search button.head-action { background: var(--interactive); color: var(--text); }
+#hub-shell #video-search button.ghost, #hub-shell #music-search button.ghost { background: transparent; color: var(--muted); }
+@media (max-width: 600px) { #hub-shell #music-search input { flex-basis: auto; } }
+/* 動画カード：16:9 の画像を端まで、題名は2行、補足は1行。 */
+#hub-shell #videos-results .video-card, #hub-shell #video-watch-related .video-card { border-radius: var(--radius-card); }
+#hub-shell .video-thumbnail { aspect-ratio: 16 / 9; border-radius: var(--radius-card); }
+#hub-shell .video-thumbnail img { object-fit: cover; }
+#hub-shell .video-player-preview > .video-thumbnail { border-radius: 0; }
+#hub-shell .video-card-copy { gap: 2px; padding: var(--space-3) 2px 0; }
+#hub-shell .video-card-copy strong { -webkit-line-clamp: 2; line-height: 1.4; }
+#hub-shell .video-back { background: transparent; color: var(--muted); border-radius: var(--radius-control); }
+/* 絞り込み・分類の選択は背景色だけで示す。 */
+#hub-shell :is(.video-filter, .video-category) { border-color: transparent; border-radius: var(--radius-control); background: var(--interactive); }
+#hub-shell :is(.video-filter, .video-category).on { border-color: transparent; background: var(--selected); }
+/* 音楽：タブは下線ではなく背景で示す。曲の行は角丸12px。 */
+#hub-shell .music-tabs { gap: 2px; margin-bottom: var(--space-4); border-bottom: 0; }
+#hub-shell .music-tab { min-height: 30px; padding: 0 var(--space-3); border: 0; border-radius: var(--radius-control); font-size: var(--type-subhead); }
+#hub-shell .music-tab.on { border: 0; background: var(--selected); color: var(--text); }
+#hub-shell .music-track { border-radius: var(--radius-card); }
+#hub-shell .music-track-art { border-radius: var(--radius-control); }
+#hub-shell .music-queue-list li[aria-current] { border-inline-start: 0; padding-inline-start: 4px; background: var(--selected); border-radius: var(--radius-control); }
+#hub-shell #view-music .music-track-text strong { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; white-space: normal; }
+#hub-shell #videos-results > .empty-state { min-height: 0; border: 0; }
+/* --- end B --- */
+/* --- C: 研究と検索（research / search / world / ranking / services / contacts） --- */
+/* 結果カード：題名、説明（2行まで）、補足の三段。ホバーは背景だけで示す。 */
+#hub-shell :is(#view-search, #view-world, #view-ranking, #view-services, #view-contacts) .result-grid {
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+#hub-shell :is(#view-search, #view-world, #view-ranking, #view-services, #view-contacts) .result-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+}
+#hub-shell :is(#view-search, #view-world, #view-ranking, #view-services, #view-contacts) .result-card strong {
+  font-size: var(--text-section);
+  font-weight: 600;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+#hub-shell :is(#view-search, #view-world, #view-ranking, #view-services, #view-contacts) .result-card p:not(.meta) {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+#hub-shell :is(#view-search, #view-world, #view-ranking, #view-services, #view-contacts) .result-card .meta { margin: var(--space-1) 0 0; }
+#hub-shell :is(#view-search, #view-world, #view-ranking, #view-services, #view-contacts) .result-card.is-link:hover {
+  border-color: var(--line);
+  background: var(--interactive);
+}
+#hub-shell #view-contacts .contact-card { flex-direction: row; align-items: center; gap: var(--space-3); }
+#hub-shell #view-contacts .contact-card > div { min-width: 0; }
+#hub-shell #view-contacts .contact-card .meta { margin: 0; }
+
+/* 検索：絞り込みの札は背景色だけで選択を示す。Web検索は下に静かに。 */
+#hub-shell #view-search .chip-row { gap: var(--space-2); margin: 0 0 var(--space-4); }
+#hub-shell #view-search .chip {
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  background: var(--interactive);
+  color: var(--muted);
+  font-weight: 600;
+}
+#hub-shell #view-search .chip:hover { background: var(--interactive-hover); }
+#hub-shell #view-search .chip.on { background: var(--selected); color: var(--text); }
+#hub-shell #view-search .web-search {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+#hub-shell #view-search .web-search .actions { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+#hub-shell #view-search .web-search h3 { font-size: var(--text-section); }
+#hub-shell #view-search .web-search .meta { margin: var(--space-1) 0 0; }
+
+/* 研究：検索欄・表示元・接続先を1本のフィルタ行に並べる。作成欄は閉じている間は出さない。 */
+#hub-shell #view-research .research-index-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); margin: 0 0 var(--space-4); }
+#hub-shell #view-research .research-index-tools > input { flex: 1 1 220px; width: auto; min-width: 0; height: var(--control-h); min-height: var(--control-h); box-sizing: border-box; }
+#hub-shell #view-research .research-index-tools > .meta { order: 2; flex: 1 1 100%; margin: var(--space-1) 0 0; }
+#hub-shell #view-research .research-index-tools .hub-network-bar {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: var(--type-caption);
+  color: var(--muted);
+}
+#hub-shell #view-research .research-index-tools .hub-network-controls {
+  position: static;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  min-width: 0;
+  min-height: var(--control-h);
+}
+#hub-shell #view-research .research-index-tools .hub-network-controls > label { max-width: none; gap: var(--space-2); }
+#hub-shell #view-research .research-index-tools .hub-network-options { position: static; }
+#hub-shell #view-research .research-index-tools .hub-network-options > summary {
+  position: static;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-h);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface-sunken);
+  color: var(--muted);
+}
+#hub-shell #view-research .research-index-tools .hub-network-options > summary:hover,
+#hub-shell #view-research .research-index-tools .hub-network-options[open] > summary { background: var(--interactive); color: var(--text); }
+#hub-shell #view-research .research-index-tools .hub-network-controls > label > select { width: auto; max-width: 240px; height: var(--control-h); min-height: var(--control-h); }
+#hub-shell #view-research .research-index-tools .hub-network-feedback { flex: 1 1 100%; padding-top: 0; }
+#hub-shell #view-research .research-create-host { margin: 0 0 var(--space-4); }
+#hub-shell #view-research .research-create-host > .research-editor:not([open]) { display: none; }
+#hub-shell #view-research .research-editor {
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--content-surface);
+}
+#hub-shell #view-research .research-project-list { gap: var(--space-3); }
+#hub-shell #view-research .research-project-card {
+  gap: var(--space-1);
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--content-surface);
+}
+#hub-shell #view-research .research-project-card:hover { background: var(--interactive); }
+#hub-shell #view-research .research-project-card .meta { margin: 0; }
+/* --- end C --- */
+/* --- D: 取引（market / cart / order / purchased / vault / wallet / compute） --- */
+#hub-shell :is(.seller-product-details, .compute-demo) > summary { cursor: pointer; font-size: var(--text-section); font-weight: 600; }
+#hub-shell :is(.seller-product-details, .compute-demo)[open] > summary { margin-bottom: var(--space-3); }
+#hub-shell #shop-results.result-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+#hub-shell #shop-results .shop-product-card { min-height: 0; gap: var(--space-2); padding: var(--space-4); }
+#hub-shell #shop-results .shop-product-card .result-media { aspect-ratio: 4 / 3; margin: calc(-1 * var(--space-4)) calc(-1 * var(--space-4)) var(--space-1); border-radius: var(--radius-card) var(--radius-card) 0 0; background: var(--content-nested); }
+#hub-shell #shop-results .shop-product-card .result-media img { object-fit: cover; }
+#hub-shell #shop-results .shop-product-card > strong { display: -webkit-box; overflow: hidden; font-size: var(--text-body); line-height: 1.4; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+#hub-shell #shop-results .shop-product-card > p:not(.shop-product-meta):not(.meta) { -webkit-line-clamp: 2; }
+#hub-shell #shop-results .shop-product-card > .meta { display: -webkit-box; overflow: hidden; margin: 0; -webkit-box-orient: vertical; -webkit-line-clamp: 1; }
+#hub-shell #shop-results .shop-product-meta strong { font-size: var(--text-section); font-variant-numeric: tabular-nums; }
+#hub-shell #shop-results .shop-card-actions .approve { min-height: 28px; padding: 0 var(--space-3); }
+/* --- end D --- */
+/* --- E: 個人と設定（profile / detail / settings / node / messages / mail / home） --- */
+#hub-shell #view-settings .account-card-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-2); }
+#hub-shell #view-settings .account-card-head h3 { margin: 0; font-size: var(--text-section); }
+#hub-shell #view-settings .account-card .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+#hub-shell #view-settings .card h3 { margin: 0 0 var(--space-2); font-size: var(--text-section); }
+/* Personal Node：公開原本の作成は畳んでおく。 */
+#hub-shell #view-node details.content-compose > summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); cursor: pointer; list-style: none; }
+#hub-shell #view-node details.content-compose > summary::-webkit-details-marker { display: none; }
+#hub-shell #view-node details.content-compose > summary::after { content: "開く"; color: var(--muted); font-size: var(--type-subhead); font-weight: 600; }
+#hub-shell #view-node details.content-compose[open] > summary::after { content: "閉じる"; }
+#hub-shell #view-node details.content-compose > summary h3 { margin: 0; font-size: var(--text-section); }
+#hub-shell #view-node details.content-compose[open] > summary { margin-bottom: var(--space-3); }
+/* メッセージ：左の列の会話を、ほかの列の項目と同じ見た目に揃える。 */
+#hub-shell.messages-active #sidebar-context .messages-side { margin-top: 0; border-top: 0; }
+#hub-shell #sidebar-context #messages-list .conversation { min-height: 42px; border-color: transparent; border-radius: var(--radius-control); }
+#hub-shell #sidebar-context #messages-list .conversation.active { background: var(--selected); }
+#hub-shell #sidebar-context #messages-list .conversation.unread { background: transparent; }
+/* --- end E --- */
+
+/* --- HANDOFF --- */
+#hub-shell .view .ai-handoff-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-block: var(--space-2); }
+#hub-shell .view .ai-handoff-row .meta { margin: 0; }
+.piw-finished .ghost { min-height: 34px; padding: var(--space-2) var(--space-3); white-space: nowrap; }
+/* --- end HANDOFF --- */
+
+/* --- AI: purchase proposal card --- */
+.piw-purchase { display: grid; grid-template-columns: max-content 1fr; gap: 2px var(--space-3); margin: var(--space-2) 0; }
+.piw-purchase dt { color: var(--muted); }
+.piw-purchase dd { margin: 0; overflow-wrap: anywhere; }
+/* --- end AI --- */
+
+/* ===== 左列（一本の列。☰で名前付きの幅へ広がる） ===== */
+#hub-shell .icon-rail {
+  width: var(--rail-w);
+  box-sizing: border-box;
+  align-items: stretch;
+  gap: 2px;
+  padding: var(--space-2) 6px;
+  overflow-x: hidden;
+  transition: width .16s ease;
+}
+#hub-shell .icon-rail :is(.icon-rail-main, .icon-rail-bottom) {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  width: 100%;
+}
+#hub-shell .icon-rail :is(.icon-button, .icon-nav-item):not([hidden]) {
+  display: flex;
+  width: 100%;
+  min-height: 40px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--muted);
+  font-size: 0;
+  box-sizing: border-box;
+}
+#hub-shell .icon-rail :is(.icon-button, .icon-nav-item) svg { flex: 0 0 20px; width: 20px; height: 20px; }
+#hub-shell.rail-expanded .icon-rail :is(.icon-button, .icon-nav-item)::after {
+  display: block;
+  content: attr(aria-label);
+  overflow: hidden;
+  font-size: var(--type-subhead);
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+#hub-shell:not(.rail-expanded) .icon-rail :is(.icon-button, .icon-nav-item)::after { display: none; }
+#hub-shell .icon-rail :is(.icon-button, .icon-nav-item):hover { background: var(--interactive); color: var(--text); }
+#hub-shell .icon-rail .icon-nav-item.on { background: var(--selected); color: var(--text); }
+#hub-shell .icon-rail .icon-nav-item.on::after { font-weight: 600; }
+#hub-shell .icon-rail .navigation-group-start { margin-top: var(--space-2); }
+#hub-shell .icon-rail .icon-rail-main > .rail-bottom-start { margin-top: auto; }
+
+/* ===== AI作業画面（Hub自前） ===== */
+/* 左列に「＋ 新しい作業」があるあいだは、見出しの「＋ 新規」を重ねて出さない。 */
+#hub-shell:not(.sidebar-collapsed) #pi-work-new { display: none; }
+/* 作業フォルダの長いパスは一行で、末尾（フォルダ名側）を残して省く。 */
+#hub-shell .piw-history-project-path {
+  display: block;
+  overflow: hidden;
+  color: var(--muted);
+  font-size:var(--type-caption);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  direction: rtl;
+  text-align: left;
+}
+/* 環境とツールの中の「実行方式の比較」。 */
+#hub-shell .ai-compare-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+#hub-shell .ai-compare-row .meta { margin: 2px 0 0; }
+/* 入力欄：書いた分だけ広がる（3行から画面の4割まで）。モデルは小さな札、補足は控えめに。 */
+#hub-shell .piw-composer {
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-3) var(--space-2);
+  border-radius: var(--radius-md);
+}
+#hub-shell .piw-composer textarea#pi-work-prompt {
+  field-sizing: content;
+  min-height: calc(3 * 1.6em);
+  max-height: 40vh;
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  background: transparent;
+  font-size: var(--type-body);
+  line-height: 1.6;
+  overflow-y: auto;
+}
+#hub-shell .piw-composer .piw-model > .meta {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+#hub-shell .piw-composer #pi-work-model {
+  min-height: 28px;
+  width: min(240px, 40vw);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background-color: var(--interactive);
+  font-size: var(--type-caption);
+}
+#hub-shell .piw-composer #pi-work-model-refresh {
+  min-height: 28px;
+  padding: 0 var(--space-2);
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--type-caption);
+}
+#hub-shell .piw-composer #pi-work-shortcut { display: none; }
+#hub-shell .piw-composer #pi-work-model-status {
+  margin: 0 var(--space-2);
+  overflow: hidden;
+  font-size:var(--type-caption);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+#hub-shell .piw-composer .piw-model { flex: 0 0 auto; }
+#hub-shell .piw-composer #pi-work-start { margin-left: auto; }
+
+/* ===== ブラウザのタブ一覧：1件1行（ユーザー指定 2026-10-11）。URLはマウスを乗せたときの表示に任せる。 ===== */
+#hub-shell .browser-tab-path { display: none; }
+#hub-shell .browser-tab-text { display: flex; align-items: center; }
+#hub-shell .browser-tab-title { font-size: var(--type-subhead); line-height: 20px; }
+#hub-shell .browser-tab-select { min-height: 32px; padding-block: var(--space-1); }
+
+/* A skeleton that never resolves (offline, a stalled request) must not repaint forever: pulse for
+   about 14 seconds, then rest at full opacity. */
+.skeleton-block { animation-iteration-count: 10; }
+@media (prefers-reduced-motion: reduce) { .skeleton-block { animation: none; } }
+
+/* ===== 画面の見直し（2026-10-11） ===== */
+/* 列の境目の線は普段は出さない（列の右の1px線で足りる）。つかんでいるときと焦点のときだけ見せる。 */
+#hub-shell .column-resizer::before { background: transparent; }
+#hub-shell .column-resizer:focus-visible::before, #hub-shell .column-resizer.dragging::before { background: var(--action); }
+/* 左の列の節の見出しは、上の項目から離して小さく薄く。項目と見分けられるように。 */
+#hub-shell #sidebar-context .nav-group { margin: var(--space-4) 12px var(--space-1); font-size:var(--type-caption); font-weight: 600; letter-spacing: .04em; color: var(--muted); }
+#hub-shell #sidebar-context .nav-group:first-child { margin-top: var(--space-1); }
+/* 一覧の中の「再試行」は文字の幅だけ。一覧の幅いっぱいに伸ばさない。 */
+#hub-shell .view button.head-action { justify-self: start; align-self: start; width: auto; padding-inline: var(--space-4); }
+/* 左の列の題名は出さない。画面の名前は本文の見出しが持つ（題名が二つ並ばないように）。2026-10-11 ユーザー指定。 */
+#hub-shell .sidebar > .brand { display: none; }
+#hub-shell .sidebar > #sidebar-context { padding-top: var(--space-3); }
+/* 右端の縦の帯が右列の切り替え役。上に開閉、続けて各表示（ブラウザ・AI・資料・メッセージ・音楽・投稿・コミュニティ・通知）。
+   2026-10-11 は帯の切り替えを隠して右列内の選択にしたが、2026-10-15 の所有者指定（「切り替えボタンが右列の一番右に並ぶ想定」）で撤回した。
+   アイコン24px・押す範囲44px。表示中は塗りと aria-pressed。帯は右列の本体の外にあるので、右列ブラウザの描画範囲には入らない。 */
+#hub-shell .rail-marks { align-items: center; gap: var(--space-1); padding: var(--space-3) 2px; overflow-y: auto; scrollbar-width: none; }
+#hub-shell .rail-marks .rail-mark { display: grid; width: 44px; height: 44px; min-height: 44px; flex: none; place-items: center; border-radius: var(--radius-sm); }
+#hub-shell .rail-marks .rail-mark--bottom { margin-top: auto; }
+#hub-shell .rail-marks .rail-mark::after { content: none; }
+#hub-shell .rail-marks .rail-mark svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+#hub-shell .rail-marks .rail-view-button[aria-pressed="true"] { background: var(--selected); color: var(--text); }
+#hub-shell .rail-marks .rail-view-button[aria-pressed="true"] svg { fill: currentColor; fill-opacity: .22; stroke-width: 2.1; }
+#hub-shell .rail-marks .rail-view-button:disabled { opacity: .38; }
+#hub-shell .rail-marks .rail-mark:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+#hub-shell .rail-activity-head .rail-view-name { margin: 0; color: var(--text); font-size: var(--type-body); font-weight: 600; }
+/* ブラウザのアドレス欄と操作は一番上の行へ（位置は app.js の placeBrowserStrip が測って入れる）。 */
+#hub-shell.browser-active #view-browser .browser-strip {
+  position: fixed;
+  z-index: 40;
+  top: var(--browser-strip-top, 0px);
+  left: var(--browser-strip-left, 160px);
+  right: var(--browser-strip-right, 160px);
+  height: var(--browser-strip-height, 44px);
+  min-height: 0;
+  max-height: var(--browser-strip-height, 44px);
+  align-items: center;
+  box-sizing: border-box;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+#hub-shell.browser-active .app-toolbar :is(.toolbar-location, #toolbar-search-form, #toolbar-search) { visibility: hidden; }
+/* ===== ブラウザ：Braveに似せた上の行（2026-10-12 ユーザー指定）=====
+   ← → ↻ ｜ ( 鍵 アドレス ☆ ) 盾 ↓ ✦ ≡ 。新しいタブはタブの列、タブ検索は Ctrl+Shift+A とメニュー。 */
+#hub-shell #view-browser .browser-strip { gap: var(--space-1); }
+#hub-shell #view-browser .browser-strip > :is(#browser-new-tab, #browser-tab-search) { display: none; }
+#hub-shell #view-browser .browser-strip > #browser-tools { order: 10; }
+#hub-shell #view-browser #browser-navigation { display: flex; flex: 1; min-width: 0; align-items: center; gap: var(--space-1); }
+#hub-shell #view-browser #browser-form { height: 34px; padding: 0 var(--space-1) 0 var(--space-1); gap: var(--space-2); border: 1px solid transparent; border-radius: var(--radius-pill); background: var(--interactive); }
+#hub-shell #view-browser #browser-form:focus-within { background: var(--panel); border-color: var(--focus-ring); outline: 0; box-shadow: none; }
+#hub-shell #view-browser #browser-form > #browser-scheme { display: grid; place-items: center; flex: none; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--muted); font-size: var(--type-caption); font-weight: 700; cursor: pointer; }
+#hub-shell #view-browser #browser-form > #browser-scheme:hover { background: var(--interactive-hover); color: var(--text); }
+#hub-shell #view-browser #browser-form > #browser-scheme.is-plain { border: 0; }
+#hub-shell #view-browser #browser-form > #browser-scheme svg { width: 13px; height: 13px; }
+#hub-shell #view-browser #browser-form > #browser-fav { display: grid; place-items: center; flex: none; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; }
+#hub-shell #view-browser #browser-form > #browser-fav:hover { background: var(--interactive-hover); color: var(--text); }
+#hub-shell #view-browser #browser-form > #browser-fav.is-on { color: var(--action); }
+#hub-shell #view-browser #browser-form > #browser-fav svg { width: 16px; height: 16px; }
+#hub-shell #view-browser .browser-site-info { display: grid; gap: var(--space-2); padding: var(--space-1) 2px; }
+#hub-shell #view-browser .browser-site-info-host { color: var(--text); font-size: var(--type-body); }
+#hub-shell #view-browser .browser-site-info > button { justify-self: stretch; text-align: left; }
+#hub-shell #view-browser #browser-form > #browser-url { min-width: 0; flex: 1; height: 100%; padding: 0 var(--space-1); border: 0; background: transparent; box-shadow: none; outline: none; color: var(--text); }
+/* Braveの見本（2026-10-12）: アドレス欄は中央に、幅は最大980px、細い枠つき。 */
+#hub-shell #view-browser #browser-navigation { justify-content: center; }
+#hub-shell #view-browser #browser-form { width: 100%; max-width: 980px; border: 1px solid var(--line); }
+/* タブの列: ＋はタブのすぐ下。「閉じたタブを復元」だけ列の下端に。 */
+#hub-shell #sidebar-tabs > #browser-tabs-pin { order: 0; }
+#hub-shell #sidebar-tabs > :is(#sidebar-tab-query, #sidebar-tab-count) { order: 1; }
+#hub-shell #sidebar-tabs > #sidebar-tabs-list { order: 2; flex: 0 1 auto; }
+#hub-shell #sidebar-tabs > #sidebar-new-tab { order: 3; margin-top: 0; }
+#hub-shell #sidebar-tabs > #browser-restore { order: 4; margin-top: auto; }
+#hub-shell #sidebar-tabs > #sidebar-tabs-list { min-height: 0; overflow-y: auto; }
+/* ブラウザの設定（メニューの「設定」） */
+#hub-shell #view-browser .browser-settings { display: grid; gap: var(--space-2); padding: var(--space-1) 2px var(--space-2); }
+#hub-shell #view-browser .browser-settings-head { margin: var(--space-2) 0 0; color: var(--muted); font-size: var(--type-caption); font-weight: 600; letter-spacing: .04em; }
+#hub-shell #view-browser .browser-settings-head:first-child { margin-top: 0; }
+#hub-shell #view-browser :is(.browser-settings-check, .browser-settings-field) { display: flex; align-items: center; gap: var(--space-2); color: var(--text); font-size: var(--type-subhead); }
+#hub-shell #view-browser .browser-settings-field :is(input, select) { flex: 1; min-width: 0; }
+#hub-shell #view-browser .browser-settings > button { justify-self: start; }
+#hub-shell #view-browser .browser-settings-keys { display: grid; grid-template-columns: max-content 1fr; gap: var(--space-1) var(--space-4); margin: 0; font-size: var(--type-caption); }
+#hub-shell #view-browser .browser-settings-keys dt { color: var(--text); font-family: ui-monospace, monospace; }
+#hub-shell #view-browser .browser-settings-keys dd { margin: 0; color: var(--muted); }
+#hub-shell #view-browser .browser-permission-remember { display: flex; align-items: center; gap: var(--space-2); color: var(--muted); font-size: var(--type-caption); }
+/* ===== 一番上の欄（Hubの検索とWebのアドレス欄を兼ねる。2026-10-12）=====
+   どの画面でも同じ場所・同じ大きさ（app.js の placeBrowserStrip が --omni-* を入れる）。 */
+#hub-shell .app-toolbar #toolbar-search-form { position: fixed; z-index: 41; top: var(--omni-top, 5px); left: var(--omni-left, 50%); width: var(--omni-width, 600px); height: 34px; box-sizing: border-box; margin: 0; padding: 0 var(--space-3); gap: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-pill); background: var(--interactive); }
+#hub-shell .app-toolbar #toolbar-search-form:focus-within { background: var(--panel); border-color: var(--focus-ring); outline: 0; box-shadow: none; }
+#hub-shell .app-toolbar #toolbar-search-form kbd { display: none; }
+#hub-shell .app-toolbar #toolbar-search-form input { flex: 1; min-width: 0; height: 100%; border: 0; background: transparent; outline: none; box-shadow: none; color: var(--text); }
+#hub-shell.browser-active #view-browser #browser-navigation { position: fixed; z-index: 41; top: var(--omni-top, 5px); left: var(--omni-left, 50%); width: calc(var(--omni-width, 600px) + 44px); height: 34px; justify-content: flex-start; }
+#hub-shell.browser-active #view-browser #browser-form { max-width: none; flex: 1; }
+#hub-shell.browser-active #view-browser .browser-strip { justify-content: flex-end; }
+#hub-shell.browser-active #view-browser .browser-strip > #browser-home { position: fixed; z-index: 41; top: var(--omni-top, 5px); left: calc(var(--omni-left, 50%) - 40px); }
+/* 候補の一覧（Hubの検索側） */
+.omnibox-suggestions { position: fixed; z-index: 60; top: var(--omnibox-top, 48px); left: var(--omnibox-left, 50%); width: var(--omnibox-width, 600px); box-sizing: border-box; padding: var(--space-1); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--panel); box-shadow: var(--shadow-lg); }
+.omnibox-suggestions .omnibox-row { display: grid; gap: 2px; width: 100%; padding: var(--space-2) var(--space-3); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text); text-align: left; cursor: pointer; }
+.omnibox-suggestions .omnibox-row[aria-selected="true"], .omnibox-suggestions .omnibox-row:hover { background: var(--interactive); }
+.omnibox-suggestions .omnibox-row strong { overflow: hidden; font-size: var(--type-subhead); font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.omnibox-suggestions .omnibox-row small { overflow: hidden; color: var(--muted); font-size:var(--type-caption); text-overflow: ellipsis; white-space: nowrap; }
+#hub-shell .app-toolbar #toolbar-search-form { max-width: none; min-width: 0; flex: none; }
+#hub-shell.browser-active #view-browser #browser-navigation { padding: 0; margin: 0; }
+#hub-shell.browser-active #view-browser #browser-navigation > #browser-form { margin: 0; }
+#hub-shell.browser-active #view-browser #browser-navigation > #browser-form { flex: 0 0 var(--omni-width, 600px); width: var(--omni-width, 600px); }
+/* ===== ブラウザのメニュー（Braveと同じく右上に重ねる一覧。2026-10-12）=====
+   ページは Rust 側でメニューの実測矩形だけ切り抜く（browser_page_holes）ので、ページは押し下げられない。 */
+#hub-shell #view-browser #browser-menu { position: fixed; z-index: 45; top: var(--menu-top, 100px); right: var(--menu-right, 12px); width: 340px; max-height: min(680px, calc(100vh - var(--menu-top, 100px) - 16px)); box-sizing: border-box; overflow-y: auto; padding: var(--space-1); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--panel); box-shadow: var(--shadow-lg); }
+#hub-shell #view-browser .browser-main-menu { display: grid; gap: 1px; }
+#hub-shell #view-browser .browser-main-item { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); width: 100%; min-height: 34px; padding: 0 var(--space-2); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text); font-size: var(--type-subhead); font-weight: 400; text-align: left; cursor: pointer; }
+#hub-shell #view-browser button.browser-main-item:hover:not(:disabled), #hub-shell #view-browser button.browser-main-item:focus-visible { background: var(--interactive); outline: none; }
+#hub-shell #view-browser button.browser-main-item:disabled { opacity: .45; cursor: default; }
+#hub-shell #view-browser .browser-main-label { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+#hub-shell #view-browser .browser-main-label svg { flex: none; width: 17px; height: 17px; color: var(--muted); }
+#hub-shell #view-browser .browser-main-keys { display: flex; align-items: center; gap: var(--space-1); color: var(--muted); font-size: var(--type-caption); white-space: nowrap; }
+#hub-shell #view-browser .browser-main-divider { height: 1px; margin: var(--space-1) var(--space-2); background: var(--line); }
+#hub-shell #view-browser .browser-main-zoom { cursor: default; }
+#hub-shell #view-browser .browser-main-zoom-button { display: grid; place-items: center; width: 30px; min-height: 26px; height: 26px; padding: 0; border: 1px solid var(--line); border-radius: var(--radius-xs); background: transparent; color: var(--text); font-weight: 400; }
+#hub-shell #view-browser .browser-main-zoom-button:hover:not(:disabled) { background: var(--interactive); }
+#hub-shell #view-browser .browser-main-zoom-value { min-width: 44px; color: var(--text); text-align: center; }
+#hub-shell #view-browser .browser-menu-back { display: flex; align-items: center; gap: var(--space-2); margin: 0 0 var(--space-2); padding: 0 0 var(--space-1); border-bottom: 1px solid var(--line); }
+#hub-shell #view-browser .browser-menu-heading { color: var(--text); font-size: var(--type-subhead); }
+#hub-shell #view-browser .browser-main-item[data-keys]::after { content: attr(data-keys); color: var(--muted); font-size: var(--type-caption); white-space: nowrap; }
+
+/* ===== 最初の画面（タイムライン）を引き締める。2026-10-12 =====
+   投稿欄の保存先・配信先は書いているときだけ出す。投稿は本文を主役に、操作の記号は詰めて控えめに。 */
+#hub-shell #composer:not(:focus-within):not(:has(textarea:not(:placeholder-shown))) :is(label:has(#composer-storage), details.detail-form) { display: none; }
+#hub-shell #view-feed .view-head h2 { font-size: var(--type-title3); font-weight: var(--weight-medium); letter-spacing: -.01em; }
+#hub-shell #view-feed .hub-network-bar { margin: 0 0 var(--space-2); font-size: var(--type-caption); color: var(--muted); }
+#hub-shell #view-feed #feed-list .post { padding: var(--space-4) var(--space-3); border-radius: 0; transition: background-color .12s ease; }
+#hub-shell #view-feed #feed-list .post:hover { background: var(--content-surface); }
+#hub-shell #view-feed #feed-list .post-head strong { font-size: var(--type-body); font-weight: 700; }
+#hub-shell #view-feed #feed-list .post-body { font-size: var(--type-body); line-height: 1.6; color: var(--text); }
+#hub-shell #view-feed #feed-list .post-actions { display: flex; justify-content: space-between; max-width: 420px; margin-top: var(--space-2); }
+#hub-shell #view-feed #feed-list .post-action { display: inline-flex; align-items: center; gap: var(--space-1); min-height: 32px; height: 32px; padding: 0 var(--space-2); border-radius: var(--radius-pill); background: transparent; color: var(--muted); font-weight: 400; }
+#hub-shell #view-feed #feed-list .post-action:hover { background: color-mix(in srgb, var(--action) 14%, transparent); color: var(--action); }
+#hub-shell #view-feed #feed-list .post-action svg { width: 17px; height: 17px; }
+#hub-shell #view-feed .social-stream-kind { margin: 0 0 2px 54px; font-size: var(--type-caption); color: var(--muted); }
+
+/* ===== SNSの画面をタイムラインと同じ調子に（2026-10-12）===== */
+/* 投稿の操作の記号：どの画面でも詰めて控えめに。 */
+#hub-shell .view .post-actions { display: flex; justify-content: space-between; max-width: 420px; margin-top: var(--space-2); }
+#hub-shell .view .post-action { display: inline-flex; align-items: center; gap: var(--space-1); min-height: 32px; height: 32px; padding: 0 var(--space-2); border-radius: var(--radius-pill); background: transparent; color: var(--muted); font-weight: 400; }
+#hub-shell .view .post-action:hover { background: color-mix(in srgb, var(--action) 14%, transparent); color: var(--action); }
+#hub-shell .view .post-action svg { width: 17px; height: 17px; }
+/* 自分の投稿の「編集」「削除」は枠なしの小さな文字に。 */
+#hub-shell .view .post-own-tool { min-height: 26px; height: 26px; padding: 0 var(--space-2); border: 0; border-radius: var(--radius-xs); background: transparent; color: var(--muted); font-size: var(--type-caption); font-weight: 400; }
+#hub-shell .view .post-own-tool:hover { background: var(--interactive); color: var(--text); }
+/* スレッドとコミュニティ：重いカードをやめ、タイムラインと同じ行に。行ごと押せるので「開く」は小さく。 */
+#hub-shell #view-feed .social-stream-card { margin: 0; padding: var(--space-4) var(--space-3); border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; box-shadow: none; cursor: pointer; transition: background-color .12s ease; }
+#hub-shell #view-feed .social-stream-card:hover { background: var(--content-surface); }
+#hub-shell #view-feed .social-stream-card .social-stream-kind { margin: 0 0 var(--space-1); }
+#hub-shell #view-feed .social-stream-card .detail-h { margin: 0 0 var(--space-2); font-size: var(--type-body); font-weight: 700; }
+#hub-shell #view-feed .social-stream-card .post-body { font-size: var(--type-body); line-height: 1.6; }
+#hub-shell #view-feed .social-stream-open { min-height: 26px; height: 26px; padding: 0; border: 0; background: transparent; color: var(--action); font-size: var(--type-caption); font-weight: 500; }
+#hub-shell #view-feed .social-stream-open:hover { background: transparent; text-decoration: underline; }
+/* プロフィール：頭を大きく、数字を太く。投稿はタイムラインと同じ行に。 */
+#hub-shell #view-profile .profile-card { display: flex; gap: var(--space-4); align-items: flex-start; padding: var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-md); background: linear-gradient(180deg, color-mix(in srgb, var(--action) 12%, var(--content-surface)), var(--content-surface) 60%); }
+#hub-shell #view-profile .profile-avatar { width: 88px; height: 88px; flex: none; font-size: var(--type-title1); }
+#hub-shell #view-profile #profile-name { font-size: var(--type-title2); font-weight: 700; }
+#hub-shell #view-profile #profile-stats { color: var(--text); font-size: var(--type-subhead); }
+#hub-shell #view-profile #profile-posts .post { margin: 0; padding: var(--space-4) var(--space-3); border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; box-shadow: none; }
+#hub-shell #view-profile #profile-posts .post:hover { background: var(--content-surface); }
+#hub-shell #view-profile #profile-posts { border: 0; background: transparent; }
+/* 中身が空のときの大きな箱は出さない。 */
+#hub-shell .view .card:has(> .empty-state:only-child) { border: 0; background: transparent; box-shadow: none; }
+#hub-shell #notifications-list:has(> .empty-state:only-child), #hub-shell .messages-thread:has(.empty-state) { border: 0; background: transparent; }
+#hub-shell .view .post .post-report { opacity: 0; transition: opacity .12s; }
+#hub-shell .view .post:hover .post-report, #hub-shell .view .post .post-report:focus-visible { opacity: 1; }
+
+/* 動画のポスト欄: 行はタイムラインと同じ .post（postCard）。区切りは --line、入力は既存のtextarea規則に従う。 */
+#hub-shell .video-posts .video-posts-composer { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-2); margin: var(--space-3) 0; }
+#hub-shell .video-posts .video-posts-composer textarea { flex: 1 1 100%; min-height: 72px; resize: vertical; }
+#hub-shell .video-posts .video-posts-composer .meta { margin-right: auto; }
+#hub-shell .video-posts .video-posts-list { display: block; }
+#hub-shell .video-posts .video-posts-list .post { margin: 0; padding: var(--space-4) var(--space-3); border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; box-shadow: none; }
+#hub-shell .video-posts > .head-action { margin-top: var(--space-2); }
+/* 会話一覧が空のとき、左の列では空の案内を繰り返さない（中央に同じ案内が出る）。 */
+#hub-shell #sidebar-context .messages-side .empty-state { display: none; }
+/* 読み込み失敗は、空の案内と同じ位置と形で出す。 */
+#hub-shell #music-tracks-state.warning { margin: var(--space-7) auto var(--space-3); max-width: 420px; text-align: center; color: var(--muted); }
+#hub-shell #music-tracks > button.head-action:only-child { display: block; margin: 0 auto; }
+/* 画像のない商品は、枠の色と印で「画像なし」と分かるようにする。 */
+#hub-shell .result-media.is-placeholder { background: var(--content-nested); display: grid; place-items: center; }
+#hub-shell .result-media.is-placeholder::before { content: ""; width: 36px; height: 36px; border-radius: var(--radius-sm); border: 1px solid var(--line-strong); }
+#hub-shell .piw-history-project-parent { color: var(--muted); font-size:var(--type-caption); }
+#hub-shell .piw-history-project-parent::before { content: "· "; }
+/* 動画を見る画面：プレイリスト・あとで見る・紹介・AIは1行に並べる。 */
+#hub-shell #video-watch-main > .head-action, #hub-shell #video-watch-main > .actions { display: inline-flex; align-items: center; gap: var(--space-2); margin: var(--space-3) var(--space-2) var(--space-1) 0; vertical-align: middle; }
+#hub-shell #video-watch-main > .actions > .meta:empty { display: none; }
+#hub-shell .video-posts { margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--line); }
+#hub-shell .video-posts .video-posts-composer textarea { min-height: 56px; }
+#hub-shell .video-posts .video-posts-send:not(:disabled) { background: var(--action); color: var(--action-text); border-color: transparent; }
+#hub-shell .video-posts .video-posts-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin: var(--space-1) 0 0; padding-bottom: var(--space-2); border-bottom: 1px solid var(--line); }
+#hub-shell .video-posts .video-posts-bar .meta { margin: 0; }
+#hub-shell .video-posts .video-posts-bar .head-action { background: transparent; border-color: transparent; color: var(--muted); }
+#hub-shell .video-posts .video-posts-bar .head-action:hover { color: var(--text); }
+#hub-shell .rail-search-intro p { margin: 0 0 var(--space-2); }
+#hub-shell .rail-search-intro .rail-switch-label { margin: var(--space-4) 0 var(--space-2); color: var(--muted); font-size:var(--type-caption); }
+#hub-shell .rail-search-intro .rail-switch { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+#hub-shell .rail-search-intro .rail-switch button { height: 30px; padding: 0 var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-pill); background: transparent; color: var(--text); font-size: var(--type-caption); cursor: pointer; }
+#hub-shell .rail-search-intro .rail-switch button:hover { background: var(--interactive-hover); }
+/* メッセージ読み込み中は、会話を選ぶ案内を出さない。 */
+#hub-shell #thread-state[hidden] { display: none; }

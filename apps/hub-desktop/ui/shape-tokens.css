@@ -1,0 +1,48 @@
+/* Hub Desktop の「形」トークン（2026-10-29、旦那様の決定）。
+   Web の apps/hub/app/v2/v2-tokens.css と同じ名前・同じ値。デスクトップとWebは形を共有し、色だけをテーマで選ぶ。
+   ここに色は書かない（色は tokens.css の意味名の変数だけ）。大きさ・太さ・角・高さ・輪の寸法をこのファイルに集める。
+   余白・角・動きの基本値は tokens.css にあり、ここはその上に重ねる段・太さ・押せる高さ・状態表示の寸法だけを足す。 */
+:root {
+  /* 字の段：大きさ / 行高 / 太さ / 字間。太さは 400・500・600・700 だけ。 */
+  --type-title2-weight: var(--weight-bold);
+  --type-title2-tracking: -0.012em;
+  --type-title3-weight: var(--weight-semibold);
+  --type-title3-tracking: -0.008em;
+  --type-headline-weight: var(--weight-semibold);
+  --type-body-weight: var(--weight-regular);
+  --type-callout-weight: var(--weight-semibold);
+  --type-subhead-weight: var(--weight-regular);
+  --type-caption-weight: var(--weight-medium);
+  --type-caption-tracking: .01em;
+  --lh-callout: 20px;
+
+  /* 押せる物の高さと焦点の輪。 */
+  --tap-height: 36px;
+  --tap-height-coarse: 44px;
+  /* ブラウザの操作（2026-10-29）：高さの足りない所の最小の押せる大きさ、タブの×の押せる円、×と操作記号の大きさ。 */
+  --tap-compact: 32px;
+  --tap-close: 28px;
+  --tap-close-glyph: 18px;
+  --tap-icon: 20px;
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+
+  /* 端のぼかし（タブ列・横の棚）。 */
+  --edge-fade: 24px;
+
+  /* 状態表示（state-view.mjs）の寸法。 */
+  --state-max: 400px;
+  --state-icon: 40px;
+  --state-icon-disc: 64px;
+
+  /* 頭字の顔の大きさ。 */
+  --avatar-24: 24px;
+  --avatar-32: 32px;
+  --avatar-40: 40px;
+  --avatar-48: 48px;
+  --avatar-96: 96px;
+}
+
+@media (pointer: coarse) {
+  :root { --tap-height: var(--tap-height-coarse); }
+}

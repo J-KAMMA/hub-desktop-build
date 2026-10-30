@@ -1,0 +1,61 @@
+/* Hub全体の高級感（2026-10-26 所有者「全体は」：右列ウォレットと同じ語彙を全画面へ）。
+   黒曜石の面・シャンパンゴールドの細線・塗りを減らす。最後に読み込み、各画面の規則を上書きする。
+   色は札（tokens.css）からだけ作る。 */
+#hub-shell { --champagne: color-mix(in srgb, var(--emphasis) 60%, var(--text)); --hair: color-mix(in srgb, var(--champagne) 34%, transparent); --hair-soft: color-mix(in srgb, var(--champagne) 14%, transparent); }
+
+/* 見出し：細く、字間を少し */
+#hub-shell .page-title { font-weight: 400; letter-spacing: .04em; }
+#hub-shell .settings-panel-title, #hub-shell .workspace-main h3.section-title { font-weight: 500; letter-spacing: .06em; }
+#hub-shell .sidebar-context-title, #hub-shell .sidebar .sidebar-heading { letter-spacing: .14em; color: color-mix(in srgb, var(--text) 45%, transparent); }
+
+/* 選択中：塗りをやめ、文字をシャンパンに、左に細線 */
+#hub-shell .sidebar-context-item { position: relative; letter-spacing: .03em; }
+#hub-shell .sidebar-context-item.on { background: color-mix(in srgb, var(--champagne) 6%, transparent); color: var(--champagne); }
+#hub-shell .sidebar-context-item.on::before { content: ""; position: absolute; left: 0; top: 22%; bottom: 22%; width: 1px; background: var(--champagne); }
+#hub-shell .sidebar-context-item.on svg { color: var(--champagne); }
+#hub-shell .icon-nav-item.on { background: transparent; color: var(--champagne); box-shadow: inset 0 0 0 1px var(--hair); }
+
+/* ボタン：主はシャンパンの面、副は細線、ゴーストは文字だけ */
+#hub-shell .btn-primary, #hub-shell :is(.view, .sidebar, .rail) :is(.btn-primary, .approve) {
+  background: linear-gradient(180deg, var(--text), var(--champagne) 55%, color-mix(in srgb, var(--champagne) 80%, var(--bg)));
+  color: var(--bg); border: 0; border-radius: var(--radius-pill); font-weight: 600; letter-spacing: .06em;
+}
+#hub-shell .btn-secondary, #hub-shell .head-action {
+  background: transparent; border: 1px solid var(--hair); border-radius: var(--radius-pill); color: var(--champagne); letter-spacing: .06em;
+}
+#hub-shell .btn-secondary:hover, #hub-shell .head-action:hover { border-color: var(--champagne); background: color-mix(in srgb, var(--champagne) 6%, transparent); }
+#hub-shell .btn-ghost, #hub-shell button.ghost { color: color-mix(in srgb, var(--champagne) 85%, transparent); letter-spacing: .06em; }
+
+/* 面：黒曜石のグラデーションと細い金の縁 */
+#hub-shell .workspace-main .card, #hub-shell .workspace-main .state-panel.mh-hero, #hub-shell .workspace-main .mh-hero {
+  border: 1px solid var(--hair-soft); border-radius: var(--radius-lg);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--champagne) 5%, var(--surface-sunken)), var(--surface-sunken) 60%);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--champagne) 8%, transparent);
+}
+#hub-shell .workspace-main .setting-danger-zone { border-color: color-mix(in srgb, var(--danger, var(--champagne)) 30%, transparent); }
+#hub-shell .state-pill { background: transparent; border: 1px solid var(--hair); color: var(--champagne); letter-spacing: .04em; }
+
+/* 入力：細線の下線 */
+#hub-shell .workspace-main input[type="text"], #hub-shell .workspace-main input[type="search"], #hub-shell .workspace-main input:not([type]), #hub-shell .mh-search {
+  background: transparent; border: 0; border-bottom: 1px solid var(--hair); border-radius: 0; box-shadow: none;
+}
+#hub-shell .workspace-main input:focus { border-bottom-color: var(--champagne); outline: none; }
+
+/* 状態表示（読み込めません等）：静かに */
+#hub-shell .state-title { font-weight: 400; letter-spacing: .04em; }
+#hub-shell .state-panel .state-icon, #hub-shell .state-panel svg { color: var(--champagne); opacity: .7; }
+
+/* 区切り線は金の細線 */
+#hub-shell .workspace-main hr, #hub-shell .workspace-main .section-divider { border-color: var(--hair-soft); }
+
+/* 選択色の札を薄い金の洗いへ。強い規則には同じ強さで当てる。 */
+#hub-shell { --selected: color-mix(in srgb, var(--champagne) 7%, transparent); }
+#hub-shell #sidebar-context .sidebar-context-item:is(.on, [aria-current="true"], [aria-current="page"]) { color: var(--champagne); }
+#hub-shell #sidebar-context .sidebar-context-item:is(.on, [aria-current="true"], [aria-current="page"])::before { content: ""; position: absolute; left: 0; top: 22%; bottom: 22%; width: 1px; background: var(--champagne); }
+#hub-shell #sidebar-context .sidebar-context-item { position: relative; }
+#hub-shell .icon-rail .icon-nav-item.on { color: var(--champagne); box-shadow: inset 0 0 0 1px var(--hair); }
+#hub-shell .icon-rail #desktop-compose:not([hidden]) { background: linear-gradient(180deg, var(--text), var(--champagne) 55%, color-mix(in srgb, var(--champagne) 80%, var(--bg))); color: var(--bg); border-radius: 50%; }
+#hub-shell .page-tabs { gap: var(--space-5); border-bottom: 1px solid color-mix(in srgb, var(--text) 8%, transparent); }
+#hub-shell .page-tabs > [role="tab"] { position: relative; padding-inline: 0; border-radius: 0; background: transparent; color: color-mix(in srgb, var(--text) 50%, transparent); letter-spacing: .12em; }
+#hub-shell .page-tabs > [role="tab"][aria-selected="true"] { background: transparent; color: var(--champagne); }
+#hub-shell .page-tabs > [role="tab"][aria-selected="true"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: var(--champagne); }

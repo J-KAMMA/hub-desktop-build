@@ -1,0 +1,780 @@
+/* Hub Desktop レーン D4（お金・設定・AI）専用（DESKTOP_SPEC §3.8 §3.9 §3.11 §3.12）。
+   色は tokens.css のトークンだけを使う。部品は desktop-foundation.css の ds- と同じ寸法。
+   購入・同意・確認の手順（Commerce の責任、非カストディアル、都度承認）は触らず、見た目と置き場所だけを替える。 */
+
+/* ============================================================
+   1. 設定（#view-settings）
+   ============================================================ */
+
+/* 1-1. 真偽の設定はスイッチ 38×22（ブラウザ既定のチェックボックスは出さない）。
+   入力欄そのものは 38×28 にして押せる領域を保ち、軌道 22 とつまみ 18 は疑似要素で描く。 */
+#view-settings input[type="checkbox"],
+#view-wallet .wallet-tip-settings input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  flex: none;
+  box-sizing: border-box;
+  width: 38px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  cursor: pointer;
+  accent-color: initial;
+}
+#view-settings input[type="checkbox"]::before,
+#view-wallet .wallet-tip-settings input[type="checkbox"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 3px;
+  height: 22px;
+  border-radius: var(--radius-pill);
+  background: var(--line-strong);
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+#view-settings input[type="checkbox"]::after,
+#view-wallet .wallet-tip-settings input[type="checkbox"]::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--action-text);
+  transition: transform var(--dur-fast) var(--ease-spring);
+}
+#view-settings input[type="checkbox"]:checked::before,
+#view-wallet .wallet-tip-settings input[type="checkbox"]:checked::before { background: var(--action); }
+#view-settings input[type="checkbox"]:checked::after,
+#view-wallet .wallet-tip-settings input[type="checkbox"]:checked::after { transform: translateX(16px); }
+#view-settings input[type="checkbox"]:disabled,
+#view-wallet .wallet-tip-settings input[type="checkbox"]:disabled { opacity: .45; cursor: default; }
+#view-settings input[type="checkbox"]:focus-visible,
+#view-wallet .wallet-tip-settings input[type="checkbox"]:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 0; }
+
+/* 1-2. 1 行 44。文は左、スイッチは右 */
+#view-settings .check.settings-row,
+#view-settings label.settings-row {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: 44px;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+  color: var(--text);
+  font-size: var(--type-subhead);
+  line-height: var(--lh-subhead);
+  cursor: pointer;
+}
+#view-settings .settings-rows > .settings-row:first-child { border-top: 0; }
+#view-settings .settings-rows { margin: 0; }
+#view-settings .settings-row > span { min-width: 0; }
+
+/* 1-3. 選択式（配色・文字の大きさ・密度）はラジオを隠して切替部品の見た目にする */
+#view-settings .appearance-choices {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  background: var(--interactive);
+}
+#view-settings .appearance-choice {
+  position: relative;
+  min-height: var(--hit-min);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--type-subhead);
+  font-weight: var(--weight-semibold);
+}
+#view-settings .appearance-choice:hover { background: transparent; color: var(--text); }
+#view-settings .appearance-choice:has(input:checked) {
+  border: 0;
+  background: var(--surface-raised);
+  color: var(--text);
+  font-weight: var(--weight-semibold);
+}
+#view-settings .appearance-choice input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+#view-settings .appearance-choice:has(input:focus-visible) { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+/* 1-4. 節・群・説明の字の段（見出し 15/600、説明 13 muted） */
+#hub-shell #view-settings .card {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+}
+#hub-shell #view-settings .card h3,
+#hub-shell #view-settings .account-card-head h3 {
+  margin: 0 0 var(--space-1);
+  font-size: var(--type-headline);
+  font-weight: var(--weight-semibold);
+  line-height: var(--lh-headline);
+}
+#hub-shell #view-settings :is(.subtle, .meta, .appearance-settings .meta) {
+  margin: var(--space-1) 0 var(--space-3);
+  color: var(--muted);
+  font-size: var(--type-subhead);
+  line-height: var(--lh-subhead);
+}
+#hub-shell #view-settings .settings-sub {
+  margin: var(--space-5) 0 var(--space-2);
+  color: var(--muted);
+  font-size: var(--type-subhead);
+  font-weight: var(--weight-semibold);
+}
+#view-settings .appearance-group legend {
+  margin-bottom: var(--space-2);
+  font-size: var(--type-subhead);
+  font-weight: var(--weight-semibold);
+}
+#view-settings .inner-nav-head {
+  font-size: var(--type-caption);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0;
+}
+#view-settings .inner-nav-item { font-size: var(--type-subhead); min-height: 32px; }
+
+/* 1-5. 操作はカードの右端に揃える。ログアウト等は danger 色の文字だけ（塗らない）。 */
+#hub-shell #view-settings .actions,
+#hub-shell #view-settings .account-card .actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+#hub-shell #view-settings .state-pill {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  box-sizing: border-box;
+  max-width: 100%;
+  min-height: 24px;
+  height: auto;
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--interactive);
+  color: var(--muted);
+  font-size: var(--type-caption);
+  line-height: var(--lh-caption);
+  font-weight: var(--weight-semibold);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+#hub-shell #view-settings :is(.deny, .head-action, .ghost) { min-height: var(--control-h); }
+#hub-shell #view-settings .deny { color: var(--danger-text); }
+#hub-shell #view-settings .settings-confirm {
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--warning-bg);
+  color: var(--warning-text);
+  font-size: var(--type-subhead);
+}
+#hub-shell #view-settings :is(select, textarea, input[type="text"], input[type="url"]) { font-size: var(--type-subhead); }
+
+/* 1-6. 音楽の P2P（通知欄の枠も含めて 13 で揃える） */
+#hub-shell #view-settings .media-p2p-settings .media-p2p-notice {
+  margin: var(--space-3) 0;
+  padding: var(--space-3) var(--space-4);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--warning-bg);
+  color: var(--warning-text);
+}
+#hub-shell #view-settings .media-p2p-settings .media-p2p-notice .meta { color: inherit; margin: 0 0 var(--space-3); }
+#view-settings progress { width: 100%; height: 6px; border-radius: var(--radius-pill); }
+
+/* ============================================================
+   2. マーケット（#view-market）
+   ============================================================ */
+
+/* 2-1. 読み込み失敗・一部失敗の帯は警告トークン（ダークの値）。再試行は secondary */
+#hub-shell #shop-state.is-partial {
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--warning-bg);
+  color: var(--warning-text);
+  font-size: var(--type-subhead);
+  line-height: var(--lh-subhead);
+}
+#hub-shell #shop-state.is-partial .head-action,
+#hub-shell #shop-state.is-partial button {
+  min-height: var(--control-h);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--interactive);
+  color: var(--text);
+}
+#hub-shell #shop-state.is-partial button:hover { background: var(--interactive-hover); }
+/* 2-2. 商品の札：格子 minmax(240px,1fr)、絵 1:1、題 15/600 2 行、店 13 muted、価格 15/700 */
+#hub-shell #shop-results.result-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--space-4); }
+#hub-shell #shop-results .shop-product-card {
+  gap: var(--space-1);
+  padding: 0 var(--space-1) var(--space-3);
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+}
+#hub-shell #shop-results .shop-product-card:hover { background: var(--content-surface-hover); }
+#hub-shell #shop-results .shop-product-card .result-media {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  margin: 0 calc(-1 * var(--space-1)) var(--space-2);
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: var(--interactive);
+}
+#hub-shell #shop-results .shop-product-card .result-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px var(--media-outline);
+  pointer-events: none;
+}
+#hub-shell #shop-results .shop-product-card .result-media img { display: block; width: 100%; height: 100%; object-fit: cover; }
+/* 絵が無い商品：店の頭字と分類の記号 */
+#hub-shell #shop-results .shop-product-card .result-media.is-placeholder {
+  display: grid;
+  place-items: center;
+  background: var(--content-nested);
+  color: var(--muted);
+}
+#hub-shell #shop-results .shop-product-card .result-media.is-placeholder .shop-initial {
+  color: var(--text);
+  font-size: var(--type-title1);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+}
+#hub-shell #shop-results .shop-product-card .result-media.is-placeholder svg {
+  position: absolute;
+  right: var(--space-3);
+  bottom: var(--space-3);
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+#hub-shell #shop-results .shop-product-card > strong {
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+  line-height: var(--lh-body);
+}
+#hub-shell #shop-results .shop-product-card > p:not(.shop-product-meta):not(.meta) {
+  font-size: var(--type-subhead);
+  line-height: var(--lh-subhead);
+}
+#hub-shell #shop-results .shop-product-card > .meta { font-size: var(--type-subhead); }
+#hub-shell #shop-results .shop-product-meta { font-size: var(--type-subhead); }
+#hub-shell #shop-results .shop-product-meta strong {
+  font-size: var(--type-body);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+#hub-shell #shop-results .shop-card-actions {
+  border-top: 0;
+  padding-top: var(--space-1);
+  font-size: var(--type-subhead);
+}
+#hub-shell #shop-results .shop-card-actions span { font-size: var(--type-subhead); }
+#hub-shell #shop-results .shop-card-actions .approve {
+  min-height: var(--control-h);
+  padding: 0 var(--space-3);
+  font-size: var(--type-subhead);
+}
+
+/* ============================================================
+   3. ウォレット（#view-wallet）：残高の札、操作は secondary 36、注意は danger-text
+   ============================================================ */
+#hub-shell #view-wallet .wallet-device,
+#hub-shell #view-wallet .wallet-section {
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--content-surface);
+}
+#hub-shell #view-wallet .wallet-eyebrow {
+  color: var(--muted);
+  font-size: var(--type-subhead);
+  font-weight: var(--weight-semibold);
+}
+#hub-shell #view-wallet .wallet-network {
+  padding: 0 var(--space-2);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--interactive);
+  color: var(--muted);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-semibold);
+  line-height: 24px;
+}
+#hub-shell #view-wallet .wallet-balance {
+  font-size: var(--type-display);
+  font-weight: var(--weight-bold);
+  line-height: var(--lh-display);
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+#hub-shell #view-wallet .wallet-balance.is-unavailable { font-size: var(--type-headline); font-weight: var(--weight-semibold); line-height: var(--lh-headline); }
+#hub-shell #view-wallet .wallet-unit { font-size: var(--type-subhead); }
+#hub-shell #view-wallet :is(.wallet-note, .wallet-balance-state, .wallet-address) {
+  font-size: var(--type-subhead);
+  line-height: var(--lh-subhead);
+}
+#hub-shell #view-wallet .wallet-address { font-size: var(--type-caption); }
+/* 警告の記号と文字は danger-text（面の上で 4.5:1 以上） */
+#hub-shell #view-wallet .wallet-balance-state.is-error { color: var(--danger-text); }
+#hub-shell #view-wallet .wallet-balance-state.is-error::before { color: var(--danger-text); border-color: var(--danger-text); }
+/* ネットワーク切り替え（選択中のネットワークは残高・送金・確認の全てに出す） */
+.wallet-network-picker { display: grid; gap: var(--space-2); margin: var(--space-3) 0; }
+.wallet-network-label { display: grid; gap: var(--space-1); color: var(--muted); font-size: var(--type-subhead); font-weight: var(--weight-semibold); }
+.wallet-network-select { min-height: var(--control-h-lg); }
+.wallet-mainnet-warning { margin: 0; padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); background: var(--warning-bg); color: var(--warning-text); font-size: var(--type-subhead); font-weight: var(--weight-semibold); line-height: var(--lh-subhead); }
+.wallet-testnet-note { margin: 0; color: var(--muted); font-size: var(--type-subhead); line-height: var(--lh-subhead); }
+.wallet-developer summary { color: var(--muted); font-size: var(--type-subhead); cursor: pointer; }
+.wallet-developer-toggle { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-2); }
+.wallet-token-list { display: grid; gap: var(--space-1); margin: var(--space-3) 0; }
+.wallet-network-dialog { width: min(480px, calc(100% - 28px)); }
+.wallet-network-dialog .wallet-network-dialog-body { display: grid; gap: var(--space-2); }
+/* 操作は secondary 36。主操作の色は使わない */
+#hub-shell #view-wallet .wallet-actions { gap: var(--space-2); }
+#hub-shell #view-wallet .wallet-actions button,
+#hub-shell #view-wallet .wallet-action-panel button,
+#hub-shell #view-wallet .wallet-section > button {
+  min-height: var(--control-h-lg);
+  min-width: 96px;
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--interactive);
+  color: var(--text);
+  font-size: var(--type-subhead);
+  font-weight: var(--weight-semibold);
+}
+#hub-shell #view-wallet :is(.wallet-actions button, .wallet-action-panel button, .wallet-section > button):hover:not(:disabled) { background: var(--interactive-hover); }
+#hub-shell #view-wallet :is(.wallet-actions button, .wallet-action-panel button, .wallet-section > button):disabled { opacity: .45; }
+#hub-shell #view-wallet .wallet-actions button[aria-expanded="true"] { background: var(--surface-raised); box-shadow: inset 0 0 0 1px var(--line-strong); }
+#hub-shell #view-wallet .wallet-action-panel {
+  padding: var(--space-4);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--content-nested);
+}
+#hub-shell #view-wallet .wallet-action-panel > strong { font-size: var(--type-body); font-weight: var(--weight-semibold); }
+#hub-shell #view-wallet .wallet-send-fields label { font-size: var(--type-subhead); }
+#hub-shell #view-wallet .wallet-section h3 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+  line-height: var(--lh-body);
+}
+#hub-shell #view-wallet .wallet-list-row { min-height: 44px; align-items: center; padding: var(--space-2) 0; }
+#hub-shell #view-wallet .wallet-list-row strong { font-size: var(--type-subhead); font-weight: var(--weight-semibold); }
+/* チップの受取設定などの summary は 28 以上 */
+#hub-shell #view-wallet summary,
+#hub-shell .wallet-tip-settings summary,
+#hub-shell .owned-event-listings summary {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  cursor: pointer;
+  font-size: var(--type-subhead);
+  font-weight: var(--weight-semibold);
+}
+#hub-shell .wallet-tip-settings,
+#hub-shell .owned-event-listings {
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--content-surface);
+}
+#hub-shell .wallet-tip-settings :is(label, .meta, p) { font-size: var(--type-subhead); }
+
+/* ============================================================
+   4. 購入の画面（カート・注文・出品者・保管庫）：ボタンと字の段をそろえる
+   ============================================================ */
+#hub-shell :is(#view-cart, #view-order, #view-purchased, #view-market) .card h3 {
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+  line-height: var(--lh-body);
+}
+#hub-shell :is(#view-cart, #view-order, #view-purchased, #view-market) .card .meta { font-size: var(--type-subhead); line-height: var(--lh-subhead); }
+#hub-shell :is(#view-cart, #view-order, #view-purchased, #view-market) .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+#hub-shell :is(#view-cart, #view-order, #view-market) :is(.segmented, .scopes) { width: auto; max-width: 100%; display: inline-flex; flex-wrap: wrap; margin: 0 0 var(--space-3); }
+#hub-shell :is(#view-cart, #view-order, #view-market, #view-purchased) :is(.segmented, .scopes) button {
+  min-height: var(--hit-min);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-xs);
+  color: var(--muted);
+  font-size: var(--type-subhead);
+  font-weight: var(--weight-semibold);
+  box-shadow: none;
+}
+#hub-shell :is(#view-cart, #view-order, #view-market, #view-purchased) :is(.segmented, .scopes) button:is(.on, [aria-pressed="true"], [aria-selected="true"]) {
+  background: var(--surface-raised);
+  color: var(--text);
+  box-shadow: none;
+}
+#hub-shell :is(#view-cart, #view-order, #view-market, #view-purchased) :is(.segmented, .scopes) button.on::after { display: none; }
+#hub-shell #view-market .eyebrow {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: var(--type-subhead);
+  font-weight: var(--weight-semibold);
+}
+/* 危険な操作（キャンセル・解除・削除）は danger 色の文字 */
+#hub-shell :is(#view-cart, #view-order, #view-market) .head-action.is-danger,
+#hub-shell :is(#view-cart, #view-order, #view-market) .deny { color: var(--danger-text); }
+/* 状態の札 */
+#hub-shell :is(#view-cart, #view-order, #view-market, #view-purchased) .state-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 var(--space-2);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--interactive);
+  color: var(--muted);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-semibold);
+}
+
+/* ============================================================
+   5. AI（#view-ai）：入力欄は角 lg、選択は 28 のチップ、送るは 32 の丸
+   ============================================================ */
+#view-ai .piw-composer { border-radius: var(--radius-lg); box-shadow: none; padding: var(--space-3) var(--space-4); }
+#view-ai .piw-composer-bar { gap: var(--space-2); }
+.piw-chip {
+  min-height: var(--hit-min);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-pill);
+  font-size: var(--type-subhead);
+  font-weight: var(--weight-semibold);
+}
+.piw-chip > span:not(.piw-caret) { max-width: 180px; }
+#view-ai .piw-composer .piw-send,
+#view-ai .piw-composer .piw-stop { width: 32px; height: 32px; min-height: 32px; }
+#view-ai .piw-title .piw-workspace { font-weight: var(--weight-semibold); }
+#view-ai .piw-title h2:not([hidden]) { font-size: var(--type-subhead); font-weight: var(--weight-semibold); }
+.piw-model-option,
+.piw-preset strong,
+#sidebar-ai-history > #sidebar-ai-new,
+#sidebar-ai-history .piw-history-project-name { font-weight: var(--weight-semibold); }
+.piw-model-option { font-weight: var(--weight-regular); }
+.piw-popover { border-radius: var(--radius-md); box-shadow: var(--elevation-1); }
+.piw-popover[hidden] { display: none; }
+#sidebar-ai-history .piw-history-project > .piw-history-item,
+#view-ai .piw-empty-recent-item { min-height: 40px; height: 40px; }
+#sidebar-ai-history .piw-history-project > .piw-history-item .piw-history-title { line-height: 40px; }
+#sidebar-ai-history .piw-history-dot[data-tone="done"] { background: var(--muted); }
+#sidebar-ai-history .piw-history-dot[data-tone="approval"] { background: var(--warning-text); }
+#view-ai .piw-empty-recent-item { border-radius: var(--radius-sm); }
+
+#view-wallet .wallet-tip-settings label.check {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: 44px;
+  font-size: var(--type-subhead);
+  cursor: pointer;
+}
+
+/* 絵の無い商品の札：旧い枠の記号を出さず、店の頭字を中央へ */
+#hub-shell #shop-results .shop-product-card .result-media.is-placeholder::before { content: none; }
+
+/* 開閉の summary：右に › を出し、開くと下向き（標準の三角は出さない） */
+#hub-shell #view-wallet summary,
+#hub-shell #view-wallet details > summary { list-style: none; justify-content: space-between; }
+#hub-shell #view-wallet summary::-webkit-details-marker { display: none; }
+#hub-shell #view-wallet details > summary::after {
+  content: "›";
+  color: var(--muted);
+  font-size: var(--type-headline);
+  line-height: 1;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+#hub-shell #view-wallet details[open] > summary::after { transform: rotate(90deg); }
+#hub-shell #view-wallet .wallet-section > button { margin-top: var(--space-3); }
+#hub-shell #view-wallet .wallet-section > .wallet-note + button { margin-top: var(--space-3); }
+
+/* 出品者・購入の画面の見出しと操作の並び：操作は左から、見出しの上に余白、送信は全幅にしない */
+#hub-shell #view-market .card > h4,
+#hub-shell #view-market .card .settings-sub,
+#hub-shell #view-market .card form > h4 {
+  margin: var(--space-5) 0 var(--space-2);
+  font-size: var(--type-subhead);
+  font-weight: var(--weight-semibold);
+  color: var(--muted);
+}
+#hub-shell :is(#view-market, #view-cart, #view-order, #view-purchased) .actions { justify-content: flex-start; }
+#hub-shell #view-market .detail-form button[type="submit"],
+#hub-shell #view-market .detail-form .approve { align-self: flex-start; width: auto; min-height: var(--control-h-lg); padding: 0 var(--space-5); }
+#hub-shell #view-market .detail-form { gap: var(--space-2); }
+#hub-shell #view-market form.detail-form > h3 {
+  margin: var(--space-5) 0 var(--space-1);
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+  line-height: var(--lh-body);
+}
+#hub-shell #view-market form.detail-form > button { justify-self: start; align-self: flex-start; width: auto; }
+
+/* AI の履歴の題は本文の太さ（400）。太さは 400 / 600 / 700 だけ */
+#sidebar-ai-history .piw-history-item .piw-history-title,
+#view-ai .piw-empty-recent-item,
+#view-ai .piw-empty-recent-item * { font-weight: var(--weight-regular); }
+#view-ai .piw-empty-recent-item { color: var(--text); font-size: var(--type-subhead); }
+#view-ai .piw-empty > strong { font-weight: var(--weight-semibold); }
+#view-ai .piw-empty strong { font-weight: var(--weight-semibold); }
+
+/* ============================================================
+   2-3. マーケットの作り直し（2026-10-18）
+   一覧は Booth の格子に寄せる：札は絵 1:1・名前 2 行・店・価格（税込）・送料と在庫。
+   説明は札から外し、詳細で全幅に置く。格子は 168px から詰め、1280 で 5 列、1920 で 6 列。
+   ============================================================ */
+#hub-shell #market-shop .shop-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  min-height: var(--control-h);
+  margin-bottom: var(--space-4);
+}
+#hub-shell #market-shop .shop-toolbar #shop-query { flex: 1 1 200px; min-width: 0; height: var(--control-h); min-height: var(--control-h); margin: 0; }
+#hub-shell #market-shop .shop-count {
+  flex: none;
+  color: var(--muted);
+  font-size: var(--type-subhead);
+  font-variant-numeric: tabular-nums;
+}
+#hub-shell #market-shop .shop-sort,
+#hub-shell #market-shop .shop-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+  min-height: var(--control-h);
+  color: var(--muted);
+  font-size: var(--type-subhead);
+}
+#hub-shell #market-shop .shop-sort select { height: var(--control-h); min-height: var(--control-h); margin: 0; }
+#hub-shell #market-shop .shop-toggle input { margin: 0; }
+#hub-shell #shop-results.result-grid {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-5);
+}
+#hub-shell #shop-results.layout-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-5);
+  max-width: none;
+  margin-inline: 0;
+  padding-inline: 0;
+}
+#hub-shell #shop-results .shop-product-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 0;
+  padding: 0 0 var(--space-2);
+  border-radius: var(--radius-md);
+}
+#hub-shell #shop-results .shop-product-card:hover { background: transparent; }
+#hub-shell #shop-results .shop-product-card:hover > strong { text-decoration: underline; text-underline-offset: 2px; }
+#hub-shell #shop-results .shop-product-card .result-media {
+  aspect-ratio: 1 / 1;
+  margin: 0 0 var(--space-2);
+}
+#hub-shell #shop-results .shop-product-card .result-media.is-placeholder .shop-initial { display: none; }
+#hub-shell :is(#shop-results .shop-product-card, .shop-detail-media) .result-media.is-placeholder svg {
+  position: static;
+  width: 36px;
+  height: 36px;
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: .7;
+}
+#hub-shell #shop-results .shop-product-card > .result-media { order: 0; }
+#hub-shell #shop-results .shop-product-card > strong {
+  display: -webkit-box;
+  overflow: hidden;
+  order: 1;
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+#hub-shell #shop-results .shop-product-card > .seller-link {
+  order: 2;
+  align-self: flex-start;
+  max-width: 100%;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: var(--type-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#hub-shell #shop-results .shop-product-card > .seller-link:hover { color: var(--link-color); text-decoration: underline; }
+#hub-shell #shop-results .shop-product-card > .meta { order: 2; font-size: var(--type-caption); }
+#hub-shell #shop-results .shop-product-card > .shop-product-meta { order: 3; margin: var(--space-1) 0 0; }
+#hub-shell #shop-results .shop-product-card > .shop-product-sub { order: 4; }
+#hub-shell #shop-results .shop-product-card > .shop-card-actions { order: 5; margin-top: auto; padding-top: var(--space-2); }
+#hub-shell :is(#shop-results, .shop-detail) .shop-product-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 0 var(--space-2);
+}
+#hub-shell .shop-detail-media .result-media.is-placeholder::before { content: none; }
+#hub-shell :is(#shop-results, .shop-detail) .shop-product-meta strong {
+  color: var(--text);
+  font-size: var(--type-headline);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+#hub-shell :is(#shop-results, .shop-detail) .shop-tax { color: var(--muted); font-size: var(--type-caption); }
+#hub-shell #shop-results .shop-product-sub {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-2);
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--type-caption);
+}
+#hub-shell #shop-results .shop-product-sub .is-low { color: var(--warning-text); }
+#hub-shell #shop-results .shop-card-actions { display: flex; }
+#hub-shell #shop-results .shop-card-actions .approve {
+  width: 100%;
+  min-height: 30px;
+  background: var(--interactive);
+  color: var(--text);
+}
+#hub-shell #shop-results .shop-card-actions .approve:hover:not(:disabled) { background: var(--interactive-hover); }
+#hub-shell #shop-results .shop-card-actions .approve:disabled { opacity: 1; color: var(--muted); }
+#hub-shell #shop-results .shop-web-hint { color: var(--link-color); font-size: var(--type-caption); }
+
+/* ほかの売り場：一覧の下に、小さな見出しと枠なしボタンの静かな足元として置く。 */
+#hub-shell #market-shop .market-web-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+#hub-shell #market-shop .market-web-title { color: var(--muted); font-size: var(--type-caption); }
+#hub-shell #market-shop .market-web-link { font-size: var(--type-subhead); }
+
+/* 商品詳細：左に絵（最大 440px）、右に購入の箱、説明は下に全幅。 */
+#hub-shell .shop-detail {
+  display: grid;
+  grid-template-columns: minmax(240px, 440px) minmax(280px, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+  width: min(1040px, 100%);
+  margin: 0;
+}
+#hub-shell .shop-detail-media .result-media,
+#hub-shell .shop-detail-media > img {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  margin: 0;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--content-nested);
+  object-fit: cover;
+}
+#hub-shell .shop-detail-media .result-media .shop-initial { display: none; }
+#hub-shell .shop-detail-info { display: grid; gap: var(--space-3); min-width: 0; }
+#hub-shell .shop-detail-info > .seller-link {
+  justify-self: start;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--link-color);
+  font-size: var(--type-subhead);
+}
+#hub-shell .shop-detail-info > .seller-link:hover { text-decoration: underline; }
+#hub-shell .shop-detail-info h3 { margin: 0; font-size: var(--type-title2); line-height: var(--lh-title2); }
+#hub-shell .shop-detail-price { margin: 0; }
+#hub-shell .shop-detail .shop-detail-price strong { font-size: var(--type-title2); }
+#hub-shell .shop-detail-facts { gap: var(--space-2); padding: var(--space-3) 0; font-size: var(--type-subhead); }
+#hub-shell .shop-detail-actions { display: flex; gap: var(--space-2); }
+#hub-shell .shop-detail-actions > button { min-height: var(--control-h-lg); padding: 0 var(--space-5); }
+#hub-shell .shop-detail-actions > .approve { flex: 1; }
+#hub-shell .shop-detail-note { margin: 0; font-size: var(--type-caption); line-height: var(--lh-caption); }
+#hub-shell .shop-detail-legal {
+  justify-self: start;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--link-color);
+  font-size: var(--type-subhead);
+}
+#hub-shell .shop-detail-legal:hover { text-decoration: underline; }
+#hub-shell .shop-detail-about {
+  grid-column: 1 / -1;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+#hub-shell .shop-detail-about h4 { margin: 0 0 var(--space-2); font-size: var(--type-headline); }
+#hub-shell .shop-detail-about .detail-p { max-width: var(--measure-reading); margin: 0; white-space: pre-wrap; line-height: var(--lh-reading); }
+@media (max-width: 900px) {
+  #hub-shell .shop-detail { grid-template-columns: 1fr; }
+  #hub-shell .shop-detail-media { max-width: 360px; }
+}
+
+/* カートの合計：dt と dd を左右に揃える（既定の字下げのまま並んでいた）。 */
+#hub-shell #view-cart #cart-totals dl {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+  padding: var(--space-3) 0;
+  border-block: 1px solid var(--line);
+}
+#hub-shell #view-cart #cart-totals dl > div { display: flex; justify-content: space-between; gap: var(--space-4); }
+#hub-shell #view-cart #cart-totals dt { color: var(--muted); }
+#hub-shell #view-cart #cart-totals dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }

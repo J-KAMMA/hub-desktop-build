@@ -1,0 +1,45 @@
+/* AI screen redesign (2026-10-11): ai-sidebar. Existing CSS variables only. */
+#sidebar-ai-history { gap: var(--space-2); padding: var(--space-2) var(--space-2) var(--space-2); }
+#sidebar-ai-history > .sidebar-context-title { display: none; }
+#sidebar-ai-history > #sidebar-ai-new { display: flex; width: 100%; min-height: 36px; align-items: center; justify-content: center; margin: 0; border-radius: var(--radius-sm); background: var(--interactive); color: var(--text); font-size: var(--type-subhead); font-weight: 500; }
+#sidebar-ai-history > #sidebar-ai-new:hover { background: var(--interactive-hover); }
+#sidebar-ai-history > .harness-history { order: 2; display: flex; min-height: 0; flex: 1; flex-direction: column; padding: 0; overflow-y: auto; scrollbar-width: thin; }
+#sidebar-ai-history .piw-history-search { flex: none; min-height: 32px; height: 32px; margin: 0 0 var(--space-2); padding: 0 var(--space-2); border-radius: var(--radius-sm); font-size: var(--type-caption); }
+#sidebar-ai-history .piw-history-list { display: block; }
+#sidebar-ai-history .piw-history-list > .meta { margin: var(--space-3) var(--space-2); font-size: var(--type-caption); }
+#sidebar-ai-history .piw-history-project { margin: 0 0 var(--space-1); }
+#sidebar-ai-history .piw-history-project-head { display: flex; height: 34px; min-height: 34px; align-items: center; gap: var(--space-2); padding: 0 var(--space-2) 0 var(--space-5); border-radius: var(--radius-sm); }
+#sidebar-ai-history .piw-history-project-head::before { top: 50%; transform: translateY(-50%); }
+#sidebar-ai-history .piw-history-project[open] > .piw-history-project-head::before { transform: translateY(-50%) rotate(90deg); }
+#sidebar-ai-history .piw-history-project-name { min-width: 0; flex: 1; overflow: hidden; font-size: var(--type-subhead); font-weight: 500; line-height: 34px; text-overflow: ellipsis; white-space: nowrap; overflow-wrap: normal; }
+#sidebar-ai-history .piw-history-project-head > .piw-history-count { flex: none; margin: 0; color: var(--muted); font-size:var(--type-caption); line-height: 34px; }
+#sidebar-ai-history .piw-history-project > .piw-history-item { display: flex; width: calc(100% - 8px); height: 32px; min-height: 32px; align-items: center; gap: var(--space-2); margin: 0 0 0 var(--space-2); padding: 0 var(--space-2); border-radius: var(--radius-sm); font-size: var(--type-subhead); }
+#sidebar-ai-history .piw-history-project > .piw-history-item[hidden] { display: none; }
+#sidebar-ai-history .piw-history-project > .piw-history-item:hover { background: var(--interactive); }
+#sidebar-ai-history .piw-history-project > .piw-history-item[aria-current="true"] { background: var(--selected); }
+#sidebar-ai-history .piw-history-dot { width: 7px; height: 7px; flex: none; border-radius: 50%; background: var(--muted); }
+#sidebar-ai-history .piw-history-dot[data-tone="running"] { background: var(--action); }
+#sidebar-ai-history .piw-history-dot[data-tone="approval"] { background: var(--warning-text); }
+#sidebar-ai-history .piw-history-dot[data-tone="done"] { background: var(--positive); }
+#sidebar-ai-history .piw-history-dot[data-tone="failed"] { background: var(--danger); }
+#sidebar-ai-history .piw-history-item .piw-history-title { display: block; min-width: 0; flex: 1; overflow: hidden; font-size: var(--type-subhead); line-height: 32px; text-overflow: ellipsis; white-space: nowrap; overflow-wrap: normal; }
+#sidebar-ai-history .piw-history-time { flex: none; color: var(--muted); font-size:var(--type-caption); font-variant-numeric: tabular-nums; }
+#sidebar-ai-history .piw-history-more { display: block; width: calc(100% - 8px); height: 28px; margin: 0 0 0 var(--space-2); padding: 0 var(--space-2); border-radius: var(--radius-sm); background: transparent; color: var(--muted); font-size: var(--type-caption); text-align: left; }
+#sidebar-ai-history .piw-history-more:hover { background: var(--interactive); color: var(--text); }
+#sidebar-ai-history > #ai-more-open { order: 3; display: flex; width: 100%; min-height: 34px; flex: none; align-items: center; justify-content: flex-start; margin: 0; padding: 0 var(--space-2); border: 0; border-top: 1px solid var(--line); border-radius: var(--radius-sm); background: transparent; color: var(--muted); font-size: var(--type-subhead); }
+#sidebar-ai-history > #ai-more-open:hover { background: var(--interactive); color: var(--text); }
+/* The selected row must stay one line too (an older rule lets selected titles wrap). */
+#sidebar-ai-history .piw-history-item,
+#sidebar-ai-history .piw-history-item * {
+  white-space: nowrap;
+}
+#sidebar-ai-history .piw-history-item > :not(.piw-history-dot) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#sidebar-ai-history .piw-history-item[aria-current="true"] .piw-history-title {
+  display: block;
+  -webkit-line-clamp: unset;
+  white-space: nowrap;
+}

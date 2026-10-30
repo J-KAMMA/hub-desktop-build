@@ -1,0 +1,67 @@
+/* AI screen redesign (2026-10-11): ai-turn. Existing CSS variables only. */
+@keyframes piw-pulse { 50% { opacity: .35; } }
+
+/* Turn */
+#pi-work .piw-turn { gap: var(--space-3); padding-block: 0; }
+#pi-work .piw-turn + .piw-turn { margin-top: var(--space-5); border-top: 0; }
+#pi-work .piw-bubble { justify-self: end; max-width: 70%; padding: var(--space-3) var(--space-3); border: 0; border-radius: var(--radius-lg); background: var(--surface-sunken); font-size: var(--type-subhead); line-height: 1.65; overflow-wrap: anywhere; white-space: pre-wrap; }
+#pi-work .piw-turn > .piw-meta { justify-self: end; font-size: var(--type-caption); color: var(--muted); }
+#pi-work .piw-answer { max-width: 100%; padding: 0; font-size: var(--type-subhead); line-height: 1.7; }
+#pi-work .piw-footer { font-size: var(--type-caption); color: var(--muted); }
+#pi-work .piw-verify.is-ok { color: var(--positive); }
+#pi-work .piw-verify.is-failed { color: var(--danger); }
+
+/* Process block */
+#pi-work .piw-process { min-width: 0; }
+#pi-work .piw-process > summary { display: flex; align-items: center; gap: var(--space-2); min-height: 28px; color: var(--muted); font-size: var(--type-subhead); cursor: pointer; list-style: none; }
+#pi-work .piw-process > summary::-webkit-details-marker { display: none; }
+#pi-work .piw-process-mark { display: inline-block; min-width: 1em; text-align: center; }
+#pi-work .piw-process-mark.is-running { width: 7px; height: 7px; min-width: 7px; border-radius: 50%; background: var(--action); animation: piw-pulse 1.2s ease-in-out infinite; }
+#pi-work .piw-process-mark.is-ok { color: var(--positive); }
+#pi-work .piw-process-mark.is-failed { color: var(--danger); }
+#pi-work .piw-process-body { display: grid; gap: var(--space-2); padding: var(--space-1) 0 var(--space-1) var(--space-3); min-width: 0; }
+#pi-work .piw-pending-row { margin: 0; color: var(--warning-text); font-size: var(--type-subhead); }
+#pi-work .piw-stderr { font-size: var(--type-caption); color: var(--muted); }
+
+/* Tool rows */
+#pi-work .piw-trace { border: 0; background: none; border-radius: 0; }
+#pi-work .piw-trace > summary { padding: 0; min-height: 24px; color: var(--muted); font-size: var(--type-caption); cursor: pointer; }
+#pi-work .piw-trace > ul { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+#pi-work .piw-trace > ul > li { display: block; font: 13px/24px var(--font-ui, inherit); color: var(--muted); }
+#pi-work .piw-tool > summary, #pi-work .piw-tool-line { display: flex; align-items: baseline; gap: var(--space-2); min-height: 24px; overflow: hidden; list-style: none; cursor: pointer; }
+#pi-work .piw-tool-line { cursor: default; }
+#pi-work .piw-tool > summary::-webkit-details-marker { display: none; }
+#pi-work .piw-trace-glyph { width: 1em; flex: none; text-align: center; }
+#pi-work .piw-trace-glyph.running { animation: piw-pulse 1.2s ease-in-out infinite; }
+#pi-work .piw-trace-glyph.stopped { color: var(--muted); }
+#pi-work .piw-trace code { flex: none; color: var(--text); }
+#pi-work .piw-trace-detail { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#pi-work .piw-tool[open] > summary { overflow: visible; }
+#pi-work .piw-tool .piw-trace-preview { display: block; margin: var(--space-1) 0 var(--space-2); padding: var(--space-3) var(--space-4); max-height: 320px; overflow: auto; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-sunken); color: var(--text); font: 12.5px/22px ui-monospace, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* Changes */
+#pi-work .piw-changes { margin: 0; padding: 0; border: 0; }
+#pi-work .piw-changes-title { margin: 0 0 var(--space-1); font-size: var(--type-subhead); font-weight: 500; }
+#pi-work .piw-change-row { min-height: 24px; font-size: var(--type-subhead); }
+#pi-work .piw-change-diff pre { max-height: 320px; padding: var(--space-3) var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-sunken); font: 12.5px/22px ui-monospace, monospace; }
+
+/* Approval seat: takes the composer's place, one request at a time */
+#pi-work .piw-approval-seat { width: min(892px, calc(100% - 24px)); margin: 0 auto var(--space-3); }
+#pi-work .piw-approval-seat[hidden] { display: none; }
+#pi-work .piw-composer.is-approval-pending { display: none; }
+#pi-work .piw-approval { display: grid; gap: 0; padding: 0; overflow: hidden; border: 1px solid var(--warning-line); border-radius: var(--radius-md); background: var(--content-surface); box-shadow: var(--shadow-sm); }
+#pi-work .piw-approval-strip { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: var(--space-2) var(--space-4); background: var(--warning-bg); color: var(--warning-text); font-size: var(--type-caption); }
+#pi-work .piw-approval-nav { display: inline-flex; align-items: center; gap: var(--space-2); }
+#pi-work .piw-approval-nav button { min-height: 24px; padding: 0 var(--space-2); font-size: var(--type-caption); }
+#pi-work .piw-approval-body { max-height: 60vh; overflow: auto; padding: var(--space-3) var(--space-4); }
+#pi-work .piw-approval-text { flex: none; gap: var(--space-2); }
+#pi-work .piw-approval-text > strong { max-height: none; font-size: var(--type-body); font-weight: 500; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+#pi-work .piw-approval[data-kind="command"] .piw-approval-text > strong { font: 500 13px/1.6 ui-monospace, monospace; word-break: break-all; }
+#pi-work .piw-approval-text .meta { font-size: var(--type-caption); color: var(--muted); }
+#pi-work .piw-approval-text .dev-output { max-height: none; }
+#pi-work .piw-approval .actions { display: flex; justify-content: flex-end; gap: var(--space-2); padding: var(--space-2) var(--space-4) var(--space-3); align-self: auto; }
+#pi-work .piw-approval .approve { background: var(--action); color: var(--action-text); }
+#pi-work .piw-approval .approve:hover:not(:disabled) { background: var(--action-hover); }
+@media (prefers-reduced-motion: reduce) {
+  #pi-work .piw-process-mark.is-running, #pi-work .piw-trace-glyph.running { animation: none; }
+}

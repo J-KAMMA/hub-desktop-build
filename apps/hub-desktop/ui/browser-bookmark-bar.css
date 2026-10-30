@@ -1,0 +1,17 @@
+.browser-bookmark-bar { flex:none; min-width:0; background:var(--panel); color:var(--text); border-bottom:1px solid var(--line); }
+.browser-bookmark-bar[hidden] { display:none; }
+.browser-bookmark-row { display:flex; align-items:center; gap:var(--space-1); height:calc(var(--tap-compact) + 4px); min-width:0; overflow:hidden; padding:0 var(--space-2); }
+.browser-bookmark-row > button { flex:none; }
+.browser-bookmark-bar button { min-width:0; height:var(--tap-compact); max-width:160px; padding:2px var(--space-2); border:0; border-radius:var(--radius-xs); background:transparent; color:inherit; font:inherit; font-size:var(--type-caption); text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; }
+.browser-bookmark-bar button:hover { background:var(--interactive); }
+.browser-bookmark-bar button:active { background:var(--interactive-hover); }
+.browser-bookmark-bar button:focus-visible { outline:2px solid var(--focus-ring); outline-offset:-2px; }
+.browser-bookmark-bar button[hidden] { display:none; }
+.browser-bookmark-row .browser-bookmark-more { width:var(--tap-compact); padding:0; text-align:center; font-size:var(--type-headline); }
+.browser-bookmark-row .browser-bookmark-empty { max-width:none; color:var(--muted); }
+.browser-bookmark-popup { width:min(520px,100%); max-height:260px; overflow:auto; padding:var(--space-1) var(--space-2); border-top:1px solid var(--line); background:var(--panel); }
+.browser-bookmark-popup[hidden] { display:none; }
+.browser-bookmark-popup > button { display:block; width:100%; max-width:none; height:var(--tap-compact); }
+.browser-bookmark-popup-title { display:block; padding:2px var(--space-2) var(--space-1); font-size:var(--type-caption); color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.browser-bookmark-popup .browser-bookmark-manage { border-top:1px solid var(--line); border-radius:0; margin-top:var(--space-1); color:var(--muted); }
+.browser-bookmark-item > .browser-favicon { margin-right:var(--space-2); }

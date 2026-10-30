@@ -1,0 +1,301 @@
+/* Hub Desktop の設計トークン（DESKTOP_SPEC §1.3）。色の値はここにだけ書く。
+   名前と値は Web の apps/hub/app/color-system.css に合わせる。ダークの地と面だけは
+   旦那様が選んだ「引き締まった黒」（2026-10-12）を正本にする。
+   テーマはアプリ自身の html[data-theme]（appearance-early.js / appearance.mjs が必ず light か dark に決める）
+   だけで切り替える。OS の prefers-color-scheme は見ない。 */
+
+/* ---- 色以外の共通値（テーマに依らない） ---- */
+:root {
+  --font-ui: "Inter Variable", "Noto Sans JP Variable", -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI",
+             "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP",
+             "Yu Gothic UI", Meiryo, system-ui, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-family: var(--font-ui);
+
+  /* 余白（4px 刻み） */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* 角 */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-pill: 999px;
+
+  /* 字の段（大きさ / 行高）。太さは 400 / 600 / 700 だけ。 */
+  --type-display: 34px;
+  --type-title1: 28px;
+  --type-title2: 22px;
+  --type-title3: 20px;
+  --type-headline: 17px;
+  --type-body: 15px;
+  --type-reading: 17px;
+  --type-callout: 15px;
+  --type-subhead: 13px;
+  --type-caption: 12px;
+  --lh-display: 40px;
+  --lh-title1: 34px;
+  --lh-title2: 28px;
+  --lh-title3: 26px;
+  --lh-headline: 24px;
+  --lh-body: 24px;
+  --lh-reading: 31px;
+  --lh-subhead: 18px;
+  --lh-caption: 16px;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* 動き */
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
+  --ease-spring: cubic-bezier(.32, .72, 0, 1);
+  --ease-in-out: cubic-bezier(.65, 0, .35, 1);
+  --dur-press: 100ms;
+  --dur-fast: 200ms;
+  --dur-base: 280ms;
+  --dur-slow: 350ms;
+
+  /* 机上の密度（マウス向け） */
+  --control-h: 32px;
+  --control-h-lg: 36px;
+  --hit-min: 28px;
+  --titlebar-h: 44px;
+  --measure-reading: 680px;
+  --width-feed: 600px;
+  --width-collection-xl: 1280px; /* 仕様の値。旧名 --width-collection(1120) を各レーンが移し終えたら置き換える */
+  --blur-bar: saturate(180%) blur(20px);
+  --blur-sheet: saturate(180%) blur(30px);
+
+  /* 旧名（各レーンが移し終えるまで残す。値は変えない＝配置が動かない） */
+  --header-height: 58px;
+  --toolbar-height: var(--titlebar-h);
+  --radius-control: var(--radius-sm);
+  --radius-card: var(--radius-md);
+  --control-height: 34px;
+  --text-title: 22px;
+  --text-section: 15px;
+  --text-body: 14px;
+  --text-meta: 12px;
+  --width-reading: 760px;
+  --width-collection: 1120px;
+}
+
+/* ---- ライト ---- */
+html[data-theme="light"] {
+  color-scheme: light;
+  /* 明るい地では游ゴシック UI の Regular が細く沈むので、日本語だけ Meiryo UI を先に当てる（英数は Segoe UI Variable のまま）。 */
+  --font-ui: "Inter Variable", "Noto Sans JP Variable", -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI",
+             "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP",
+             "Meiryo UI", "Yu Gothic UI", Meiryo, system-ui, sans-serif;
+  /* 強調色は 1 つのトークンに集める。ダークも同じ値（Web の --action と同じ）。切り替えるときはここだけ。 */
+  --accent-base: #0071e3;
+  --accent-base-hover: #0077ed;
+  --accent-base-active: #0068d1;
+  --accent-link: #005bb5;
+
+  --bg: #f5f5f7;
+  --panel: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-sunken: #ececee;
+  --content-surface: #ffffff;
+  --content-surface-hover: #f5f5f7;
+  --content-nested: #f0f0f3;
+  --interactive: #e6e6eb;
+  --interactive-hover: #dedee4;
+  --selected: #d6d6dc; /* 地(#f5f5f7)との差 1.3 以上。選択は hover より濃い */
+  --line: rgba(0, 0, 0, .14); /* 白の上で 1.38:1（細い区切りの下限 1.3 を超える） */
+  --line-strong: rgba(0, 0, 0, .46); /* 入力欄などの境界。白の上で 3:1 を超える */
+  --text: #1d1d1f;
+  --muted: #56565b;
+
+  --action: var(--accent-base);
+  --action-hover: var(--accent-base-hover);
+  --action-active: var(--accent-base-active);
+  --action-text: #ffffff;
+  --link-color: var(--accent-link);
+  --emphasis: var(--action);
+  --focus-ring: #3a3a3c;
+
+  --reaction-like: #f53844;
+  --positive-bg: #edf7f0;
+  --positive-text: #26643a;
+  --warning-bg: #fff7df;
+  --warning-text: #745719;
+  --danger-bg: #fff0f1;
+  --danger-text: #a43743;
+  --overlay: rgba(0, 0, 0, .4);
+
+  --material-bar: color-mix(in srgb, var(--bg) 72%, transparent);
+  --material-bar-solid: var(--bg);
+  /* 明るい配色のときは濃く重ねる。Mica の下地が暗い・黒（合成失敗）でも --muted が 4.5:1 を保つ。 */
+  --material-mica-tint: color-mix(in srgb, var(--bg) 90%, transparent);
+  --material-sheet: color-mix(in srgb, var(--surface-raised) 82%, transparent);
+  --material-sheet-solid: var(--surface-raised);
+
+  --media-app-bg: #090909;
+  --media-app-text: #f8f8f8;
+  --media-badge-bg: color-mix(in srgb, var(--media-app-bg) 78%, transparent);
+  --media-badge-text: var(--media-app-text);
+  --media-outline: color-mix(in srgb, var(--text) 8%, transparent);
+
+  --elevation-1: 0 1px 2px color-mix(in srgb, var(--text) 8%, transparent), 0 6px 16px color-mix(in srgb, var(--text) 8%, transparent);
+  --elevation-2: 0 2px 6px color-mix(in srgb, var(--text) 10%, transparent), 0 16px 40px color-mix(in srgb, var(--text) 14%, transparent);
+  /* 頭字の顔の6色（Web の --avatar-N と同じ値）。選ぶのは avatarTint()（state-view.mjs）。 */
+  --avatar-1: #e3efff; --avatar-1-text: #0a4a8f;
+  --avatar-2: #e1f4e8; --avatar-2-text: #17603a;
+  --avatar-3: #fdebd8; --avatar-3-text: #8a4a05;
+  --avatar-4: #f6e4f4; --avatar-4-text: #7a2a73;
+  --avatar-5: #fbe3e3; --avatar-5-text: #9a2b2b;
+  --avatar-6: #e6e6f7; --avatar-6-text: #43439a;
+}
+
+/* ---- ダーク（引き締まった黒）。data-theme が無い文書もダークに倒す（既定はダーク）。 ---- */
+html[data-theme="dark"],
+html:not([data-theme]) {
+  color-scheme: dark;
+  --accent-base: #0071e3;
+  --accent-base-hover: #0a84ff;
+  --accent-base-active: #0068d1;
+  --accent-link: #2997ff;
+
+  --bg: #0b0b0d;
+  --panel: #111114;
+  --surface-raised: #18181c;
+  --surface-sunken: #0e0e11;
+  --content-surface: #141417;
+  --content-surface-hover: #1b1b20;
+  --content-nested: #18181c;
+  --interactive: #1c1c21;
+  --interactive-hover: #25252b;
+  --selected: #24242b;
+  --line: #232329;
+  --line-strong: #3a3a43;
+  --text: #ececf1;
+  --muted: #a4a4b0;
+
+  --action: var(--accent-base);
+  --action-hover: var(--accent-base-hover);
+  --action-active: var(--accent-base-active);
+  --action-text: #ffffff;
+  --link-color: var(--accent-link);
+  --emphasis: var(--action);
+  --focus-ring: #d1d1d6;
+
+  --reaction-like: #ff453a;
+  --positive-bg: #203429;
+  --positive-text: #9bdfad;
+  --warning-bg: #37301f;
+  --warning-text: #ead084;
+  --danger-bg: #3b252b;
+  --danger-text: #f3a8b1;
+  --overlay: rgba(0, 0, 0, .6);
+
+  --material-bar: color-mix(in srgb, var(--bg) 70%, transparent);
+  --material-bar-solid: var(--bg);
+  --material-mica-tint: color-mix(in srgb, var(--bg) 58%, transparent);
+  --material-sheet: color-mix(in srgb, var(--surface-raised) 80%, transparent);
+  --material-sheet-solid: var(--surface-raised);
+
+  --media-app-bg: #090909;
+  --media-app-text: #f8f8f8;
+  --media-badge-bg: color-mix(in srgb, var(--media-app-bg) 78%, transparent);
+  --media-badge-text: var(--media-app-text);
+  --media-outline: color-mix(in srgb, var(--text) 12%, transparent);
+
+  --elevation-1: 0 0 0 1px var(--line);
+  --elevation-2: 0 0 0 1px var(--line), 0 16px 40px color-mix(in srgb, var(--media-app-bg) 60%, transparent);
+  --avatar-1: #1f3a5c; --avatar-1-text: #cfe3ff;
+  --avatar-2: #1d4630; --avatar-2-text: #c9efd8;
+  --avatar-3: #523515; --avatar-3-text: #fbdcb8;
+  --avatar-4: #4d2a4a; --avatar-4-text: #f5d3f1;
+  --avatar-5: #532424; --avatar-5-text: #fbd0d0;
+  --avatar-6: #333366; --avatar-6-text: #d6d6fa;
+}
+
+/* ---- ゴールド（2026-10-16、旦那様の指定）。設定の「配色」で選ぶ任意のパレット。
+   ライト／ダークは data-theme のまま、data-palette が値を差し替える（web の color-system.css と同じ値）。
+   金は強調（選択、主要操作、札、操作中のアイコン）だけ。本文と区切り線には使わない。焦点の輪は無彩色のまま。 ---- */
+html[data-palette="gold-ivory"][data-theme="light"] {
+  --accent-base: #8f6a1c;
+  --accent-base-hover: #7e5d16;
+  --accent-base-active: #6f5212;
+  --accent-link: #2a2216;
+  --bg: #ede4d0;
+  --panel: #f2ebdb;
+  --surface-raised: #f2ebdb;
+  --surface-sunken: #e6dbc2;
+  --content-surface: #f2ebdb;
+  --content-surface-hover: #eae0c9;
+  --content-nested: #eae0c9;
+  --interactive: #eae0c9;
+  --interactive-hover: #e0d4b8;
+  --selected: #d9c496;
+  --selected-text: #3f2e08;
+  --line: #d8c9a8;
+  --line-strong: #8a7b58;
+  --text: #2a2216;
+  --muted: #54483a;
+  --text-meta: #695d49;
+  --action-text: #fbf6ea;
+  /* 補足の文字（--text-meta）が暗い下地の上でも4.5:1を保つよう、標準のライトより濃く重ねる。 */
+  --material-mica-tint: color-mix(in srgb, var(--bg) 95%, transparent);
+  --chip-bg: #e2d3ae;
+  --chip-text: #4f3b08;
+  --chip-selected-bg: #2a2216;
+  --chip-selected-text: #f2ebdb;
+}
+
+html[data-palette="gold-ivory"][data-theme="dark"] {
+  --accent-base: #d9b44a;
+  --accent-base-hover: #e8c45c;
+  --accent-base-active: #c29d4a;
+  --accent-link: #f1e6c8;
+  --bg: #0e0c09;
+  --panel: #191612;
+  --surface-raised: #221e17;
+  --surface-sunken: #0e0c09;
+  --content-surface: #191612;
+  --content-surface-hover: #221e17;
+  --content-nested: #221e17;
+  --interactive: #221e17;
+  --interactive-hover: #332b1d;
+  --selected: #342c1a;
+  --selected-text: #d9b44a;
+  --line: #332b1d;
+  --line-strong: #817559;
+  --text: #f1e6c8;
+  --muted: #b9a77a;
+  --text-meta: #9c8e6f;
+  --action-text: #1a1408;
+  --chip-bg: #221e17;
+  --chip-text: #d9b44a;
+  --chip-selected-bg: #f1e6c8;
+  --chip-selected-text: #0e0c09;
+}
+
+/* 金は主要操作と左列の記号だけ。内側の列の選択行は --selected の地と --text（金を塗らない）。札の選択中は中立の --selected の面。 */
+html[data-palette="gold-ivory"] .nav-item.on,
+html[data-palette="gold-ivory"] .mobile-nav-item.on { color: var(--selected-text); }
+html[data-palette="gold-ivory"] .chip { background: var(--chip-bg); border-color: transparent; color: var(--chip-text); }
+html[data-palette="gold-ivory"] .chip.on { background: var(--selected); border-color: transparent; color: var(--text); }
+
+/* ---- 旧名の別名（両テーマ共通。値は上の Web 名から引く） ---- */
+:root {
+  --danger: var(--danger-text);
+  --positive: var(--positive-text);
+  --warning-line: var(--line);
+  --panel-glass: var(--panel);
+  --glass: var(--material-sheet);
+  --panel-raised: var(--surface-raised);
+  --shadow-sm: none;
+  --shadow-lg: var(--elevation-2);
+}

@@ -1,0 +1,284 @@
+/* Hub Desktop の共通部品（DESKTOP_SPEC §4）。Web の部品と同じ寸法を、マウス向けの密度で。
+   色は tokens.css のトークンだけを使う（生の 16 進・rgb() は書かない）。
+   新しい部品は ds- 接頭辞。既存の .approve / .deny / .head-action / .ghost は各レーンがこれへ移す。
+   他のレーンの CSS より後に読み込むが、既存の規則より詳しくはしない（:where で特異度 0 にそろえる）。 */
+
+/* ---- 材質：不透明へ倒す条件（Web の --material-*-solid と同じ） ---- */
+@supports not (backdrop-filter: blur(1px)) {
+  html:root { --material-bar: var(--material-bar-solid); --material-sheet: var(--material-sheet-solid); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  html:root { --material-bar: var(--material-bar-solid); --material-sheet: var(--material-sheet-solid); }
+}
+html[data-transparency="reduce"] {
+  --material-bar: var(--material-bar-solid);
+  --material-sheet: var(--material-sheet-solid);
+}
+html[data-transparency="reduce"] { --material-mica-tint: var(--material-bar-solid); }
+html[data-transparency="reduce"] :is(dialog, .dialog-head) { backdrop-filter: none; }
+
+/* ---- Windows 11 の Mica（窓の後ろの材質）。窓側の効果は Rust 側（D1）が有効にし、
+   成功したときだけ html に data-material="mica" を付ける。付かなければ（Windows 10・未対応・
+   OS の「透明効果」オフ）従来の不透明な面のまま。ここでは CSS だけを用意する。
+   本文（.workspace-main）は不透明のまま。透けるのは上の帯と左の列だけ。
+   帯と列には --material-mica-tint（背景色の半透明）を重ね、Mica の下地が明るくても暗くても文字の対比を保つ。
+   Mica の明暗はアプリの配色に合わせる（material-sync.mjs → window_material.rs）。 ---- */
+html[data-material="mica"],
+html[data-material="mica"] body,
+html[data-material="mica"] #hub-shell { background: transparent; }
+html[data-material="mica"] :is(.app-toolbar, .sidebar, .icon-rail) { background: var(--material-mica-tint); backdrop-filter: none; }
+html[data-material="mica"][data-transparency="reduce"],
+html[data-material="mica"][data-transparency="reduce"] body { background: var(--bg); }
+html[data-material="mica"][data-transparency="reduce"] #hub-shell { background: var(--bg); }
+html[data-material="mica"][data-transparency="reduce"] :is(.app-toolbar, .sidebar, .icon-rail) { background: var(--material-bar-solid); }
+
+/* ---- 動きを止める（OS の設定と、設定の「動きを減らす」の両方） ---- */
+html[data-motion="reduce"] *,
+html[data-motion="reduce"] *::before,
+html[data-motion="reduce"] *::after {
+  scroll-behavior: auto !important;
+  transition-duration: .01ms !important;
+  animation-duration: .01ms !important;
+  animation-iteration-count: 1 !important;
+}
+
+/* ---- ボタン：primary / secondary / plain / icon。高さ 32（主要 36）、字 13/600 ---- */
+:where(.ds-btn) {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  box-sizing: border-box;
+  min-height: var(--control-h);
+  min-width: var(--hit-min);
+  margin: 0;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--interactive);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--type-subhead);
+  font-weight: var(--weight-semibold);
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), transform var(--dur-press) var(--ease-out);
+}
+:where(.ds-btn:hover:not(:disabled)) { background: var(--interactive-hover); }
+:where(.ds-btn:active:not(:disabled)) { transform: scale(.97); }
+:where(.ds-btn:disabled) { opacity: .45; cursor: default; }
+:where(.ds-btn.is-lg) { min-height: var(--control-h-lg); padding: 0 var(--space-4); }
+:where(.ds-btn.is-pill) { border-radius: var(--radius-pill); }
+:where(.ds-btn-primary) { background: var(--action); color: var(--action-text); }
+:where(.ds-btn-primary:hover:not(:disabled)) { background: var(--action-hover); }
+:where(.ds-btn-primary:active:not(:disabled)) { background: var(--action-active); }
+:where(.ds-btn-plain) { background: transparent; color: var(--muted); }
+:where(.ds-btn-plain:hover:not(:disabled)) { background: var(--interactive); color: var(--text); }
+:where(.ds-btn-danger) { color: var(--danger-text); }
+/* 記号だけの押し手：32 角、記号 18。見た目は 32、押せる領域は ::before で保つ。 */
+:where(.ds-btn-icon) { width: var(--control-h); padding: 0; background: transparent; color: var(--muted); }
+:where(.ds-btn-icon:hover:not(:disabled)) { background: var(--interactive); color: var(--text); }
+:where(.ds-btn-icon > svg) { width: 18px; height: 18px; flex: none; }
+:where(.ds-btn-icon)::before { content: ""; position: absolute; inset: -2px; }
+:where(.ds-btn):focus-visible,
+:where(.ds-chip):focus-visible,
+:where(.ds-tab):focus-visible,
+:where(.ds-switch input):focus-visible + .ds-switch-track { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+/* ---- チップ：高さ 28、pill、字 13/600。選択中は反転 ---- */
+:where(.ds-chip) {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  box-sizing: border-box;
+  min-height: var(--hit-min);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--interactive);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--type-subhead);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+:where(.ds-chip)::before { content: ""; position: absolute; inset: -2px 0; }
+:where(.ds-chip:hover) { background: var(--interactive-hover); }
+:where(.ds-chip[aria-pressed="true"], .ds-chip.is-on) { background: var(--text); color: var(--bg); }
+
+/* ---- 切替（segmented）：高さ 28。選択は影ではなく面の色だけ ---- */
+:where(.ds-seg) {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  background: var(--interactive);
+}
+:where(.ds-seg > button) {
+  min-height: var(--hit-min);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--type-subhead);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+:where(.ds-seg > button[aria-pressed="true"], .ds-seg > button[aria-selected="true"], .ds-seg > button.is-on) { background: var(--surface-raised); color: var(--text); }
+
+/* ---- タブ（帯の中）：字 13/600、選択は --text と細い下線（中立） ---- */
+:where(.ds-tab) {
+  position: relative;
+  min-height: var(--control-h-lg);
+  padding: 0 var(--space-3);
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--type-subhead);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+}
+:where(.ds-tab[aria-selected="true"], .ds-tab.is-on) { color: var(--text); }
+:where(.ds-tab[aria-selected="true"], .ds-tab.is-on)::after {
+  content: ""; position: absolute; left: 12px; right: 12px; bottom: 0; height: 2px; border-radius: var(--radius-pill); background: var(--text);
+}
+
+/* ---- スイッチ 38×22、つまみ 18 ---- */
+:where(.ds-switch) { position: relative; display: inline-flex; align-items: center; }
+:where(.ds-switch input) { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+:where(.ds-switch-track) {
+  position: relative;
+  width: 38px;
+  height: 22px;
+  border-radius: var(--radius-pill);
+  background: var(--line-strong);
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+:where(.ds-switch-track)::after {
+  content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--action-text); transition: transform var(--dur-fast) var(--ease-spring);
+}
+:where(.ds-switch input:checked + .ds-switch-track) { background: var(--action); }
+:where(.ds-switch input:checked + .ds-switch-track)::after { transform: translateX(16px); }
+:where(.ds-switch input:disabled + .ds-switch-track) { opacity: .45; }
+
+/* ---- 一覧の行：40 / 56。区切りは髪の毛線 ---- */
+:where(.ds-row) {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 40px;
+  padding: 0 var(--space-3);
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+}
+:where(.ds-row.is-two-line) { min-height: 56px; }
+:where(.ds-row:hover) { background: var(--content-surface-hover); }
+
+/* ---- 顔：20/24/32/40/88。人は丸、場は角丸の四角。頭字は --interactive 地に --text ---- */
+:where(.ds-avatar) {
+  --size: 32px;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: var(--size);
+  height: var(--size);
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--interactive);
+  color: var(--text);
+  font-size: calc(var(--size) * .4);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+}
+:where(.ds-avatar.is-20) { --size: 20px; }
+:where(.ds-avatar.is-24) { --size: 24px; }
+:where(.ds-avatar.is-40) { --size: 40px; }
+:where(.ds-avatar.is-88) { --size: 88px; }
+:where(.ds-avatar.is-place) { border-radius: var(--radius-sm); }
+:where(.ds-avatar > img) { width: 100%; height: 100%; object-fit: cover; }
+
+/* ---- 媒体枠：aspect-ratio 必須。縁に --media-outline の内線。失敗・許可外は表紙（題）に替える ---- */
+:where(.ds-media) {
+  position: relative;
+  aspect-ratio: var(--ratio, 16 / 9);
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: var(--interactive);
+}
+:where(.ds-media > img, .ds-media > video) { display: block; width: 100%; height: 100%; object-fit: cover; }
+:where(.ds-media)::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px var(--media-outline); pointer-events: none; }
+:where(.ds-media.is-square) { --ratio: 1 / 1; }
+:where(.ds-media-badge) {
+  position: absolute; right: var(--space-2); bottom: var(--space-2);
+  padding: 2px var(--space-1); border-radius: var(--radius-xs);
+  background: var(--media-badge-bg); color: var(--media-badge-text);
+  font-size: var(--type-caption); font-weight: 500; line-height: var(--lh-caption); font-variant-numeric: tabular-nums;
+}
+:where(.ds-cover) {
+  display: grid; place-items: center; width: 100%; height: 100%; padding: var(--space-4);
+  background: var(--content-nested); color: var(--text); text-align: center;
+  font-size: var(--type-headline); font-weight: var(--weight-bold); line-height: var(--lh-headline);
+  overflow: hidden; overflow-wrap: anywhere;
+}
+
+/* ---- 骨組み：完成形と同じ寸法で置く。光の帯は有限回だけ（無限のアニメーションを持たない） ---- */
+:where(.ds-skeleton) {
+  display: block;
+  border-radius: var(--radius-xs);
+  background: linear-gradient(90deg, var(--interactive) 0%, var(--interactive-hover) 50%, var(--interactive) 100%);
+  background-size: 200% 100%;
+  animation: ds-shimmer 1.4s var(--ease-in-out) 6;
+}
+:where(.ds-skeleton.is-line) { height: 12px; }
+:where(.ds-skeleton.is-round) { border-radius: 50%; }
+@keyframes ds-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+
+/* ---- メニュー（右クリック・ポップオーバー）：行 28、字 13 ---- */
+:where(.ds-menu) {
+  min-width: 180px;
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
+  background: var(--material-sheet);
+  backdrop-filter: var(--blur-sheet);
+  -webkit-backdrop-filter: var(--blur-sheet);
+  box-shadow: var(--elevation-1);
+  color: var(--text);
+}
+:where(.ds-menu-item) {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);
+  width: 100%; min-height: var(--hit-min); padding: 0 var(--space-2);
+  border: 0; border-radius: var(--radius-xs); background: transparent; color: inherit;
+  font: inherit; font-size: var(--type-subhead); text-align: left; cursor: pointer;
+}
+:where(.ds-menu-item:hover, .ds-menu-item:focus-visible) { background: var(--selected); outline: none; }
+:where(.ds-menu-item > kbd) { color: var(--muted); font: inherit; font-size: var(--type-caption); }
+:where(.ds-menu-sep) { height: 1px; margin: var(--space-1) 0; background: var(--line); }
+
+/* ---- トースト：下中央、高さ 36 ---- */
+:where(.ds-toast) {
+  position: fixed; left: 50%; bottom: var(--space-5); transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap: var(--space-3);
+  min-height: 36px; padding: 0 var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--material-sheet);
+  backdrop-filter: var(--blur-sheet);
+  -webkit-backdrop-filter: var(--blur-sheet);
+  box-shadow: var(--elevation-1);
+  color: var(--text); font-size: var(--type-subhead);
+}
+
+/* ---- 空の状態：記号 40、題 15/600、説明 13 muted、押し手 1 つ ---- */
+:where(.ds-empty) { display: grid; justify-items: center; gap: var(--space-2); padding: var(--space-7) var(--space-5); color: var(--muted); text-align: center; }
+:where(.ds-empty > svg) { width: 40px; height: 40px; }
+:where(.ds-empty > strong) { color: var(--text); font-size: var(--type-body); font-weight: var(--weight-semibold); }
+:where(.ds-empty > p) { margin: 0; font-size: var(--type-subhead); line-height: var(--lh-subhead); }

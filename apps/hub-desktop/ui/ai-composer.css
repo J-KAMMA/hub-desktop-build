@@ -1,0 +1,118 @@
+/* AI screen redesign (2026-10-11): ai-composer. Existing CSS variables only. */
+
+/* ---- Header: one 52px row, breadcrumb "folder > title", status chip, ghost new button ---- */
+#view-ai .piw-head { display: flex; height: 52px; min-height: 52px; flex: none; flex-wrap: nowrap; align-items: center; gap: var(--space-2); padding: 0; border-bottom: 1px solid var(--line); }
+#view-ai .piw-title { display: flex; min-width: 0; flex: 1 1 auto; flex-wrap: nowrap; align-items: center; gap: var(--space-1); }
+#view-ai .piw-title .piw-workspace { width: auto; max-width: 200px; min-height: 32px; flex: 0 1 auto; justify-content: flex-start; gap: var(--space-2); padding: var(--space-1) var(--space-2); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--muted); font-size: var(--type-subhead); font-weight: 500; }
+#view-ai .piw-title .piw-workspace:hover { background: var(--interactive); color: var(--text); }
+#view-ai .piw-crumb { flex: none; color: var(--muted); font-size: var(--type-subhead); }
+#view-ai .piw-title h2:not([hidden]) { min-width: 0; max-width: none; flex: 0 1 auto; margin: 0 var(--space-1) 0 0; overflow: hidden; color: var(--text); font-size: var(--type-subhead); font-weight: 500; line-height: 1.4; text-overflow: ellipsis; white-space: nowrap; }
+#view-ai #pi-work-status { display: inline-flex; height: 20px; flex: none; align-items: center; padding: 0 var(--space-2); border-radius: var(--radius-pill); background: var(--interactive); color: var(--muted); font-size: var(--type-caption); line-height: 1; white-space: nowrap; }
+#view-ai #pi-work-status[hidden] { display: none; }
+#view-ai #pi-work-status[data-state="running"] { color: var(--action); }
+#view-ai #pi-work-status[data-state="waiting"] { background: var(--warning-bg); color: var(--warning-text); }
+#view-ai #pi-work-status[data-state="ok"] { color: var(--positive); }
+#view-ai #pi-work-status[data-state="failed"] { color: var(--danger); }
+#view-ai #pi-work-new { flex: none; margin-left: auto; border: 0; background: transparent; color: var(--muted); font-size: var(--type-subhead); }
+#view-ai #pi-work-new:hover { background: var(--interactive); color: var(--text); }
+
+/* ---- Composer card ---- */
+#view-ai .piw-composer { width: 100%; gap: var(--space-2); margin: 0 auto var(--space-1); padding: var(--space-3) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--content-surface); box-shadow: var(--shadow-sm); }
+#view-ai .piw-composer:focus-within { border-color: var(--line); }
+#view-ai .piw-composer #pi-work-prompt { max-height: 40vh; font-size: var(--type-body); line-height: 1.6; }
+#view-ai .piw-composer-bar { display: flex; min-width: 0; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+#view-ai .piw-model[hidden], #view-ai .piw-shortcut[hidden], .piw-perm-source[hidden] { display: none !important; }
+.piw-pop { position: relative; display: inline-flex; min-width: 0; }
+
+.piw-chip { display: inline-flex; min-width: 0; max-width: 100%; min-height: 32px; align-items: center; gap: var(--space-2); padding: 0 var(--space-2); border: 0; border-radius: var(--radius-sm); background: var(--interactive); color: var(--text); font-size: var(--type-subhead); line-height: 1.2; cursor: pointer; }
+.piw-chip:hover:not(:disabled) { background: var(--interactive-hover); }
+.piw-chip:disabled { opacity: .55; cursor: default; }
+.piw-chip > span:not(.piw-caret) { min-width: 0; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.piw-chip svg { width: 15px; height: 15px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.piw-caret { flex: none; color: var(--muted); font-size:var(--type-caption); }
+.piw-chip.is-attention { background: var(--warning-bg); color: var(--warning-text); box-shadow: inset 0 0 0 1px var(--warning-line); }
+
+/* Primary button: 36px circle; stop replaces it while running with an empty draft. */
+#view-ai .piw-composer .piw-send, #view-ai .piw-composer .piw-stop { width: 36px; height: 36px; min-height: 36px; flex: none; padding: 0; border: 0; border-radius: 50%; background: var(--action); color: var(--action-text); }
+#view-ai .piw-composer .piw-send:hover:not(:disabled), #view-ai .piw-composer .piw-stop:hover:not(:disabled) { background: var(--action-hover); }
+#view-ai .piw-composer .piw-send:disabled { opacity: 1; background: var(--interactive); color: var(--muted); }
+#view-ai .piw-composer .piw-send, #view-ai .piw-composer .piw-stop { margin-left: auto; }
+#view-ai .piw-composer .piw-stop:not([hidden]) + .piw-send { margin-left: 0; }
+#view-ai .piw-composer .piw-send[hidden], #view-ai .piw-composer .piw-stop[hidden] { display: none; }
+
+/* ---- Popovers (model, permission) open upward from the chip ---- */
+.piw-popover { position: absolute; bottom: calc(100% + 8px); left: 0; z-index: 30; display: grid; gap: var(--space-2); width: min(360px, calc(100vw - 32px)); max-height: min(440px, 60vh); padding: var(--space-2); overflow-y: auto; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--content-surface); box-shadow: var(--shadow-sm); }
+.piw-popover[hidden] { display: none; }
+.piw-popover-search { width: 100%; min-height: 32px; padding: var(--space-1) var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-sunken); color: var(--text); font-size: var(--type-subhead); }
+.piw-model-options { display: grid; gap: 2px; }
+.piw-model-group { display: grid; gap: 2px; }
+.piw-model-group-name { margin: var(--space-2) var(--space-2) 2px; color: var(--muted); font-size:var(--type-caption); font-weight: 500; }
+.piw-model-option { display: flex; min-height: 32px; align-items: center; justify-content: space-between; gap: var(--space-2); padding: var(--space-1) var(--space-2); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text); font-size: var(--type-subhead); text-align: left; cursor: pointer; }
+.piw-model-option:hover { background: var(--interactive); }
+.piw-model-option[aria-selected="true"] { background: var(--selected); }
+.piw-model-option > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.piw-model-option > small { flex: none; color: var(--muted); font-size:var(--type-caption); }
+.piw-popover-foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding-top: var(--space-1); border-top: 1px solid var(--line); }
+#hub-shell .piw-composer .piw-popover-foot #pi-work-model-status { min-width: 0; flex: 1 1 140px; margin: 0; overflow: visible; font-size:var(--type-caption); line-height: 1.5; white-space: normal; }
+#hub-shell .piw-composer .piw-popover-foot #pi-work-model-refresh { min-height: 32px; padding: 0 var(--space-2); background: var(--interactive); color: var(--text); font-size: var(--type-caption); }
+
+.piw-preset-list { display: grid; gap: 2px; }
+.piw-preset { display: grid; gap: 2px; width: 100%; padding: var(--space-2) var(--space-2); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text); text-align: left; cursor: pointer; }
+.piw-preset:hover:not(:disabled):not(.is-display) { background: var(--interactive); }
+.piw-preset[aria-checked="true"] { background: var(--selected); }
+.piw-preset:disabled { opacity: .55; cursor: default; }
+.piw-preset.is-display { cursor: default; }
+.piw-preset[hidden] { display: none; }
+.piw-preset strong { font-size: var(--type-subhead); font-weight: 500; }
+.piw-preset span { color: var(--muted); font-size: var(--type-caption); line-height: 1.5; }
+.piw-confirm { display: grid; gap: var(--space-2); padding: var(--space-3) var(--space-3); border: 1px solid var(--warning-line); border-radius: var(--radius-sm); background: var(--warning-bg); color: var(--warning-text); font-size: var(--type-caption); line-height: 1.6; }
+.piw-confirm[hidden] { display: none; }
+.piw-confirm p { margin: 0; }
+.piw-confirm-actions { display: flex; justify-content: flex-end; gap: var(--space-2); }
+.piw-popover > .meta { margin: 0 var(--space-2); font-size: var(--type-caption); }
+.piw-verify { display: grid; gap: var(--space-2); padding: var(--space-2) var(--space-2) var(--space-1); border-top: 1px solid var(--line); }
+.piw-verify h4 { margin: 0; font-size: var(--type-caption); font-weight: 500; }
+.piw-verify label { display: grid; gap: var(--space-1); color: var(--muted); font-size: var(--type-caption); }
+.piw-verify input, .piw-verify textarea { width: 100%; padding: var(--space-1) var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-sunken); color: var(--text); font: inherit; font-size: var(--type-subhead); }
+.piw-verify .meta { margin: 0; font-size:var(--type-caption); line-height: 1.6; }
+.piw-verify-warning { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); padding: var(--space-2) var(--space-2); border-radius: var(--radius-sm); background: var(--warning-bg); color: var(--warning-text); font-size: var(--type-caption); }
+.piw-verify-warning[hidden] { display: none; }
+
+/* ---- Status dot (recent rows) ---- */
+.piw-dot { width: 7px; height: 7px; flex: none; border-radius: 50%; background: var(--muted); }
+.piw-dot[data-state="running"] { background: var(--action); }
+/* Only a live run pulses. styles.css pulses every dot, and an endless animation repaints every frame:
+   three finished rows kept an idle AI screen at about 16% of one core. */
+.piw-dot { animation: none; }
+.piw-dot[data-state="running"], .piw-meta > .piw-dot { animation: piw-pulse 1.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .piw-dot[data-state="running"], .piw-meta > .piw-dot { animation: none; } }
+.piw-dot[data-state="waiting"] { background: var(--warning-text); }
+.piw-dot[data-state="ok"] { background: var(--positive); }
+.piw-dot[data-state="failed"] { background: var(--danger); }
+
+/* ---- Empty state: heading, folder line, composer centred (~38% from the top), recent rows below ----
+   The timeline wrappers become transparent so the composer card can sit between the heading and the recent list. */
+#view-ai .piw-shell.is-new { justify-content: flex-start; }
+#view-ai .piw-shell.is-new .piw-timeline-wrap, #view-ai .piw-shell.is-new .piw-timeline, #view-ai .piw-shell.is-new .piw-empty { display: contents; }
+#view-ai .piw-shell.is-new .piw-empty strong { order: 1; margin: clamp(var(--space-4), 8vh, var(--space-7)) 0 var(--space-1); color: var(--text); font-size: var(--type-title3); font-weight: var(--weight-semibold); line-height: var(--lh-title3); text-align: center; }
+#view-ai .piw-shell.is-new .piw-empty > span { order: 2; margin: 0 0 var(--space-4); color: var(--muted); font-size: var(--type-subhead); text-align: center; }
+#view-ai .piw-shell.is-new .piw-empty-workspace:not([hidden]) { order: 3; display: inline-flex; align-self: center; min-height: 32px; align-items: center; margin: -8px 0 var(--space-4); padding: 0 var(--space-3); border: 0; border-radius: var(--radius-sm); background: var(--interactive); color: var(--text); font-size: var(--type-subhead); cursor: pointer; }
+#view-ai .piw-shell.is-new .piw-empty-workspace[hidden] { display: none; }
+#view-ai .piw-shell.is-new #pi-work-error, #view-ai .piw-shell.is-new #pi-work-resume { order: 4; }
+#view-ai .piw-shell.is-new .piw-composer { order: 5; }
+#view-ai .piw-shell.is-new .piw-empty-recent { order: 6; display: grid; width: 100%; max-width: 720px; gap: 2px; margin: var(--space-5) auto 0; }
+#view-ai .piw-empty-recent-item { display: grid; width: 100%; min-height: 32px; grid-template-columns: 7px minmax(0, 1fr) auto; align-items: center; gap: var(--space-2); padding: 0 var(--space-2); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text); font-size: var(--type-subhead); text-align: left; cursor: pointer; }
+#view-ai .piw-empty-recent-item:hover:not(:disabled) { background: var(--interactive); }
+#view-ai .piw-empty-recent-item > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#view-ai .piw-empty-recent-item > small { color: var(--muted); font-size:var(--type-caption); }
+
+/* After the first run starts the composer settles at the bottom; the motion is skipped for reduced-motion users. */
+@media (prefers-reduced-motion: no-preference) {
+  #view-ai .piw-shell:not(.is-new) .piw-composer { animation: piw-seat .18s ease-out; }
+  @keyframes piw-seat { from { opacity: .6; transform: translateY(-16px); } to { opacity: 1; transform: none; } }
+}
+
+/* ---- Right rail keeps the compact stack ---- */
+#rail-ai-workspace-host .piw-popover { width: min(320px, calc(100vw - 32px)); }
+#rail-ai-workspace-host .piw-chip > span:not(.piw-caret) { max-width: 110px; }
+#rail-ai-workspace-host .piw-model[hidden], #rail-ai-workspace-host .piw-shortcut[hidden] { display: none; }

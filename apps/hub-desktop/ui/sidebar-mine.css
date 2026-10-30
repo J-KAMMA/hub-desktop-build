@@ -1,0 +1,97 @@
+/* 内側左列の下段「あなたのもの」（sidebar-mine.mjs、2026-10-29）。
+   行 36px（--tap-height）・顔 24px（--avatar-24）・見出しは caption。色は意味名の変数だけ。 */
+#hub-shell #sidebar-context .sidebar-mine {
+  display: grid;
+  gap: var(--space-1);
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--divider);
+}
+#hub-shell #sidebar-context .sidebar-mine-section { display: grid; gap: 1px; }
+#hub-shell #sidebar-context .sidebar-mine-heading {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: var(--space-2) var(--space-3) var(--space-1);
+  color: var(--muted);
+  font-size: var(--type-caption);
+  font-weight: var(--type-caption-weight);
+  letter-spacing: var(--type-caption-tracking);
+}
+#hub-shell #sidebar-context .sidebar-mine-count { font-variant-numeric: tabular-nums; }
+#hub-shell #sidebar-context .sidebar-mine-item {
+  position: relative;
+  display: flex;
+  min-height: var(--tap-height);
+  align-items: center;
+  border-radius: var(--radius-sm);
+}
+#hub-shell #sidebar-context .sidebar-mine-item:hover { background: var(--interactive); }
+#hub-shell #sidebar-context .sidebar-mine-row {
+  display: flex;
+  height: var(--tap-height);
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  font-size: var(--type-body);
+  text-align: left;
+}
+#hub-shell #sidebar-context .sidebar-mine-face {
+  display: grid;
+  width: var(--avatar-24);
+  height: var(--avatar-24);
+  flex: none;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--avatar-bg, var(--interactive));
+  color: var(--avatar-fg, var(--text));
+  font-size: var(--type-caption);
+  font-weight: var(--weight-semibold);
+}
+#hub-shell #sidebar-context .sidebar-mine-face.is-tag { border-radius: var(--radius-sm); }
+#hub-shell #sidebar-context .sidebar-mine-face[data-tint="1"] { --avatar-bg: var(--avatar-1); --avatar-fg: var(--avatar-1-text); }
+#hub-shell #sidebar-context .sidebar-mine-face[data-tint="2"] { --avatar-bg: var(--avatar-2); --avatar-fg: var(--avatar-2-text); }
+#hub-shell #sidebar-context .sidebar-mine-face[data-tint="3"] { --avatar-bg: var(--avatar-3); --avatar-fg: var(--avatar-3-text); }
+#hub-shell #sidebar-context .sidebar-mine-face[data-tint="4"] { --avatar-bg: var(--avatar-4); --avatar-fg: var(--avatar-4-text); }
+#hub-shell #sidebar-context .sidebar-mine-face[data-tint="5"] { --avatar-bg: var(--avatar-5); --avatar-fg: var(--avatar-5-text); }
+#hub-shell #sidebar-context .sidebar-mine-face[data-tint="6"] { --avatar-bg: var(--avatar-6); --avatar-fg: var(--avatar-6-text); }
+#hub-shell #sidebar-context .sidebar-mine-label { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#hub-shell #sidebar-context .sidebar-mine-meta { flex: none; color: var(--muted); font-size: var(--type-caption); font-variant-numeric: tabular-nums; }
+#hub-shell #sidebar-context .sidebar-mine-pin {
+  height: var(--avatar-24);
+  margin-right: var(--space-2);
+  padding: 0 var(--space-2);
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--type-caption);
+  opacity: 0;
+}
+#hub-shell #sidebar-context .sidebar-mine-item:is(:hover, :focus-within) .sidebar-mine-pin,
+#hub-shell #sidebar-context .sidebar-mine-item.is-pinned .sidebar-mine-pin { opacity: 1; }
+#hub-shell #sidebar-context .sidebar-mine-pin[aria-pressed="true"] { color: var(--text); font-weight: var(--weight-semibold); }
+#hub-shell #sidebar-context .sidebar-mine-note { margin: 0; padding: var(--space-1) var(--space-3); color: var(--muted); font-size: var(--type-caption); }
+#hub-shell #sidebar-context :is(.sidebar-mine-action, .sidebar-mine-all) {
+  height: var(--tap-height);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--type-caption);
+  text-align: left;
+}
+#hub-shell #sidebar-context .sidebar-mine-action { color: var(--text); font-weight: var(--weight-medium); }
+#hub-shell #sidebar-context :is(.sidebar-mine-action, .sidebar-mine-all):hover { background: var(--interactive); color: var(--text); }
+#hub-shell #sidebar-context :is(.sidebar-mine-row, .sidebar-mine-pin, .sidebar-mine-action, .sidebar-mine-all):focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: calc(var(--focus-ring-width) * -1);
+}
+#hub-shell #sidebar-context .sidebar-mine .ds-state { padding: var(--space-2) var(--space-3); }

@@ -1,0 +1,514 @@
+/* Hub Desktop レーン D1（外郭・窓・ブラウザ）専用。色は tokens.css のトークンだけを使う。
+   古い規則（styles.css・hub-design.css・browser-ui.css）の上に、読み込み順で勝つ。 */
+
+/* ===== 幅の変数 ===== */
+#hub-shell {
+  --rail-w: 56px;
+  /* アドレスバーの幅。窓の中央に置き、左右の群に重ならない範囲へ収める。 */
+  --omni-w: max(120px, min(clamp(360px, 46vw, 680px), 100vw - 572px));
+  --window-controls-w: 138px;
+}
+#hub-shell.rail-expanded { --rail-w: 208px; }
+
+/* ===== 上の帯（高さ 44） ===== */
+#hub-shell .app-toolbar {
+  gap: var(--space-1);
+  height: var(--titlebar-h);
+  padding: 0;
+  border-bottom: 0;
+  background: var(--material-bar-solid);
+}
+html[data-material="mica"] #hub-shell .app-toolbar { background: var(--material-mica-tint); }
+#hub-shell .app-toolbar .toolbar-navigation { display: flex; flex: none; align-items: center; gap: var(--space-1); }
+#hub-shell .app-toolbar .toolbar-button {
+  width: var(--control-h);
+  height: var(--control-h);
+  min-height: var(--control-h);
+  border-radius: var(--radius-sm);
+}
+#hub-shell .app-toolbar .toolbar-button svg { width: 18px; height: 18px; }
+/* メニュー（左列の開閉）は上の帯の一番左で、左列の真上（2026-10-15、所有者指定）。
+   幅を --rail-w に揃え、記号を左列の記号と同じ位置（左から18px）に置く。広げ縮みに合わせて幅も動く。 */
+#hub-shell .app-toolbar #rail-expand-toggle {
+  position: relative;
+  flex: none;
+  width: var(--rail-w);
+  justify-content: flex-start;
+  padding: 0 0 0 18px;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
+  transition: width .16s ease;
+}
+#hub-shell .app-toolbar #rail-expand-toggle::before { content: ""; position: absolute; inset: -6px 0; }
+#hub-shell .app-toolbar #rail-expand-toggle:hover { background: var(--interactive); color: var(--text); }
+#hub-shell .app-toolbar #rail-expand-toggle:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+#hub-shell .app-toolbar .toolbar-button:disabled { opacity: .4; }
+/* 重複する検索の押し手は出さない（アドレスバーが常にある）。 */
+#hub-shell .app-toolbar #toolbar-search { display: none; }
+#hub-shell .app-toolbar .toolbar-location {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: max(0px, calc(50vw - var(--omni-w) / 2 - 168px));
+  overflow: hidden;
+  margin-left: var(--space-2);
+  color: var(--muted);
+  font-size: var(--type-subhead);
+  font-weight: var(--weight-regular);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#hub-shell .app-toolbar .toolbar-location > span { display: block; overflow: hidden; text-overflow: ellipsis; }
+
+/* 窓の操作：右端を窓の右端に合わせる（46×44 を 3 つ）。 */
+#hub-shell .app-toolbar .window-controls {
+  flex: none;
+  height: var(--titlebar-h);
+  margin: 0 0 0 auto;
+}
+#hub-shell .app-toolbar .window-control { width: 46px; height: var(--titlebar-h); min-height: var(--titlebar-h); }
+#hub-shell .app-toolbar #toolbar-rail { margin-right: var(--space-1); }
+
+/* アドレスバー（Hub の検索とブラウザのアドレスを兼ねる）：窓の中央、高さ 32、角は pill。 */
+#hub-shell .app-toolbar #toolbar-search-form,
+#hub-shell.browser-active #view-browser #browser-form {
+  position: fixed;
+  z-index: 41;
+  top: calc((var(--titlebar-h) - var(--control-h)) / 2);
+  left: 50%;
+  transform: translateX(-50%);
+  width: var(--omni-w);
+  height: var(--control-h);
+  max-width: none;
+  margin: 0;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  background: var(--interactive);
+}
+#hub-shell .app-toolbar #toolbar-search-form { display: flex; align-items: center; gap: var(--space-2); padding: 0 var(--space-3); }
+#hub-shell .app-toolbar #toolbar-search-form svg { width: 16px; height: 16px; flex: none; color: var(--muted); }
+#hub-shell .app-toolbar #toolbar-search-form input,
+#hub-shell #view-browser #browser-form > #browser-url { font-size: var(--type-subhead); }
+#hub-shell .app-toolbar #toolbar-search-form:focus-within,
+#hub-shell.browser-active #view-browser #browser-form:focus-within {
+  border-color: var(--line-strong);
+  background: var(--interactive);
+  outline: 0;
+  box-shadow: none;
+}
+
+/* ===== ブラウザ画面の上の行 ===== */
+/* 帯の右側の群：保護・ダウンロード・AI へ送る・メニュー（各 32 角、間 4）。窓の操作の左に並べる。 */
+#hub-shell.browser-active #view-browser .browser-strip {
+  position: fixed;
+  z-index: 42;
+  top: 0;
+  left: auto;
+  right: calc(var(--window-controls-w) + var(--space-2));
+  width: auto;
+  height: var(--titlebar-h);
+  min-height: 0;
+  max-height: var(--titlebar-h);
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-1);
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+/* アドレスの入れ物は群の一部にしない（中の保護の押し手を群へ並べる）。 */
+#hub-shell.browser-active #view-browser #browser-navigation { display: contents; }
+#hub-shell.browser-active #view-browser #browser-protection { order: 1; }
+#hub-shell.browser-active #view-browser #browser-downloads { order: 2; }
+#hub-shell.browser-active #view-browser #browser-ai { order: 3; margin-left: 0; }
+#hub-shell.browser-active #view-browser #browser-tools { order: 4; }
+#hub-shell.browser-active #view-browser :is(.browser-strip > button, #browser-protection) {
+  flex: 0 0 var(--control-h);
+  width: var(--control-h);
+  height: var(--control-h);
+  min-height: var(--control-h);
+  margin: 0;
+  border-radius: var(--radius-sm);
+}
+#hub-shell.browser-active #view-browser :is(.browser-strip > button, #browser-protection) svg { width: 18px; height: 18px; }
+#hub-shell.browser-active #view-browser #browser-zoom { flex-basis: 44px; width: 44px; }
+/* アドレスバーの中は、サイト情報・入力・お気に入りだけ。 */
+#hub-shell #view-browser #browser-form { gap: var(--space-1); padding: 0 var(--space-1); }
+#hub-shell #view-browser #browser-form > #browser-scheme { width: 28px; height: 28px; }
+#hub-shell #view-browser #browser-form > #browser-fav { width: 28px; height: 28px; }
+
+/* ===== 左の記号の帯 ===== */
+#hub-shell .icon-rail {
+  width: var(--rail-w);
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2) 6px;
+  gap: 0;
+  overflow: hidden;
+  border-right: 0;
+  background: var(--material-bar-solid);
+  box-sizing: border-box;
+}
+html[data-material="mica"] #hub-shell .icon-rail { background: var(--material-mica-tint); }
+/* 上の群が余れば縮み、足りなければここだけが縦にスクロールする（下の群は常に見える）。 */
+#hub-shell .icon-rail .icon-rail-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  gap: 2px;
+  scrollbar-width: none;
+}
+#hub-shell .icon-rail .icon-rail-main::-webkit-scrollbar { display: none; }
+#hub-shell .icon-rail .icon-rail-bottom {
+  flex: none;
+  gap: 2px;
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 0;
+}
+#hub-shell .icon-rail :is(.icon-button, .icon-nav-item):not([hidden]) {
+  flex: none;
+  min-height: 36px;
+  height: 36px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+}
+#hub-shell .icon-rail :is(.icon-button, .icon-nav-item) svg {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  stroke-width: 1.75;
+  transition: fill-opacity var(--dur-fast) var(--ease-out);
+}
+#hub-shell .icon-rail .rail-avatar { display: grid; flex: 0 0 24px; place-items: center; width: 24px; height: 24px; border-radius: 50%; overflow: hidden; background: var(--interactive); color: var(--text); font-size: var(--type-caption); font-weight: 700; line-height: 1; }
+#hub-shell .icon-rail .rail-avatar.has-image { background: transparent; }
+#hub-shell .icon-rail .rail-avatar img { display: block; width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
+/* 現在地は輪（画像の外側に細い環）。 */
+#hub-shell .icon-rail .icon-nav-item.on .rail-avatar { box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--emphasis); }
+/* 現在地は塗りの記号（輪郭の中を薄く塗る）。 */
+#hub-shell .icon-rail .icon-nav-item.on svg { fill: currentColor; fill-opacity: .2; }
+#hub-shell .icon-rail .navigation-group-start { margin-top: var(--space-3); }
+#hub-shell .icon-rail .icon-rail-main > :first-child { margin-top: 0; }
+#hub-shell .icon-rail :is(.icon-button, .icon-nav-item):focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+@media (max-height: 679px) {
+  #hub-shell .icon-rail :is(.icon-button, .icon-nav-item):not([hidden]) { min-height: 34px; height: 34px; }
+  #hub-shell .icon-rail .icon-rail-main { gap: 0; }
+  #hub-shell .icon-rail .icon-rail-bottom { gap: 0; margin-top: var(--space-1); padding-top: var(--space-1); }
+  #hub-shell .icon-rail .navigation-group-start { margin-top: var(--space-2); }
+}
+
+/* ===== 画面のサイドバーと右列の帯 ===== */
+#hub-shell .sidebar { background: var(--material-bar-solid); }
+html[data-material="mica"] #hub-shell .sidebar { background: var(--material-mica-tint); }
+html[data-material="mica"] #hub-shell:not(.rail-open) .rail { background: var(--material-mica-tint); }
+html[data-material="mica"] #hub-shell:not(.rail-open) .rail-marks { background: transparent; }
+
+/* ===== 右クリックのメニュー・近道の一覧 ===== */
+.context-menu { min-width: 200px; max-width: 320px; }
+.context-menu .ds-menu-item:disabled { opacity: .45; cursor: default; }
+.shortcuts-dialog {
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding: var(--space-5);
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: var(--material-sheet-solid);
+  box-shadow: var(--elevation-2);
+  color: var(--text);
+}
+.shortcuts-dialog::backdrop { background: var(--overlay); }
+.shortcuts-dialog h2 { margin: 0 0 var(--space-3); font-size: var(--type-headline); font-weight: var(--weight-semibold); }
+.shortcuts-dialog h3 { margin: var(--space-4) 0 var(--space-1); color: var(--muted); font-size: var(--type-subhead); font-weight: var(--weight-semibold); }
+.shortcuts-dialog dl { display: grid; grid-template-columns: max-content 1fr; gap: var(--space-1) var(--space-4); margin: 0; font-size: var(--type-subhead); }
+.shortcuts-dialog dt { margin: 0; }
+.shortcuts-dialog dd { margin: 0; color: var(--muted); }
+.shortcuts-dialog kbd { padding: 1px var(--space-1); border: 1px solid var(--line); border-radius: var(--radius-xs); background: var(--interactive); font: inherit; font-size: var(--type-caption); }
+.shortcuts-dialog > button { margin-top: var(--space-4); }
+
+/* ===== 画面のサイドバー：行 40、字 15/400（選択中は --selected の薄い地と --text。太らせない）、節の見出し 13/400 muted ===== */
+#hub-shell .sidebar :is(.nav-item, .sidebar-context-item) {
+  min-height: 40px;
+  padding-inline: var(--space-3);
+  gap: var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--type-body);
+  font-weight: var(--weight-regular);
+}
+#hub-shell .sidebar :is(.nav-item, .sidebar-context-item) svg { width: 18px; height: 18px; }
+#hub-shell .sidebar :is(.nav-item.on, .nav-item[aria-current], .sidebar-context-item[aria-current="true"]) { background: var(--selected); color: var(--text); font-weight: var(--weight-regular); }
+#hub-shell .sidebar :is(.nav-item, .sidebar-context-item):focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+#hub-shell .sidebar .nav-group,
+#hub-shell #sidebar-context .nav-group { margin: var(--space-5) var(--space-3) var(--space-1); color: var(--muted); font-size: var(--type-subhead); font-weight: var(--weight-regular); letter-spacing: 0; text-transform: none; }
+
+/* ===== 左列の「投稿する」（2026-10-15 所有者指定） =====
+   主要な画面の群と下の群（プロフィール・設定）のあいだ。広げたときは幅いっぱいにラベルつき、
+   畳んだときはペンの記号だけ。強調色は意味のあるトークン（--action）だけを使う。 */
+#hub-shell .icon-rail #desktop-compose:not([hidden]) {
+  flex: none;
+  height: 44px;
+  min-height: 44px;
+  margin-top: var(--space-2);
+  padding: 0;
+  justify-content: center;
+  gap: var(--space-2);
+  border-radius: var(--radius-control);
+  background: var(--action);
+  color: var(--action-text);
+}
+#hub-shell.rail-expanded .icon-rail #desktop-compose:not([hidden]) { padding: 0 var(--space-3); }
+#hub-shell .icon-rail #desktop-compose:not([hidden]):hover { background: var(--action-hover); color: var(--action-text); }
+#hub-shell .icon-rail #desktop-compose:not([hidden]):active { background: var(--action-active); }
+#hub-shell .icon-rail #desktop-compose:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+#hub-shell.rail-expanded .icon-rail #desktop-compose::after { font-weight: var(--weight-medium); }
+#hub-shell .icon-rail #desktop-compose svg { stroke-width: 2.1; }
+
+/* ===== 右列のウォレット（要約）。送金と全機能は中央のウォレット画面で行う。 ===== */
+#hub-shell .rail-wallet-body { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4) var(--space-3); min-width: 0; }
+#hub-shell .rail-wallet-body .wallet-developer { display: none; }
+#hub-shell .rail-wallet-body .wallet-network-picker { display: contents; }
+#hub-shell .rail-wallet-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); min-width: 0; }
+#hub-shell .wallet-network-pill { display: inline-flex; align-items: center; gap: var(--space-2); min-width: 0; max-width: 100%; min-height: var(--control-h); padding: 0 var(--space-3) 0 var(--space-1); border: 1px solid var(--line); border-radius: var(--radius-pill); background: var(--interactive); color: var(--text); font: inherit; font-size: var(--type-subhead); font-weight: var(--weight-medium); cursor: pointer; }
+#hub-shell .wallet-network-pill:hover { background: var(--interactive-hover); }
+#hub-shell .wallet-network-pill:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+#hub-shell .wallet-chain-mark, #hub-shell .wallet-token-avatar, #hub-shell .wallet-history-icon { display: grid; flex: 0 0 auto; place-items: center; border-radius: 50%; background: var(--selected); color: var(--text); font-size: var(--type-caption); font-weight: var(--weight-semibold); line-height: 1; }
+#hub-shell .wallet-network-pill-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#hub-shell .wallet-network-pill-caret { color: var(--muted); font-size: var(--type-caption); }
+#hub-shell .rail-wallet-account { flex: 0 1 auto; min-width: 0; padding: var(--space-1) var(--space-2); border-radius: var(--radius-pill); background: var(--surface-sunken); color: var(--muted); font-family: ui-monospace, monospace; font-size: var(--type-caption); white-space: nowrap; }
+#hub-shell .wallet-network-chooser { display: grid; gap: var(--space-2); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-raised); }
+#hub-shell .wallet-network-chooser[hidden] { display: none; }
+#hub-shell .rail-wallet-body .wallet-network-select { width: 100%; min-width: 0; }
+#hub-shell .rail-wallet-body .wallet-balance.is-unavailable { font-size: var(--type-headline); }
+#hub-shell .rail-wallet-body .rail-wallet-open { align-self: center; }
+#hub-shell .rail-wallet-body .wallet-address { margin: 0; font-size: var(--type-subhead); line-height: 1.7; letter-spacing: .02em; word-spacing: var(--space-1); }
+#hub-shell .wallet-address-prefix { color: var(--muted); }
+#hub-shell .rail-wallet-body .wallet-token-list { display: grid; gap: var(--space-1); margin: 0; }
+#hub-shell .wallet-token-name, #hub-shell .wallet-history-main { display: grid; flex: 1 1 auto; min-width: 0; }
+#hub-shell .wallet-token-row .wallet-note, #hub-shell .wallet-history-main .wallet-note { margin: 0; }
+#hub-shell .rail-wallet-body .wallet-history { padding: 0; border: 0; background: transparent; }
+#hub-shell .state-panel.is-compact { max-width: none; margin: var(--space-2) 0; padding: var(--space-4) var(--space-3); border-radius: var(--radius-md); background: var(--surface-sunken); }
+#hub-shell .state-panel.is-compact[hidden] { display: none; }
+#hub-shell .state-panel.is-compact > .state-body { font-size: var(--type-subhead); line-height: var(--lh-subhead); }
+
+/* ヒーローカード：トークンだけで作る淡いグラデーションと光彩。ネットワークと短いアドレスは上段、残高は中央に大きく。 */
+#hub-shell .rail-wallet-hero { display: grid; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-lg); background: radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--emphasis) 16%, transparent), transparent 70%), linear-gradient(180deg, color-mix(in srgb, var(--emphasis) 7%, var(--surface-raised)), var(--surface-raised)); min-width: 0; }
+#hub-shell .wallet-chain-mark { width: 24px; height: 24px; }
+#hub-shell .wallet-token-avatar, #hub-shell .wallet-history-icon { width: 40px; height: 40px; font-size: var(--type-body); }
+#hub-shell .wallet-token-avatar { background: color-mix(in srgb, var(--emphasis) 22%, var(--surface-raised)); }
+#hub-shell .wallet-token-avatar[data-tint="1"] { background: color-mix(in srgb, var(--accent-base) 22%, var(--surface-raised)); }
+#hub-shell .wallet-token-avatar[data-tint="2"] { background: color-mix(in srgb, var(--warning-text) 22%, var(--surface-raised)); }
+#hub-shell .wallet-token-avatar[data-tint="3"] { background: color-mix(in srgb, var(--danger-text) 22%, var(--surface-raised)); }
+#hub-shell .wallet-balance-row { display: flex; align-items: baseline; justify-content: center; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); min-width: 0; text-align: center; }
+#hub-shell .rail-wallet-body .wallet-balance { font-size: var(--type-display); font-weight: var(--weight-medium); font-variant-numeric: tabular-nums; line-height: 1.1; overflow-wrap: anywhere; }
+#hub-shell .rail-wallet-body .wallet-unit { margin: 0; color: var(--muted); font-size: var(--type-subhead); font-weight: var(--weight-medium); }
+#hub-shell .rail-wallet-body .wallet-balance-state { margin: calc(var(--space-2) * -1) 0 0; text-align: center; color: var(--muted); font-size: var(--type-subhead); }
+#hub-shell .rail-wallet-body .wallet-actions { display: flex; justify-content: center; gap: var(--space-5); margin: var(--space-1) 0 0; }
+#hub-shell .rail-wallet-action { display: grid; justify-items: center; gap: var(--space-1); min-width: 56px; padding: 0; border: 0; background: transparent; color: var(--text); font: inherit; font-size: var(--type-caption); cursor: pointer; }
+#hub-shell .rail-wallet-action-icon { display: grid; place-items: center; width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 50%; background: var(--interactive); transition: background var(--dur-fast) var(--ease-out), transform var(--dur-press) var(--ease-out), border-color var(--dur-fast) var(--ease-out); }
+#hub-shell .rail-wallet-action-icon svg { width: 22px; height: 22px; }
+#hub-shell .rail-wallet-action:hover:not(:disabled) .rail-wallet-action-icon { background: var(--interactive-hover); }
+#hub-shell .rail-wallet-action:active:not(:disabled) .rail-wallet-action-icon { transform: scale(.94); }
+#hub-shell .rail-wallet-action:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 4px; border-radius: var(--radius-md); }
+#hub-shell .rail-wallet-action[aria-expanded="true"] .rail-wallet-action-icon { background: var(--selected); }
+#hub-shell .rail-wallet-action:disabled { opacity: .45; cursor: not-allowed; }
+#hub-shell .rail-wallet-action.is-done .rail-wallet-action-icon { border-color: var(--emphasis); }
+#hub-shell .rail-wallet-action-label { transition: color var(--dur-fast) var(--ease-out); }
+#hub-shell .rail-wallet-action.is-done .rail-wallet-action-label { color: var(--emphasis); }
+#hub-shell .rail-wallet-sheet { display: grid; gap: var(--space-2); padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-sunken); animation: rail-wallet-rise var(--dur-fast) var(--ease-out); }
+#hub-shell .rail-wallet-sheet[hidden] { display: none; }
+#hub-shell .rail-wallet-tabs { display: flex; gap: var(--space-1); padding: var(--space-1); border-radius: var(--radius-pill); background: var(--surface-sunken); }
+#hub-shell .rail-wallet-tab { flex: 1 1 0; min-height: var(--control-h); border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--muted); font: inherit; font-size: var(--type-subhead); font-weight: var(--weight-medium); cursor: pointer; transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
+#hub-shell .rail-wallet-tab:hover { color: var(--text); }
+#hub-shell .rail-wallet-tab.is-selected { background: var(--surface-raised); color: var(--text); box-shadow: 0 0 0 1px var(--line); }
+#hub-shell .rail-wallet-tab:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+#hub-shell .rail-wallet-panel.is-entering { animation: rail-wallet-rise var(--dur-fast) var(--ease-out); }
+#hub-shell .rail-wallet-panel[hidden] { display: none; }
+#hub-shell .rail-wallet-panel .wallet-token-heading, #hub-shell .rail-wallet-panel.wallet-history h3 { display: none; }
+#hub-shell .rail-wallet-body .wallet-token-list { display: grid; gap: var(--space-1); margin: 0; }
+#hub-shell .wallet-token-row, #hub-shell .wallet-history-row { display: flex; align-items: center; gap: var(--space-3); min-height: 56px; padding: var(--space-2) var(--space-2); margin-inline: calc(var(--space-2) * -1); border-radius: var(--radius-md); transition: background var(--dur-fast) var(--ease-out); }
+#hub-shell .wallet-token-row:hover, #hub-shell .wallet-history-row:hover { background: var(--interactive); }
+#hub-shell .wallet-token-name strong { font-weight: var(--weight-medium); }
+#hub-shell .wallet-token-balance, #hub-shell .wallet-history-amount { margin: 0; flex: 0 0 auto; text-align: right; color: var(--text); font-size: var(--type-subhead); font-variant-numeric: tabular-nums; }
+#hub-shell .wallet-token-balance.is-loading { color: transparent; min-width: 64px; border-radius: var(--radius-sm); background: linear-gradient(90deg, var(--surface-sunken), var(--interactive), var(--surface-sunken)); background-size: 200% 100%; animation: rail-wallet-shimmer 1.4s linear infinite; user-select: none; }
+#hub-shell .wallet-history-row { flex-wrap: wrap; }
+#hub-shell .wallet-history-row > .actions { flex: 1 0 100%; padding-left: calc(40px + var(--space-3)); }
+#hub-shell .wallet-history-head { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-2); }
+#hub-shell .wallet-history-head h3 { margin: 0; }
+#hub-shell .wallet-history .state-panel .state-action { margin-top: var(--space-2); }
+@keyframes rail-wallet-rise { from { opacity: 0; transform: translateY(var(--space-1)); } to { opacity: 1; transform: none; } }
+@keyframes rail-wallet-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@media (prefers-reduced-motion: reduce) {
+  #hub-shell .rail-wallet-sheet, #hub-shell .rail-wallet-panel.is-entering, #hub-shell .wallet-token-balance.is-loading { animation: none; }
+  #hub-shell .rail-wallet-action-icon, #hub-shell .rail-wallet-tab, #hub-shell .rail-wallet-action-label, #hub-shell .wallet-token-row, #hub-shell .wallet-history-row { transition: none; }
+}
+#hub-shell .rail-wallet-body .wallet-section > div > .wallet-list-row:nth-child(n + 6) { display: none; }
+
+/* ===== 本文の左右の余白と縁を、左の列と右の列でそろえる =====
+   左（画面のサイドバー）→本文、本文→右の列。余白は --pane-gutter 一つ（4px。スクロールバー分の 10px と合わせ、見た目の左右は 14px で同じ）、縁は同じ 1px の --line、
+   面は同じ --material-bar-solid。縦スクロールバーは本文の右端に幅を取るので、
+   scrollbar-gutter: stable both-edges で左にも同じ幅を空け、本文を常に左右対称に置く。 */
+#hub-shell { --pane-gutter: var(--space-6); --pane-hairline: 1px solid color-mix(in srgb, var(--line) 75%, transparent); --pane-surface: var(--bg); font-size: var(--type-body); line-height: 1.6; }
+#hub-shell .workspace-main { scrollbar-gutter: stable both-edges; }
+#hub-shell .view:not(#view-browser):not(#view-ai) { padding-inline: var(--pane-gutter); }
+/* 平らな一枚の地（2026-10-24 所有者「丸くして色変えるの微妙かも」）：本文と右の列は地（--bg）のまま、角丸も色の差も付けない。
+   列どうしは --line を薄めた1本の線だけで仕切る。窓は Mica（透ける素材）なので、本文・右の列・列の幅つまみは不透明の地で塗り、
+   窓の裏が線になって見えるすき間を作らない（「全体のデザイン悪くなった」の原因）。 */
+#hub-shell .sidebar { border-right: var(--pane-hairline); }
+/* 左の記号の帯も1本の線で区切る（2026-10-24 所有者「左列も線なくて」。中列を閉じたときに本文と地続きになっていた）。 */
+#hub-shell .icon-rail { border-right: var(--pane-hairline); }
+/* 見出しの下・節のあいだの飾りの線は引かない（余白が仕切る）。密な一覧の行の線は --line を薄めて残す（sidebar-context.css）。 */
+#hub-shell :is(.view-head, .rail-activity-head, .rail-pane > .rail-title, .sidebar > .brand) { border-bottom: 0; }
+@media (min-width: 721px) {
+  #hub-shell .workspace-main {
+    height: auto;
+    min-height: 0;
+    align-self: stretch;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: var(--pane-surface);
+  }
+  #hub-shell .rail-marks { border: 0; background: transparent; }
+  #hub-shell.rail-open .rail { border-left: var(--pane-hairline); }
+  #hub-shell.rail-open .rail-body {
+    margin: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: 0;
+    background: var(--pane-surface);
+  }
+  #hub-shell .column-resizer { background: var(--pane-surface); }
+  /* 不透明のつまみが列の線を覆うので、境目の線はつまみの中央に引く（2026-10-24 所有者「列の境界がなくなってる」）。 */
+  #hub-shell .column-resizer::before { width: 1px; left: 50%; right: auto; background: var(--line); }
+}
+#hub-shell :is(.workspace-main, .workspace-main *, .rail-body *) { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--text) 16%, transparent) transparent; }
+
+/* Hubの検索欄は窓の中央ではなく中央の列の真上（2026-10-18 所有者「検索バーを左に寄せて」）。
+   位置と幅は app.js の placeBrowserStrip が中央の列を測って --omni-left / --omni-width に入れる。
+   中央がブラウザのとき（#browser-form）は上の規則のまま窓の中央。 */
+#hub-shell .app-toolbar #toolbar-search-form {
+  left: var(--omni-left, calc(50% - var(--omni-w) / 2));
+  width: var(--omni-width, var(--omni-w));
+  transform: none;
+}
+
+/* 右列ウォレット：スマホのウォレットアプリの作り（2026-10-25 所有者「最新のスマホアプリみたいにかっこよく」「レベルが低くないか」）。
+   動いているアプリに差し込んで撮っては直した結果をそのまま移した。 */
+#hub-shell #rail-wallet .rail-wallet-body { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-3) var(--space-3) var(--space-5); }
+#hub-shell #rail-wallet .rail-wallet-body > p.wallet-note:empty { display: none; }
+#hub-shell #rail-wallet .rail-wallet-hero {
+  position: relative; overflow: hidden; gap: var(--space-2);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid color-mix(in srgb, var(--emphasis) 22%, transparent);
+  background:
+    radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--emphasis) 26%, transparent), transparent 60%),
+    radial-gradient(90% 70% at 0% 100%, color-mix(in srgb, var(--emphasis) 12%, transparent), transparent 70%),
+    color-mix(in srgb, var(--bg) 88%, var(--text) 12%);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--text) 10%, transparent) inset, 0 18px 40px color-mix(in srgb, var(--bg) 80%, transparent);
+}
+#hub-shell #rail-wallet .rail-wallet-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
+#hub-shell #rail-wallet .wallet-network-pill {
+  display: inline-flex; align-items: center; gap: var(--space-2); max-width: 100%;
+  height: 30px; min-height: 0; padding: 0 var(--space-3) 0 var(--space-1);
+  border: 0; border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+  color: var(--text); font-size: var(--type-caption); font-weight: var(--weight-medium);
+}
+#hub-shell #rail-wallet .wallet-network-pill-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#hub-shell #rail-wallet .wallet-chain-mark { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--emphasis); color: var(--bg); font-size: 11px; font-weight: var(--weight-bold); }
+#hub-shell #rail-wallet .wallet-network-pill-caret { opacity: .6; font-size: 10px; }
+#hub-shell #rail-wallet .rail-wallet-account {
+  padding: var(--space-1) var(--space-2); border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+  color: var(--muted); font-family: var(--font-ui); font-size: var(--type-caption);
+  font-variant-numeric: tabular-nums; letter-spacing: 0;
+}
+#hub-shell #rail-wallet .wallet-balance-row { display: flex; align-items: baseline; justify-content: center; gap: var(--space-2); margin-top: var(--space-3); }
+#hub-shell #rail-wallet .wallet-balance { font-size: 56px; line-height: 1; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: var(--text); }
+#hub-shell #rail-wallet .wallet-unit { font-size: var(--type-headline); font-weight: var(--weight-medium); color: var(--muted); }
+#hub-shell #rail-wallet .wallet-balance-state { margin: var(--space-2) 0 0; text-align: center; font-size: var(--type-caption); color: var(--muted); }
+#hub-shell #rail-wallet .wallet-actions { display: flex; justify-content: center; gap: var(--space-5); margin-top: var(--space-3); }
+#hub-shell #rail-wallet .rail-wallet-action { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); padding: 0; border: 0; background: none; color: var(--text); }
+#hub-shell #rail-wallet .rail-wallet-action-icon {
+  display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%;
+  background: color-mix(in srgb, var(--emphasis) 20%, var(--bg));
+  border: 1px solid color-mix(in srgb, var(--emphasis) 35%, transparent);
+  color: var(--emphasis);
+  transition: transform .15s ease, background .15s ease;
+}
+#hub-shell #rail-wallet .rail-wallet-action:hover:not(:disabled) .rail-wallet-action-icon { background: color-mix(in srgb, var(--emphasis) 30%, var(--bg)); transform: translateY(-1px); }
+#hub-shell #rail-wallet .rail-wallet-action svg { width: 20px; height: 20px; stroke-width: 2.2; }
+#hub-shell #rail-wallet .rail-wallet-action-label { font-size: var(--type-caption); font-weight: var(--weight-medium); color: var(--text); }
+#hub-shell #rail-wallet .rail-wallet-action:disabled { opacity: .45; }
+#hub-shell #rail-wallet .rail-wallet-open { align-self: center; height: auto; padding: 0; margin: calc(-1 * var(--space-1)) 0 0; font-size: var(--type-caption); color: var(--muted); background: none; }
+#hub-shell #rail-wallet .rail-wallet-open:hover { color: var(--text); }
+#hub-shell #rail-wallet .rail-wallet-tabs { display: grid; grid-template-columns: 1fr 1fr; padding: 3px; border-radius: var(--radius-pill); background: color-mix(in srgb, var(--text) 6%, transparent); }
+#hub-shell #rail-wallet .rail-wallet-tab { height: 30px; border: 0; border-radius: var(--radius-pill); background: none; color: var(--muted); font-size: var(--type-subhead); font-weight: var(--weight-medium); }
+#hub-shell #rail-wallet .rail-wallet-tab.is-selected { background: color-mix(in srgb, var(--text) 12%, var(--bg)); color: var(--text); box-shadow: 0 1px 2px color-mix(in srgb, var(--bg) 70%, transparent); }
+#hub-shell #rail-wallet .wallet-list-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); width: auto; padding: var(--space-2) var(--space-1); border: 0; border-radius: var(--radius-md); }
+#hub-shell #rail-wallet .wallet-list-row:hover { background: color-mix(in srgb, var(--text) 5%, transparent); }
+#hub-shell #rail-wallet .wallet-token-avatar { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; font-weight: var(--weight-bold); }
+#hub-shell #rail-wallet .wallet-token-name { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+#hub-shell #rail-wallet .wallet-token-name strong { font-size: var(--type-body); font-weight: var(--weight-medium); }
+#hub-shell #rail-wallet .wallet-token-name .wallet-note { margin: 0; padding: 0; font-size: var(--type-caption); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+#hub-shell #rail-wallet .wallet-token-balance { margin: 0; font-size: var(--type-body); font-weight: var(--weight-medium); color: var(--text); font-variant-numeric: tabular-nums; }
+/* 右列ウォレットの高級感（2026-10-25 所有者「もっと高級感が欲しい」）：黒曜石の地、シャンパンゴールドの細線、細い字。上の規則を上書きする。 */
+#hub-shell #rail-wallet { --champagne: color-mix(in srgb, var(--emphasis) 60%, var(--text)); --hair: color-mix(in srgb, var(--champagne) 38%, transparent); }
+#hub-shell #rail-wallet .rail-wallet-body { gap: var(--space-4); padding: var(--space-4) var(--space-4) var(--space-6); }
+#hub-shell #rail-wallet .rail-wallet-hero {
+  padding: var(--space-5) var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid transparent;
+  background:
+    linear-gradient(155deg, color-mix(in srgb, var(--champagne) 7%, var(--surface-sunken)) 0%, var(--surface-sunken) 55%, color-mix(in srgb, var(--champagne) 4%, var(--surface-sunken)) 100%) padding-box,
+    linear-gradient(135deg, color-mix(in srgb, var(--champagne) 75%, transparent), color-mix(in srgb, var(--champagne) 10%, transparent) 40%, color-mix(in srgb, var(--champagne) 10%, transparent) 60%, color-mix(in srgb, var(--champagne) 55%, transparent)) border-box;
+  box-shadow: 0 30px 60px -20px color-mix(in srgb, var(--surface-sunken) 90%, transparent), inset 0 1px 0 color-mix(in srgb, var(--champagne) 16%, transparent);
+}
+#hub-shell #rail-wallet .rail-wallet-hero::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(80% 60% at 85% -10%, color-mix(in srgb, var(--champagne) 16%, transparent), transparent 70%);
+}
+#hub-shell #rail-wallet .rail-wallet-hero > * { position: relative; }
+#hub-shell #rail-wallet .wallet-network-pill { height: 28px; background: transparent; border: 1px solid var(--hair); color: var(--champagne); letter-spacing: .02em; }
+#hub-shell #rail-wallet .wallet-chain-mark { width: 18px; height: 18px; font-size: var(--type-caption); background: linear-gradient(145deg, var(--text), var(--emphasis) 60%, color-mix(in srgb, var(--emphasis) 55%, var(--bg))); }
+#hub-shell #rail-wallet .rail-wallet-account { background: transparent; border: 1px solid color-mix(in srgb, var(--text) 10%, transparent); color: color-mix(in srgb, var(--text) 62%, transparent); letter-spacing: .04em; }
+#hub-shell #rail-wallet .wallet-balance-row { margin-top: var(--space-6); }
+#hub-shell #rail-wallet .wallet-balance {
+  font-size: calc(var(--type-display) * 1.75); font-weight: var(--weight-regular); letter-spacing: -0.03em;
+  background: linear-gradient(180deg, var(--text) 0%, var(--champagne) 70%, color-mix(in srgb, var(--champagne) 70%, var(--bg)) 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+#hub-shell #rail-wallet .wallet-unit { font-size: var(--type-caption); font-weight: 500; letter-spacing: .18em; color: var(--champagne); opacity: .8; }
+#hub-shell #rail-wallet .wallet-balance-state { font-size: var(--type-caption); letter-spacing: .06em; color: color-mix(in srgb, var(--text) 45%, transparent); }
+#hub-shell #rail-wallet .wallet-actions { gap: var(--space-4); margin-top: var(--space-5); padding-top: var(--space-5); border-top: 1px solid color-mix(in srgb, var(--champagne) 14%, transparent); }
+#hub-shell #rail-wallet .rail-wallet-action-icon { width: 46px; height: 46px; background: transparent; border: 1px solid var(--hair); color: var(--champagne); }
+#hub-shell #rail-wallet .rail-wallet-action:hover:not(:disabled) .rail-wallet-action-icon { background: color-mix(in srgb, var(--champagne) 10%, transparent); border-color: var(--champagne); }
+#hub-shell #rail-wallet .rail-wallet-action svg { width: 18px; height: 18px; stroke-width: 1.5; }
+#hub-shell #rail-wallet .rail-wallet-action-label { font-size: var(--type-caption); letter-spacing: .12em; color: color-mix(in srgb, var(--text) 78%, transparent); }
+#hub-shell #rail-wallet .rail-wallet-action:disabled { opacity: .35; }
+#hub-shell #rail-wallet .rail-wallet-tabs { display: flex; gap: var(--space-5); padding: 0 var(--space-1); border-radius: 0; background: none; border-bottom: 1px solid color-mix(in srgb, var(--text) 8%, transparent); }
+#hub-shell #rail-wallet .rail-wallet-tab { height: 36px; padding: 0; border-radius: 0; font-size: var(--type-caption); letter-spacing: .14em; color: color-mix(in srgb, var(--text) 45%, transparent); box-shadow: none; position: relative; }
+#hub-shell #rail-wallet .rail-wallet-tab.is-selected { background: none; box-shadow: none; color: var(--champagne); }
+#hub-shell #rail-wallet .rail-wallet-tab.is-selected::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: var(--champagne); }
+#hub-shell #rail-wallet .wallet-list-row { padding: var(--space-3) var(--space-1); border-radius: 0; border-bottom: 1px solid color-mix(in srgb, var(--text) 6%, transparent); }
+#hub-shell #rail-wallet .wallet-list-row:hover { background: color-mix(in srgb, var(--champagne) 4%, transparent); }
+#hub-shell #rail-wallet .wallet-token-avatar { width: 36px; height: 36px; background: transparent; border: 1px solid var(--hair); color: var(--champagne); font-weight: 500; }
+#hub-shell #rail-wallet .wallet-token-name strong { letter-spacing: .04em; }
+#hub-shell #rail-wallet .wallet-token-name .wallet-note { color: color-mix(in srgb, var(--text) 42%, transparent); }
+#hub-shell #rail-wallet .wallet-token-balance { font-weight: 400; color: var(--champagne); }
+#hub-shell #rail-wallet .rail-wallet-send-sheet { display: grid; gap: var(--space-3); margin-top: var(--space-5); padding-top: var(--space-4); border-top: 1px solid color-mix(in srgb, var(--champagne) 14%, transparent); }
+#hub-shell #rail-wallet .rail-wallet-label { font-size: var(--type-caption); font-weight: 500; letter-spacing: .14em; color: var(--champagne); }
+#hub-shell #rail-wallet .rail-wallet-field { display: grid; gap: var(--space-1); font-size: var(--type-caption); letter-spacing: .1em; color: color-mix(in srgb, var(--text) 50%, transparent); }
+#hub-shell #rail-wallet .rail-wallet-input { width: 100%; height: 36px; padding: 0 2px; border: 0; border-bottom: 1px solid var(--hair); border-radius: 0; background: transparent; color: var(--text); font-size: var(--type-body); outline: none; }
+#hub-shell #rail-wallet .rail-wallet-input:focus { border-bottom-color: var(--champagne); }
+#hub-shell #rail-wallet .rail-wallet-submit { height: 40px; margin-top: var(--space-2); border: 0; border-radius: var(--radius-pill); background: linear-gradient(180deg, var(--text), var(--champagne) 55%, color-mix(in srgb, var(--champagne) 80%, var(--bg))); color: var(--bg); font-weight: 600; letter-spacing: .08em; }
+#hub-shell #rail-wallet .rail-wallet-submit:disabled { opacity: .5; }
+#hub-shell #rail-wallet .rail-wallet-send-note:empty { display: none; }
+#hub-shell #rail-wallet .rail-wallet-send-sheet .wallet-mainnet-warning { margin: 0; font-size: var(--type-caption); line-height: 1.6; color: color-mix(in srgb, var(--text) 62%, transparent); }#hub-shell #rail-wallet .wallet-actions { flex-wrap: nowrap; justify-content: space-evenly; justify-self: stretch; width: auto; max-width: none; }
+#hub-shell #rail-wallet .rail-wallet-send-sheet { border-left: 0; border-right: 0; border-bottom: 0; border-radius: 0; background: none; padding-inline: 0; }
+#hub-shell #rail-wallet .rail-wallet-send-sheet .wallet-mainnet-warning { padding: 0; border: 0; background: none; }

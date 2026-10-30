@@ -1,0 +1,30 @@
+/* AIの接続：設定の節と、AI画面の会話。色は意味トークンだけを使う。 */
+#pi-work-timeline[hidden] { display: none !important; }
+.byok-settings .byok-list { display: grid; gap: var(--space-3, 12px); margin: var(--space-3, 12px) 0; }
+.byok-settings .byok-row { padding: var(--space-3, 12px); border: 1px solid var(--line); border-radius: var(--radius-control, 8px); background: var(--content-surface); }
+.byok-settings .byok-row-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2, 8px); }
+.byok-settings .byok-row p { margin: var(--space-1, 4px) 0 0; overflow-wrap: anywhere; }
+.byok-settings .byok-form { margin: var(--space-3, 12px) 0; padding: var(--space-3, 12px); border: 1px solid var(--line); border-radius: var(--radius-control, 8px); }
+.byok-settings select,
+.byok-settings .settings-field input { width: 100%; box-sizing: border-box; }
+.byok-settings .byok-state.is-logged_in { color: var(--positive); }
+.byok-settings .byok-state.is-not_logged_in { color: var(--warning-text); }
+.byok-chat { display: flex; flex: 1 1 0; flex-direction: column; gap: var(--space-3, 12px); min-height: 0; padding: var(--space-3) 2px var(--space-4); overflow: auto; }
+.byok-chat[hidden] { display: none; }
+.byok-chat .byok-note { margin: 0; }
+.byok-chat .byok-messages { display: grid; gap: var(--space-4, 16px); }
+.byok-chat .byok-msg { max-width: 100%; font-size: var(--type-subhead); line-height: 1.7; overflow-wrap: anywhere; white-space: pre-wrap; }
+.byok-chat .byok-user { justify-self: end; max-width: 70%; padding: var(--space-3) var(--space-3); border-radius: var(--radius-lg); background: var(--surface-sunken); }
+.byok-chat .byok-assistant.is-failed { color: var(--danger); }
+.byok-chat .byok-assistant:empty { display: none; }
+.byok-chat .byok-stop { justify-self: start; }
+.byok-settings .byok-remote { margin-top: var(--space-2, 8px); }
+.remote-ai-indicator { position: fixed; right: 16px; bottom: 16px; z-index: 50; display: flex; align-items: center; gap: var(--space-2, 8px); max-width: min(420px, calc(100vw - 32px)); padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-control, 8px); background: var(--content-surface); color: var(--text); font-size: var(--type-subhead); overflow-wrap: anywhere; }
+.remote-ai-indicator[hidden] { display: none; }
+.byok-chat .hubpedia-ask-sources { display: grid; gap: var(--space-2, 8px); }
+.byok-chat .hubpedia-ask-list { margin: 0; padding-left: var(--space-5, 24px); display: grid; gap: var(--space-2, 8px); font-size: var(--type-subhead); }
+.byok-chat .hubpedia-ask-attribution { margin: 0; }
+.byok-chat .hubpedia-ask-badge { padding: 0 var(--space-2, 8px); border: 1px solid var(--line); border-radius: var(--radius-control, 8px); font-size: var(--type-footnote, 0.8em); }
+.byok-chat .hubpedia-ask-badge.is-verified { color: var(--positive-text); }
+.byok-chat .hubpedia-ask-badge.is-needs_review, .byok-chat .hubpedia-ask-badge.is-unverified { color: var(--warning-text); }
+.byok-chat .byok-assistant.is-ungrounded { color: var(--text-secondary); }

@@ -1,0 +1,210 @@
+/* Hub Desktop shared components (PLAN stage 1). Tokens only: no raw px for type, space or radius, no raw colors. */
+
+/* ---- Page header ---- */
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
+  padding: var(--space-6) var(--space-6) var(--space-4);
+  border: 0;
+}
+.page-header > .page-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  color: var(--text);
+  font-size: var(--type-title2);
+  line-height: var(--lh-title2);
+  font-weight: var(--type-title2-weight);
+  letter-spacing: var(--type-title2-tracking);
+}
+.page-header > .page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  min-width: 0;
+  margin-left: auto;
+}
+.page-header > .page-tabs {
+  flex: 0 0 100%;
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+/* ---- State (empty / signedOut / error / loading) ----
+   Web の V2State と同じ形：中央寄せ・最大幅 var(--state-max)・枠も箱も無い。記号は 64px の円の中に 40px。
+   state-view.mjs と、既存の .empty-state / .state-panel の両方に同じ見た目を当てる。 */
+.state-panel,
+#hub-shell .empty-state,
+#hub-shell .view .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  grid-column: 1 / -1;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--state-max);
+  margin: var(--space-5) auto;
+  padding: var(--space-7) var(--space-5);
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  text-align: center;
+}
+.state-panel.is-compact,
+#hub-shell .empty-state.is-compact { margin-block: var(--space-3); padding-block: var(--space-5); }
+:is(.state-panel, #hub-shell .empty-state) :is(.state-icon, .empty-icon) {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--state-icon-disc);
+  height: var(--state-icon-disc);
+  margin: 0 0 var(--space-2);
+  border-radius: 50%;
+  background: var(--interactive);
+  color: var(--muted);
+}
+:is(.state-panel, #hub-shell .empty-state) :is(.state-icon, .empty-icon) svg { width: var(--state-icon); height: var(--state-icon); }
+/* 失敗：記号の円だけを警告色にし、ブロック全体は塗らない。 */
+:is(.ds-state--error, .load-error) :is(.state-icon, .empty-icon) { background: var(--danger-bg); color: var(--danger-text); }
+:is(.state-panel, #hub-shell .empty-state) :is(.state-title, strong) {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--type-headline);
+  line-height: var(--lh-headline);
+  font-weight: var(--type-headline-weight);
+}
+:is(.state-panel, #hub-shell .empty-state) :is(.state-body, p) {
+  max-width: 100%;
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--type-body);
+  line-height: var(--lh-body);
+  font-weight: var(--type-body-weight);
+}
+:is(.state-panel, #hub-shell .empty-state) .state-action,
+:is(.state-panel, #hub-shell .empty-state) > :is(.approve, .btn) { margin-top: var(--space-3); }
+.ds-state__actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-2); margin-top: var(--space-3); }
+.ds-state__actions > .state-action { margin-top: 0; }
+.ds-state--loading { width: 100%; max-width: none; }
+
+/* ---- Skeleton（Web の SkeletonRow と同じ寸法：顔 40 + 2 行、72px） ---- */
+.ds-skel-group { display: grid; }
+.ds-skel-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  box-sizing: border-box;
+  min-height: 72px;
+  padding: var(--space-3) var(--space-4);
+}
+.ds-skel-face { flex: none; width: var(--avatar-40); height: var(--avatar-40); border-radius: 50%; }
+.ds-skel-col { display: grid; flex: 1; gap: var(--space-2); min-width: 0; }
+.ds-skel-line { display: block; height: var(--space-3); }
+.ds-skel-line.is-half { width: 50%; }
+.ds-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* ---- Buttons ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  box-sizing: border-box;
+  min-height: var(--tap-height);
+  padding: 0 var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--type-callout);
+  font-weight: var(--type-callout-weight);
+  line-height: var(--lh-callout);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--dur-press) var(--ease-out), border-color var(--dur-press) var(--ease-out);
+}
+.btn.btn-lg {
+  min-height: var(--tap-height);
+  padding: 0 var(--space-5);
+  font-size: var(--type-body);
+}
+.btn:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+/* 控えめな強調：面に強調色を16%溶かした色の札。塗りつぶしの強調ボタンは左列の「投稿する」だけ。 */
+.btn-primary { background: color-mix(in srgb, var(--emphasis) 16%, var(--surface-raised)); border-color: transparent; color: var(--emphasis); }
+.btn-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--emphasis) 24%, var(--surface-raised)); }
+.btn-primary:active:not(:disabled) { background: color-mix(in srgb, var(--emphasis) 30%, var(--surface-raised)); }
+
+.btn-secondary { background: var(--interactive); border-color: var(--line); }
+.btn-secondary:hover:not(:disabled) { background: var(--interactive-hover); }
+.btn-secondary:active:not(:disabled) { background: var(--selected); }
+
+.btn-ghost { color: var(--muted); }
+.btn-ghost:hover:not(:disabled) { background: var(--interactive); color: var(--text); }
+.btn-ghost:active:not(:disabled) { background: var(--interactive-hover); color: var(--text); }
+
+/* ---- Filter rows ---- */
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+.filter-row > input,
+.filter-row select,
+#hub-shell .view .filter-row > input,
+#hub-shell .view .filter-row select { height: var(--control-h); min-height: var(--control-h); }
+
+/* ---- Layout widths ---- */
+.layout-reading { box-sizing: border-box; width: 100%; max-width: 720px; margin-inline: auto; }
+.layout-list { box-sizing: border-box; width: 100%; max-width: 960px; margin-inline: auto; }
+.layout-grid { box-sizing: border-box; width: 100%; padding-inline: var(--space-6); }
+
+/* ---- Page tabs (timeline kinds, rail posts/community) ---- */
+.page-tabs { overflow-x: auto; scrollbar-width: none; }
+.page-tabs > [role="tab"] { flex: none; }
+/* 端のぼかし：はみ出した側だけ 24px（Web の .ui-tabs と同じ。data 属性は state-view.mjs の bindEdgeFade が付ける）。 */
+.page-tabs[data-fade-end] { -webkit-mask-image: linear-gradient(to right, var(--text) calc(100% - var(--edge-fade)), transparent); mask-image: linear-gradient(to right, var(--text) calc(100% - var(--edge-fade)), transparent); }
+.page-tabs[data-fade-start] { -webkit-mask-image: linear-gradient(to right, transparent, var(--text) var(--edge-fade)); mask-image: linear-gradient(to right, transparent, var(--text) var(--edge-fade)); }
+.page-tabs[data-fade-start][data-fade-end] { -webkit-mask-image: linear-gradient(to right, transparent, var(--text) var(--edge-fade), var(--text) calc(100% - var(--edge-fade)), transparent); mask-image: linear-gradient(to right, transparent, var(--text) var(--edge-fade), var(--text) calc(100% - var(--edge-fade)), transparent); }
+.page-tabs > [role="tab"][aria-selected="true"] { background: var(--selected); color: var(--text); }
+
+/* Screens that opt into the shared grid width (articles, videos, music). */
+#hub-shell .view:not(#view-browser):not(#view-ai).layout-grid {
+  max-width: none;
+  margin-inline: 0;
+  padding-inline: var(--space-6);
+}
+
+/* Content sits centered in the canvas, and empty/error states are centered blocks without rules (2026-10-24). */
+#hub-shell .view:not(#view-browser):not(#view-ai) { margin-inline: auto; }
+.layout-list, .layout-reading { margin-inline: auto; }
+/* state: see the State block above (max-width is --state-max). */
+
+/* ---- Avatar initials: six tints (Web --avatar-N). paintAvatar() sets data-tint. ---- */
+:is(.post-avatar, .bubble-avatar)[data-tint="1"] { --avatar-bg: var(--avatar-1); --avatar-fg: var(--avatar-1-text); }
+:is(.post-avatar, .bubble-avatar)[data-tint="2"] { --avatar-bg: var(--avatar-2); --avatar-fg: var(--avatar-2-text); }
+:is(.post-avatar, .bubble-avatar)[data-tint="3"] { --avatar-bg: var(--avatar-3); --avatar-fg: var(--avatar-3-text); }
+:is(.post-avatar, .bubble-avatar)[data-tint="4"] { --avatar-bg: var(--avatar-4); --avatar-fg: var(--avatar-4-text); }
+:is(.post-avatar, .bubble-avatar)[data-tint="5"] { --avatar-bg: var(--avatar-5); --avatar-fg: var(--avatar-5-text); }
+:is(.post-avatar, .bubble-avatar)[data-tint="6"] { --avatar-bg: var(--avatar-6); --avatar-fg: var(--avatar-6-text); }
+#hub-shell :is(.post-avatar, .bubble-avatar).has-image { background: transparent; }
+
+/* A skeleton is on screen: its words go to screen readers only (no "loading" text beside the bones). */
+#hub-shell #view-feed:has(.skeleton-post) #feed-state:not(.warning) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

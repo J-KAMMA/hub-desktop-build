@@ -1,0 +1,26 @@
+/* 右列の音楽パネル（rail-music.mjs）。意味トークンだけを使う。 */
+.rail-music-search { display: flex; gap: var(--space-2); padding: var(--space-2) var(--space-3); }
+.rail-music-search .rail-music-query { flex: 1; min-width: 0; }
+.rail-music-quick { display: flex; flex-wrap: wrap; gap: var(--space-2); padding: 0 var(--space-3) var(--space-2); }
+.rail-music-chip { padding: var(--space-1) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--interactive); color: var(--text); font-size: var(--type-caption); cursor: pointer; }
+.rail-music-chip:hover { background: var(--interactive-hover); }
+.rail-music-chip.is-primary { border-color: transparent; background: var(--action); color: var(--action-text); }
+.rail-music-chip.is-primary:hover { background: var(--action-hover); }
+.rail-music-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: var(--space-2) var(--space-3) 0; }
+.rail-music-heading h3 { margin: 0; }
+.rail-music-more, .rail-music-link { padding: 0; border: 0; background: transparent; color: var(--muted); font-size: var(--type-caption); cursor: pointer; }
+.rail-music-more:hover, .rail-music-link:hover { color: var(--text); text-decoration: underline; }
+.rail-music-links { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); padding: 0 var(--space-3) var(--space-2) calc(var(--space-3) + 32px + var(--space-3)); }
+.rail-music-page-title { margin: 0; padding: var(--space-2) var(--space-3) 0; }
+.rail-music-status { padding: 0 var(--space-3); }
+.rail-music-collection { padding: 0 var(--space-3); }
+.rail-music-work { display: grid; gap: var(--space-3); padding: var(--space-3); }
+.rail-music-work-hero { display: flex; gap: var(--space-3); align-items: center; }
+.rail-music-work-text { display: grid; min-width: 0; gap: var(--space-1); }
+.rail-music-work-text h3 { margin: 0; }
+.rail-music-work-text .rail-music-links { padding: 0; }
+.rail-music-work-body { margin: 0; white-space: pre-wrap; color: var(--muted); }
+.rail-music-work-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+/* YouTube の枠は右列の中（16:9）。共有の再生枠(yt-dock)がこの置き場に重なる。 */
+.rail-music-yt { margin: var(--space-2) var(--space-3); }
+.rail-music-yt[hidden] { display: none; }

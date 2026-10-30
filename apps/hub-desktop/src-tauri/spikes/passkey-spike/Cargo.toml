@@ -1,0 +1,27 @@
+# 第0段の試作（docs/hub-desktop-wallet/SMART_WALLET_PLAN.md）。
+# Hub Desktop 本体には入らない開発用の別 crate。本体の windows crate の機能を
+# 変えずに済むよう、ここだけで webauthn.dll の宣言を有効にする。
+# 署名の包みは本体の src/webauthn_p256.rs を #[path] でそのまま使う。
+[package]
+name = "hub-passkey-spike"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[workspace]
+
+[[bin]]
+name = "passkey-spike"
+path = "src/main.rs"
+
+[dependencies]
+base64 = "0.22"
+p256 = { version = "0.13", features = ["ecdsa"] }
+rand = "0.8"
+serde_json = "1"
+sha2 = "0.10"
+sha3 = "0.10"
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "=0.61.3", features = ["Win32_Foundation", "Win32_Networking_WindowsWebServices", "Win32_UI_WindowsAndMessaging"] }
+windows-core = "0.61"

@@ -1,0 +1,394 @@
+{
+  "profile": {
+    "env_mv3": false,
+    "env_firefox": false,
+    "cap_html_filtering": false
+  },
+  "scope": "positive YouTube domains only in five pinned uAssets files; not complete uAssets",
+  "rules": [
+    {
+      "file": "uassets-filters-filters.txt",
+      "line": 12,
+      "filter": "*_ad_$media,domain=youtube.com,3p",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-filters.txt",
+      "line": 18,
+      "filter": "tv.youtube.com##+js(trusted-replace-xhr-response, '\"adPlacements\"', '\"no_ads\"', /playlist\\?list=|\\/player(?:\\?.+)?$|watch\\?[tv]=/)",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-filters.txt",
+      "line": 20,
+      "filter": "www.youtube.com##+js(trusted-replace-xhr-response, /\"adPlacements.*?([A-Z]\"\\}|\"\\}{2\\,4})\\}\\]\\,/, , /playlist\\?list=|\\/player(?:\\?.+)?$|watch\\?[tv]=/)",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-filters.txt",
+      "line": 21,
+      "filter": "www.youtube.com##+js(trusted-replace-xhr-response, /\"adPlacements.*?(\"adSlots\"|\"adBreakHeartbeatParams\")/gms, $1, /\\/player(?:\\?.+)?$/)",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-filters.txt",
+      "line": 22,
+      "filter": "www.youtube.com##+js(trusted-rpfr, '\"adPlacements\"', '\"no_ads\"', player?)",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-filters.txt",
+      "line": 23,
+      "filter": "www.youtube.com##+js(trusted-rpfr, '\"adSlots\"', '\"no_ads\"', player?)",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-filters.txt",
+      "line": 25,
+      "filter": "||www.youtube.com/playlist?list=$xhr,1p,replace=/\"adPlacements\"/\"no_ads\"/",
+      "active": false
+    },
+    {
+      "file": "uassets-filters-filters.txt",
+      "line": 26,
+      "filter": "||www.youtube.com/playlist?list=$xhr,1p,replace=/\"adSlots\"/\"no_ads\"/",
+      "active": false
+    },
+    {
+      "file": "uassets-filters-filters.txt",
+      "line": 27,
+      "filter": "||www.youtube.com/watch?$xhr,1p,replace=/\"adPlacements\"/\"no_ads\"/",
+      "active": false
+    },
+    {
+      "file": "uassets-filters-filters.txt",
+      "line": 28,
+      "filter": "||www.youtube.com/watch?$xhr,1p,replace=/\"adSlots\"/\"no_ads\"/",
+      "active": false
+    },
+    {
+      "file": "uassets-filters-filters.txt",
+      "line": 29,
+      "filter": "||www.youtube.com/youtubei/v1/player?$xhr,1p,replace=/\"adPlacements\"/\"no_ads\"/",
+      "active": false
+    },
+    {
+      "file": "uassets-filters-filters.txt",
+      "line": 30,
+      "filter": "||www.youtube.com/youtubei/v1/player?$xhr,1p,replace=/\"adSlots\"/\"no_ads\"/",
+      "active": false
+    },
+    {
+      "file": "uassets-filters-filters.txt",
+      "line": 35,
+      "filter": "m.youtube.com,music.youtube.com,tv.youtube.com,www.youtube.com,youtubekids.com,youtube-nocookie.com##+js(set, ytInitialPlayerResponse.playerAds, undefined)",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-filters.txt",
+      "line": 36,
+      "filter": "m.youtube.com,music.youtube.com,tv.youtube.com,www.youtube.com,youtubekids.com,youtube-nocookie.com##+js(set, ytInitialPlayerResponse.adPlacements, undefined)",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-filters.txt",
+      "line": 37,
+      "filter": "m.youtube.com,music.youtube.com,tv.youtube.com,www.youtube.com,youtubekids.com,youtube-nocookie.com##+js(set, ytInitialPlayerResponse.adSlots, undefined)",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-filters.txt",
+      "line": 38,
+      "filter": "m.youtube.com,music.youtube.com,tv.youtube.com,www.youtube.com,youtubekids.com,youtube-nocookie.com##+js(set, playerResponse.adPlacements, undefined)",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-filters.txt",
+      "line": 40,
+      "filter": "m.youtube.com,music.youtube.com,youtubekids.com,youtube-nocookie.com##+js(json-prune, playerResponse.adPlacements playerResponse.playerAds playerResponse.adSlots adPlacements playerAds adSlots important)",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-filters.txt",
+      "line": 42,
+      "filter": "youtube.com##.ytlr-horizontal-list-renderer__items > .yt-virtual-list__container > .yt-virtual-list__item--visible.yt-virtual-list__item--selected.yt-virtual-list__item:has-text(Ad)",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-filters.txt",
+      "line": 44,
+      "filter": "||googlevideo.com/initplayback?source=youtube&*c=TVHTML5&*oad=$xhr,domain=youtube.com",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-filters.txt",
+      "line": 46,
+      "filter": "m.youtube.com,music.youtube.com,tv.youtube.com,www.youtube.com,youtubekids.com,youtube-nocookie.com##+js(json-prune-fetch-response, reelWatchSequenceResponse.entries.[-].command.reelWatchEndpoint.adClientParams.isAd entries.[-].command.reelWatchEndpoint.adClientParams.isAd, , propsToMatch, url:/reel_watch_sequence?)",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-filters.txt",
+      "line": 47,
+      "filter": "m.youtube.com,music.youtube.com,tv.youtube.com,www.youtube.com,youtubekids.com,youtube-nocookie.com##+js(json-prune, entries.[-].command.reelWatchEndpoint.adClientParams.isAd)",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-filters.txt",
+      "line": 49,
+      "filter": "m.youtube.com##+js(json-edit-fetch-response, ..itemSectionRenderer.contents.*[?.adSlotRenderer], propsToMatch, /get_watch)",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-filters.txt",
+      "line": 51,
+      "filter": "||youtube.com/youtubei/v1/get_watch?$xhr,1p,replace=/\"adPlacements\"/\"no_ads\"/",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-filters.txt",
+      "line": 52,
+      "filter": "||youtube.com/youtubei/v1/get_watch?$xhr,1p,replace=/\"adSlots\"/\"no_ads\"/",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-filters.txt",
+      "line": 4073,
+      "filter": "||youtube.com/get_video$media,redirect=noopmp4-1s,domain=games2rule.com",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-filters.txt",
+      "line": 9931,
+      "filter": "||youtube.com/embed/*$domain=1shortlink.com",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 21,
+      "filter": "youtube.com##+js(json-prune, playerResponse.adPlacements playerResponse.playerAds playerResponse.adSlots adPlacements playerAds adSlots legacyImportant)",
+      "active": false
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 25,
+      "filter": "www.youtube.com##+js(rpnt, script, /(\\(function serverContract\\(\\)|^if \\(window\\.ytcsi)/, (()=>{if(\"YOUTUBE_PREMIUM_LOGO\"===window.ytInitialData?.topbar?.desktopTopbarRenderer?.logo?.topbarLogoRenderer?.iconImage?.iconType||\"YOUTUBE_PREMIUM_LOGO\"===document.getElementById(\"masthead\").attributes[\"logo-type\"].value||location.href.startsWith(\"https://www.youtube.com/tv#/\")||location.href.startsWith(\"https://www.youtube.com/embed/\"))return;const e=window.ytcfg.data_.INNERTUBE_CONTEXT.client.userAgent\\,t=[\"channel\"\\,\"lactmilli\"\\,\"instream\"\\,\"yahi\"];let r=!1\\,o=t;const n=t=>{if(t){let r=e?.match?.(/Mozilla\\/5\\.0 \\([^)]+/)?.[0];window.ytcfg.data_.INNERTUBE_CONTEXT.client.userAgent=r?e.replace?.(r\\,r+\"; \"+t):e}else window.ytcfg.data_.INNERTUBE_CONTEXT.client.userAgent=e}\\,a=()=>{let e=document.getElementById(\"movie_player\");return{player:e\\,response:e?.getPlayerResponse?.()\\,stats:e?.getStatsForNerds?.()\\,progress:e?.getProgressState?.()\\,buffer:e?.getPlayerStateObject?.()?.isBuffering}}\\,s=(e\\,t\\,r)=>e&&\"0.00 s\"===t?.buffer_health_seconds&&\"0x0\"===t?.resolution&&r.length>0\\,l=()=>{let{player:e\\,response:t\\,stats:n\\,buffer:l}=a();e&&s(l\\,n\\,o)&&(t?.playbackTracking?.videostatsPlaybackUrl?.baseUrl?.includes?.(\"reloadxhr\")&&(o=o.slice(1))\\,r=!0)};document.addEventListener(\"DOMContentLoaded\"\\,(function(){const e=()=>{let e\\,l\\,{player:i\\,response:d\\,stats:c\\,progress:p\\,buffer:y}=a();if(i&&window.location.href.includes(\"/watch?\")){if(p&&p.duration>0&&(p.loaded<p.duration||p.duration-p.current>1)||d?.videoDetails?.isLive){if(!c?.debug_info?.startsWith?.(\"SSAP\\, AD\")){const t=d.videoDetails?.videoId\\,a=d.playerConfig?.playbackStartConfig?.startSeconds??0\\,u=d.playabilityStatus?.errorScreen\\,g=JSON.stringify(u?.playerErrorMessageRenderer?.subreason?.runs||u?.playerInterstitialRenderer?.content?.interstitialViewModel?.description?.commandRuns);return void(\"UNPLAYABLE\"===d?.playabilityStatus?.status&&!u?.playerErrorMessageRenderer?.playerCaptchaViewModel&&g?.includes?.(\"WEB_PAGE_TYPE_UNKNOWN\")&&g?.includes?.(\"https://support.google.com/youtube/answer/3037019\")?(o=o.slice(1)\\,o.length>0?n(o[0]):n(\"\")\\,r=!1\\,i.loadVideoById(t\\,a)):0===o.length?(r=!1\\,n(\"\")):s(y\\,c\\,o)&&r?(n(o[0])\\,r=!1\\,i.loadVideoById(t\\,a)):!r&&p.current-a<5&&location.href.includes(\"&list=\")&&null===i.getPlaylistId?.()&&(e=document.querySelector(\"yt-playlist-manager\")\\,l=e?.getPlaylistData?.()\\,l&&(e.setPlaylistData?.(l)\\,e.setPlayerPlaybackControlData?.({playlistPanelRenderer:l}))))}p.duration>0&&i.seekTo?.(p.duration)}}else o=t};e()\\,new MutationObserver((()=>{e()})).observe(document\\,{childList:!0\\,subtree:!0})}))\\,window.Map.prototype.has=new Proxy(window.Map.prototype.has\\,{apply:(e\\,t\\,o)=>(\"onSnackbarMessage\"!==o?.[0]||r||l()\\,Reflect.apply(e\\,t\\,o))})\\,window.Array.prototype.push=new Proxy(window.Array.prototype.push\\,{apply:(e\\,t\\,r)=>{let o=r?.[0];return!o||\"object\"!=typeof o||\"Uint8Array\"!==o.constructor.name||o.buffer?.byteLength!==o.length||105!==o.length&&104!==o.length||l()\\,Reflect.apply(e\\,t\\,r)}});const i={apply:(e\\,t\\,r)=>{const o=r[0];return\"function\"==typeof o&&o.toString().includes(\"onAbnormalityDetected\")&&(r[0]=function(){})\\,Reflect.apply(e\\,t\\,r)}};window.Promise.prototype.then=new Proxy(window.Promise.prototype.then\\,i)})();$1, sedCount, 1, excludes, MutationObserver, condition, /serverContract|js_ld/)",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 26,
+      "filter": "www.youtube.com##+js(trusted-edit-inbound-object, JSON.stringify, 0, [?.attestationRequest][?.context.client.userAgent*=\"channel\"].context.client[?.clientName==\"WEB\"]+={\"clientScreen\":\"CHANNEL\"})",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 27,
+      "filter": "www.youtube.com##+js(trusted-edit-inbound-object, JSON.stringify, 0, [?.attestationRequest][?.context.client.userAgent*=\"lactmilli\"]+={\"params\":\"8AUB\"})",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 28,
+      "filter": "www.youtube.com##+js(trusted-edit-inbound-object, JSON.stringify, 0, [?.attestationRequest][?.context.client.userAgent*=\"yahi\"]+={\"params\":\"YAHI\"})",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 29,
+      "filter": "www.youtube.com##+js(trusted-edit-inbound-object, JSON.stringify, 0, [?.attestationRequest][?.context.client.userAgent*=\"instream\"].playbackContext[?.contentPlaybackContext]+={\"adPlaybackContext\":{\"adType\":\"AD_TYPE_INSTREAM\"}})",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 30,
+      "filter": "www.youtube.com##+js(trusted-edit-inbound-object, JSON.stringify, 0, [?.attestationRequest][?.context.client.userAgent=/channel|lactmilli|instream/].playbackContext.contentPlaybackContext.lactMilliseconds=\"${now}\")",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 31,
+      "filter": "www.youtube.com##+js(trusted-edit-inbound-object, JSON.stringify, 0, [?.attestationRequest][?.context.client.userAgent=/adunit|channel|lactmilli|instream|inline|yahi|eafg/].playbackContext.contentPlaybackContext.referer=repl({\"regex\":\"(?:#reloadxhr)?$\"\\,\"replacement\":\"#reloadxhr\"}))",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 51,
+      "filter": "www.youtube.com##+js(nano-stb, [native code], 17000, 0.001)",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 57,
+      "filter": "www.youtube.com##+js(json-prune-fetch-response, adPlacements adSlots playerResponse.adPlacements playerResponse.adSlots [].playerResponse.adPlacements [].playerResponse.adSlots, , propsToMatch, /player?)",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 59,
+      "filter": "www.youtube.com##+js(json-prune-fetch-response, adPlacements adSlots playerResponse.adPlacements playerResponse.adSlots, , propsToMatch, /playlist?)",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 63,
+      "filter": "www.youtube.com##+js(json-prune-xhr-response, adPlacements adSlots playerResponse.adPlacements playerResponse.adSlots [].playerResponse.adPlacements [].playerResponse.adSlots, , propsToMatch, /\\/player(?:\\?.+)?$/)",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 64,
+      "filter": "tv.youtube.com##+js(trusted-replace-xhr-response, '\"adPlacements\"', '\"no_ads\"', /playlist\\?list=|\\/player(?:\\?.+)?$|watch\\?[tv]=/)",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 66,
+      "filter": "www.youtube.com##+js(trusted-replace-xhr-response, /\"adPlacements.*?([A-Z]\"\\}|\"\\}{2\\,4})\\}\\]\\,/, , /playlist\\?list=|\\/player(?:\\?.+)?$|watch\\?[tv]=/)",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 67,
+      "filter": "www.youtube.com##+js(trusted-replace-xhr-response, /\"adPlacements.*?(\"adSlots\"|\"adBreakHeartbeatParams\")/gms, $1, /\\/player(?:\\?.+)?$/)",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 68,
+      "filter": "www.youtube.com##+js(trusted-rpfr, '\"adPlacements\"', '\"no_ads\"', player?)",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 69,
+      "filter": "www.youtube.com##+js(trusted-rpfr, '\"adSlots\"', '\"no_ads\"', player?)",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 70,
+      "filter": "www.youtube.com##+js(trusted-rpfr, '\"adSlots\"', '\"no_ads\"', /^\\W+$/)",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 71,
+      "filter": "www.youtube.com##+js(rmnt, script, window\\,\"fetch\")",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 73,
+      "filter": "||www.youtube.com/playlist?list=$xhr,1p,replace=/\"adPlacements\"/\"no_ads\"/",
+      "active": false
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 74,
+      "filter": "||www.youtube.com/playlist?list=$xhr,1p,replace=/\"adSlots\"/\"no_ads\"/",
+      "active": false
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 75,
+      "filter": "||www.youtube.com/watch?$xhr,1p,replace=/\"adPlacements\"/\"no_ads\"/",
+      "active": false
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 76,
+      "filter": "||www.youtube.com/watch?$xhr,1p,replace=/\"adSlots\"/\"no_ads\"/",
+      "active": false
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 77,
+      "filter": "||www.youtube.com/youtubei/v1/player?$xhr,1p,replace=/\"adPlacements\"/\"no_ads\"/",
+      "active": false
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 78,
+      "filter": "||www.youtube.com/youtubei/v1/player?$xhr,1p,replace=/\"adSlots\"/\"no_ads\"/",
+      "active": false
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 79,
+      "filter": "||youtube.com/youtubei/v1/get_watch?$xhr,1p,replace=/\"adPlacements\"/\"no_ads\"/",
+      "active": false
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 80,
+      "filter": "||youtube.com/youtubei/v1/get_watch?$xhr,1p,replace=/\"adSlots\"/\"no_ads\"/",
+      "active": false
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 81,
+      "filter": "www.youtube.com##^script[id]:has-text(window,\"fetch\")",
+      "active": false
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 83,
+      "filter": "www.youtube.com##+js(trusted-prevent-dom-bypass, Node.prototype.appendChild, fetch)",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 84,
+      "filter": "www.youtube.com##+js(trusted-prevent-dom-bypass, Node.prototype.appendChild, Request)",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 85,
+      "filter": "www.youtube.com##+js(trusted-prevent-dom-bypass, Node.prototype.appendChild, JSON.parse)",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 87,
+      "filter": "youtube.com##+js(json-prune, entries.[-].command.reelWatchEndpoint.adClientParams.isAd)",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 89,
+      "filter": "youtube.com#@##player-ads",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 95,
+      "filter": "www.youtube.com##+js(trusted-rpfr, '\"adSlots\"', '\"no_ads\"', /get_watch?)",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 101,
+      "filter": "/\\.googlevideo\\.com\\/videoplayback\\?expire=(?:[02-9]\\d+|1[1-68-9]\\d+|17[1-7]\\d+)&/$xhr,3p,method=get,domain=www.youtube.com",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-quick-fixes.txt",
+      "line": 103,
+      "filter": "||youtube.com/api/stats/atr?ns=*&ver=2&cmt=1.*&fs=0&*&euri&lact=$xhr,method=post,badfilter",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-unbreak.txt",
+      "line": 2477,
+      "filter": "||ads.youtube.com^$badfilter",
+      "active": true
+    },
+    {
+      "file": "uassets-filters-unbreak.txt",
+      "line": 2478,
+      "filter": "||ads.youtube.com^$domain=~ads.youtube.com",
+      "active": true
+    }
+  ]
+}

@@ -1,0 +1,989 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Hub</title>
+  <script src="./appearance-early.js"></script>
+  <link rel="stylesheet" href="./fonts/fonts.css">
+  <link rel="stylesheet" href="./tokens.css">
+  <link rel="stylesheet" href="./shape-tokens.css">
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./browser-ui.css">
+  <link rel="stylesheet" href="./browser-vertical-tabs.css">
+  <link rel="stylesheet" href="./browser-protection-ui.css">
+  <link rel="stylesheet" href="./browser-bookmark-bar.css">
+  <link rel="stylesheet" href="./ai-ui.css">
+  <link rel="stylesheet" href="./hub-design.css">
+  <link rel="stylesheet" href="./components.css">
+  <link rel="stylesheet" href="./games-view.css">
+  <link rel="stylesheet" href="./music-home.css">
+  <link rel="stylesheet" href="./desktop-music-pages.css">
+  <link rel="stylesheet" href="./video-home.css">
+  <link rel="stylesheet" href="./desktop-video-pages.css">
+  <link rel="stylesheet" href="./yt-dock.css">
+  <link rel="stylesheet" href="./ai-composer.css">
+  <link rel="stylesheet" href="./ai-turn.css">
+  <link rel="stylesheet" href="./ai-sidebar.css">
+  <link rel="stylesheet" href="./settings-view.css">
+  <link rel="stylesheet" href="./article-reader.css">
+  <link rel="stylesheet" href="./desktop-foundation.css">
+  <link rel="stylesheet" href="./desktop-shell.css">
+  <link rel="stylesheet" href="./desktop-social.css">
+  <link rel="stylesheet" href="./desktop-media.css">
+  <link rel="stylesheet" href="./desktop-commerce.css">
+  <link rel="stylesheet" href="./rail-browser.css">
+  <link rel="stylesheet" href="./rail-panels.css">
+  <link rel="stylesheet" href="./rail-music.css">
+  <link rel="stylesheet" href="./byok.css">
+  <link rel="stylesheet" href="./browser-polish.css">
+  <link rel="stylesheet" href="./sidebar-context.css">
+  <link rel="stylesheet" href="./sidebar-mine.css">
+  <link rel="stylesheet" href="./profile-view.css">
+<link rel="stylesheet" href="./desktop-luxe.css">
+</head>
+<body>
+<div id="hub-shell" class="app-shell">
+  <header class="app-toolbar" aria-label="共通操作">
+    <div class="toolbar-navigation">
+      <button id="rail-expand-toggle" class="toolbar-button rail-expand-toggle" type="button" aria-label="メニューを広げる" aria-expanded="false" title="メニューを広げる"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+      <button id="toolbar-back" class="toolbar-button" type="button" aria-label="戻る" title="戻る" disabled><svg class="ic" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg></button>
+      <button id="toolbar-forward" class="toolbar-button" type="button" aria-label="進む" title="進む" disabled><svg class="ic" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></button>
+      <button id="browser-back" class="toolbar-button" type="button" aria-label="ページを戻る" title="ページを戻る"><svg class="ic" viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg></button>
+      <button id="browser-forward" class="toolbar-button" type="button" aria-label="ページを進む" title="ページを進む"><svg class="ic" viewBox="0 0 24 24"><path d="m9.5 5.5 6.5 6.5-6.5 6.5"/></svg></button>
+      <button id="browser-reload" class="toolbar-button" type="button" aria-label="再読み込み" title="再読み込み"><svg class="ic" viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 3.5v3.7h-3.7"/></svg></button>
+      <button id="toolbar-sidebar" class="toolbar-button" type="button" aria-label="サイドバーを閉じる" aria-expanded="true" title="サイドバーを切り替える"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg></button>
+    </div>
+    <button id="toolbar-apps" class="toolbar-button" type="button" aria-label="すべての機能" aria-expanded="false" title="すべての機能"><svg class="ic" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg></button>
+    <div class="toolbar-location"><span id="toolbar-current">フィード</span></div>
+    <form id="toolbar-search-form" role="search" aria-label="Hubを検索">
+      <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg>
+      <input id="toolbar-search-input" type="search" maxlength="100" autocomplete="off" placeholder="Hubを検索、またはWebアドレスを入力" aria-label="Hubを検索、またはWebアドレスを入力">
+      <kbd>Enter</kbd>
+    </form>
+    <button id="toolbar-search" class="toolbar-button" type="button" aria-label="Hubを検索" title="Hubを検索"><svg class="ic" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg></button>
+    <button id="toolbar-rail" class="toolbar-button desktop-rail-toggle" type="button" aria-label="右列を開く" aria-expanded="false" title="別の作業を開く"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg></button>
+    <div class="window-controls" hidden>
+      <button id="window-minimize" class="window-control" type="button" aria-label="最小化" title="最小化"><svg class="ic" viewBox="0 0 24 24"><path d="M5 17h14"/></svg></button>
+      <button id="window-maximize" class="window-control" type="button" aria-label="最大化" title="最大化"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="1"/></svg></button>
+      <button id="window-close" class="window-control window-control-close" type="button" aria-label="閉じる" title="閉じる"><svg class="ic" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5 5 19"/></svg></button>
+    </div>
+  </header>
+  <nav class="icon-rail" aria-label="主な画面">
+    <div class="icon-rail-main" role="group" aria-label="画面">
+    <button class="nav-item icon-nav-item on" data-view="feed" aria-current="page" type="button" aria-label="タイムライン" title="タイムライン"><svg class="ic" viewBox="0 0 24 24"><path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 20.5l1.5-5.3A8.5 8.5 0 1 1 21 11.5ZM8.5 11.5h.01M12.5 11.5h.01M16.5 11.5h.01"/></svg></button>
+    <button class="nav-item icon-nav-item" data-view="notifications" type="button" aria-label="通知" title="通知"><svg class="ic" viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 5-2.5 6-2.5 8h17c0-2-2.5-3-2.5-8ZM10 20h4"/></svg></button>
+    <button class="nav-item icon-nav-item" data-view="messages" type="button" aria-label="メッセージ" title="メッセージ"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></button>
+    <button class="nav-item icon-nav-item navigation-group-start" data-view="articles" type="button" aria-label="記事" title="記事"><svg class="ic" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6V3Zm9 0v4h4M9 12h6M9 16h6"/></svg></button>
+    <button class="nav-item icon-nav-item" data-view="videos" type="button" aria-label="動画" title="動画"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3V9Z"/></svg></button>
+    <button class="nav-item icon-nav-item" data-view="music" type="button" aria-label="音楽" title="音楽"><svg class="ic" viewBox="0 0 24 24"><path d="M9 17V5l10-2v12M9 7l10-2"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg></button>
+    <button id="rail-games" class="nav-item icon-nav-item" data-view="games" type="button" aria-label="ゲーム" title="ゲーム"><svg class="ic" viewBox="0 0 24 24"><path d="M7 8h10a4 4 0 0 1 4 4v1.5a3.5 3.5 0 0 1-6.2 2.2L13.5 14h-3l-1.3 1.7A3.5 3.5 0 0 1 3 13.5V12a4 4 0 0 1 4-4ZM8 10.5v3M6.5 12h3M16 11.5h.01M18 13h.01"/></svg></button>
+    <button class="nav-item icon-nav-item" data-view="research" type="button" aria-label="研究" title="研究"><svg class="ic" viewBox="0 0 24 24"><path d="M8 4h8M10 4v6l-6 9a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1l-6-9V4M8 15h8"/></svg></button>
+    <button id="desktop-apps" class="icon-button" type="button" aria-label="すべての機能" data-short-label="すべて" aria-expanded="false" title="すべての機能"><svg class="ic" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg></button>
+    <button class="nav-item icon-nav-item rail-bottom-start" data-view="market" type="button" aria-label="マーケット" title="マーケット"><svg class="ic" viewBox="0 0 24 24"><path d="m3 10 2-6h14l2 6M3 10a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0M5 13v7h14v-7M9 20v-5h6v5"/></svg></button>
+    <button class="nav-item icon-nav-item" data-view="browser" type="button" aria-label="ブラウザ" title="ブラウザ"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a17 17 0 0 1 0 18 17 17 0 0 1 0-18Z"/></svg></button>
+    <button class="nav-item icon-nav-item" data-view="ai" type="button" aria-label="AI" title="AI"><svg class="ic" viewBox="0 0 24 24"><rect class="ai-chip" x="3" y="3" width="18" height="18" rx="5"/><path fill="none" d="M7.5 16.5 10.25 8l2.75 8.5M8.5 13.3H12M16.5 8v8.5"/></svg></button>
+    </div>
+    <button id="desktop-compose" class="icon-button rail-compose" type="button" aria-label="投稿する" title="投稿する（N）" data-short-label="投稿"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5"/><path d="m10 14 7.5-7.5a1.8 1.8 0 0 1 2.5 2.5L12.5 16.5 9 17l1-3Z"/></svg></button>
+    <div class="icon-rail-bottom" role="group" aria-label="プロフィール・設定">
+    <button class="nav-item icon-nav-item" data-view="profile" data-title="プロフィール" type="button" aria-label="プロフィール" title="プロフィール"><span class="rail-avatar" id="rail-profile-avatar">?</span></button>
+    <button class="nav-item icon-nav-item" data-view="settings" type="button" aria-label="設定" title="設定"><svg class="ic" viewBox="0 0 24 24"><path d="M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg></button>
+    </div>
+  </nav>
+  <button id="layout-backdrop" type="button" aria-label="開いているパネルを閉じる"></button>
+  <aside class="sidebar" aria-label="開いている画面のサイドバー">
+    <div class="brand"><h1>フィード</h1><span class="environment">ローカル</span></div>
+    <div id="sidebar-ai-history"><button id="sidebar-ai-new" type="button" class="sidebar-context-item">＋ 新しい作業</button><h2 class="sidebar-context-title">作業フォルダ</h2><button id="ai-more-open" class="ai-more-open" type="button" aria-haspopup="dialog" aria-controls="ai-more">環境とツール</button></div>
+    <div id="sidebar-context"></div>
+    <nav id="primary-nav">
+      <p class="nav-group">よく使う</p>
+      <button class="nav-item" data-view="home"><svg class="ic" viewBox="0 0 24 24"><path d="M4 20v-9h4v9M10 20V4h4v16M16 20v-7h4v7M3 20h18"/></svg>概要</button>
+      <button class="nav-item on" data-view="feed"><svg class="ic" viewBox="0 0 24 24"><circle cx="5" cy="5" r="1.5" fill="currentColor" stroke="none"/><circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="5" cy="19" r="1.5" fill="currentColor" stroke="none"/><path d="M5 8v1M5 15v1M10 5h10M10 8h6M10 12h10M10 15h6M10 19h10"/></svg>フィード</button>
+      <button class="nav-item" data-view="notifications"><svg class="ic" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0v4l2 3H4l2-3V9ZM10 19h4"/></svg>通知<b class="nav-badge" id="nav-badge-notifications" hidden></b></button>
+      <button class="nav-item" data-view="messages"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16v12H4zm0 1 8 6 8-6"/></svg>メッセージ<b class="nav-badge" id="nav-badge-messages" hidden></b></button>
+      <button class="nav-item" data-view="mail"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8"/></svg>メール</button>
+      <button class="nav-item" data-view="community"><svg class="ic" viewBox="0 0 24 24"><path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM3 19a6 6 0 0 1 12 0M16 4a3.5 3.5 0 0 1 0 7M14 18a4 4 0 0 1 7 0"/></svg>コミュニティ</button>
+      <button class="nav-item" data-view="threads"><svg class="ic" viewBox="0 0 24 24"><path d="M20 15a3 3 0 0 1-3 3H8l-4 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3ZM8 9h8M8 13h5"/></svg>スレッド</button>
+      <button class="nav-item" data-view="search"><svg class="ic" viewBox="0 0 24 24"><path d="M10.5 4a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13Zm9.5 16-4.5-4.5"/></svg>検索</button>
+      <button class="nav-item" data-view="ai"><svg class="ic" viewBox="0 0 24 24"><rect class="ai-chip" x="3" y="3" width="18" height="18" rx="5"/><path fill="none" d="M7.5 16.5 10.25 8l2.75 8.5M8.5 13.3H12M16.5 8v8.5"/></svg>AI</button>
+      <p class="nav-group">コンテンツ</p>
+      <button class="nav-item" data-view="hubpedia"><svg class="ic" viewBox="0 0 24 24"><path d="M4 4h6a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H4V4Zm16 0h-6a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h7V4Z"/></svg>資料・知識</button>
+      <button class="nav-item" data-view="research"><svg class="ic" viewBox="0 0 24 24"><path d="M8 4h8M10 4v6l-6 9a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1l-6-9V4M8 15h8"/></svg>プロジェクトと研究</button>
+      <button class="nav-item" data-view="code"><svg class="ic" viewBox="0 0 24 24"><path d="m8 8-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14"/></svg>コード</button>
+      <button class="nav-item" data-view="articles"><svg class="ic" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6V3Zm9 0v4h4M9 12h6M9 16h6"/></svg>記事</button>
+      <button class="nav-item" data-view="videos"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h13v12H3zM16 10l5-3v10l-5-3"/></svg>動画</button>
+      <button class="nav-item" data-view="music"><svg class="ic" viewBox="0 0 24 24"><path d="M9 18V6l10-2v12M9 18a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Zm10-2a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Z"/></svg>音楽</button>
+      <button class="nav-item" data-view="market"><svg class="ic" viewBox="0 0 24 24"><path d="M4 9l1.5-5h13L20 9M4 9v11h16V9M4 9h16M9 20v-6h6v6"/></svg>マーケット</button>
+      <p class="nav-group">この PC とその他</p>
+      <button class="nav-item" data-view="browser"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M15.6 8.4 13.7 13.7 8.4 15.6l1.9-5.3z"/></svg>ブラウザ</button>
+      <button class="nav-item" data-view="node"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="6.5" rx="1.8"/><rect x="3" y="13" width="18" height="6.5" rx="1.8"/><path d="M6.8 7.7h.01M6.8 16.2h.01"/></svg>Personal Node</button>
+      <button class="nav-item" data-view="compute"><svg class="ic" viewBox="0 0 24 24"><rect x="5.5" y="5.5" width="13" height="13" rx="2"/><rect x="9.5" y="9.5" width="5" height="5"/><path d="M9.5 2.5v3M14.5 2.5v3M9.5 18.5v3M14.5 18.5v3M2.5 9.5h3M2.5 14.5h3M18.5 9.5h3M18.5 14.5h3"/></svg>Compute</button>
+      <button class="nav-item" data-view="books"><svg class="ic" viewBox="0 0 24 24"><path d="M5 4.5v15M9.5 4.5v15"/><path d="m14.3 4.7 4 .8-2.9 14.2-4-.8z"/></svg>本</button>
+      <button class="nav-item" data-view="world"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM3 12h18M12 3c2.5 2.6 3.9 5.7 3.9 9s-1.4 6.4-3.9 9c-2.5-2.6-3.9-5.7-3.9-9S9.5 5.6 12 3Z"/></svg>世界</button>
+      <button class="nav-item" data-view="ranking"><svg class="ic" viewBox="0 0 24 24"><path d="m4 17 6-6 4 4 6-9M14 6h6v6"/></svg>ランキング</button>
+      <button class="nav-item" data-view="purchased"><svg class="ic" viewBox="0 0 24 24"><path d="M20.5 8.2 12 3.8 3.5 8.2v7.6l9 4.4 9-4.4z"/><path d="M3.9 8.4 12 12.6l8.1-4.2M12 12.6v7.6"/></svg>購入済み</button>
+      <button class="nav-item" data-view="contacts"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10.5" r="2"/><path d="M6.2 15.8c.5-1.7 1.3-2.5 2.3-2.5s1.8.8 2.3 2.5M14 9.5h4M14 13.5h4"/></svg>連絡先</button>
+      <button class="nav-item" data-view="bookmarks"><svg class="ic" viewBox="0 0 24 24"><path d="M7 4h10v16l-5-3.5L7 20V4Z"/></svg>ブックマーク</button>
+      <button class="nav-item" data-view="lists"><svg class="ic" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>リスト</button>
+      <button class="nav-item" data-view="services"><svg class="ic" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>サービス</button>
+    </nav>
+    <div id="sidebar-tabs">
+      <button id="browser-tabs-pin" type="button" aria-label="タブの列を細くする" aria-pressed="false" hidden><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8M9 3v6l-3 4h12l-3-4V3M12 13v8"/></svg><span>細くする</span></button>
+      <p class="nav-group">タブ</p>
+      <input id="sidebar-tab-query" type="search" maxlength="512" placeholder="タブを検索" aria-label="開いているタブを検索" autocomplete="off" spellcheck="false" aria-controls="sidebar-tabs-list" aria-describedby="sidebar-tab-count">
+      <p id="sidebar-tab-count" role="status" aria-live="polite"></p>
+      <p id="sidebar-tab-empty" hidden>一致するタブはありません</p>
+      <div id="sidebar-tabs-list"></div>
+      <button class="sidebar-new-tab" id="browser-restore" type="button" title="Ctrl+Shift+T">閉じたタブを復元</button>
+      <button class="sidebar-new-tab" id="sidebar-new-tab" type="button"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13"/></svg><span class="sidebar-new-tab-label">新しいタブ</span><span class="sidebar-new-tab-keys" aria-hidden="true"><kbd>Ctrl</kbd><kbd>T</kbd></span></button>
+    </div>
+    <div class="account-nav">
+      <button class="nav-item" data-view="profile" data-title="プロフィール"><span class="nav-avatar" id="account-avatar"><svg class="ic" viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 21a8 8 0 0 1 16 0"/></svg></span><span class="nav-avatar-label" id="account-name">プロフィール</span></button>
+      <button class="nav-item" data-view="settings"><svg class="ic" viewBox="0 0 24 24"><path d="M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>設定</button>
+    </div>
+  </aside>
+
+  <div id="sidebar-resizer" class="column-resizer" role="separator" tabindex="0" aria-orientation="vertical" aria-label="左列の幅" title="ドラッグで幅を変更・細くすると閉じる・ダブルクリックで元に戻す"></div>
+  <main class="workspace-main">
+    <section class="view home-view" id="view-home" data-view-panel="home">
+      <div class="view-head"><h2>概要</h2></div>
+      <section class="home-section" aria-labelledby="home-check-title"><h3 id="home-check-title">確認すること</h3><div id="home-attention"><div class="notice-card"><span class="notice-icon" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM12 7v5l3 2"/></svg></span><div><strong>確認中</strong><p>アカウント状態を見ています。</p></div></div></div></section>
+      <div class="home-grid">
+        <section class="home-section" aria-labelledby="home-notif-title"><div class="home-sec-head"><h3 id="home-notif-title">最近の通知</h3><button class="ghost open-view" data-open-view="notifications" type="button">すべて見る</button></div><div id="home-notifications" class="rail-list"></div></section>
+        <section class="home-section" aria-labelledby="home-msg-title"><div class="home-sec-head"><h3 id="home-msg-title">メッセージ</h3><button class="ghost open-view" data-open-view="messages" type="button">すべて見る</button></div><div id="home-messages" class="rail-list"></div></section>
+      </div>
+      <section class="home-section" aria-labelledby="home-device-title"><h3 id="home-device-title">この端末</h3><div id="home-device"></div></section>
+    </section>
+
+    <section class="view on" id="view-feed" data-view-panel="feed">
+      <header class="page-header"><h2 class="page-title">タイムライン</h2><div class="page-actions"><button id="feed-refresh" type="button" class="btn btn-secondary">更新</button><button id="feed-sources-toggle" type="button" class="btn btn-ghost" aria-label="表示元と接続先" aria-expanded="false" aria-controls="view-feed" title="表示元と接続先"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="18.5" cy="12" r="1.4"/></svg></button></div><div class="page-tabs" id="feed-tabs" role="tablist" aria-label="タイムラインの種類"></div></header>
+      <div class="layout-list" id="feed-body">
+      <form class="composer" id="composer"><span class="post-avatar composer-avatar" id="composer-avatar"><svg class="ic" viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 21a8 8 0 0 1 16 0"/></svg></span><div class="composer-body"><textarea id="composer-text" maxlength="500" rows="1" placeholder="いまどうしてる？"></textarea><div class="composer-images" id="composer-images" hidden></div><div class="composer-bar"><button class="ghost composer-image-add" id="composer-image-add" type="button" title="画像を添付">画像</button><input type="file" id="composer-image-input" accept="image/jpeg,image/png,image/webp" multiple hidden><select class="composer-audience" id="composer-audience" title="公開範囲"><option value="public">公開</option><option value="followers">フォロワーのみ</option></select><button class="ghost" id="composer-schedule" type="button" title="予約投稿">予約</button><input type="datetime-local" id="composer-schedule-at" hidden><div id="composer-scheduled-list" hidden></div><span class="meta composer-note" id="composer-note"></span><span class="meta composer-count" id="composer-count" hidden></span><button class="approve composer-post" id="composer-post" type="submit" disabled>投稿</button></div></div></form>
+      <div class="login-callout" id="desktop-account-callout"><span class="notice-icon" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg></span><div class="callout-body"><strong data-account="title">ログインして投稿</strong><p data-account="copy">Hubプロフィールから投稿するにはDesktop端末を接続してください。</p></div><button class="approve" data-account="login" type="button">Desktopを接続</button></div>
+        <p class="meta" id="feed-state" aria-live="polite">読み込み中…</p>
+        <p class="meta source-summary" id="feed-sources" aria-live="polite"></p>
+      <div class="feed-fresh" id="feed-fresh" hidden><button type="button" class="approve" id="feed-fresh-show"></button></div>
+      <div id="feed-list"></div>
+      <div class="feed-more"><button type="button" class="head-action" id="feed-more" hidden>もっと見る</button></div>
+      </div>
+    </section>
+
+    <section class="view" id="view-search" data-view-panel="search">
+      <div class="view-head"><h2>検索</h2></div>
+      <form id="hub-search" class="searchbar"><input id="search-query" type="search" maxlength="100" placeholder="投稿、人物、コミュニティ、作品を検索"><button class="approve" type="submit">検索</button></form>
+      <div id="search-filter-host"></div>
+      <div class="chip-row" id="search-tabs" hidden></div>
+      <p class="meta" id="search-state" aria-live="polite"></p><div id="search-results" class="result-grid"></div>
+      <section class="web-search" aria-labelledby="web-search-title">
+        <div class="actions"><h3 id="web-search-title">Webでも探す</h3><button id="search-web" class="ghost" type="button">Googleで検索</button></div>
+        <p class="meta">同じ語句をGoogleに送信し、結果をHubブラウザで開きます。</p>
+        <p class="meta" id="search-web-state" aria-live="polite"></p>
+      </section>
+    </section>
+
+    <section class="view" id="view-ai" data-view-panel="ai">
+      <div class="view-head"><h2>AI</h2></div>
+      <div id="ai-workspace"></div>
+      <dialog class="ai-more" id="ai-more" aria-labelledby="ai-more-title">
+      <header class="ai-more-head"><div><h2 id="ai-more-title">環境とツール</h2><p class="meta">作業環境、使用量、CLI接続</p></div><button id="ai-more-close" class="deny" type="button">閉じる</button></header>
+      <div id="ai-more-content">
+      <div class="card ai-compare-row"><div><h3 class="rail-title">実行方式の比較</h3><p class="meta">同じ依頼をこの端末のモデルで試し、結果を比べます。</p></div><button id="toolbar-ai-compare" class="head-action" type="button" hidden disabled>比較を始める</button></div>
+      <div class="card ai-status" id="ai-status"><p class="meta">この端末のAI状態を確認中…</p></div>
+      <p class="meta" id="isolation">隔離テストの利用可否を確認中…</p>
+      <div class="card" id="ai-tools" hidden>
+        <div class="actions"><h3 class="rail-title">AI ツール</h3><button id="ai-catalog-load" class="ghost" type="button">一覧を読む</button></div>
+        <p class="meta">利用ごとに料金がかかります。実行前に金額と宛先を確認してから署名します。</p>
+        <div class="state" id="ai-catalog-state" hidden></div>
+        <div id="ai-tool-form" hidden>
+          <label class="field"><span class="meta">ツール</span><select id="ai-tool-select"></select></label>
+          <label class="field" id="ai-provider-field"><span class="meta">プロバイダ</span><select id="ai-provider-select"></select></label>
+          <label class="field" id="ai-aspect-field" hidden><span class="meta">比率</span><select id="ai-aspect-select"><option value="1:1">1:1</option><option value="16:9">16:9</option><option value="9:16">9:16</option></select></label>
+          <textarea id="ai-prompt" maxlength="8000" rows="4" placeholder="指示を入力"></textarea>
+          <div class="actions"><button id="ai-run" class="approve" type="button" disabled>実行</button></div>
+          <div class="state" id="ai-run-state" hidden></div>
+          <div id="ai-pay-panel" hidden>
+            <p class="meta">支払いが求められています。支払い方法を選ぶと署名の確認が出ます。</p>
+            <div id="ai-pay-options"></div>
+          </div>
+          <div id="ai-result" hidden></div>
+        </div>
+      </div>
+      </div></dialog>
+    </section>
+
+    <section class="view" id="view-browser" data-view-panel="browser">
+      <div id="browser-tabbar" aria-label="開いているページ"></div>
+      <div class="browser-strip">
+        <div id="browser-navigation">
+        <form id="browser-form">
+          <button id="browser-scheme" type="button" aria-label="サイトの情報" title="サイトの情報" aria-controls="browser-menu"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3.5" y="7" width="9" height="6.2" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg></button>
+          <input id="browser-url" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="Webアドレス または Web検索" aria-label="WebアドレスまたはWeb検索" aria-keyshortcuts="Control+L" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="browser-suggestions">
+          <button id="browser-fav" type="button" aria-label="お気に入りに追加" title="お気に入りに追加"><svg class="ic" viewBox="0 0 24 24"><path d="m12 4 2.4 5 5.6.7-4.1 3.9 1 5.6-4.9-2.7-4.9 2.7 1-5.6L4 9.7l5.6-.7z"/></svg></button>
+        </form>
+        </div>
+        <button id="browser-new-tab" type="button" title="新しいタブ Ctrl+T" aria-label="新しいタブ" aria-keyshortcuts="Control+T"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+        <button id="browser-tab-search" type="button" title="タブを検索" aria-label="タブを検索" aria-keyshortcuts="Control+Shift+A" aria-controls="browser-menu"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="14" height="12" rx="2"/><path d="M7 4v4h10"/><circle cx="16.5" cy="16.5" r="3.5"/><path d="m19 19 2.5 2.5"/></svg></button>
+        <button id="browser-history" type="button" hidden aria-label="履歴" title="履歴・お気に入り"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11a9 9 0 1 1 2.5 7"/><path d="M3 5v6h6M12 7v5l3 2"/></svg></button>
+        <button id="browser-find" type="button" hidden aria-label="ページ内検索" title="ページ内検索 Ctrl+F"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></button>
+        <button id="browser-zoom" type="button" hidden aria-label="ページの拡大縮小">100%</button>
+        <button id="browser-tools" type="button" title="ブラウザのメニュー" aria-expanded="false" aria-controls="browser-menu" aria-label="ブラウザの操作と設定"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+        <button id="browser-local-games" type="button" class="approve" hidden>このPCで起動</button>
+        <button id="browser-ai" type="button" aria-label="このページをAIへ送る" title="このページをAIへ送る"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect class="ai-chip" x="3" y="3" width="18" height="18" rx="5"/><path fill="none" d="M7.5 16.5 10.25 8l2.75 8.5M8.5 13.3H12M16.5 8v8.5"/></svg></button>
+      </div>
+      <div id="browser-bookmark-bar" aria-label="ブックマークバー"></div>
+      <div id="browser-mobile-tabs"></div>
+      <div id="browser-suggestions" role="listbox" aria-label="アドレス候補" hidden></div>
+      <div id="browser-menu" hidden></div>
+      <div id="browser-find-bar" hidden>
+        <form id="browser-find-form"><input id="browser-find-query" type="search" maxlength="200" placeholder="ページ内を検索" aria-label="ページ内を検索"><button type="submit" hidden>検索</button></form>
+        <span id="browser-find-status" role="status"></span>
+        <button id="browser-find-previous" type="button" aria-label="前の一致箇所">↑</button><button id="browser-find-next" type="button" aria-label="次の一致箇所">↓</button><button id="browser-find-close" type="button" aria-label="ページ内検索を閉じる">×</button>
+      </div>
+      <div class="browser-blocked" id="browser-blocked" hidden><p>HubのWeb版はアプリ内ブラウザでは開きません。</p><button id="browser-blocked-open" class="head-action" type="button">既定のブラウザで開く</button></div>
+      <p id="browser-error" class="browser-error" role="alert" hidden></p>
+      <div id="browser-stage">
+        <section id="browser-reader" aria-label="読みやすく表示" hidden></section>
+        <div class="browser-hint" id="browser-empty"><p>ブラウザを開いています。外部のページは、この窓のタブとして描かれます。</p></div>
+      </div>
+    </section>
+
+
+    <section class="view" id="view-purchased" data-view-panel="purchased">
+      <div class="view-head"><h2>購入済み</h2></div>
+      <div class="segmented"><button data-market-tab="market">マーケット</button><button class="on" data-market-tab="purchased">購入済み</button></div>
+      <div class="hero-card"><h3>注文履歴</h3><p>この端末から購入した商品の支払い・配送状態を確認します。注文の確認はCommerceが発行するトークンで行い、この端末の外には出しません。</p><div class="segmented" id="orders-filter"><button type="button" data-filter="all" class="on">すべて</button><button type="button" data-filter="attention">要対応</button><button type="button" data-filter="open">進行中</button><button type="button" data-filter="done">完了・終了</button></div><p class="meta" id="orders-state" aria-live="polite"></p><div id="orders-list"></div></div>
+      <div class="hero-card"><h3>ゲームライブラリ</h3><p>購入済みゲームと、このPCに登録したゲームをここから起動します。</p><button id="open-games" class="approve" type="button">ゲームランチャーを開く</button></div>
+      <div class="locked-card"><span class="lock-icon"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg></span><h3 data-account="title">ログインが必要です</h3><p data-account="copy">Commerceが発行した購入済み項目を表示するには、この端末をHubアカウントへ接続してください。</p><button class="approve" data-account="login" type="button">Desktopを接続</button></div>
+    </section>
+
+    <section class="view" id="view-community" data-view-panel="community">
+      <div class="view-head"><h2>コミュニティ</h2><div class="view-head-actions"><button id="community-create-toggle" class="approve" type="button">＋作成</button></div></div>
+      <form id="community-create" class="card detail-form" hidden>
+        <input type="text" name="name" maxlength="100" placeholder="コミュニティ名（3〜100字）" required>
+        <textarea name="description" rows="3" maxlength="2000" placeholder="説明（10〜2000字）" required></textarea>
+        <div class="detail-form-row">
+          <label class="field"><span class="meta">カテゴリ</span><input type="text" name="category" maxlength="100" placeholder="例: 技術・趣味" required></label>
+          <label class="field"><span class="meta">公開範囲</span><select name="visibility"><option value="public">公開</option><option value="approval">承認制</option><option value="private">招待制</option></select></label>
+        </div>
+        <div class="detail-form-row"><button class="approve" type="submit">作成</button><p class="meta" id="community-create-state"></p></div>
+      </form>
+      <p class="meta" id="community-state" aria-live="polite"></p><div id="community-results" class="result-grid"></div>
+    </section>
+
+    <section class="view" id="view-threads" data-view-panel="threads">
+      <div class="view-head"><h2>スレッド</h2><div class="view-head-actions"><button id="threads-board-clear" class="head-action" type="button" hidden>全スレッド</button><button id="threads-create-toggle" class="approve" type="button">＋作成</button></div></div>
+      <form id="threads-search" class="searchbar"><input id="threads-query" type="search" maxlength="100" placeholder="スレッドを検索"><button class="head-action" type="submit">検索</button></form>
+      <form id="threads-create" class="card detail-form" hidden>
+        <div class="detail-form-row">
+          <label class="field"><span class="meta">板</span><select name="boardKey" required></select></label>
+          <label class="field"><span class="meta">種別</span><select name="threadType"><option value="chat">雑談</option><option value="question">質問</option><option value="recruitment">募集</option><option value="knowledge">知識</option></select></label>
+          <label class="field"><span class="meta">言語</span><select name="language"><option value="ja">日本語</option><option value="en">English</option><option value="ko">한국어</option><option value="zh-CN">简体中文</option><option value="es">Español</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="pt">Português</option><option value="ar">العربية</option><option value="hi">हिन्दी</option></select></label>
+          <label class="field"><span class="meta">地域</span><select name="region"><option value="global">グローバル</option><option value="asia-pacific">アジア太平洋</option><option value="europe">ヨーロッパ</option><option value="north-america">北米</option><option value="latin-america-caribbean">中南米・カリブ</option><option value="middle-east-north-africa">中東・北アフリカ</option><option value="africa">アフリカ</option><option value="local">地域限定</option></select></label>
+        </div>
+        <input type="text" name="title" maxlength="120" placeholder="スレッドの題名" required>
+        <textarea name="body" rows="4" maxlength="4000" placeholder="最初の投稿" required></textarea>
+        <input type="text" name="tags" maxlength="200" placeholder="タグ（読書, 感想 のようにカンマ区切り・任意）">
+        <div class="detail-form-row"><label class="check"><input type="checkbox" name="anonymous"> 匿名で立てる</label><button class="approve" type="submit">作成</button><p class="meta" id="threads-create-state"></p></div>
+      </form>
+      <p class="meta" id="threads-state" aria-live="polite"></p><div id="threads-results" class="result-grid"></div>
+    </section>
+
+    <section class="view" id="view-hubpedia" data-view-panel="hubpedia">
+      <div class="view-head"><h2>資料・知識</h2></div>
+      <form id="hubpedia-search" class="searchbar"><input id="hubpedia-query" type="search" maxlength="100" placeholder="百科項目を検索" aria-label="百科項目を検索"><button class="head-action" type="submit">検索</button></form>
+      <p class="meta" id="hubpedia-state" aria-live="polite"></p><div id="hubpedia-results" class="result-grid"></div>
+    </section>
+
+    <section class="view layout-grid" id="view-articles" data-view-panel="articles">
+      <div class="view-head page-header"><h2 class="page-title">記事</h2><div class="view-head-actions page-actions"><button id="articles-saved" type="button" class="ghost btn btn-ghost">保存した記事</button><button id="articles-drafts" type="button" class="ghost btn btn-ghost">下書き</button><button id="articles-series" type="button" class="ghost btn btn-ghost" title="Web版のHubをブラウザで開きます">シリーズ</button><button id="articles-stats" type="button" class="ghost btn btn-ghost" title="Web版のHubをブラウザで開きます">統計</button><button id="articles-create-toggle" class="approve btn btn-primary" type="button">＋書く</button></div></div>
+      <form id="articles-search" class="searchbar" role="search"><input id="articles-query" type="search" maxlength="100" placeholder="記事名・著者・タグを検索" aria-label="記事を検索"><button class="head-action" type="submit">検索</button></form>
+      <form id="articles-create" class="card detail-form" hidden>
+        <input type="text" name="title" maxlength="240" placeholder="記事の題名" required>
+        <input type="text" name="summary" maxlength="800" placeholder="要約（任意・空なら本文から）">
+        <textarea name="body" rows="10" maxlength="200000" placeholder="本文（Markdown可）" required></textarea>
+        <input type="text" name="tags" maxlength="400" placeholder="タグ（任意・カンマ区切り）">
+        <div class="detail-form-row"><button class="approve" type="submit">公開</button><p class="meta" id="articles-create-state"></p></div>
+      </form>
+      <p class="meta" id="articles-state" aria-live="polite"></p><div id="articles-results" class="result-grid"></div>
+    </section>
+
+    <section class="view layout-grid" id="view-videos" data-view-panel="videos">
+      <div id="video-discover">
+        <div class="view-head page-header"><h2 class="page-title">動画</h2><div class="view-head-actions page-actions"><span hidden><button id="video-playlists" type="button">プレイリスト</button><button id="video-saved" type="button">あとで見る</button></span><button id="video-refresh" type="button" class="ghost btn btn-ghost">更新</button></div></div>
+        <form id="video-search" class="searchbar" role="search"><input id="video-query" type="search" maxlength="100" placeholder="Hubの動画を検索" aria-label="Hubの動画を検索"><button id="video-search-hub" type="submit" class="head-action">検索</button><button id="video-search-web" type="button" class="ghost">Webで探す</button></form>
+        <div id="video-home" class="vh-home" hidden></div>
+        <div id="video-categories" class="video-categories" role="group" aria-label="読み込んだ動画のカテゴリ" hidden></div>
+        <div class="video-catalog-head"><div><h3 id="video-catalog-title">すべての動画</h3><p class="meta" id="videos-state" aria-live="polite"></p></div><div id="video-filters" class="video-filters" role="group" aria-label="動画の表示順"></div></div>
+        <div id="videos-results" class="result-grid"></div><button id="video-more" type="button" class="head-action" hidden>続きを表示</button>
+      </div>
+      <div id="video-watch" hidden>
+        <button id="video-watch-back" class="video-back" type="button">← 動画一覧へ</button>
+        <div class="video-watch-layout"><div id="video-watch-main"></div><aside id="video-watch-related" aria-label="関連動画"></aside></div>
+      </div>
+      <div id="video-studio" hidden>
+        <button id="video-studio-back" class="video-back" type="button">← 動画一覧へ</button>
+        <div id="video-studio-body" aria-live="polite"></div>
+      </div>
+      <div id="video-channel" hidden>
+        <button id="video-channel-back" class="video-back" type="button">← 戻る</button>
+        <div id="video-channel-body" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="view layout-grid" id="view-music" data-view-panel="music">
+      <div class="view-head page-header"><h2 class="page-title">音楽</h2><div class="view-head-actions page-actions"><span hidden><button id="music-playlists" type="button">プレイリスト</button><button id="music-saved" type="button">お気に入り</button></span><button id="music-refresh" type="button" class="ghost btn btn-ghost">更新</button></div></div>
+      <div class="music-tabs" role="tablist" aria-label="音楽の種類">
+        <button id="music-tab-home" class="music-tab on" type="button" role="tab" aria-selected="true" aria-controls="music-home">ホーム</button>
+        <button id="music-tab-tracks" class="music-tab" type="button" role="tab" aria-selected="false" aria-controls="music-stream">公開曲</button>
+        <button id="music-tab-catalog" class="music-tab" type="button" role="tab" aria-selected="false" aria-controls="music-catalog">外部作品</button>
+      </div>
+      <div id="music-home" role="tabpanel" aria-labelledby="music-tab-home"></div>
+      <div id="music-stream" role="tabpanel" aria-labelledby="music-tab-tracks" hidden>
+        <form id="music-search" class="searchbar" role="search"><input id="music-query" type="search" maxlength="100" placeholder="曲名・アーティスト・アルバムを検索" aria-label="公開曲を検索"><button id="music-search-hub" type="submit" class="head-action">検索</button><button id="music-search-web" type="button" class="ghost">Webで探す</button></form>
+        <p class="meta" id="music-tracks-state" aria-live="polite"></p>
+        <div id="music-tracks"></div><button id="music-more" type="button" class="head-action" hidden>続きを表示</button>
+      </div>
+      <div id="music-catalog" role="tabpanel" aria-labelledby="music-tab-catalog" hidden>
+        <form id="music-catalog-search" class="searchbar" role="search"><input id="music-catalog-query" type="search" maxlength="100" placeholder="外部作品の曲名・アーティストを検索" aria-label="外部作品を検索"><button type="submit" class="head-action">検索</button></form>
+        <p class="meta">外部作品は提供元のページで再生します。</p>
+        <p class="meta" id="music-state" aria-live="polite"></p><div id="music-results" class="result-grid"></div>
+      </div>
+    </section>
+
+    <section class="view" id="view-market" data-view-panel="market">
+      <div class="view-head page-header"><h2 class="page-title">マーケット</h2><div class="view-head-actions page-actions"><button id="market-cart-open" class="btn btn-secondary" type="button">カート</button></div></div>
+      <div class="segmented"><button class="on" data-shop-tab="products" type="button">商品</button><button data-shop-tab="listings" type="button">出品</button><button data-shop-tab="seller" type="button">販売者</button></div>
+      <div id="market-shop">
+        <div class="shop-toolbar filter-row">
+          <input id="shop-query" type="search" maxlength="100" placeholder="商品名・説明で検索" aria-label="商品を検索">
+          <label class="shop-sort"><span>並べ替え</span><select id="shop-sort" aria-label="並べ替え"><option value="new">新着</option><option value="price_asc">価格の安い順</option><option value="price_desc">価格の高い順</option></select></label>
+          <label class="shop-toggle"><input type="checkbox" id="shop-in-stock"><span>在庫あり</span></label>
+          <label class="shop-toggle"><input type="checkbox" id="shop-free-shipping"><span>送料無料</span></label>
+          <span class="shop-count" id="shop-count" aria-live="polite"></span>
+        </div>
+          <p class="meta" id="shop-state" aria-live="polite"></p>
+        <p class="meta" id="shop-filter" hidden></p>
+        <div id="shop-results" class="result-grid layout-grid"></div>
+        <nav class="market-web-links" aria-label="Webのマーケットの売り場"><span class="market-web-title">ほかの売り場（Webで開く）</span><button type="button" class="market-web-link btn btn-ghost" data-market-web="/v2/market/digital">デジタル ↗</button><button type="button" class="market-web-link btn btn-ghost" data-market-web="/v2/market/digital?view=articles">有料記事 ↗</button><button type="button" class="market-web-link btn btn-ghost" data-market-web="/v2/market/tickets">予約・チケット ↗</button><button type="button" class="market-web-link btn btn-ghost" data-market-web="/v2/work">仕事 ↗</button></nav>
+      </div>
+      <div id="market-listings" hidden>
+        <h3 class="rail-title">予約・チケット</h3><p class="meta" id="market-tickets-state" aria-live="polite"></p><div id="market-tickets" class="result-grid"></div>
+        <form id="market-search" class="searchbar"><input id="market-query" type="search" maxlength="100" placeholder="商品やサービスを検索"><button class="approve" type="submit">検索</button></form>
+        <p class="meta" id="market-state" aria-live="polite"></p><div id="market-results" class="result-grid"></div>
+      </div>
+      <div id="market-seller" hidden>
+        <p class="meta" id="seller-state" aria-live="polite"></p>
+        <div id="seller-gate"></div>
+        <div id="seller-console" hidden>
+          <div class="card">
+            <div class="actions"><strong id="seller-shop-name">店舗</strong><button id="seller-logout" class="head-action" type="button">ログアウト</button></div>
+            <p class="meta">商品の登録・在庫・発送登録はCommerceの販売者領域で管理されます。本人確認情報はここに来ません。</p>
+          </div>
+          <details class="card seller-product-details" id="seller-product-details">
+            <summary>商品を登録</summary>
+            <form id="seller-product-form" class="detail-form">
+              <input type="text" name="title" maxlength="120" placeholder="商品名" required>
+              <textarea name="description" rows="3" maxlength="2000" placeholder="商品の説明" required></textarea>
+              <div class="detail-form-row">
+                <label class="field"><span class="meta">価格（JPYC）</span><input type="number" name="priceJpyc" min="1" max="10000000" required></label>
+                <label class="field"><span class="meta">送料（JPYC）</span><input type="number" name="shippingJpyc" min="0" value="0" required></label>
+                <label class="field"><span class="meta">在庫</span><input type="number" name="stockQuantity" min="0" max="100000" required></label>
+              </div>
+              <div class="detail-form-row">
+                <label class="field"><span class="meta">配送方式</span><select name="fulfillmentType"><option value="seller_shipping">販売者が発送</option><option value="platform_3pl">委託倉庫から発送</option><option value="pickup">受け取り</option></select></label>
+                <label class="field"><span class="meta">公開状態</span><select name="status"><option value="active">公開</option><option value="draft">下書き</option></select></label>
+                <label class="field"><span class="meta">Hub商品ID（任意・紐付け用）</span><input type="text" name="hubProductId" maxlength="100" pattern="[\x20-\x7E]*"></label>
+              </div>
+              <div class="detail-form-row">
+                <label class="field"><span class="meta">画像URL（https・任意）</span><input type="url" name="imageUrl" maxlength="2000" placeholder="https://…"></label>
+                <label class="field"><span class="meta">ガス代の負担</span><select name="gasPayerPolicy"><option value="buyer">購入者が負担</option><option value="merchant">店舗が負担（要スポンサー環境）</option><option value="merchant_above_threshold">一定額以上で店舗が負担</option></select></label>
+                <label class="field"><span class="meta">店負担の閾値（円・任意）</span><input type="number" name="gasSponsorThresholdJpy" min="1" max="10000000"></label>
+              </div>
+              <div class="detail-form-row"><button class="approve" type="submit">商品を登録</button><button type="button" id="seller-product-cancel" hidden>編集をやめる</button><p class="meta" id="seller-product-state"></p></div>
+            </form>
+          </details>
+          <div class="card"><h3>売上</h3><p class="meta" id="seller-analytics-state"></p><div id="seller-analytics"></div></div>
+          <div class="card"><h3>出品中の商品</h3><p class="meta" id="seller-products-state"></p><div id="seller-products"></div></div>
+          <div class="card"><h3>支払いの確認が必要な注文</h3><p class="meta" id="seller-exceptions-state"></p><div id="seller-exceptions"></div></div>
+          <div class="card"><h3 id="seller-orders-title">注文（販売分）</h3>
+            <div class="actions"><button id="seller-orders-csv" class="head-action" type="button">CSVエクスポート</button></div>
+            <div class="segmented" id="seller-orders-purpose">
+              <button type="button" data-purpose="orders" class="on">注文</button>
+              <button type="button" data-purpose="refunds">返金履歴</button>
+            </div>
+            <div class="segmented" id="seller-orders-filter">
+              <button type="button" data-filter="attention" class="on">要対応</button>
+              <button type="button" data-filter="all">すべて</button>
+            </div>
+            <p class="meta" id="seller-orders-state"></p><div id="seller-orders"></div></div>
+          <div class="card"><h3>商品画像（審査制）</h3><p class="meta" id="seller-media-state">アップロードした画像は検疫と審査を通った後に配信URLが有効になります。</p><div class="actions"><button id="seller-media-upload" class="head-action" type="button">画像をアップロード</button></div><div id="seller-media"></div></div>
+          <div class="card"><h3>店舗ウォレット</h3><p class="meta" id="seller-wallet-state"></p><div id="seller-wallet"></div></div>
+          <div class="card"><h3>チェーン別の受取先</h3><p class="meta" id="seller-destinations-state"></p><div id="seller-destinations"></div><form id="seller-destination-form" class="detail-form"><div class="detail-form-row"><select name="networkKey" required></select><input name="address" maxlength="160" placeholder="受取アドレス" required /><input name="addressTag" maxlength="40" placeholder="タグ/メモ（必要なチェーンのみ）" /></div><div class="actions"><button id="seller-destination-wallet" class="head-action" type="button">この端末のウォレットを使う</button><button class="approve" type="submit">受取先を登録</button></div></form></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-order" data-view-panel="order">
+      <div class="view-head"><h2>注文詳細</h2><div class="view-head-actions"><button id="order-back" class="ghost" type="button">← 購入済みへ戻る</button></div></div>
+      <p class="meta" id="order-state" aria-live="polite"></p>
+      <div id="order-detail"></div>
+    </section>
+
+    <section class="view" id="view-cart" data-view-panel="cart">
+      <div class="view-head"><h2>カート</h2><div class="view-head-actions"><button id="cart-back" class="ghost" type="button">← マーケットへ戻る</button></div></div>
+      <p class="meta" id="cart-state" aria-live="polite"></p>
+      <div id="cart-lines"></div>
+      <div id="cart-summary" class="card" hidden>
+        <h3>注文内容</h3>
+        <div class="detail-form-row">
+          <label class="field"><span class="meta">請求先国（2文字）</span><input id="cart-country" type="text" maxlength="2" value="JP"></label>
+          <label class="field"><span class="meta">支払い資産</span><select id="cart-asset"></select></label>
+        </div>
+        <p class="meta">通常居住する国を2文字の国コードで入力してください（例：JP）。Commerceが課税地域だけを確定します。氏名・住所はIdentityに留まり、この端末にもHubにも保存されません。</p>
+        <div id="cart-totals"></div>
+        <div id="cart-review" hidden></div>
+        <button id="cart-checkout" class="approve" type="button">確定金額を確認</button>
+        <p class="meta">支払いはウォレットの確認モーダルで承認してから実行されます。この端末もHubも配送先住所・秘密鍵・資金を保持しません。</p>
+      </div>
+    </section>
+
+    <section class="view" id="view-books" data-view-panel="books">
+      <div class="view-head"><h2>本</h2></div>
+      <p class="meta" id="books-state" aria-live="polite"></p><div id="books-results" class="result-grid"></div>
+    </section>
+
+    <section class="view" id="view-compute" data-view-panel="compute">
+      <div class="view-head"><h2>Compute</h2><div class="view-head-actions"><button id="compute-refresh" type="button" class="ghost">更新</button></div></div>
+      <p class="meta" id="compute-state" aria-live="polite"></p>
+      <details class="card compute-demo">
+        <summary>デモ（無料）</summary>
+        <p class="meta">文字列の大文字・小文字変換を試せます。無料で、ジョブは検証付きで実行されます。</p>
+        <form id="compute-demo-form" class="detail-form">
+          <input type="text" name="text" maxlength="4000" placeholder="変換するテキスト" required>
+          <div class="detail-form-row">
+            <select name="operation"><option value="uppercase">大文字にする</option><option value="lowercase">小文字にする</option></select>
+            <button class="approve" type="submit">実行</button>
+          </div>
+        </form>
+        <p class="meta" id="compute-demo-state"></p>
+        <pre id="compute-demo-output" class="confirm-detail" hidden></pre>
+      </details>
+      <div class="card">
+        <h3>予約</h3>
+        <p class="meta">計算資源の時間枠を予約します。上限課金額の資金枠を確保してから予約を作成します。</p>
+        <div id="compute-reservations"></div>
+        <form id="compute-reserve-form" class="detail-form">
+          <div class="detail-form-row">
+            <div class="field"><label>オファー</label><select name="offerId" id="compute-offer-select"></select></div>
+            <div class="field"><label>時間</label><input type="number" name="durationHours" min="1" max="24" value="1"></div>
+            <div class="field"><label>開始</label><input type="datetime-local" name="startsAt"></div>
+          </div>
+          <div class="detail-form-row"><button class="approve" type="submit" id="compute-reserve-button">予約を申し込む</button><p class="meta" id="compute-reserve-state"></p></div>
+        </form>
+      </div>
+      <div class="card">
+        <h3>提供中のオファー</h3>
+        <div id="compute-offers"></div>
+      </div>
+    </section>
+
+    <section class="view" id="view-world" data-view-panel="world">
+      <div class="view-head"><h2>世界</h2></div>
+      <p class="meta" id="world-state" aria-live="polite"></p><div id="world-results" class="result-grid"></div>
+    </section>
+
+    <section class="view" id="view-ranking" data-view-panel="ranking">
+      <div class="view-head"><h2>ランキング</h2></div>
+      <p class="meta" id="ranking-state" aria-live="polite"></p><div id="ranking-results" class="result-grid"></div>
+    </section>
+
+    <section class="view" id="view-contacts" data-view-panel="contacts">
+      <div class="view-head"><h2>連絡先</h2></div>
+      <p class="meta" id="contacts-state" aria-live="polite"></p><div id="contacts-results" class="result-grid"></div>
+    </section>
+
+    <section class="view" id="view-bookmarks" data-view-panel="bookmarks">
+      <div class="view-head"><h2>ブックマーク</h2></div>
+      <p class="meta" id="bookmarks-state" aria-live="polite"></p><div id="bookmarks-results" class="result-grid"></div>
+    </section>
+
+    <section class="view" id="view-lists" data-view-panel="lists">
+      <div class="view-head"><h2>リスト</h2><div class="view-head-actions"><button id="lists-create-toggle" class="approve" type="button">＋作成</button></div></div>
+      <form id="lists-create" class="card detail-form" hidden>
+        <input type="text" name="name" maxlength="100" placeholder="リスト名" required>
+        <textarea name="description" rows="2" maxlength="1000" placeholder="説明（任意）"></textarea>
+        <div class="detail-form-row"><select name="visibility"><option value="private">非公開</option><option value="public">公開</option></select><button class="approve" type="submit">作成</button><p class="meta" id="lists-create-state"></p></div>
+      </form>
+      <p class="meta" id="lists-state" aria-live="polite"></p><div id="lists-results" class="result-grid"></div>
+    </section>
+
+    <section class="view" id="view-services" data-view-panel="services">
+      <div class="view-head"><h2>サービス</h2></div>
+      <p class="meta" id="services-state" aria-live="polite"></p><div id="services-results" class="result-grid"></div>
+    </section>
+
+    <section class="view" id="view-games" data-view-panel="games">
+      <header class="page-header"><h2 class="page-title">ゲーム</h2><div class="page-actions"><input id="games-search" class="games-search" type="search" maxlength="80" placeholder="ゲームを検索" aria-label="ゲームを検索"></div></header>
+      <div class="layout-grid">
+        <div class="games-section games-local">
+          <div class="games-local-head"><h3>このPCのゲーム</h3><button id="games-view-add" type="button" class="btn btn-secondary">ゲームを追加</button></div>
+          <p id="games-view-state" class="games-status" aria-live="polite"></p>
+          <div id="games-local-list"></div>
+        </div>
+        <div class="games-section"><h3>ストア</h3><div id="games-store"></div></div>
+      </div>
+    </section>
+
+    <section class="view" id="view-code" data-view-panel="code">
+      <div class="view-head"><h2>コード</h2><div class="view-head-actions"><button id="code-open-web" type="button" class="approve">コードを開く</button></div></div>
+      <p class="meta">リポジトリの一覧・作成、clone と push の手順、開発者トークンの発行は、アプリのブラウザ面で開く Hub のコード画面で行います。</p>
+    </section>
+
+    <section class="view" id="view-research" data-view-panel="research">
+      <div class="view-head page-header"><h2 class="page-title">プロジェクトと研究</h2><div class="view-head-actions page-actions" id="research-head-actions"><button id="research-refresh" type="button" class="ghost btn btn-ghost">更新</button><button id="research-create-web" type="button" class="approve btn btn-primary">＋ プロジェクトを作成</button></div></div>
+      <p class="meta">コード・論文・データをプロジェクトごとにまとめ、版と検証関係を確認します。</p>
+      <div class="research-index-tools filter-row"><input id="research-query" type="search" placeholder="プロジェクト名・概要を検索" aria-label="プロジェクト名・概要を検索" maxlength="100"></div>
+      <div id="research-github-panel"></div>
+      <p class="meta" id="research-state" aria-live="polite"></p><div id="research-results" class="research-project-list layout-list"></div>
+    </section>
+
+    <section class="view" id="view-wallet" data-view-panel="wallet">
+      <div class="view-head"><h2>ウォレット</h2><div class="view-head-actions"><button id="wallet-refresh" type="button" class="ghost">更新</button></div></div>
+      <p class="meta" id="wallet-state" aria-live="polite"></p><div id="wallet-results" class="result-grid"></div>
+    </section>
+
+    <section class="view" id="view-node" data-view-panel="node">
+      <div class="view-head"><h2>Personal Node</h2><div class="view-head-actions"><button id="node-refresh" type="button" class="ghost">更新</button></div></div>
+      <div id="personal-node-dashboard"></div>
+      <div class="card node-card">
+        <div class="field"><label for="node-name">名前</label><input id="node-name" type="text" maxlength="80" spellcheck="false"></div><div class="field"><label for="node-url">公開URL</label><input id="node-url" type="text" inputmode="url" placeholder="https://node.example" spellcheck="false"></div><div class="field"><label for="node-storage">保管先</label><input id="node-storage" type="text" spellcheck="false"></div>
+        <label class="check"><input id="node-enabled" type="checkbox"> この端末をHubに参加させる</label><label class="check"><input id="node-login" type="checkbox" aria-describedby="node-startup-state"> Windowsログイン時にこのHubを起動する</label><p class="meta" id="node-startup-state" aria-live="polite"></p>
+        <p class="meta" id="node-key"></p><p class="meta" id="node-state" aria-live="polite">確認中…</p><div class="actions"><button id="node-sync" type="button" class="deny">配信待ちを確認</button><button id="node-save" type="button" class="approve">保存</button></div>
+      </div>
+      <details class="card node-card content-compose">
+        <summary><h3>公開原本を作る</h3></summary>
+        <p class="subtle">まずプレビューします。この段階では保存・配信されません。確定後も結果は「配信待ち」で、公開先へ届いたことは別に確認します。</p>
+        <div class="field"><label for="content-kind">種類</label><select id="content-kind"><option value="memory">記憶</option><option value="post">投稿</option><option value="article">記事</option><option value="document">文書</option></select></div>
+        <div class="field"><label for="content-title">題名</label><input id="content-title" type="text" maxlength="240"></div>
+        <div class="field"><label for="content-language">言語</label><input id="content-language" type="text" maxlength="35" value="ja" spellcheck="false"></div>
+        <textarea id="content-body" rows="8" maxlength="1048576" placeholder="人やAIと共有する原本を書く"></textarea>
+        <div class="actions content-actions"><button id="content-clear" type="button" class="deny">クリア</button><button id="content-preview" type="button" class="approve">公開前に確認</button></div>
+        <section id="content-preview-panel" class="content-preview" hidden aria-live="polite">
+          <h3>公開プレビュー</h3><p id="content-preview-summary" class="meta"></p><pre id="content-preview-body"></pre>
+          <p class="warning">公開・ミラー許可の原本です。複製された内容をあとから完全には回収できません。</p>
+          <label class="check"><input id="content-confirm-public" type="checkbox"> この内容を公開用イベントとして端末に保存し、配信待ちへ追加する</label>
+          <div class="actions"><span></span><button id="content-publish" type="button" class="approve" disabled>確認して配信待ちへ追加</button></div>
+        </section>
+        <p id="content-state" class="meta" aria-live="polite"></p>
+      </details>
+    </section>
+
+    <section class="view layout-list" id="view-notifications" data-view-panel="notifications">
+      <div class="view-head page-header"><h2 class="page-title">通知</h2><div class="view-head-actions page-actions"><span class="meta notif-unread" id="notifications-unread" aria-live="polite"></span><button id="notifications-refresh" type="button" class="ghost btn btn-ghost">更新</button><div class="head-more" id="notifications-more-wrap" hidden><button id="notifications-more" type="button" class="ds-btn ds-btn-icon" aria-label="その他の操作" aria-haspopup="menu" aria-expanded="false" title="その他"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="18.5" cy="12" r="1.4"/></svg></button><div class="post-repost-menu head-more-menu" role="menu" hidden><button id="notifications-read-all" type="button" role="menuitem">すべて既読にする</button></div></div></div></div>
+      <div class="scopes" role="group" aria-label="通知の絞り込み">
+        <button type="button" class="scope on" data-notif-tab="all" aria-pressed="true">すべて</button><button type="button" class="scope" data-notif-tab="unread" aria-pressed="false">未読</button><button type="button" class="scope" data-notif-tab="feed" aria-pressed="false">フィード</button><button type="button" class="scope" data-notif-tab="community" aria-pressed="false">コミュニティ</button><button type="button" class="scope" data-notif-tab="system" aria-pressed="false">お知らせ</button>
+      </div>
+      <p class="meta" id="notifications-state" aria-live="polite">読み込み中…</p><div id="notifications-list"></div>
+    </section>
+
+    <section class="view" id="view-messages" data-view-panel="messages" aria-label="メッセージ">
+      <div class="view-head page-header"><h2 class="page-title">メッセージ</h2><div class="view-head-actions page-actions"><button id="messages-refresh" type="button" class="ghost btn btn-ghost">更新</button></div></div>
+      <div class="messages-layout">
+        <div class="messages-side"><p class="meta" id="messages-state" aria-live="polite">読み込み中…</p><div id="messages-list"></div></div>
+        <div class="messages-thread">
+          <p class="meta" id="thread-state"></p>
+          <div id="thread-list"></div>
+          <form id="thread-form" hidden><span id="thread-attach"></span><textarea id="thread-input" maxlength="280" rows="1" placeholder="メッセージを書く" aria-label="メッセージ（Enterで送信、Shift+Enterで改行）" autocomplete="off"></textarea><button class="approve" type="submit">送信</button></form>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-mail" data-view-panel="mail">
+      <div class="view-head"><h2>メール</h2><div class="view-head-actions"><span class="meta" id="mail-address"></span><button id="mail-compose" type="button" class="approve" hidden>新規作成</button><button id="mail-refresh" type="button" class="ghost">更新</button></div></div>
+      <p class="meta" id="mail-state" aria-live="polite"></p>
+      <div id="mail-gate"></div>
+      <div id="mail-setup" class="card" hidden>
+        <h3>Hubメールを始める</h3>
+        <p class="meta">メールは独立したMailサービスで保管され、Hub内のDMとは分離されます。</p>
+        <div class="detail-form-row">
+          <div class="field"><label for="mail-local-part">希望するメールアドレス</label><input id="mail-local-part" type="text" maxlength="32" autocomplete="off" spellcheck="false" placeholder="jkamma"></div>
+          <button id="mail-create" class="approve" type="button">作成</button>
+        </div>
+        <p class="meta" id="mail-setup-state" aria-live="polite"></p>
+      </div>
+      <div id="mail-main" hidden>
+        <div class="scopes" id="mail-folders" role="group" aria-label="メールのフォルダ">
+          <button type="button" class="scope on" data-mail-folder="inbox" aria-pressed="true">受信</button><button type="button" class="scope" data-mail-folder="sent" aria-pressed="false">送信済み</button><button type="button" class="scope" data-mail-folder="drafts" aria-pressed="false">下書き</button><button type="button" class="scope" data-mail-folder="archive" aria-pressed="false">アーカイブ</button><button type="button" class="scope" data-mail-folder="spam" aria-pressed="false">迷惑メール</button><button type="button" class="scope" data-mail-folder="trash" aria-pressed="false">ゴミ箱</button>
+        </div>
+        <div class="mail-layout">
+          <div class="mail-list-col">
+            <div id="mail-list"></div>
+            <div class="feed-more" id="mail-more-wrap" hidden><button id="mail-more" type="button" class="head-action">もっと見る</button></div>
+          </div>
+          <div class="mail-reader" id="mail-reader">
+            <p class="meta" id="mail-reader-state">メールを選択するか、新規作成してください</p>
+            <article id="mail-message" hidden></article>
+            <form id="mail-form" class="detail-form" hidden>
+              <h3 id="mail-form-title">新しいメール</h3>
+              <div class="field"><label for="mail-to">宛先</label><input id="mail-to" type="text" maxlength="320" autocomplete="off" spellcheck="false" required></div>
+              <div class="field"><label for="mail-subject">件名</label><input id="mail-subject" type="text" maxlength="998" required></div>
+              <textarea id="mail-text" rows="10" maxlength="100000" placeholder="本文" required></textarea>
+              <div class="detail-form-row"><button id="mail-discard" type="button" class="deny">破棄</button><button id="mail-draft-save" type="button" class="head-action">下書き保存</button><button class="approve" type="submit">送信内容を確認</button></div>
+            </form>
+            <section id="mail-preview" class="card" hidden>
+              <h3>送信前の確認</h3>
+              <p class="meta">宛先: <span id="mail-preview-to"></span></p>
+              <p class="meta">件名: <span id="mail-preview-subject"></span></p>
+              <p id="mail-preview-text" class="mail-preview-text"></p>
+              <p class="meta" id="mail-preview-expiry"></p>
+              <p class="meta warning" id="mail-preview-state" aria-live="polite"></p>
+              <div class="actions"><button id="mail-preview-back" type="button" class="deny">戻る</button><button id="mail-preview-send" type="button" class="approve">この内容で送信</button></div>
+            </section>
+          </div>
+        </div>
+      </div>
+      <p class="meta" id="mail-notice" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="view" id="view-profile" data-view-panel="profile">
+      <header class="page-header"><h2 class="page-title">プロフィール</h2></header>
+      <div class="layout-list">
+      <div class="profile-card"><div class="profile-cover" id="profile-cover" aria-hidden="true"></div><div class="profile-top"><span class="post-avatar profile-avatar" id="profile-avatar">?</span><div id="profile-actions"></div></div><div class="profile-info"><h3 id="profile-name"></h3><p class="meta" id="profile-handle"></p><p id="profile-bio" class="profile-bio"></p><div id="profile-facts"></div><div id="profile-stats"></div></div></div>
+      <p class="meta" id="profile-state" aria-live="polite"></p><div id="profile-posts"></div>
+      </div>
+    </section>
+
+    <section class="view" id="view-detail" data-view-panel="detail">
+      <div class="view-head"><h2 id="detail-title">詳細</h2><button id="detail-open-right" class="head-action" type="button" hidden>右で読む</button></div>
+      <p class="meta" id="detail-state" aria-live="polite"></p><div id="detail-content"></div>
+    </section>
+
+    <section class="view" id="view-settings" data-view-panel="settings">
+      <header class="page-header"><h2 class="page-title">設定</h2></header>
+      <div class="inner-layout layout-reading">
+        <nav class="inner-nav" aria-label="設定の節">
+          <div class="settings-search"><input id="settings-search" type="search" placeholder="設定を検索" aria-label="設定を検索" autocomplete="off" spellcheck="false" maxlength="100"></div>
+          <button class="inner-nav-item on" data-settings-sec="account" type="button" aria-current="page">アカウント</button>
+          <button class="inner-nav-item" data-settings-sec="appearance" type="button">表示</button>
+          <button class="inner-nav-item" data-settings-sec="notifications" type="button">通知</button>
+          <button class="inner-nav-item" data-settings-sec="privacy" type="button">プライバシーと安全</button>
+          <button class="inner-nav-item" data-settings-sec="ai" type="button">AI</button>
+          <button class="inner-nav-item" data-settings-sec="wallet" type="button">ウォレット</button>
+          <button class="inner-nav-item" data-settings-sec="browser" type="button">ブラウザ</button>
+          <button class="inner-nav-item" data-settings-sec="device" type="button">この端末</button>
+          <button class="inner-nav-item" data-settings-sec="advanced" type="button">詳細（開発者向け）</button>
+          <button class="inner-nav-item" data-settings-sec="app-info" type="button">このアプリについて</button>
+        </nav>
+        <div class="inner-body">
+          <div data-settings-panel="search" hidden aria-label="検索の結果"></div>
+          <div data-settings-panel="account">
+            <h3 class="settings-panel-title">アカウント</h3>
+            <div class="card account-card">
+              <div class="setting-header" data-setting="Desktopの接続" data-keywords="ログイン 接続 承認 端末 アカウント"><h3 class="setting-label">Desktopの接続</h3><p class="setting-desc">この端末をHubのアカウントにつなぎます。つなぐと、投稿・通知・メッセージが使えます。</p></div>
+              <div class="account-card-head"><span class="meta">今の状態</span><span class="state-pill" data-account="state">未接続</span><button class="btn btn-secondary account-action" data-account="login" type="button">Desktopを接続</button></div>
+              <p class="meta" data-account="copy">この端末のDesktop接続状態です。</p>
+            </div>
+            <div class="card">
+              <div class="setting-row" data-setting="プロフィール" data-keywords="表示名 自己紹介 アイコン"><span class="setting-text"><span class="setting-label">プロフィール</span><span class="setting-desc">表示名や自己紹介を変えます。</span></span><span class="setting-control"><button class="open-view btn btn-secondary" data-open-view="profile" data-title="プロフィール" type="button">開く</button></span></div>
+            </div>
+            <div class="card setting-danger-zone">
+              <div class="setting-row is-danger" data-setting="この端末からログアウト" data-keywords="ログアウト 接続を切る 鍵を消す"><span class="setting-text"><span class="setting-label">この端末からログアウト</span><span class="setting-desc">この端末に保存した接続用の鍵を消します。Account側の登録履歴と端末内のデータは消えません。</span></span><span class="setting-control"><button class="deny btn btn-ghost" data-account="logout" type="button" hidden>ログアウト</button></span></div>
+            </div>
+          </div>
+          <div data-settings-panel="appearance" hidden>
+            <h3 class="settings-panel-title">表示</h3>
+            <p class="subtle">この端末だけの設定です。アカウントやほかの端末には影響しません。</p>
+            <div class="card"><div id="settings-appearance"></div></div>
+          </div>
+          <div data-settings-panel="notifications" hidden>
+            <h3 class="settings-panel-title">通知</h3>
+            <p class="subtle">どんなときに通知を受け取るかを選びます。</p>
+            <div class="card">
+              <p class="meta" id="settings-state"></p>
+              <div id="settings-notifications" class="settings-rows"></div>
+              <div class="actions"><button class="btn btn-secondary" id="settings-save" type="button" disabled>保存</button></div>
+            </div>
+          </div>
+          <div data-settings-panel="privacy" hidden>
+            <h3 class="settings-panel-title">プライバシーと安全</h3>
+            <p class="subtle">誰からのメッセージを受けるか、どんな投稿を見るかを決めます。</p>
+            <div class="card">
+              <p class="meta" id="settings-state-safety"></p>
+              <div class="setting-row" data-setting="ダイレクトメッセージ" data-keywords="DM メッセージ 受信 相互フォロー"><span class="setting-text"><span class="setting-label">ダイレクトメッセージを受け取る相手</span><span class="setting-desc">この範囲の人からだけ、メッセージが届きます。</span></span><span class="setting-control"><select id="settings-dm" aria-label="ダイレクトメッセージを受け取る相手"><option value="mutuals">相互フォローのみ</option><option value="following">フォロー中の人から</option><option value="nobody">受け取らない</option></select></span></div>
+              <div class="setting-row is-stacked" data-setting="ミュートする言葉" data-keywords="ミュート 非表示 ブロック ワード 禁止語"><span class="setting-text"><span class="setting-label">ミュートする言葉</span><span class="setting-desc">この言葉を含む投稿を見えなくします。1行に1語、50語までです。</span></span><textarea id="settings-muted" rows="3" maxlength="4000" placeholder="1行に1語" aria-label="ミュートする言葉"></textarea></div>
+              <label class="setting-row" data-setting="センシティブな内容" data-keywords="センシティブ 表示 成人 注意"><span class="setting-text"><span class="setting-label">センシティブな内容を表示する</span><span class="setting-desc">オフのあいだは、注意が必要な内容が伏せて表示されます。</span></span><span class="setting-control"><input type="checkbox" id="settings-sensitive" role="switch"></span></label>
+              <div class="actions"><button class="btn btn-secondary" id="settings-save-safety" type="button" disabled>保存</button></div>
+            </div>
+          </div>
+          <div data-settings-panel="ai" hidden>
+            <h3 class="settings-panel-title">AI</h3>
+            <p class="subtle">AIの画面で使う接続を決めます。接続はこの端末の中だけで扱います。</p>
+            <div id="settings-ai"></div>
+          </div>
+          <div data-settings-panel="wallet" hidden>
+            <h3 class="settings-panel-title">ウォレット</h3>
+            <p class="subtle">残高の確認や送金は、ウォレットの画面で行います。</p>
+            <div class="card">
+              <div class="setting-row" data-setting="ウォレット" data-keywords="残高 送金 受け取り 暗号資産 ネットワーク 支払い"><span class="setting-text"><span class="setting-label">ウォレット</span><span class="setting-desc">残高を見て、送金や受け取りをします。送金のたびに、ネットワーク・宛先・金額の確認が出ます。</span></span><span class="setting-control"><button class="open-view btn btn-secondary" data-open-view="wallet" data-title="ウォレット" type="button">開く</button></span></div>
+            </div>
+          </div>
+          <div data-settings-panel="browser" hidden>
+            <h3 class="settings-panel-title">ブラウザ</h3>
+            <div id="settings-browser"></div>
+          </div>
+          <div data-settings-panel="device" hidden>
+            <h3 class="settings-panel-title">この端末</h3>
+            <p class="subtle">この端末に置くデータと、ほかの端末とのやり取りです。</p>
+            <div class="card">
+              <div class="setting-row" data-setting="Personal Node" data-keywords="保管 同期 公開 原本 ノード バックアップ"><span class="setting-text"><span class="setting-label">Personal Node（この端末の保管庫）</span><span class="setting-desc">自分の作品の原本をこの端末に置き、同期や公開の元にします。保管先や同期はここで管理します。</span></span><span class="setting-control"><button class="open-view btn btn-secondary" data-open-view="node" data-title="Personal Node" type="button">開く</button></span></div>
+            </div>
+            <div id="settings-media-p2p"></div>
+            <div id="settings-storage"></div>
+            <div id="settings-local-data"></div>
+            <div id="settings-cache"></div>
+          </div>
+          <div data-settings-panel="app-info" hidden>
+            <h3 class="settings-panel-title">このアプリについて</h3>
+            <p class="subtle">右列の情報パネルを切り替えます。</p>
+            <div class="card">
+              <div class="setting-row" data-setting="情報パネル" data-keywords="右列 情報 パネル 概要 サイドバー"><span class="setting-text"><span class="setting-label">情報パネル</span><span class="setting-desc">画面の右に、いま見ている内容の情報を出します。</span></span><span class="setting-control"><button id="settings-about-panel" class="btn btn-secondary desktop-rail-toggle" type="button" aria-expanded="false">情報パネルを開く</button></span></div>
+            </div>
+          </div>
+          <div data-settings-panel="advanced" hidden>
+            <h3 class="settings-panel-title">詳細（開発者向け）</h3>
+            <p class="subtle">ふだんは変えなくてよい設定です。</p>
+            <div class="card">
+              <div class="setting-header" data-setting="引っ越し用の署名鍵" data-settings-anchor="identity" data-keywords="did:key 根鍵 身元の鍵 引っ越し 署名 アカウント移行 公開鍵"><h3 class="setting-label">引っ越し用の署名鍵</h3><p class="setting-desc">別のハブへ移っても同じ人だと示すための鍵です。公開鍵の確認と、署名ができます。</p></div>
+              <div id="settings-identity"></div>
+            </div>
+            <div class="card">
+              <div class="setting-row" data-setting="テスト用ネットワーク" data-keywords="開発者 テストネット Fuji Amoy Sepolia Kairos ウォレット"><span class="setting-text"><span class="setting-label">テスト用ネットワーク</span><span class="setting-desc">本物のお金を使わず試すための設定です。ウォレット画面の「開発者向け設定」で切り替えます。</span></span><span class="setting-control"><button class="open-view btn btn-secondary" data-open-view="wallet" data-title="ウォレット" type="button">ウォレットを開く</button></span></div>
+            </div>
+            <div id="settings-about" data-settings-anchor="about"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <div id="music-player" class="music-player" hidden>
+      <div class="music-player-art"><span aria-hidden="true">♪</span><img id="music-player-art" alt="" hidden></div>
+      <div class="music-player-text"><strong id="music-player-title"></strong><span id="music-player-artist" class="meta"></span><button id="music-return-work" type="button" class="head-action" disabled>作品へ戻る</button></div>
+      <div class="music-player-controls">
+        <div class="music-player-buttons"><button id="music-prev" type="button" aria-label="前の曲">⏮</button><button id="music-toggle" type="button" aria-label="再生">▶</button><button id="music-next" type="button" aria-label="次の曲">⏭</button><button id="music-queue-toggle" type="button" aria-label="再生待ちを表示" aria-controls="music-queue-panel" aria-expanded="false" title="再生待ち">☷</button></div>
+        <div class="music-progress"><span id="music-current-time">0:00</span><input id="music-seek" type="range" min="0" max="100" value="0" aria-label="再生位置"><span id="music-total-time">0:00</span></div>
+      </div>
+      <label class="music-volume">音量 <input id="music-volume" type="range" min="0" max="100" value="80" aria-label="音量"></label>
+      <p id="music-playback-state" class="meta" role="status"></p>
+      <section id="music-queue-panel" class="music-queue-panel" aria-label="再生待ち" hidden></section>
+      <audio id="music-player-audio" preload="none"></audio>
+    </div>
+    <div id="music-yt-bar" class="yt-now-bar" role="region" aria-label="YouTubeで再生中" hidden></div>
+  </main>
+
+  <aside class="rail" aria-label="並べて見る">
+    <div class="rail-body">
+      <div class="rail-activity-head"><div class="rail-history-nav"><button id="rail-back" class="rb-button rail-nav-button" type="button" aria-label="右列で戻る" title="戻る" disabled><svg class="ic" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg></button><button id="rail-forward" class="rb-button rail-nav-button" type="button" aria-label="右列で進む" title="進む" disabled><svg class="ic" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></button></div><div class="rail-activity-heading"><h2 id="rail-view-title" class="rail-view-name" aria-live="polite">ブラウザ</h2></div><div class="rail-activity-actions"><button id="rail-ai-new" type="button" hidden>＋ 新規</button><button id="rail-open-ai-full" type="button" hidden aria-label="AI画面を広げる">広げる</button><button id="rail-mark-all" type="button" hidden>すべて既読</button><button id="rail-refresh" type="button" hidden>更新</button></div></div>
+      <div id="rail-browser-reference" hidden></div>
+      <section class="rail-view rail-view--browser" data-rail-view="browser" aria-label="ブラウザ" hidden>
+        <div class="rb-bar" role="toolbar" aria-label="右列のブラウザ">
+          <div class="rb-row">
+            <button id="rb-back" class="rb-button" type="button" aria-label="戻る" title="戻る" disabled><svg class="ic" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg></button>
+            <button id="rb-forward" class="rb-button" type="button" aria-label="進む" title="進む" disabled><svg class="ic" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></button>
+            <button id="rb-reload" class="rb-button" type="button" aria-label="再読み込み" title="再読み込み" disabled><svg class="ic" viewBox="0 0 24 24"><path d="M19 12a7 7 0 1 1-2.1-5M19 4v4h-4"/></svg></button>
+            <form id="rb-form" class="rb-form" role="search" autocomplete="off"><input id="rb-address" class="rb-address" type="text" inputmode="url" spellcheck="false" maxlength="2048" placeholder="検索またはアドレス" aria-label="右列のアドレスと検索"></form>
+            <button id="rb-center" class="rb-button" type="button" aria-label="中央で開く" title="中央で開く" disabled><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M13 12h5M16 9l3 3-3 3"/></svg></button>
+          </div>
+          <p id="rb-title" class="rb-title" aria-live="polite"></p>
+        </div>
+        <p id="rb-note" class="rb-note" role="status" hidden></p>
+        <div id="rail-browser-stage" class="rb-stage"></div>
+      </section>
+      <section class="rail-view" data-rail-view="posts" hidden><div class="page-tabs rail-posts-tabs" id="rail-posts-tabs" role="tablist" aria-label="投稿とコミュニティ"><button type="button" class="btn btn-ghost rail-posts-tab" role="tab" data-rail-posts-tab="posts" aria-selected="true" tabindex="0">投稿</button><button type="button" class="btn btn-ghost rail-posts-tab" role="tab" data-rail-posts-tab="community" aria-selected="false" tabindex="-1">コミュニティ</button></div><div id="rail-posts-feed" class="rail-list" role="tabpanel"></div><div id="rail-communities" class="rail-list" role="tabpanel" hidden></div></section>
+      <section class="rail-view" data-rail-view="search" hidden>
+        <div id="rail-detail-preview-host" class="rail-list"></div><form id="rail-search-form" class="rail-search-form" role="search"><input id="rail-search-query" type="search" maxlength="100" placeholder="Hub内の資料を探す" aria-label="右列でHubを検索"><button type="submit">検索</button></form>
+        <div id="rail-search-filter-host"></div>
+        <div id="rail-search-intro" class="rail-search-intro"><p>中央の画面はそのままで、右で資料を探して読めます。詳細画面で「右で読む」を押すと、ここに残ります。</p><p class="rail-switch-label">右で開く</p><div class="rail-switch"><button type="button" data-rail-switch="ai">AI</button><button type="button" data-rail-switch="messages">メッセージ</button><button type="button" data-rail-switch="music">音楽</button></div></div>
+        <p id="rail-search-state" class="meta" role="status"></p><div id="rail-search-results" class="rail-list"></div>
+      </section>
+      <section class="rail-view" data-rail-view="notifications" hidden><div id="rail-notifications" class="rail-list"></div></section>
+      <section class="rail-view" data-rail-view="messages" hidden><div id="rail-messages" class="rail-list"></div></section>
+      <section class="rail-view" data-rail-view="music" hidden><div id="rail-playing" class="rail-list"></div><div id="rail-music-yt" class="rail-music-yt" hidden></div><div id="rail-music" class="rail-list"></div></section>
+      <section class="rail-view rail-view--wallet" data-rail-view="wallet" hidden><div id="rail-wallet" class="rail-wallet"></div></section>
+      <section class="rail-view rail-view--ai" data-rail-view="ai"><div id="rail-ai-workspace-host"></div></section>
+    </div>
+    <nav class="rail-marks" aria-label="右列の表示">
+      <button id="rail-activity-toggle" class="rail-mark" type="button" title="右列を閉じる" aria-label="右列を閉じる" aria-expanded="true"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg></button>
+      <button class="rail-mark rail-view-button" data-rail-view="search" type="button" title="資料・検索" aria-label="資料・検索" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg></button>
+      <button class="rail-mark rail-view-button" data-rail-view="messages" type="button" title="メッセージ" aria-label="メッセージ" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12"/><path d="m4 7 8 6 8-6"/></svg></button>
+      <button class="rail-mark rail-view-button" data-rail-view="music" type="button" title="音楽" aria-label="音楽" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg></button>
+      <button class="rail-mark rail-view-button" data-rail-view="posts" type="button" title="投稿" aria-label="投稿" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24"><path d="M5 5h14v10H10l-5 4Z"/></svg></button>
+      <button class="rail-mark rail-view-button" data-rail-view="notifications" type="button" title="通知" aria-label="通知" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24"><path d="M6 17V11a6 6 0 0 1 12 0v6l1.5 2h-15ZM10 21h4"/></svg></button>
+      <button class="rail-mark rail-view-button rail-mark--bottom" data-rail-view="browser" type="button" title="ブラウザ" aria-label="ブラウザ" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.5 2.5 3.5 5.5 3.5 8.5s-1 6-3.5 8.5c-2.5-2.5-3.5-5.5-3.5-8.5s1-6 3.5-8.5Z"/></svg></button>
+      <button class="rail-mark rail-view-button" data-rail-view="ai" type="button" title="AI" aria-label="AI" aria-pressed="true"><svg class="ic" viewBox="0 0 24 24"><rect class="ai-chip" x="3" y="3" width="18" height="18" rx="5"/><path fill="none" d="M7.5 16.5 10.25 8l2.75 8.5M8.5 13.3H12M16.5 8v8.5"/></svg></button>
+      <button class="rail-mark rail-view-button" data-rail-view="wallet" type="button" title="ウォレット" aria-label="ウォレット" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24"><path d="M4 7V5.5A2.5 2.5 0 0 1 6.5 3H18M5 7h14a2 2 0 0 1 2 2v11H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"/><path d="M16 12h5v5h-5a2.5 2.5 0 0 1 0-5Z"/></svg></button>
+    </nav>
+  </aside>
+  <div id="rail-resizer" class="column-resizer" role="separator" tabindex="0" aria-orientation="vertical" aria-label="右列の幅" title="ドラッグで幅を変更・細くすると閉じる・ダブルクリックで元に戻す"></div>
+</div>
+
+<nav class="mobile-nav" aria-label="スマホ用メインナビゲーション">
+  <button class="mobile-nav-item" data-view="home"><svg class="ic" viewBox="0 0 24 24"><path d="M4 20v-9h4v9M10 20V4h4v16M16 20v-7h4v7M3 20h18"/></svg>概要</button><button class="mobile-nav-item on" data-view="feed"><svg class="ic" viewBox="0 0 24 24"><circle cx="5" cy="5" r="1.5" fill="currentColor" stroke="none"/><circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="5" cy="19" r="1.5" fill="currentColor" stroke="none"/><path d="M5 8v1M5 15v1M10 5h10M10 8h6M10 12h10M10 15h6M10 19h10"/></svg>ホーム</button><button class="mobile-nav-item" data-view="search"><svg class="ic" viewBox="0 0 24 24"><path d="M10.5 4a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13Zm9.5 16-4.5-4.5"/></svg>検索</button><button class="mobile-nav-item" data-view="ai"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2L12 3Z"/></svg>AI</button><button class="mobile-nav-item" data-view="notifications"><svg class="ic" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0v4l2 3H4l2-3V9ZM10 19h4"/></svg>通知</button><button class="mobile-nav-item" data-view="profile"><svg class="ic" viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 21a8 8 0 0 1 16 0"/></svg>自分</button>
+  <button class="mobile-nav-item" data-view="market"><svg class="ic" viewBox="0 0 24 24"><path d="M4 9l1.5-5h13L20 9M4 9v11h16V9M4 9h16M9 20v-6h6v6"/></svg>マーケット</button>
+  <button class="mobile-nav-item" data-view="wallet"><svg class="ic" viewBox="0 0 24 24"><path d="M3 7h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Zm0 0V6a2 2 0 0 1 2-2h11M16 13h5v4h-5a2 2 0 0 1 0-4Z"/></svg>ウォレット</button>
+  <button class="mobile-nav-item" data-view="browser"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M15.6 8.4 13.7 13.7 8.4 15.6l1.9-5.3z"/></svg>ブラウザ</button>
+  <button class="mobile-nav-item" data-view="settings"><svg class="ic" viewBox="0 0 24 24"><path d="M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>設定</button>
+</nav>
+
+<dialog id="harness-dialog" aria-labelledby="harness-title">
+  <div class="dialog-shell">
+    <header class="dialog-head"><div><h2 id="harness-title">Hubハーネス</h2><p class="subtle">作業の入口・承認・検証・履歴をHubに集約します</p></div><button id="return-to-hub" type="button" class="deny">Hubに戻る</button><button type="button" class="deny dialog-close" data-close="harness-dialog" aria-label="閉じる">閉じる</button></header>
+    <div class="harness-layout">
+      <aside class="harness-history" aria-label="AI実行履歴"><h3>作業フォルダ</h3><input id="pi-work-history-search" class="piw-history-search" type="search" placeholder="作業を検索…" aria-label="AIの作業履歴を検索" autocomplete="off"><div id="pi-work-history" class="piw-history-list"><p class="meta">作業履歴はまだありません</p></div></aside>
+      <div class="harness-main">
+    <section id="pi-work" aria-labelledby="pi-work-title"><div class="piw-shell">
+      <header class="piw-head">
+        <div class="piw-title"><button id="pi-work-workspace" class="piw-workspace" type="button" title="作業フォルダを設定" aria-label="作業フォルダを設定"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10H3V7Z"/></svg><span id="pi-work-workspace-label">作業フォルダを設定</span></button><span class="piw-crumb" aria-hidden="true">›</span><h2 id="pi-work-title">AI</h2><span id="pi-work-status" class="piw-status" aria-live="polite">確認中…</span></div>
+        <button id="pi-work-new" type="button" class="head-action" aria-label="新しい作業を始める">＋ 新規</button>
+      </header>
+      <div class="piw-timeline-wrap"><div id="pi-work-timeline" class="piw-timeline" aria-live="polite"><div class="piw-empty"><strong>AIに何を依頼しますか？</strong><span>作業フォルダを選んでください</span></div></div><button id="pi-work-latest" class="piw-latest" type="button" hidden>最新へ ↓</button></div>
+      <div id="pi-work-error" class="warning" role="alert"></div>
+      <div id="pi-work-resume" class="piw-resume" hidden><div class="piw-resume-copy"><span id="pi-work-resume-text"></span><p id="pi-work-resume-source" hidden>履歴の作業フォルダ <code id="pi-work-resume-path"></code></p></div><div class="piw-resume-actions"><button id="pi-work-resume-workspace" type="button" class="approve" hidden>このフォルダに切り替える</button><button id="pi-work-resume-clear" type="button" class="deny">新しい作業に戻す</button></div></div>
+      <div id="pi-work-finished" class="piw-finished" hidden><span id="pi-work-finished-text"></span><button id="pi-work-finished-post" type="button" class="ghost head-action" hidden>投稿の下書きにする</button><button id="pi-work-finished-action" type="button" class="approve"></button></div>
+      <div id="pi-work-approval-seat" class="piw-approval-seat" hidden></div>
+      <div class="piw-composer">
+        <textarea id="pi-work-prompt" rows="3" maxlength="16000" placeholder="AIにやってほしいことを入力" aria-label="Hubハーネスの依頼内容" title="Enterで送信 · Shift+Enterで改行"></textarea>
+        <p id="pi-work-draft-limit" class="meta warning" role="status" aria-live="polite" hidden></p>
+        <div class="piw-composer-bar">
+          <button id="pi-work-composer-workspace" class="piw-chip" type="button" title="作業フォルダを設定" aria-label="作業フォルダを選ぶ"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10H3V7Z"/></svg><span id="pi-work-composer-workspace-label">作業フォルダ</span></button>
+          <span class="piw-pop">
+            <button id="pi-work-model-chip" class="piw-chip" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="pi-work-model-popover" aria-label="モデルを選ぶ"><span id="pi-work-model-chip-label">既定のモデル</span><span class="piw-caret" aria-hidden="true">▾</span></button>
+            <label class="piw-model" hidden><span class="meta">モデル</span><input id="pi-work-model" type="text" list="pi-work-model-list" placeholder="既定のモデル" autocomplete="off" spellcheck="false" tabindex="-1"><datalist id="pi-work-model-list"></datalist></label>
+            <div id="pi-work-model-popover" class="piw-popover" role="dialog" aria-label="モデルを選ぶ" hidden>
+              <input id="pi-work-model-search" class="piw-popover-search" type="search" placeholder="モデルを検索" aria-label="モデルを検索" autocomplete="off" spellcheck="false">
+              <div id="pi-work-model-options" class="piw-model-options" role="listbox" aria-label="モデル"></div>
+              <div class="piw-popover-foot"><button id="pi-work-model-refresh" type="button" class="piw-chip" aria-label="モデル候補を再検出" title="モデル候補を再検出">候補を再検出</button><p id="pi-work-model-status" class="meta" role="status" aria-live="polite"></p></div>
+            </div>
+          </span>
+          <span class="piw-pop">
+            <button id="pi-work-perm-chip" class="piw-chip" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="pi-work-perm-popover" aria-label="権限: 都度承認"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6l-7-3Z"/></svg><span id="pi-work-perm-chip-label">都度承認</span><span class="piw-caret" aria-hidden="true">▾</span></button>
+            <div id="pi-work-perm-popover" class="piw-popover piw-perm-popover" role="dialog" aria-label="権限" hidden>
+              <div class="piw-preset-list" role="radiogroup" aria-label="権限プリセット">
+                <button type="button" class="piw-preset" role="radio" aria-checked="true" data-preset="ask"><strong>都度承認</strong><span>ファイルの読み取りのみ自動。書き込みは1件ずつ承認します。</span></button>
+                <button type="button" class="piw-preset" role="radio" aria-checked="false" data-preset="write"><strong>書き込みを許可</strong><span id="pi-work-write-note" aria-live="polite">このセッションのファイル書き込みを事前に許可します。実行・通信は使えません。</span></button>
+                <button type="button" class="piw-preset" role="radio" aria-checked="false" data-preset="tools"><strong>コマンドと通信を使う</strong><span>コマンド実行とHTTPを使えます。書き込み・実行・送信は1件ずつ承認します。</span></button>
+                <div id="pi-work-perm-custom" class="piw-preset is-display" role="radio" aria-checked="true" aria-disabled="true" data-preset="custom" hidden><strong>カスタム</strong><span>個別に設定した状態です。</span></div>
+              </div>
+              <div id="pi-work-write-confirm" class="piw-confirm" role="alert" hidden><p>このセッションでは書き込みの承認が省略されます。</p><div class="piw-confirm-actions"><button id="pi-work-write-confirm-cancel" type="button" class="deny">やめる</button><button id="pi-work-write-confirm-ok" type="button" class="approve">許可する</button></div></div>
+              <p id="pi-work-perm-lock" class="meta" role="status" hidden>作業中は変更できません</p>
+              <section class="piw-verify" aria-labelledby="pi-work-verify-title">
+                <h4 id="pi-work-verify-title">完了の検証（任意）</h4>
+                <label>完了に必要な検証コマンド<input id="pi-work-verify-program" type="text" placeholder="例: node" autocomplete="off" spellcheck="false"></label>
+                <label>検証コマンドの引数（1行に1つ）<textarea id="pi-work-verify-args" rows="2" placeholder="例: verify.cjs" spellcheck="false"></textarea></label>
+                <p class="meta">設定した場合はコマンド実行を有効にしてください。検証が通るまで完了扱いにしません。</p>
+                <div id="pi-work-verify-warning" class="piw-verify-warning" role="status" hidden><span>検証にはコマンド実行が必要です</span><button id="pi-work-verify-enable" type="button" class="piw-chip">コマンドと通信を使う</button></div>
+              </section>
+              <section class="piw-verify piw-best-of" aria-labelledby="pi-work-best-of-title">
+                <h4 id="pi-work-best-of-title">複数回の試行と編集ごとの検査（任意）</h4>
+                <label>試行回数<select id="pi-work-best-of"><option value="">1回（通常）</option><option value="2">2回</option><option value="3">3回</option></select></label>
+                <p id="pi-work-best-of-estimate" class="meta" role="status" hidden></p>
+                <label><input id="pi-work-best-of-confirm" type="checkbox" disabled> 上の見積りを確認しました</label>
+                <label><input id="pi-work-fast-check" type="checkbox"> 書き込みごとに型・Lint検査の新しいエラーを添える</label>
+                <p id="pi-work-fast-check-note" class="meta" role="status" hidden></p>
+              </section>
+              <section class="piw-verify piw-connection" aria-labelledby="pi-work-connection-title">
+                <h4 id="pi-work-connection-title">AIの接続（任意）</h4>
+                <label>作業に使う接続<select id="pi-work-connection"><option value="">使わない（上のモデル欄）</option></select></label>
+                <label>モデル（空欄で接続の既定）<input id="pi-work-connection-model" type="text" autocomplete="off" spellcheck="false" disabled></label>
+                <p id="pi-work-connection-note" class="meta" hidden></p>
+                <label class="piw-hubpedia-ask"><input id="pi-work-hubpedia-ask" type="checkbox"> ハブペディアに聞く（モデル欄の接続で、ハブペディアの資料だけから答える）</label>
+                <p id="pi-work-hubpedia-ask-note" class="meta" hidden></p>
+              </section>
+              <div class="piw-perm-source" hidden aria-hidden="true"><input id="pi-work-allow-write" type="checkbox" tabindex="-1"><input id="pi-work-allow-exec" type="checkbox" tabindex="-1"><input id="pi-work-allow-http" type="checkbox" tabindex="-1"></div>
+            </div>
+          </span>
+          <span id="pi-work-shortcut" class="piw-shortcut" hidden>Enterで送信 · Shift+Enterで改行</span>
+          <button id="pi-work-cancel" type="button" class="piw-stop" disabled hidden aria-label="作業を中断" title="作業を中断"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="4" y="4" width="8" height="8" rx="1.5" fill="currentColor"/></svg></button>
+          <button id="pi-work-start" type="button" class="piw-send" aria-label="依頼内容を入力してください" title="依頼内容を入力してください" disabled><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 12V3.5M3.5 8 8 3.5 12.5 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </div>
+      </div>
+    </div></section>
+    <section id="subscription-usage" class="card" aria-labelledby="subscription-usage-title">
+      <div class="run-head"><div><h2 id="subscription-usage-title">サブスクの使用量</h2><p class="subtle">この端末のCLIでログインしているアカウントの利用枠です。</p></div><button id="subscription-usage-refresh" type="button" class="deny">更新</button></div>
+      <p id="subscription-usage-note" class="meta">アカウント全体で共有する枠です。API・カスタムモデルの従量課金額や、ローカルモデルの使用量は含みません。</p>
+      <div id="subscription-usage-list" class="agent-grid" aria-live="polite"></div>
+    </section>
+    <section class="card workspace-card"><div class="workspace"><label for="workspace-path">共有 Git 作業フォルダ</label><input id="workspace-path" type="text" placeholder="C:\jkamma-platform" spellcheck="false"><button id="workspace-pick" type="button">選ぶ</button><button id="workspace-save" type="button">設定</button><button id="workspace-clear" type="button" class="deny">解除</button></div><p class="meta" id="workspace-state">確認中…</p></section>
+    <section class="card pairing"><div><strong>CLI接続もHubで管理</strong><p class="subtle">CLIが実行する作業は、Hubで承認・履歴・検証結果を確認できます。</p></div></section>
+    <section id="dev"><h2>CLI接続</h2><div class="card">
+      <div class="dev-controls"><select id="dev-agent"></select><input id="dev-model" list="dev-model-list" placeholder="モデル" spellcheck="false"><datalist id="dev-model-list"></datalist><label class="resume" hidden><input id="dev-resume" type="checkbox"> 続きから<span id="dev-resume-hint"></span></label></div>
+      <textarea id="dev-prompt" rows="4" placeholder="やってほしいことを書く"></textarea>
+      <div class="actions"><button id="dev-cancel" type="button" class="deny" disabled>中断</button><button id="dev-start" type="button" class="approve">実行</button></div>
+      <p class="meta" id="dev-status" aria-live="polite"></p><pre id="dev-output" class="dev-output"></pre><div id="dev-changes" class="dev-changes"></div>
+    </div><h2>これまでの実行</h2><div id="dev-history" class="empty">まだありません</div></section>
+    <section><h2>開発の承認待ち</h2><div id="dev-approvals" class="empty">開発リクエストはありません</div></section>
+    <section><h2>コード実行の承認待ち</h2><div id="runs" class="empty">実行リクエストはありません</div></section>
+    <section><h2>ファイル保存の承認待ち</h2><div id="writes" class="empty">保存リクエストはありません</div></section>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="games-dialog" aria-labelledby="games-title">
+  <div class="dialog-shell">
+    <header class="dialog-head"><div><h2 id="games-title">ゲームランチャー</h2><p class="subtle">このPCにあるゲームを直接起動します</p></div><button type="button" class="deny dialog-close" data-close="games-dialog" aria-label="閉じる">閉じる</button></header>
+    <div class="section-heading"><p id="game-state" class="meta" aria-live="polite">読み込み中…</p><button id="game-add" type="button" class="approve">ゲームを追加</button></div>
+    <div id="game-list" class="game-grid"></div>
+    <div class="card launcher-note"><strong>ローカル専用</strong><p class="meta">登録情報だけをHubアプリに保存します。ゲーム本体をコピー・削除せず、起動時もシェルを介しません。</p></div>
+  </div>
+</dialog>
+
+<dialog id="wallet-confirm-dialog" aria-labelledby="wallet-confirm-title" aria-describedby="wallet-confirm-summary">
+  <div class="dialog-shell">
+    <header class="dialog-head"><div><h2 id="wallet-confirm-title">ウォレット操作の確認</h2><p class="subtle">この端末のウォレットへの要求です。内容を確かめてから承認してください。</p></div></header>
+    <div id="wallet-confirm-content" tabindex="0" aria-label="ウォレット要求の全内容">
+      <p id="wallet-confirm-summary"></p>
+      <pre id="wallet-confirm-detail" class="confirm-detail"></pre>
+    </div>
+    <div class="actions"><button type="button" class="deny" id="wallet-confirm-deny" disabled>拒否</button><button type="button" class="approve" id="wallet-confirm-approve" disabled>承認</button></div>
+  </div>
+</dialog>
+
+<dialog id="tip-dialog" aria-labelledby="tip-title">
+  <div class="dialog-shell dialog-narrow">
+    <header class="dialog-head"><div><h2 id="tip-title">チップを送る</h2><p class="subtle" id="tip-to"></p></div><button type="button" class="deny dialog-close" data-close="tip-dialog" aria-label="閉じる">閉じる</button></header>
+    <div class="field"><label for="tip-option">ネットワーク</label><select id="tip-option"></select></div>
+    <div class="field"><label for="tip-amount">数量</label><input id="tip-amount" type="text" inputmode="decimal" placeholder="0.01" spellcheck="false"></div>
+    <p class="meta" id="tip-note" aria-live="polite"></p>
+    <div class="actions"><button type="button" class="deny dialog-close" data-close="tip-dialog">キャンセル</button><button type="button" class="approve" id="tip-send">送る</button></div>
+  </div>
+</dialog>
+
+<dialog id="ai-comparison" aria-label="ローカル実行方式">
+  <div class="dialog-shell harness-comparison-dialog">
+    <header class="dialog-head comparison-dialog-head"><button id="ai-comparison-close" class="deny dialog-close" type="button" aria-label="閉じる">閉じる</button></header>
+    <div id="ai-comparison-body"></div>
+  </div>
+</dialog>
+
+<dialog id="node-sync-dialog" aria-label="配信待ちと受領記録">
+  <div class="dialog-shell node-sync-dialog-shell">
+    <header class="dialog-head"><h2>配信待ちと受領記録</h2><button id="node-sync-close" type="button" class="deny dialog-close">閉じる</button></header>
+    <div id="node-sync-body"></div>
+  </div>
+</dialog>
+
+<dialog id="notice-dialog" aria-labelledby="notice-title">
+  <div class="dialog-shell dialog-narrow">
+    <header class="dialog-head"><div><h2 id="notice-title">お知らせ</h2></div><button type="button" class="deny dialog-close" data-close="notice-dialog" aria-label="閉じる">閉じる</button></header>
+    <p id="notice-text" aria-live="polite"></p>
+  </div>
+</dialog>
+
+<dialog id="quick-switcher" aria-label="検索と移動">
+  <div class="quick-switcher-head"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><input id="quick-switcher-query" type="search" maxlength="100" autocomplete="off" placeholder="Hubを検索、または画面へ移動" aria-label="検索語または画面名" aria-controls="quick-switcher-results" aria-activedescendant="quick-switcher-option-0"><kbd>Esc</kbd></div>
+  <div id="quick-switcher-results" role="listbox" aria-label="移動先"></div>
+  <p class="quick-switcher-hint">↑↓ で選択 · Enter で開く</p>
+</dialog>
+
+<script type="module" src="./app.js"></script>
+</body>
+</html>

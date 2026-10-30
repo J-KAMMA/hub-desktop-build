@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>新しいタブ</title>
+  <script src="./appearance-early.js"></script>
+  <link rel="stylesheet" href="./tokens.css">
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./newtab-brave.css">
+</head>
+<body class="native-tool newtab-tool newtab-brave">
+  <main id="newtab-page">
+    <h1 class="newtab-sr">新しいタブ</h1>
+    <button id="newtab-settings" class="newtab-settings" type="button" aria-label="新しいタブの表示設定" aria-expanded="false" aria-controls="newtab-settings-panel" title="新しいタブの表示設定"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg></button>
+    <div id="newtab-settings-panel" class="newtab-settings-panel" hidden>
+      <label><input id="newtab-show-stats" type="checkbox" checked> 保護の記録を表示</label>
+    </div>
+    <div class="newtab-inner">
+      <div class="newtab-greeting"><p id="newtab-hello" class="newtab-hello"></p><p class="newtab-when"><time id="newtab-date"></time><span aria-hidden="true"> · </span><time id="newtab-time"></time></p></div>
+      <form id="newtab-form">
+        <label for="newtab-url" class="newtab-sr">Webを検索 <span>Google</span></label>
+        <div class="newtab-search">
+          <span class="newtab-engine" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg></span>
+          <input id="newtab-url" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="Webを検索" aria-label="WebアドレスまたはWeb検索" aria-describedby="newtab-search-note">
+          <button type="submit" aria-label="開く"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button>
+        </div>
+        <p id="newtab-search-note" class="newtab-sr">検索語はGoogleに送信されます。</p>
+        <p id="newtab-status" class="newtab-status" role="alert" hidden></p>
+      </form>
+      <div class="newtab-extra"><button id="newtab-restore" class="newtab-text-button" type="button">最近閉じたタブを開く</button></div>
+    </div>
+    <footer id="newtab-stats" class="newtab-stats" aria-label="保護の記録" hidden>
+      <p>この起動で <strong id="newtab-stat-blocked">0</strong> 件をブロックしました。</p>
+    </footer>
+  </main>
+  <script type="module" src="./newtab.js"></script>
+</body>
+</html>
