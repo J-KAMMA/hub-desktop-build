@@ -10,7 +10,7 @@
   border-radius: var(--radius-pill);
   background: var(--bg);
   color: var(--text);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   cursor: pointer;
 }
 #hub-shell .profile-actions .ds-btn:hover { background: var(--interactive-hover); }
@@ -57,7 +57,7 @@
   color: var(--muted);
   font: inherit;
   font-size: var(--type-body);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   cursor: pointer;
 }
 #hub-shell .profile-tab:hover { background: var(--content-surface-hover); color: var(--text); }
@@ -68,17 +68,17 @@
   left: 50%;
   bottom: 0;
   width: 56px;
-  height: 4px;
+  height: 0;
+  border-top: 4px solid var(--emphasis);
   border-radius: var(--radius-pill);
-  background: var(--accent-base);
   transform: translateX(-50%);
 }
 #hub-shell .profile-tab-count { font-size: var(--type-caption); font-weight: var(--weight-regular); color: var(--muted); font-variant-numeric: tabular-nums; }
 
 #hub-shell .profile-panel { display: grid; gap: 0; }
-#hub-shell .profile-panel > .empty-state { margin: var(--space-6) var(--space-4); }
+#hub-shell .profile-panel > .empty-state { margin: var(--space-7) var(--space-4); }
 #hub-shell .profile-pinned { border-bottom: 1px solid var(--line); }
-#hub-shell .profile-pinned-label { margin: var(--space-3) var(--space-4) 0; font-size: var(--type-caption); font-weight: var(--weight-semibold); color: var(--muted); }
+#hub-shell .profile-pinned-label { margin: var(--space-3) var(--space-4) 0; font-size: var(--type-caption); font-weight: var(--weight-bold); color: var(--muted); }
 #hub-shell .profile-row {
   display: grid;
   gap: var(--space-1);
@@ -92,7 +92,7 @@
   cursor: pointer;
 }
 #hub-shell .profile-row:hover { background: var(--content-surface-hover); }
-#hub-shell .profile-row strong { font-size: var(--type-body); font-weight: var(--weight-semibold); overflow-wrap: anywhere; }
+#hub-shell .profile-row strong { font-size: var(--type-body); font-weight: var(--weight-bold); overflow-wrap: anywhere; }
 #hub-shell .profile-connections-head { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--line); }
 #hub-shell .profile-connections-head h3 { margin: 0; font-size: var(--type-title3); font-weight: var(--weight-bold); }
 #hub-shell .profile-connections-more { margin: var(--space-3) var(--space-4); }
@@ -107,4 +107,4 @@
   .app-shell:not(.sidebar-collapsed) #view-profile .profile-panel { margin-top: var(--space-2); }
 }
 #hub-shell #view-profile .profile-card { width: 100%; }
-#hub-shell #view-profile .layout-list { padding-inline: var(--space-5); }
+#hub-shell #view-profile .layout-list { padding-inline: var(--space-6); }

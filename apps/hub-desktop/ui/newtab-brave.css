@@ -8,16 +8,16 @@ body.newtab-brave {
 }
 body.newtab-brave #newtab-page { position: relative; display: flex; flex-direction: column; align-items: center; min-height: 100vh; box-sizing: border-box; padding: 0 var(--space-4); background: transparent; }
 body.newtab-brave .newtab-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-body.newtab-brave .newtab-inner { display: grid; justify-items: center; gap: var(--space-5); width: min(680px, 100%); margin-top: 16vh; }
+body.newtab-brave .newtab-inner { display: grid; justify-items: center; gap: var(--space-6); width: min(680px, 100%); margin-top: 16vh; }
 
 /* あいさつ：17 と 13。時計は大きくしない。 */
 body.newtab-brave .newtab-greeting { display: grid; justify-items: center; gap: var(--space-1); user-select: none; }
-body.newtab-brave .newtab-hello { margin: 0; color: var(--text); font-size: var(--type-headline); line-height: var(--lh-headline); font-weight: var(--weight-semibold); }
+body.newtab-brave .newtab-hello { margin: 0; color: var(--text); font-size: var(--type-headline); line-height: var(--lh-headline); font-weight: var(--weight-bold); }
 body.newtab-brave .newtab-when { margin: 0; color: var(--muted); font-size: var(--type-subhead); line-height: var(--lh-subhead); font-variant-numeric: tabular-nums; }
 
 /* 検索欄：高さ 52、pill、--interactive 地。焦点は線の色だけ。 */
 body.newtab-brave #newtab-form { width: 100%; }
-body.newtab-brave .newtab-search { display: flex; align-items: center; gap: var(--space-2); height: 52px; padding: 0 var(--space-2) 0 var(--space-5); border: 1px solid transparent; border-radius: var(--radius-pill); background: var(--interactive); box-shadow: none; transition: border-color var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out); }
+body.newtab-brave .newtab-search { display: flex; align-items: center; gap: var(--space-2); height: 52px; padding: 0 var(--space-2) 0 var(--space-6); border: 1px solid transparent; border-radius: var(--radius-pill); background: var(--interactive); box-shadow: none; transition: border-color var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out); }
 body.newtab-brave .newtab-search:hover { background: var(--interactive-hover); }
 body.newtab-brave .newtab-search:focus-within { border-color: var(--line-strong); background: var(--interactive); outline: 0; box-shadow: none; }
 body.newtab-brave .newtab-engine { display: grid; place-items: center; flex: none; color: var(--muted); }
@@ -48,10 +48,10 @@ body.newtab-brave .newtab-settings-panel[hidden] { display: none; }
 body.newtab-brave .newtab-settings-panel label { display: flex; align-items: center; gap: var(--space-2); cursor: pointer; }
 
 /* 足元の1行（13 muted）。札で囲まない。 */
-body.newtab-brave .newtab-stats { position: absolute; bottom: var(--space-5); left: 50%; transform: translateX(-50%); max-width: calc(100% - 32px); }
+body.newtab-brave .newtab-stats { position: absolute; bottom: var(--space-6); left: 50%; transform: translateX(-50%); max-width: calc(100% - 32px); }
 body.newtab-brave .newtab-stats[hidden] { display: none; }
 body.newtab-brave .newtab-stats p { margin: 0; color: var(--muted); font-size: var(--type-subhead); text-align: center; white-space: nowrap; }
-body.newtab-brave .newtab-stats strong { color: var(--muted); font-weight: var(--weight-semibold); font-variant-numeric: tabular-nums; }
-@media (max-height: 640px) { body.newtab-brave .newtab-stats { position: static; transform: none; margin: var(--space-6) 0 var(--space-4); } body.newtab-brave .newtab-inner { margin-top: 8vh; gap: var(--space-4); } }
+body.newtab-brave .newtab-stats strong { color: var(--muted); font-weight: var(--weight-bold); font-variant-numeric: tabular-nums; }
+@media (max-height: 640px) { body.newtab-brave .newtab-stats { position: static; transform: none; margin: var(--space-7) 0 var(--space-4); } body.newtab-brave .newtab-inner { margin-top: 8vh; gap: var(--space-4); } }
 @media (prefers-reduced-motion: reduce) { body.newtab-brave .newtab-link, body.newtab-brave .newtab-search { transition: none; } }
 html[data-motion="reduce"] body.newtab-brave .newtab-link, html[data-motion="reduce"] body.newtab-brave .newtab-search { transition: none; }

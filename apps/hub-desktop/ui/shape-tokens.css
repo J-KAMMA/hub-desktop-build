@@ -6,13 +6,13 @@
   /* 字の段：大きさ / 行高 / 太さ / 字間。太さは 400・500・600・700 だけ。 */
   --type-title2-weight: var(--weight-bold);
   --type-title2-tracking: -0.012em;
-  --type-title3-weight: var(--weight-semibold);
+  --type-title3-weight: var(--weight-bold);
   --type-title3-tracking: -0.008em;
-  --type-headline-weight: var(--weight-semibold);
+  --type-headline-weight: var(--weight-bold);
   --type-body-weight: var(--weight-regular);
-  --type-callout-weight: var(--weight-semibold);
+  --type-callout-weight: var(--weight-bold);
   --type-subhead-weight: var(--weight-regular);
-  --type-caption-weight: var(--weight-medium);
+  --type-caption-weight: var(--weight-regular);
   --type-caption-tracking: .01em;
   --lh-callout: 20px;
 

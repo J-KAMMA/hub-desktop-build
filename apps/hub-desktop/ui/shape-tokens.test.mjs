@@ -9,11 +9,11 @@ const dir = new URL('./', import.meta.url);
 const read = (name) => readFileSync(new URL(name, dir), 'utf8');
 const strip = (css) => css.replace(/\/\*[\s\S]*?\*\//g, '');
 
-test('font-weight literals are only 400, 500, 600, 700', () => {
+test('font-weight literals are only 400, 700, 800 (DESIGN-SYSTEM §2: never 500, 600 or 650)', () => {
   const bad = [];
   for (const file of readdirSync(dir).filter((f) => f.endsWith('.css'))) {
     for (const m of strip(read(file)).matchAll(/font-weight\s*:\s*(\d+)\b/g)) {
-      if (![400, 500, 600, 700].includes(Number(m[1]))) bad.push(`${file}: ${m[1]}`);
+      if (![400, 700, 800].includes(Number(m[1]))) bad.push(`${file}: ${m[1]}`);
     }
   }
   assert.deepEqual(bad, []);
@@ -35,16 +35,41 @@ test('shape-tokens.css mirrors the Web shape tokens and carries no color', () =>
   }
 });
 
-test('type ramp sizes, leading and weights match the Web table', () => {
+test('type ramp sizes, leading and weights follow the unified design system (13/16 · 15/20 · 17/28 · 20/24 · 23/28 · 31/36; 400 · 700 · 800)', () => {
   const tokens = strip(read('tokens.css'));
   const shape = strip(read('shape-tokens.css'));
-  const pairs = [['--type-title2', '22px'], ['--type-title3', '20px'], ['--type-headline', '17px'], ['--type-body', '15px'],
-    ['--type-callout', '15px'], ['--type-subhead', '13px'], ['--type-caption', '12px'], ['--lh-title2', '28px'],
-    ['--lh-title3', '26px'], ['--lh-headline', '24px'], ['--lh-body', '24px'], ['--lh-subhead', '18px'], ['--lh-caption', '16px']];
-  for (const [name, value] of pairs) assert.match(tokens, new RegExp(`${name}:\\s*${value};`), name);
-  assert.match(shape, /--lh-callout:\s*20px;/);
-  assert.match(shape, /--type-title2-weight:\s*var\(--weight-bold\)/);
-  assert.match(shape, /--type-callout-weight:\s*var\(--weight-semibold\)/);
+  const ds = [['--ds-type-meta-size', '13px'], ['--ds-type-meta-leading', '16px'], ['--ds-type-body-size', '15px'], ['--ds-type-body-leading', '20px'],
+    ['--ds-type-reading-size', '17px'], ['--ds-type-reading-leading', '28px'], ['--ds-type-title-size', '20px'], ['--ds-type-title-leading', '24px'],
+    ['--ds-type-name-size', '23px'], ['--ds-type-name-leading', '28px'], ['--ds-type-article-size', '31px'], ['--ds-type-article-leading', '36px'],
+    ['--ds-weight-text', '400'], ['--ds-weight-strong', '700'], ['--ds-weight-heavy', '800']];
+  for (const [name, value] of ds) assert.ok(tokens.includes(name + ': ' + value + ';'), name);
+  const alias = [['--type-display', '--ds-type-article-size'], ['--type-title1', '--ds-type-name-size'], ['--type-title2', '--ds-type-title-size'],
+    ['--type-title3', '--ds-type-title-size'], ['--type-headline', '--ds-type-reading-size'], ['--type-body', '--ds-type-body-size'],
+    ['--type-callout', '--ds-type-body-size'], ['--type-subhead', '--ds-type-meta-size'], ['--type-caption', '--ds-type-meta-size'],
+    ['--type-footnote', '--ds-type-meta-size'], ['--lh-body', '--ds-type-body-leading'], ['--lh-subhead', '--ds-type-meta-leading'],
+    ['--lh-caption', '--ds-type-meta-leading'], ['--lh-title2', '--ds-type-title-leading'], ['--lh-headline', '--ds-type-reading-leading']];
+  for (const [name, target] of alias) assert.ok(tokens.includes(name + ': var(' + target + ');'), name);
+  assert.doesNotMatch(tokens, /--weight-(medium|semibold):/, 'no 500 or 600 weight tokens');
+  assert.ok(shape.includes('--lh-callout: 20px;'));
+  assert.ok(shape.includes('--type-title2-weight: var(--weight-bold)'));
+  assert.ok(shape.includes('--type-callout-weight: var(--weight-bold)'));
+});
+
+test('spacing, radius and nav tokens are the unified scale and the retired text aliases are gone', () => {
+  const tokens = strip(read('tokens.css'));
+  const space = ['4px', '8px', '12px', '16px', '20px', '24px', '32px', '48px'];
+  space.forEach((value, i) => assert.ok(tokens.includes('--ds-space-' + (i + 1) + ': ' + value + ';'), '--ds-space-' + (i + 1)));
+  space.forEach((_, i) => assert.ok(tokens.includes('--space-' + (i + 1) + ': var(--ds-space-' + (i + 1) + ');'), '--space-' + (i + 1)));
+  for (const [name, value] of [['card', '16px'], ['callout', '12px'], ['input', '8px'], ['tile-video', '12px'], ['tile-music', '8px'], ['badge', '4px'], ['pill', '999px']]) {
+    assert.ok(tokens.includes('--ds-radius-' + name + ': ' + value + ';'), name);
+  }
+  const sources = readdirSync(dir).filter((f) => /\.(css|mjs|js)$/.test(f) && !f.endsWith('.test.mjs') && f !== 'tokens.css');
+  for (const retired of ['--text-title', '--text-section', '--text-body', '--width-reading', '--width-collection']) {
+    for (const file of sources) assert.ok(!read(file).includes('var(' + retired), file + ' still reads ' + retired);
+  }
+  for (const file of sources.filter((f) => f.endsWith('.css'))) {
+    assert.doesNotMatch(strip(read(file)), /font-size\s*:\s*var\(--text-meta/, file + ': --text-meta is the gold text colour, not a size');
+  }
 });
 
 test('avatar tint and initial follow the Web rules', () => {

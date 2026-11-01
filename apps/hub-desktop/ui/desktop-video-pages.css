@@ -16,20 +16,20 @@
 
 /* チャンネルページ */
 #hub-shell #video-channel[hidden] { display: none; }
-#hub-shell .vid-channel { display: grid; gap: var(--space-5); margin-top: var(--space-3); }
-#hub-shell .vid-channel-head { display: flex; align-items: flex-start; gap: var(--space-5); }
+#hub-shell .vid-channel { display: grid; gap: var(--space-6); margin-top: var(--space-3); }
+#hub-shell .vid-channel-head { display: flex; align-items: flex-start; gap: var(--space-6); }
 #hub-shell .vid-channel-avatar { flex: none; width: 88px; height: 88px; overflow: hidden; border-radius: 50%; }
 #hub-shell .vid-channel-avatar img { width: 100%; height: 100%; object-fit: cover; }
 #hub-shell .vid-channel-copy { display: grid; min-width: 0; gap: var(--space-1); }
 #hub-shell .vid-channel-name { margin: 0; font-size: var(--type-display); line-height: var(--lh-display); font-weight: var(--weight-bold); overflow-wrap: anywhere; }
 #hub-shell .vid-channel-bio { margin: var(--space-2) 0 0; max-width: var(--measure-reading); line-height: var(--lh-body); white-space: pre-wrap; overflow-wrap: anywhere; }
 #hub-shell .vid-channel-copy .vid-follow { margin: var(--space-2) 0 0; }
-#hub-shell .vid-channel-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-5) var(--space-3); }
+#hub-shell .vid-channel-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-6) var(--space-3); }
 #hub-shell .vid-channel-more { justify-self: center; }
 #hub-shell .vid-channel .vh-card.is-locked { opacity: .85; cursor: not-allowed; }
 #hub-shell .vid-channel .vh-card.is-locked:hover { transform: none; }
 #hub-shell .vid-channel .video-thumbnail { position: relative; }
-#hub-shell .vid-lock { position: absolute; right: var(--space-2); bottom: var(--space-2); padding: 2px var(--space-2); border-radius: var(--radius-pill); background: var(--surface-raised); color: var(--text); font-size: var(--type-caption); font-weight: var(--weight-semibold); }
+#hub-shell .vid-lock { position: absolute; right: var(--space-2); bottom: var(--space-2); padding: 2px var(--space-2); border-radius: var(--radius-pill); background: var(--surface-raised); color: var(--text); font-size: var(--type-caption); font-weight: var(--weight-bold); }
 
 /* ショートの縦フィード：1画面に1本。再生枠は 200×200 以上を保つ。 */
 #hub-shell #videos-results.vid-shorts-mode { display: block; }
@@ -64,17 +64,17 @@
 
 /* Hub動画のスタジオ（video-studio.mjs）。色は意味のトークンだけ。 */
 .nv-studio { display: grid; gap: 16px; max-width: 720px; }
-.nv-card { display: grid; gap: 10px; padding: 16px; border: 1px solid var(--divider); border-radius: var(--radius-md); }
+.nv-card { display: grid; gap: 10px; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius-md); }
 .nv-card__title { margin: 0; font-size: var(--type-headline, 1em); }
 .nv-note { margin: 0; color: var(--text-secondary); font-size: var(--type-caption, 0.8em); }
 .nv-note--error { color: var(--danger-text); }
 .nv-input { width: 100%; box-sizing: border-box; }
-.nv-drop { padding: 18px; border: 1px dashed var(--divider); border-radius: var(--radius-md); text-align: center; }
-.nv-meter { height: 8px; border-radius: var(--radius-sm); background: var(--divider); overflow: hidden; }
-.nv-meter > span { display: block; height: 100%; background: var(--emphasis); }
+.nv-drop { padding: 18px; border: 1px dashed var(--line); border-radius: var(--radius-md); text-align: center; }
+.nv-meter { height: 8px; border-radius: var(--radius-sm); background: var(--line); overflow: hidden; }
+.nv-meter > span { display: block; height: 100%; background: transparent; border-bottom: 2px solid var(--emphasis); box-sizing: border-box; }
 .nv-quota__head { display: flex; justify-content: space-between; }
 .nv-list { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
-.nv-item { display: grid; gap: 6px; padding-bottom: 12px; border-bottom: 1px solid var(--divider); }
+.nv-item { display: grid; gap: 6px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
 .nv-item__head { display: flex; justify-content: space-between; gap: 8px; }
 .nv-state--processing, .nv-state--upload_issued { color: var(--warning-text); }
 .nv-state--published { color: var(--positive-text); }

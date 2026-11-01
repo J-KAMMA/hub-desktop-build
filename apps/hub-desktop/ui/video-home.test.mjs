@@ -107,7 +107,7 @@ test('related list excludes the current video and prefers the same category', ()
   const { document, deps } = setup();
   const current = yt(A, { category: 'X' });
   const nodes = createRelatedList(document, current, [current, yt(B, { category: 'Y', channel: 'z' }), yt(C, { category: 'X' })], deps);
-  assert.equal(nodes[0].textContent, '次の動画');
+  assert.equal(nodes[0].textContent, '次に見る');
   const cards = nodes.slice(1);
   assert.equal(cards.length, 2);
   assert.match(cards[0].textContent, new RegExp(`動画${C}`));

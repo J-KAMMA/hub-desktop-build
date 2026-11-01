@@ -7,7 +7,7 @@ import {JSDOM} from 'jsdom';
 const root = fileURLToPath(new URL('./',import.meta.url));
 const source = readFileSync(root + 'app.js', 'utf8');
 const code = source.slice(source.indexOf('const desktopShell = document.querySelector(".app-shell");'), source.indexOf('async function travelToolbar(direction)'));
-function fixture(viewport = 1440) {
+function fixture(viewport = 1700) {
   const dom = new JSDOM(readFileSync(root+'index.html','utf8'), {url:'https://resize.invalid'});
   const {document,localStorage} = dom.window, shell = document.querySelector('.app-shell'), observers = [], saved = [];
   Object.defineProperty(dom.window, 'innerWidth', {value:viewport});
@@ -89,7 +89,7 @@ for(const [name,min,initial,sign,key] of [['sidebar',190,245,1,'ArrowLeft'],['ra
       f.handle(name).dispatchEvent(new f.dom.window.KeyboardEvent('keydown',{key:'Home',bubbles:true}));assert.equal(f.width(name),min);assert.equal(f.open(name),true);
       f.handle(name).dispatchEvent(new f.dom.window.KeyboardEvent('keydown',{key,bubbles:true}));assert.equal(f.open(name),false);
       f.shell.classList.toggle(name==='sidebar'?'sidebar-collapsed':'rail-open',name!=='sidebar');f.handle(name).dispatchEvent(new f.dom.window.MouseEvent('dblclick',{bubbles:true}));
-      assert.equal(f.width(name),name==='sidebar'?210:300);assert.equal(f.read(`preferredColumnWidth.${name}`),null);
+      assert.equal(f.width(name),name==='sidebar'?300:380);assert.equal(f.read(`preferredColumnWidth.${name}`),null);
     } finally {f.dispose()}
   });
 }

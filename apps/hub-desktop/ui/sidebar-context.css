@@ -31,7 +31,7 @@
 
   #hub-shell .sidebar > #sidebar-context { gap: 1px; padding: 0 var(--space-2) var(--space-3); }
   #hub-shell #sidebar-context .nav-group {
-    margin: var(--space-5) var(--space-3) var(--space-1);
+    margin: var(--space-6) var(--space-3) var(--space-1);
     color: var(--muted);
     font-size: var(--type-subhead);
     font-weight: var(--weight-regular);
@@ -99,7 +99,7 @@
     background: transparent;
     color: var(--muted);
     font-size: var(--type-caption);
-    font-weight: var(--weight-medium);
+    font-weight: var(--weight-regular);
   }
   #hub-shell #sidebar-context .sidebar-switch > button:hover { color: var(--text); }
   #hub-shell #sidebar-context .sidebar-switch > button[aria-pressed="true"] { background: var(--surface-raised); color: var(--text); box-shadow: var(--elevation-1); }
@@ -130,13 +130,13 @@
   #hub-shell #sidebar-context #messages-list .conversation:hover { background: var(--interactive); }
   #hub-shell #sidebar-context #messages-list .conversation.active { background: var(--selected); }
   #hub-shell #sidebar-context #messages-list .conversation:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
-  #hub-shell #sidebar-context #messages-list .conversation .post-avatar { width: 36px; height: 36px; background: var(--avatar-bg, var(--interactive)); color: var(--avatar-fg, var(--text)); font-size: var(--type-subhead); font-weight: var(--weight-semibold); }
+  #hub-shell #sidebar-context #messages-list .conversation .post-avatar { width: 36px; height: 36px; background: var(--avatar-bg, var(--interactive)); color: var(--avatar-fg, var(--text)); font-size: var(--type-subhead); font-weight: var(--weight-bold); }
   #hub-shell #sidebar-context #messages-list .conversation-content { display: grid; min-width: 0; gap: 1px; }
   #hub-shell #sidebar-context #messages-list .conversation-head { display: flex; min-width: 0; align-items: baseline; gap: var(--space-2); }
-  #hub-shell #sidebar-context #messages-list .conversation-head strong { min-width: 0; overflow: hidden; font-size: var(--type-body); font-weight: var(--weight-semibold); text-overflow: ellipsis; white-space: nowrap; }
+  #hub-shell #sidebar-context #messages-list .conversation-head strong { min-width: 0; overflow: hidden; font-size: var(--type-body); font-weight: var(--weight-bold); text-overflow: ellipsis; white-space: nowrap; }
   #hub-shell #sidebar-context #messages-list .conversation-head .when { margin-left: auto; flex: none; color: var(--muted); font-size: var(--type-caption); line-height: var(--lh-caption); text-align: end; }
   #hub-shell #sidebar-context #messages-list .conversation-preview { margin: 0; overflow: hidden; color: var(--muted); font-size: var(--type-subhead); font-weight: 400; line-height: var(--lh-subhead); text-overflow: ellipsis; white-space: nowrap; }
-  #hub-shell #sidebar-context #messages-list .conversation .nav-badge { width: 8px; min-width: 8px; height: 8px; padding: 0; overflow: hidden; border-radius: 50%; background: var(--action); font-size: 0; }
+  #hub-shell #sidebar-context #messages-list .conversation .nav-badge { width: 8px; min-width: 8px; height: 8px; padding: 0; overflow: hidden; border-radius: 50%; background: transparent; box-shadow: inset 0 0 0 2px var(--emphasis); font-size: 0; }
   #hub-shell #sidebar-context .messages-side .empty-state { display: block; margin: var(--space-3) 0; padding: var(--space-2) var(--space-3); color: var(--muted); font-size: var(--type-caption); text-align: left; }
   #hub-shell #sidebar-context .messages-side .empty-state svg { display: none; }
 
@@ -193,7 +193,7 @@
     background: var(--interactive);
     color: var(--text);
     font-size: var(--type-caption);
-    font-weight: 600;
+    font-weight: 700;
   }
   #hub-shell #sidebar-context .sidebar-avatar img { width: 100%; height: 100%; object-fit: cover; }
   #hub-shell #sidebar-context .sidebar-divider {
@@ -216,7 +216,7 @@
     background: transparent;
     color: var(--text);
     font-size: var(--type-body);
-    font-weight: var(--weight-medium);
+    font-weight: var(--weight-regular);
     text-align: left;
   }
   #hub-shell #sidebar-context .sidebar-heading.is-link { cursor: pointer; }
@@ -242,7 +242,7 @@
     background: var(--interactive);
     color: var(--text);
     font-size: var(--type-subhead);
-    font-weight: 500;
+    font-weight: 400;
     white-space: nowrap;
   }
   #hub-shell .sidebar-chip:hover { background: var(--interactive-hover); }
@@ -268,11 +268,11 @@
   #hub-shell .sidebar-chip-step.is-next .sidebar-icon { transform: scaleX(-1); }
 
   /* ショート：縦長（9:16）の札。ホームの棚と、ショートの一覧の両方。 */
-  #hub-shell .video-shorts-shelf { margin: 0 0 var(--space-6); }
+  #hub-shell .video-shorts-shelf { margin: 0 0 var(--space-7); }
   #hub-shell .video-shorts-head { display: flex; align-items: center; justify-content: space-between; margin: 0 0 var(--space-3); }
-  #hub-shell .video-shorts-title { display: flex; align-items: center; gap: var(--space-2); margin: 0; font-size: var(--type-title3, 20px); font-weight: var(--weight-medium); }
+  #hub-shell .video-shorts-title { display: flex; align-items: center; gap: var(--space-2); margin: 0; font-size: var(--type-title3, 20px); font-weight: var(--weight-regular); }
   #hub-shell .video-shorts-title .sidebar-icon { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-  #hub-shell .video-shorts-more { height: 32px; padding: 0 var(--space-3); border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--text); font-size: var(--type-subhead); font-weight: 600; }
+  #hub-shell .video-shorts-more { height: 32px; padding: 0 var(--space-3); border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--text); font-size: var(--type-subhead); font-weight: 700; }
   #hub-shell .video-shorts-more:hover { background: var(--interactive); }
   #hub-shell .video-shorts-row { display: grid; grid-auto-columns: minmax(150px, 180px); grid-auto-flow: column; gap: var(--space-3); overflow-x: auto; padding-bottom: var(--space-1); scrollbar-width: thin; }
   #hub-shell #videos-results.video-shorts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--space-4); }
@@ -280,12 +280,12 @@
   #hub-shell .video-short-frame { display: block; overflow: hidden; border-radius: var(--radius-md); }
   #hub-shell .video-short-frame .video-thumbnail { display: block; width: 100%; aspect-ratio: 9 / 16; }
   #hub-shell .video-short-frame img { width: 100%; height: 100%; object-fit: cover; }
-  #hub-shell .video-short-name { display: -webkit-box; overflow: hidden; font-size: var(--type-subhead); font-weight: 500; line-height: 1.35; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  #hub-shell .video-short-name { display: -webkit-box; overflow: hidden; font-size: var(--type-subhead); font-weight: 400; line-height: 1.35; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
   #hub-shell .video-short-card:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: var(--radius-md); }
 
   #hub-shell .music-side-panel { display: grid; gap: var(--space-3); }
   #hub-shell .music-side-panel[hidden] { display: none; }
-  #hub-shell .music-side-title { margin: 0; font-size: var(--type-title3); font-weight: var(--weight-medium); }
+  #hub-shell .music-side-title { margin: 0; font-size: var(--type-title3); font-weight: var(--weight-regular); }
 }
 @media (min-width: 861px) {
   /* 保存した記事・下書きは列のマイページにあるので、見出しの横には出さない。 */

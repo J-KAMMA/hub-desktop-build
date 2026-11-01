@@ -4,17 +4,17 @@
 :is(#view-ai, #rail-ai-workspace-host) #pi-work { display: flex; min-width: 0; min-height: 0; flex: 1; flex-direction: column; }
 :is(#view-ai, #rail-ai-workspace-host) .piw-shell { width: 100%; height: 100%; min-width: 0; min-height: 0; flex: 1; }
 :is(#view-ai, #rail-ai-workspace-host) .piw-timeline-wrap { min-width: 0; min-height: 0; flex: 1 1 0; }
-:is(#view-ai, #rail-ai-workspace-host) .piw-timeline { min-width: 0; min-height: 0; max-height: none; flex: 1 1 0; margin: 0; padding: var(--space-4) 2px var(--space-5); overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; }
-#view-ai .piw-shell.is-new .piw-timeline { display: block; padding-bottom: var(--space-5); }
+:is(#view-ai, #rail-ai-workspace-host) .piw-timeline { min-width: 0; min-height: 0; max-height: none; flex: 1 1 0; margin: 0; padding: var(--space-4) 2px var(--space-6); overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+#view-ai .piw-shell.is-new .piw-timeline { display: block; padding-bottom: var(--space-6); }
 :is(#view-ai, #rail-ai-workspace-host) .piw-shell.is-new .piw-composer { margin-bottom: 0; }
 :is(#view-ai, #rail-ai-workspace-host) .piw-empty { min-height: 0; padding: clamp(28px, 8vh, 72px) 16px; color: var(--muted); font-size: var(--type-subhead); line-height: 1.65; }
 #view-ai .piw-shell.is-new .piw-empty { min-height: 0; padding: clamp(28px, 8vh, 72px) 16px; }
-:is(#view-ai, #rail-ai-workspace-host) .piw-empty strong { color: var(--text); font-size: var(--type-title3); font-weight: 600; line-height: 1.45; }
+:is(#view-ai, #rail-ai-workspace-host) .piw-empty strong { color: var(--text); font-size: var(--type-title3); font-weight: 700; line-height: 1.45; }
 
 /* Workspace and configuration stay visible in the center and the right rail. */
 :is(#view-ai, #rail-ai-workspace-host) .piw-head { display: flex; min-width: 0; min-height: 52px; flex: none; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding: var(--space-2) 0; border-bottom: 1px solid var(--line); }
 :is(#view-ai, #rail-ai-workspace-host) .piw-title { display: flex; min-width: 0; flex: 1 1 200px; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
-:is(#view-ai, #rail-ai-workspace-host) .piw-title h2:not([hidden]) { display: block; min-width: 0; max-width: 100%; flex: 1 1 100px; margin: 0; overflow: hidden; color: var(--text); font-size: var(--type-body); font-weight: 600; line-height: 1.4; text-overflow: ellipsis; white-space: nowrap; }
+:is(#view-ai, #rail-ai-workspace-host) .piw-title h2:not([hidden]) { display: block; min-width: 0; max-width: 100%; flex: 1 1 100px; margin: 0; overflow: hidden; color: var(--text); font-size: var(--type-body); font-weight: 700; line-height: 1.4; text-overflow: ellipsis; white-space: nowrap; }
 :is(#view-ai, #rail-ai-workspace-host) .piw-status { padding: 3px var(--space-2); font-size:var(--type-caption); line-height: 1.5; }
 :is(#view-ai, #rail-ai-workspace-host) .piw-workspace { width: auto; min-width: 0; max-width: 240px; min-height: 32px; flex: 0 1 220px; justify-content: flex-start; gap: var(--space-2); padding: var(--space-1) var(--space-2); border-color: var(--line); border-radius: var(--radius-xs); color: var(--muted); font-size: var(--type-caption); }
 :is(#view-ai, #rail-ai-workspace-host) .piw-workspace span:not([hidden]) { display: block; min-width: 0; }
@@ -66,8 +66,8 @@
 /* History stays in its own scroll area; full paths remain in text and titles. */
 #sidebar-ai-history .harness-history { padding: 0; scrollbar-width: thin; }
 #sidebar-ai-history .piw-history-search { min-height: 32px; margin-bottom: var(--space-2); font-size: var(--type-caption); }
-#sidebar-ai-history .piw-history-project-head { gap: 2px var(--space-2); padding: var(--space-2) var(--space-2) var(--space-2) var(--space-5); }
-#sidebar-ai-history .piw-history-project-name { font-size: var(--type-caption); font-weight: 600; }
+#sidebar-ai-history .piw-history-project-head { gap: 2px var(--space-2); padding: var(--space-2) var(--space-2) var(--space-2) var(--space-6); }
+#sidebar-ai-history .piw-history-project-name { font-size: var(--type-caption); font-weight: 700; }
 #sidebar-ai-history .piw-history-project-path { font-size:var(--type-caption); line-height: 1.45; }
 #sidebar-ai-history .piw-history-item { min-height: 36px; gap: 3px; padding: var(--space-2) var(--space-2); border-radius: var(--radius-xs); font-size: var(--type-caption); }
 #sidebar-ai-history .piw-history-title { font-size: var(--type-caption); line-height: 1.5; }

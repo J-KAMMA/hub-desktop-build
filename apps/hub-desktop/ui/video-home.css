@@ -1,5 +1,5 @@
 /* 動画ホームと視聴画面。色は意味トークンだけを使う（theme-black.css）。 */
-#hub-shell .vh-home { display: grid; gap: var(--space-5); margin: var(--space-1) 0 var(--space-5); }
+#hub-shell .vh-home { display: grid; gap: var(--space-6); margin: var(--space-1) 0 var(--space-6); }
 #hub-shell .vh-home[hidden] { display: none; }
 
 
@@ -16,10 +16,10 @@
 #hub-shell .vh-card-body { display: flex; gap: var(--space-2); align-items: flex-start; padding-top: var(--space-2); }
 #hub-shell .vh-card-body .video-card-copy { min-width: 0; padding: 0; }
 #hub-shell .vh-card:hover .video-card-copy strong { text-decoration: none; }
-#hub-shell .vh-avatar { display: inline-grid; flex: none; width: 32px; height: 32px; place-items: center; border-radius: 50%; background: var(--selected); color: var(--text); font-size: var(--type-subhead); font-weight: 600; }
+#hub-shell .vh-avatar { display: inline-grid; flex: none; width: 32px; height: 32px; place-items: center; border-radius: 50%; background: var(--selected); color: var(--text); font-size: var(--type-subhead); font-weight: 700; }
 
 /* 一覧の既存グリッドも同じ見た目に揃える */
-#hub-shell #videos-results { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-5) var(--space-3); }
+#hub-shell #videos-results { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-6) var(--space-3); }
 
 /* 視聴画面 */
 #hub-shell #video-watch-main .vh-stage { margin: 0; }
@@ -51,8 +51,6 @@
 }
 @media (max-width: 600px) {
   #hub-shell .vh-grid, #hub-shell #videos-results { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4) var(--space-2); }
-}
-@media (prefers-reduced-motion: reduce) {
 }
 
 /* 他のHubの動画：出典Hub名 */

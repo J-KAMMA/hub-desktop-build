@@ -35,7 +35,7 @@
   background: var(--text);
   color: var(--bg);
   font-size: var(--type-caption);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   font-variant-numeric: tabular-nums;
   line-height: 16px;
   text-align: center;
@@ -219,7 +219,7 @@
 /* ===== 面の中の文字と押し手（ダウンロード・サイトの情報・権限） ===== */
 #hub-shell #view-browser #browser-menu .browser-menu-empty { margin: var(--space-1) var(--space-2); color: var(--muted); font-size: var(--type-subhead); line-height: var(--lh-subhead); }
 #hub-shell #view-browser #browser-menu .browser-site-info { gap: var(--space-1); padding: var(--space-1) 0; }
-#hub-shell #view-browser #browser-menu .browser-site-info-host { padding: 0 var(--space-2); color: var(--text); font-size: var(--type-body); font-weight: var(--weight-semibold); line-height: var(--lh-body); }
+#hub-shell #view-browser #browser-menu .browser-site-info-host { padding: 0 var(--space-2); color: var(--text); font-size: var(--type-body); font-weight: var(--weight-bold); line-height: var(--lh-body); }
 #hub-shell #view-browser #browser-menu :is(.browser-site-info, .browser-settings) > button,
 #hub-shell #view-browser #browser-menu > button:not(.browser-menu-tab) {
   min-height: var(--control-h);
@@ -246,7 +246,7 @@
 /* 休止中のタブは薄くするが、「休止中」の文字は読める濃さで残す。 */
 .app-shell.browser-active .sidebar-tab.is-discarded { opacity: .78; }
 .app-shell.browser-active .sidebar-tab.is-discarded .browser-tab-badge { filter: grayscale(1); }
-.browser-tab-sleeping { color: var(--text); font-weight: 600; }
+.browser-tab-sleeping { color: var(--text); font-weight: 700; }
 
 /* 音のアイコンは押してミュートを切り替える。縦でも横でも常に見せる。 */
 .sidebar-tab > .browser-tab-audio { display: grid; flex-shrink: 0; width: 20px; height: 20px; min-height: 20px; place-items: center; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--muted); font-size: var(--type-caption); cursor: pointer; }

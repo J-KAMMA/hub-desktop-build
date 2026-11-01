@@ -12,48 +12,113 @@
   --font-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
   font-family: var(--font-ui);
 
-  /* 余白（4px 刻み） */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 24px;
-  --space-6: 32px;
-  --space-7: 48px;
-  --space-8: 64px;
+  /* 統一デザインシステム（docs/hub-ui-reference/DESIGN-SYSTEM.md §2〜§3）。Web の apps/hub/app/v2/x-templates.css の
+     --ds-* と同じ名前・同じ値。値はここにだけ書く。下の旧名（--space-N など）はこの値を指す別名。 */
+  /* 余白: 4 8 12 16 20 24 32 48 だけ。 */
+  --ds-space-1: 4px;
+  --ds-space-2: 8px;
+  --ds-space-3: 12px;
+  --ds-space-4: 16px;
+  --ds-space-5: 20px;
+  --ds-space-6: 24px;
+  --ds-space-7: 32px;
+  --ds-space-8: 48px;
+  --ds-page-inset: var(--ds-space-4);
+  --ds-grid-gap-x: var(--ds-space-4);
+  --ds-grid-gap-y: var(--ds-space-6);
+  --space-1: var(--ds-space-1);
+  --space-2: var(--ds-space-2);
+  --space-3: var(--ds-space-3);
+  --space-4: var(--ds-space-4);
+  --space-5: var(--ds-space-5);
+  --space-6: var(--ds-space-6);
+  --space-7: var(--ds-space-7);
+  --space-8: var(--ds-space-8);
 
-  /* 角 */
-  --radius-xs: 6px;
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --radius-xl: 28px;
-  --radius-pill: 999px;
+  /* 角: 4 8 12 16 と丸。 */
+  --ds-radius-card: 16px;
+  --ds-radius-callout: 12px;
+  --ds-radius-input: 8px;
+  --ds-radius-tile-video: 12px;
+  --ds-radius-tile-music: 8px;
+  --ds-radius-badge: 4px;
+  --ds-radius-pill: 999px;
+  --radius-xs: var(--ds-radius-badge);
+  --radius-sm: var(--ds-radius-input);
+  --radius-md: var(--ds-radius-callout);
+  --radius-lg: var(--ds-radius-card);
+  --radius-xl: var(--ds-radius-card);
+  --radius-pill: var(--ds-radius-pill);
 
-  /* 字の段（大きさ / 行高）。太さは 400 / 600 / 700 だけ。 */
-  --type-display: 34px;
-  --type-title1: 28px;
-  --type-title2: 22px;
-  --type-title3: 20px;
-  --type-headline: 17px;
-  --type-body: 15px;
-  --type-reading: 17px;
-  --type-callout: 15px;
-  --type-subhead: 13px;
-  --type-caption: 12px;
-  --lh-display: 40px;
-  --lh-title1: 34px;
-  --lh-title2: 28px;
-  --lh-title3: 26px;
-  --lh-headline: 24px;
-  --lh-body: 24px;
-  --lh-reading: 31px;
-  --lh-subhead: 18px;
-  --lh-caption: 16px;
-  --weight-regular: 400;
-  --weight-medium: 500;
-  --weight-semibold: 600;
-  --weight-bold: 700;
+  /* 字: 大きさ / 行高は 13/16 · 15/20 · 17/28 · 20/24 · 23/28 · 31/36 だけ。太さは 400 · 700 · 800 だけ。 */
+  --ds-type-meta-size: 13px;
+  --ds-type-meta-leading: 16px;
+  --ds-type-body-size: 15px;
+  --ds-type-body-leading: 20px;
+  --ds-type-reading-size: 17px;
+  --ds-type-reading-leading: 28px;
+  --ds-type-title-size: 20px;
+  --ds-type-title-leading: 24px;
+  --ds-type-name-size: 23px;
+  --ds-type-name-leading: 28px;
+  --ds-type-article-size: 31px;
+  --ds-type-article-leading: 36px;
+  --ds-weight-text: 400;
+  --ds-weight-strong: 700;
+  --ds-weight-heavy: 800;
+  --type-display: var(--ds-type-article-size);
+  --type-title1: var(--ds-type-name-size);
+  --type-title2: var(--ds-type-title-size);
+  --type-title3: var(--ds-type-title-size);
+  --type-headline: var(--ds-type-reading-size);
+  --type-body: var(--ds-type-body-size);
+  --type-reading: var(--ds-type-reading-size);
+  --type-callout: var(--ds-type-body-size);
+  --type-subhead: var(--ds-type-meta-size);
+  --type-caption: var(--ds-type-meta-size);
+  --type-footnote: var(--ds-type-meta-size);
+  --lh-display: var(--ds-type-article-leading);
+  --lh-title1: var(--ds-type-name-leading);
+  --lh-title2: var(--ds-type-title-leading);
+  --lh-title3: var(--ds-type-title-leading);
+  --lh-headline: var(--ds-type-reading-leading);
+  --lh-body: var(--ds-type-body-leading);
+  --lh-reading: var(--ds-type-reading-leading);
+  --lh-subhead: var(--ds-type-meta-leading);
+  --lh-caption: var(--ds-type-meta-leading);
+  --weight-regular: var(--ds-weight-text);
+  --weight-bold: var(--ds-weight-strong);
+  --weight-heavy: var(--ds-weight-heavy);
+
+  /* 押せる物と部品の寸法。 */
+  --ds-header-h: 53px;
+  --ds-tabs-h: 53px;
+  --ds-input-h: 44px;
+  --ds-search-h: 40px;
+  --ds-btn-h: 36px;
+  --ds-btn-h-compact: 32px;
+  --ds-btn-h-nav: 52px;
+  --ds-btn-px: var(--ds-space-4);
+  --ds-icon-btn: 36px;
+  --ds-icon-btn-compact: 32px;
+  --ds-icon-size: 20px;
+  --ds-chip-h: 32px;
+  --ds-chip-px: var(--ds-space-3);
+  --ds-chip-gap: var(--ds-space-2);
+  --ds-badge-h: 20px;
+  --ds-badge-count-min-w: 20px;
+  --ds-badge-status-px: 6px;
+
+  /* 列の寸法（型は data-template: stream · wide · reading · split · settings）。左ナビは 1280 以上で 275、それ未満は 88 の記号列。 */
+  --ds-col-main: 600px;
+  --ds-col-gap: 30px;
+  --ds-col-right: 350px;
+  --ds-col-wide: 980px;
+  --ds-col-reading: 680px;
+  --ds-col-list: 380px;
+  --ds-reading-measure: 648px;
+  --ds-nav-w: 275px;
+  --ds-nav-w-rail: 88px;
 
   /* 動き */
   --ease-out: cubic-bezier(.22, 1, .36, 1);
@@ -69,24 +134,19 @@
   --control-h-lg: 36px;
   --hit-min: 28px;
   --titlebar-h: 44px;
-  --measure-reading: 680px;
-  --width-feed: 600px;
-  --width-collection-xl: 1280px; /* 仕様の値。旧名 --width-collection(1120) を各レーンが移し終えたら置き換える */
+  --measure-reading: var(--ds-col-reading);
+  --width-feed: var(--ds-col-main);
   --blur-bar: saturate(180%) blur(20px);
   --blur-sheet: saturate(180%) blur(30px);
 
-  /* 旧名（各レーンが移し終えるまで残す。値は変えない＝配置が動かない） */
-  --header-height: 58px;
+  /* 旧名（各レーンが移し終えるまで残す）。--text-title / --text-section / --text-body / --text-meta（寸法）と
+     --width-reading / --width-collection は退役した。字は --type-*、列は --ds-col-* を使う。
+     --text-meta は黒金の色（--text-meta）として palette が持つ。 */
+  --header-height: var(--ds-header-h);
   --toolbar-height: var(--titlebar-h);
   --radius-control: var(--radius-sm);
   --radius-card: var(--radius-md);
-  --control-height: 34px;
-  --text-title: 22px;
-  --text-section: 15px;
-  --text-body: 14px;
-  --text-meta: 12px;
-  --width-reading: 760px;
-  --width-collection: 1120px;
+  --control-height: var(--ds-btn-h);
 }
 
 /* ---- ライト ---- */
@@ -298,4 +358,35 @@ html[data-palette="gold-ivory"] .chip.on { background: var(--selected); border-c
   --panel-raised: var(--surface-raised);
   --shadow-sm: none;
   --shadow-lg: var(--elevation-2);
+
+  /* 色の役（DESIGN-SYSTEM §3 ボタン・チップ・札）。既定は白黒: 主ボタンは塗る。黒金は下で上書きし、金は線と字だけ（塗らない）。 */
+  --ds-btn-primary-fg: var(--bg);
+  --ds-btn-primary-bg: var(--text);
+  --ds-btn-primary-line: var(--text);
+  --ds-btn-secondary-fg: var(--text);
+  --ds-btn-secondary-bg: transparent;
+  --ds-btn-secondary-line: var(--line-strong);
+  --ds-btn-ghost-fg: var(--muted);
+  --ds-btn-ghost-hover: var(--interactive);
+  --ds-chip-bg: var(--interactive);
+  --ds-chip-selected-line: var(--text);
+  --ds-focus-ring: var(--focus-ring);
+  --ds-field-line: var(--line-strong);
+  --ds-badge-count-fg: var(--text);
+  --ds-badge-count-line: var(--text);
+  --ds-badge-status-fg: var(--muted);
+  --ds-badge-status-line: var(--line-strong);
+  --ds-card-bg: var(--panel);
+  --ds-card-line: var(--line);
+  --ds-callout-line: var(--line-strong);
+}
+
+/* 黒金: 主ボタン・選択中のチップ・件数の札は金の線と金の字。塗りはどこにも無い。 */
+html[data-palette="gold-ivory"] {
+  --ds-btn-primary-fg: var(--emphasis);
+  --ds-btn-primary-bg: transparent;
+  --ds-btn-primary-line: var(--emphasis);
+  --ds-chip-selected-line: var(--emphasis);
+  --ds-badge-count-fg: var(--emphasis);
+  --ds-badge-count-line: var(--emphasis);
 }

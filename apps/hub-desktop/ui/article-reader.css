@@ -1,6 +1,6 @@
 /* 記事の読む画面（Hub Desktop）。色は tokens.css の意味トークンだけを使う。
    測りは 680px（17px で約40字）。題は本文にだけ置き、帯は「記事」。本文は1画面目から始める。 */
-.article-reader{width:min(var(--measure-reading,680px),100%);margin:0 auto;padding:0 0 var(--space-5)}
+.article-reader{width:min(var(--measure-reading,680px),100%);margin:0 auto;padding:0 0 var(--space-6)}
 /* 表紙は本文の幅いっぱい。窓の高さが低いときは 2:1 にして、本文を1画面目へ入れる。 */
 .article-cover{position:relative;margin:0 0 var(--space-4);border-radius:var(--radius-md);overflow:hidden;aspect-ratio:2/1;background:var(--interactive)}
 .article-cover img{display:block;width:100%;height:100%;object-fit:cover}
@@ -9,9 +9,9 @@
 .article-title{margin:0 0 var(--space-2);font-size:var(--type-title1);line-height:var(--lh-title1);font-weight:var(--weight-bold);font-feature-settings:"palt";overflow-wrap:anywhere}
 .article-lead{display:-webkit-box;margin:0 0 var(--space-3);overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:2;color:var(--muted);font-size:var(--type-headline);line-height:var(--lh-headline);overflow-wrap:anywhere}
 .article-byline{display:flex;align-items:center;gap:var(--space-3);margin:0 0 var(--space-1);padding:var(--space-2) 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-.article-author-avatar{display:grid;flex:none;width:40px;height:40px;place-items:center;border-radius:50%;background:var(--interactive);color:var(--text);font-size:var(--type-body);font-weight:var(--weight-semibold)}
+.article-author-avatar{display:grid;flex:none;width:40px;height:40px;place-items:center;border-radius:50%;background:var(--interactive);color:var(--text);font-size:var(--type-body);font-weight:var(--weight-bold)}
 .article-byline-text{display:grid;min-width:0;gap:2px}
-.article-author-name{padding:0;border:0;background:transparent;color:var(--text);font:inherit;font-size:var(--type-body);font-weight:var(--weight-semibold);text-align:left;overflow-wrap:anywhere}
+.article-author-name{padding:0;border:0;background:transparent;color:var(--text);font:inherit;font-size:var(--type-body);font-weight:var(--weight-bold);text-align:left;overflow-wrap:anywhere}
 button.article-author-name{cursor:pointer}
 button.article-author-name:hover{text-decoration:underline}
 button.article-author-name:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px;border-radius:var(--radius-xs)}
@@ -25,13 +25,13 @@ button.article-author-name:focus-visible{outline:2px solid var(--focus-ring);out
 .article-reader-body .detail-quote{margin:1.4em 0;padding:.2em 0 .2em 1em;border-left:3px solid var(--line-strong);font-size:var(--type-reading);line-height:var(--lh-reading)}
 .article-reader-body :is(code,pre){border-radius:var(--radius-sm);background:var(--content-nested)}
 .article-reader-body img{max-width:100%;height:auto;border-radius:var(--radius-sm)}
-.article-actions{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2);margin-top:var(--space-5)}
+.article-actions{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2);margin-top:var(--space-6)}
 .article-actions>*{margin:0}
 #hub-shell .view .article-actions :is(.actions,.ai-handoff-row){display:contents;margin:0}
-#hub-shell .view .article-actions :is(.head-action,.ghost){min-height:var(--control-h);padding:0 var(--space-3);border:1px solid var(--line);border-radius:var(--radius-pill);background:transparent;color:var(--text);font-size:var(--type-subhead);font-weight:var(--weight-semibold)}
+#hub-shell .view .article-actions :is(.head-action,.ghost){min-height:var(--control-h);padding:0 var(--space-3);border:1px solid var(--line);border-radius:var(--radius-pill);background:transparent;color:var(--text);font-size:var(--type-subhead);font-weight:var(--weight-bold)}
 #hub-shell .view .article-actions :is(.head-action,.ghost):hover:not(:disabled){background:var(--interactive-hover);color:var(--text)}
 #hub-shell .view .article-actions .meta{flex-basis:100%;margin:0}
-.article-engagement{margin-top:var(--space-6);padding-top:var(--space-4);border-top:1px solid var(--line)}
+.article-engagement{margin-top:var(--space-7);padding-top:var(--space-4);border-top:1px solid var(--line)}
 .article-like{display:flex;align-items:center;gap:var(--space-2);margin:0 0 var(--space-4);font-size:var(--type-subhead)}
 #hub-shell .view .article-like .meta,#hub-shell .view .article-like-button .meta{margin:0;line-height:1.2}
 .article-like-button{line-height:1.2}

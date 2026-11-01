@@ -5,7 +5,6 @@
   .app-shell.browser-tabs-peek #browser-tabs-pin:hover,.app-shell.browser-tabs-peek #browser-tabs-pin[aria-pressed="true"] { background:var(--interactive); color:var(--text); }
   .app-shell.browser-tabs-peek #browser-tabs-pin:focus-visible { outline:2px solid var(--focus-ring); outline-offset:-2px; }
   .app-shell.browser-tabs-peek:not(.browser-tabs-peek-open) #sidebar-resizer { display:none; }
-  .app-shell.browser-tabs-peek:not(.browser-tabs-peek-open) { grid-template-columns:var(--rail-w) 52px minmax(0,1fr); }
   .app-shell.browser-tabs-peek:not(.browser-tabs-peek-open) .sidebar { overflow:hidden; }
   .app-shell.browser-tabs-peek:not(.browser-tabs-peek-open) .sidebar > :not(#sidebar-tabs) { display:none; }
   .app-shell.browser-tabs-peek:not(.browser-tabs-peek-open) #sidebar-tabs { padding:var(--space-2) var(--space-1); gap:var(--space-1); }
@@ -18,22 +17,13 @@
   .app-shell.browser-tabs-peek:not(.browser-tabs-peek-open) #browser-restore::before { content:'↶'; font-size:var(--type-headline); }
   .app-shell.browser-tabs-peek:not(.browser-tabs-peek-open) #sidebar-new-tab svg { width:18px; height:18px; }
 }
-@media(min-width:1180px){
-  .app-shell.browser-tabs-peek:not(.browser-tabs-peek-open):not(.rail-open) { grid-template-columns:var(--rail-w) 52px minmax(0,1fr) 48px; }
-  .app-shell.browser-tabs-peek:not(.browser-tabs-peek-open).rail-open { grid-template-columns:var(--rail-w) 52px minmax(0,1fr) var(--desktop-rail-width,300px); }
-}
 @media(prefers-reduced-motion:reduce){ .app-shell.browser-tabs-peek,.app-shell.browser-tabs-peek .sidebar { transition:none; } }
 
 /* Hover and pin expand over the page without changing its viewport. */
 @media(min-width:861px){
-  .app-shell.browser-tabs-peek:not(.browser-tabs-overlay-unavailable){grid-template-columns:var(--rail-w) 52px minmax(0,1fr)}
   .app-shell.browser-tabs-peek:not(.browser-tabs-overlay-unavailable) .sidebar{position:relative;z-index:13;width:52px;min-width:0}
   .app-shell.browser-tabs-peek.browser-tabs-peek-open:not(.browser-tabs-overlay-unavailable) .sidebar{width:var(--desktop-sidebar-width,230px);background:var(--panel);box-shadow:var(--shadow-lg)}
-  .app-shell.browser-tabs-peek.browser-tabs-peek-open:not(.browser-tabs-overlay-unavailable) #sidebar-resizer{position:fixed;z-index:14;left:calc(var(--rail-w) + var(--desktop-sidebar-width,230px));top:var(--toolbar-height);bottom:0;grid-column:auto;grid-row:auto;height:auto;transform:translateX(-50%)}
-}
-@media(min-width:1180px){
-  .app-shell.browser-tabs-peek:not(.browser-tabs-overlay-unavailable):not(.rail-open){grid-template-columns:var(--rail-w) 52px minmax(0,1fr) 48px}
-  .app-shell.browser-tabs-peek:not(.browser-tabs-overlay-unavailable).rail-open{grid-template-columns:var(--rail-w) 52px minmax(0,1fr) var(--desktop-rail-width,300px)}
+  .app-shell.browser-tabs-peek.browser-tabs-peek-open:not(.browser-tabs-overlay-unavailable) #sidebar-resizer{position:fixed;z-index:14;left:calc(var(--rail-w) + var(--desktop-sidebar-width,230px));top:var(--toolbar-height);bottom:0;height:auto;transform:translateX(-50%)}
 }
 
 /* 固定表示（既定）: タブの列はふつうの左の列としてページの横に並ぶ。題名は1行。ピンで細い帯に戻せる。 */
@@ -71,4 +61,11 @@
   #hub-shell:is(.browser-tabs-pinned, .browser-tabs-peek-open) #sidebar-new-tab .sidebar-new-tab-keys { display:flex; }
   #hub-shell #sidebar-new-tab kbd { padding:1px var(--space-1); border:1px solid var(--line); border-radius:var(--radius-xs); color:var(--muted); font:12px/16px inherit; }
   .app-shell.browser-tabs-peek:not(.browser-tabs-peek-open) #sidebar-new-tab .sidebar-new-tab-label { display:none; }
+}
+
+/* ブックマークバーはページの列の上の自分の段。重ねて開く細い列／広い列は、その段の下から始める
+   （さもないと列がバーの左側を覆い、バーの右端だけが列の外へはみ出して見えた）。 */
+@media(min-width:861px){
+  #hub-shell.browser-tabs-peek:not(.browser-tabs-overlay-unavailable):has(#browser-bookmark-bar:not([hidden])) .sidebar { margin-top:calc(var(--tap-compact) + 5px); }
+  #hub-shell.browser-tabs-peek-open:not(.browser-tabs-overlay-unavailable):has(#browser-bookmark-bar:not([hidden])) #sidebar-resizer { top:calc(var(--toolbar-height) + var(--tap-compact) + 5px); }
 }

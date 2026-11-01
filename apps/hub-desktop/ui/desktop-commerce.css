@@ -46,11 +46,11 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: var(--action-text);
+  background: var(--text);
   transition: transform var(--dur-fast) var(--ease-spring);
 }
 #view-settings input[type="checkbox"]:checked::before,
-#view-wallet .wallet-tip-settings input[type="checkbox"]:checked::before { background: var(--action); }
+#view-wallet .wallet-tip-settings input[type="checkbox"]:checked::before { background: transparent; box-shadow: inset 0 0 0 1px var(--emphasis); }
 #view-settings input[type="checkbox"]:checked::after,
 #view-wallet .wallet-tip-settings input[type="checkbox"]:checked::after { transform: translateX(16px); }
 #view-settings input[type="checkbox"]:disabled,
@@ -97,14 +97,14 @@
   background: transparent;
   color: var(--muted);
   font-size: var(--type-subhead);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
 }
 #view-settings .appearance-choice:hover { background: transparent; color: var(--text); }
 #view-settings .appearance-choice:has(input:checked) {
   border: 0;
   background: var(--surface-raised);
   color: var(--text);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
 }
 #view-settings .appearance-choice input[type="radio"] {
   appearance: none;
@@ -129,7 +129,7 @@
 #hub-shell #view-settings .account-card-head h3 {
   margin: 0 0 var(--space-1);
   font-size: var(--type-headline);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   line-height: var(--lh-headline);
 }
 #hub-shell #view-settings :is(.subtle, .meta, .appearance-settings .meta) {
@@ -139,19 +139,19 @@
   line-height: var(--lh-subhead);
 }
 #hub-shell #view-settings .settings-sub {
-  margin: var(--space-5) 0 var(--space-2);
+  margin: var(--space-6) 0 var(--space-2);
   color: var(--muted);
   font-size: var(--type-subhead);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
 }
 #view-settings .appearance-group legend {
   margin-bottom: var(--space-2);
   font-size: var(--type-subhead);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
 }
 #view-settings .inner-nav-head {
   font-size: var(--type-caption);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   letter-spacing: 0;
 }
 #view-settings .inner-nav-item { font-size: var(--type-subhead); min-height: 32px; }
@@ -181,7 +181,7 @@
   color: var(--muted);
   font-size: var(--type-caption);
   line-height: var(--lh-caption);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   white-space: normal;
   overflow-wrap: anywhere;
 }
@@ -268,7 +268,7 @@
 #hub-shell #shop-results .shop-product-card .result-media.is-placeholder .shop-initial {
   color: var(--text);
   font-size: var(--type-title1);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   line-height: 1;
 }
 #hub-shell #shop-results .shop-product-card .result-media.is-placeholder svg {
@@ -285,7 +285,7 @@
 }
 #hub-shell #shop-results .shop-product-card > strong {
   font-size: var(--type-body);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   line-height: var(--lh-body);
 }
 #hub-shell #shop-results .shop-product-card > p:not(.shop-product-meta):not(.meta) {
@@ -316,7 +316,7 @@
    ============================================================ */
 #hub-shell #view-wallet .wallet-device,
 #hub-shell #view-wallet .wallet-section {
-  padding: var(--space-4) var(--space-5);
+  padding: var(--space-4) var(--space-6);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: var(--content-surface);
@@ -324,7 +324,7 @@
 #hub-shell #view-wallet .wallet-eyebrow {
   color: var(--muted);
   font-size: var(--type-subhead);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
 }
 #hub-shell #view-wallet .wallet-network {
   padding: 0 var(--space-2);
@@ -333,7 +333,7 @@
   background: var(--interactive);
   color: var(--muted);
   font-size: var(--type-caption);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   line-height: 24px;
 }
 #hub-shell #view-wallet .wallet-balance {
@@ -343,7 +343,7 @@
   letter-spacing: 0;
   font-variant-numeric: tabular-nums;
 }
-#hub-shell #view-wallet .wallet-balance.is-unavailable { font-size: var(--type-headline); font-weight: var(--weight-semibold); line-height: var(--lh-headline); }
+#hub-shell #view-wallet .wallet-balance.is-unavailable { font-size: var(--type-headline); font-weight: var(--weight-bold); line-height: var(--lh-headline); }
 #hub-shell #view-wallet .wallet-unit { font-size: var(--type-subhead); }
 #hub-shell #view-wallet :is(.wallet-note, .wallet-balance-state, .wallet-address) {
   font-size: var(--type-subhead);
@@ -355,9 +355,9 @@
 #hub-shell #view-wallet .wallet-balance-state.is-error::before { color: var(--danger-text); border-color: var(--danger-text); }
 /* ネットワーク切り替え（選択中のネットワークは残高・送金・確認の全てに出す） */
 .wallet-network-picker { display: grid; gap: var(--space-2); margin: var(--space-3) 0; }
-.wallet-network-label { display: grid; gap: var(--space-1); color: var(--muted); font-size: var(--type-subhead); font-weight: var(--weight-semibold); }
+.wallet-network-label { display: grid; gap: var(--space-1); color: var(--muted); font-size: var(--type-subhead); font-weight: var(--weight-bold); }
 .wallet-network-select { min-height: var(--control-h-lg); }
-.wallet-mainnet-warning { margin: 0; padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); background: var(--warning-bg); color: var(--warning-text); font-size: var(--type-subhead); font-weight: var(--weight-semibold); line-height: var(--lh-subhead); }
+.wallet-mainnet-warning { margin: 0; padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); background: var(--warning-bg); color: var(--warning-text); font-size: var(--type-subhead); font-weight: var(--weight-bold); line-height: var(--lh-subhead); }
 .wallet-testnet-note { margin: 0; color: var(--muted); font-size: var(--type-subhead); line-height: var(--lh-subhead); }
 .wallet-developer summary { color: var(--muted); font-size: var(--type-subhead); cursor: pointer; }
 .wallet-developer-toggle { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-2); }
@@ -377,7 +377,7 @@
   background: var(--interactive);
   color: var(--text);
   font-size: var(--type-subhead);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
 }
 #hub-shell #view-wallet :is(.wallet-actions button, .wallet-action-panel button, .wallet-section > button):hover:not(:disabled) { background: var(--interactive-hover); }
 #hub-shell #view-wallet :is(.wallet-actions button, .wallet-action-panel button, .wallet-section > button):disabled { opacity: .45; }
@@ -388,16 +388,16 @@
   border-radius: var(--radius-sm);
   background: var(--content-nested);
 }
-#hub-shell #view-wallet .wallet-action-panel > strong { font-size: var(--type-body); font-weight: var(--weight-semibold); }
+#hub-shell #view-wallet .wallet-action-panel > strong { font-size: var(--type-body); font-weight: var(--weight-bold); }
 #hub-shell #view-wallet .wallet-send-fields label { font-size: var(--type-subhead); }
 #hub-shell #view-wallet .wallet-section h3 {
   margin: 0 0 var(--space-2);
   font-size: var(--type-body);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   line-height: var(--lh-body);
 }
 #hub-shell #view-wallet .wallet-list-row { min-height: 44px; align-items: center; padding: var(--space-2) 0; }
-#hub-shell #view-wallet .wallet-list-row strong { font-size: var(--type-subhead); font-weight: var(--weight-semibold); }
+#hub-shell #view-wallet .wallet-list-row strong { font-size: var(--type-subhead); font-weight: var(--weight-bold); }
 /* チップの受取設定などの summary は 28 以上 */
 #hub-shell #view-wallet summary,
 #hub-shell .wallet-tip-settings summary,
@@ -407,7 +407,7 @@
   min-height: 36px;
   cursor: pointer;
   font-size: var(--type-subhead);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
 }
 #hub-shell .wallet-tip-settings,
 #hub-shell .owned-event-listings {
@@ -423,7 +423,7 @@
    ============================================================ */
 #hub-shell :is(#view-cart, #view-order, #view-purchased, #view-market) .card h3 {
   font-size: var(--type-body);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   line-height: var(--lh-body);
 }
 #hub-shell :is(#view-cart, #view-order, #view-purchased, #view-market) .card .meta { font-size: var(--type-subhead); line-height: var(--lh-subhead); }
@@ -435,7 +435,7 @@
   border-radius: var(--radius-xs);
   color: var(--muted);
   font-size: var(--type-subhead);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   box-shadow: none;
 }
 #hub-shell :is(#view-cart, #view-order, #view-market, #view-purchased) :is(.segmented, .scopes) button:is(.on, [aria-pressed="true"], [aria-selected="true"]) {
@@ -448,7 +448,7 @@
   text-transform: none;
   letter-spacing: 0;
   font-size: var(--type-subhead);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
 }
 /* 危険な操作（キャンセル・解除・削除）は danger 色の文字 */
 #hub-shell :is(#view-cart, #view-order, #view-market) .head-action.is-danger,
@@ -464,7 +464,7 @@
   background: var(--interactive);
   color: var(--muted);
   font-size: var(--type-caption);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
 }
 
 /* ============================================================
@@ -477,17 +477,17 @@
   padding: 0 var(--space-3);
   border-radius: var(--radius-pill);
   font-size: var(--type-subhead);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
 }
 .piw-chip > span:not(.piw-caret) { max-width: 180px; }
 #view-ai .piw-composer .piw-send,
 #view-ai .piw-composer .piw-stop { width: 32px; height: 32px; min-height: 32px; }
-#view-ai .piw-title .piw-workspace { font-weight: var(--weight-semibold); }
-#view-ai .piw-title h2:not([hidden]) { font-size: var(--type-subhead); font-weight: var(--weight-semibold); }
+#view-ai .piw-title .piw-workspace { font-weight: var(--weight-bold); }
+#view-ai .piw-title h2:not([hidden]) { font-size: var(--type-subhead); font-weight: var(--weight-bold); }
 .piw-model-option,
 .piw-preset strong,
 #sidebar-ai-history > #sidebar-ai-new,
-#sidebar-ai-history .piw-history-project-name { font-weight: var(--weight-semibold); }
+#sidebar-ai-history .piw-history-project-name { font-weight: var(--weight-bold); }
 .piw-model-option { font-weight: var(--weight-regular); }
 .piw-popover { border-radius: var(--radius-md); box-shadow: var(--elevation-1); }
 .piw-popover[hidden] { display: none; }
@@ -531,19 +531,19 @@
 #hub-shell #view-market .card > h4,
 #hub-shell #view-market .card .settings-sub,
 #hub-shell #view-market .card form > h4 {
-  margin: var(--space-5) 0 var(--space-2);
+  margin: var(--space-6) 0 var(--space-2);
   font-size: var(--type-subhead);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   color: var(--muted);
 }
 #hub-shell :is(#view-market, #view-cart, #view-order, #view-purchased) .actions { justify-content: flex-start; }
 #hub-shell #view-market .detail-form button[type="submit"],
-#hub-shell #view-market .detail-form .approve { align-self: flex-start; width: auto; min-height: var(--control-h-lg); padding: 0 var(--space-5); }
+#hub-shell #view-market .detail-form .approve { align-self: flex-start; width: auto; min-height: var(--control-h-lg); padding: 0 var(--space-6); }
 #hub-shell #view-market .detail-form { gap: var(--space-2); }
 #hub-shell #view-market form.detail-form > h3 {
-  margin: var(--space-5) 0 var(--space-1);
+  margin: var(--space-6) 0 var(--space-1);
   font-size: var(--type-body);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   line-height: var(--lh-body);
 }
 #hub-shell #view-market form.detail-form > button { justify-self: start; align-self: flex-start; width: auto; }
@@ -553,8 +553,8 @@
 #view-ai .piw-empty-recent-item,
 #view-ai .piw-empty-recent-item * { font-weight: var(--weight-regular); }
 #view-ai .piw-empty-recent-item { color: var(--text); font-size: var(--type-subhead); }
-#view-ai .piw-empty > strong { font-weight: var(--weight-semibold); }
-#view-ai .piw-empty strong { font-weight: var(--weight-semibold); }
+#view-ai .piw-empty > strong { font-weight: var(--weight-bold); }
+#view-ai .piw-empty strong { font-weight: var(--weight-bold); }
 
 /* ============================================================
    2-3. マーケットの作り直し（2026-10-18）
@@ -590,12 +590,12 @@
 #hub-shell #market-shop .shop-toggle input { margin: 0; }
 #hub-shell #shop-results.result-grid {
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: var(--space-5);
+  gap: var(--space-6);
 }
 #hub-shell #shop-results.layout-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: var(--space-5);
+  gap: var(--space-6);
   max-width: none;
   margin-inline: 0;
   padding-inline: 0;
@@ -632,7 +632,7 @@
   overflow: hidden;
   order: 1;
   font-size: var(--type-body);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   line-height: 1.4;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -697,7 +697,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-1) var(--space-2);
-  margin-top: var(--space-6);
+  margin-top: var(--space-7);
   padding-top: var(--space-4);
   border-top: 1px solid var(--line);
 }
@@ -708,7 +708,7 @@
 #hub-shell .shop-detail {
   display: grid;
   grid-template-columns: minmax(240px, 440px) minmax(280px, 1fr);
-  gap: var(--space-6);
+  gap: var(--space-7);
   align-items: start;
   width: min(1040px, 100%);
   margin: 0;
@@ -742,7 +742,7 @@
 #hub-shell .shop-detail .shop-detail-price strong { font-size: var(--type-title2); }
 #hub-shell .shop-detail-facts { gap: var(--space-2); padding: var(--space-3) 0; font-size: var(--type-subhead); }
 #hub-shell .shop-detail-actions { display: flex; gap: var(--space-2); }
-#hub-shell .shop-detail-actions > button { min-height: var(--control-h-lg); padding: 0 var(--space-5); }
+#hub-shell .shop-detail-actions > button { min-height: var(--control-h-lg); padding: 0 var(--space-6); }
 #hub-shell .shop-detail-actions > .approve { flex: 1; }
 #hub-shell .shop-detail-note { margin: 0; font-size: var(--type-caption); line-height: var(--lh-caption); }
 #hub-shell .shop-detail-legal {

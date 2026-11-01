@@ -116,7 +116,7 @@ function metaText(video, relTime) {
   return [viewsText(video), video.publishedAt ? relTime(video.publishedAt) : ''].filter(Boolean).join(' · ');
 }
 
-/** 動画カード。compact は「次の動画」用の横並び。 */
+/** 動画カード。compact は「次に見る」用の横並び。 */
 export function createVideoCard(document, video, { hubAsset, relTime, onOpen, compact = false }) {
   const peerHost = typeof video.peerHost === 'string' ? video.peerHost : '';
   const card = el(document, 'button', `video-card vh-card${compact ? ' video-card-compact' : ''}`);
@@ -301,11 +301,11 @@ export function createWatchHeader(document, video, { relTime }) {
   return { title, bar, actions, desc };
 }
 
-/** 「次の動画」。現在の動画を除いた一覧から、同じ分類・チャンネルを先頭に最大12件。 */
+/** 「次に見る」。現在の動画を除いた一覧から、同じ分類・チャンネルを先頭に最大12件。 */
 export function createRelatedList(document, video, items, deps) {
   const rank = (item) => Number(item.category === video.category) + Number(item.channel === video.channel);
   const others = items.filter((item) => item.id !== video.id).sort((a, b) => rank(b) - rank(a)).slice(0, 12);
-  const nodes = [el(document, 'h3', '', '次の動画'), ...others.map((item) => createVideoCard(document, item, { ...deps, compact: true }))];
-  if (!others.length) nodes.push(el(document, 'p', 'meta', '次の動画はまだありません。'));
+  const nodes = [el(document, 'h3', '', '次に見る'), ...others.map((item) => createVideoCard(document, item, { ...deps, compact: true }))];
+  if (!others.length) nodes.push(el(document, 'p', 'meta', '次に見る動画はまだありません。'));
   return nodes;
 }

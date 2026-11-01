@@ -78,7 +78,7 @@ export function fixture({ projects = [], width = 1280, registered = true } = {})
     const desktopAccount = { state: registered ? "registered" : "anonymous" };
     const invoke = async (command, args) => { calls.push(["invoke", command, args?.name, ...(args?.ids ?? [])]); return hubSidebar(command, args); };
     const sidebarContext = document.querySelector("#sidebar-context");
-    const messagesSide = document.querySelector(".messages-side"), messagesLayout = document.querySelector(".messages-layout");
+    const messagesSide = document.querySelector(".messages-side"), messagesLayout = document.querySelector(".messages-layout"), mailListCol = document.querySelector(".mail-list-col"), mailLayoutNode = document.querySelector(".mail-layout");
     ${tables.replace(/\bdetailTrail\b/g, "state.detailTrail")}
     ${column.replace(/\bcurrentView\b/g, "state.currentView").replace(/\bdetailTrail\b/g, "state.detailTrail")}
     return { renderSidebarContext, placeMessagesSide, sidebarRemote };
@@ -92,5 +92,5 @@ export function fixture({ projects = [], width = 1280, registered = true } = {})
 }
 
 export const WITH_CONTENT = ["feed", "notifications", "messages", "videos", "music", "articles", "market", "settings", "purchased", "lists", "bookmarks", "profile"];
-export const EMPTY = ["wallet", "home", "world", "ranking", "services", "node", "compute", "books", "research", "search", "contacts", "mail", "hubpedia", "community", "threads"];
+export const EMPTY = ["wallet", "home", "ranking", "services", "node", "compute", "books", "research", "search", "contacts", "mail", "hubpedia", "community", "threads"];
 export { source, css, html };

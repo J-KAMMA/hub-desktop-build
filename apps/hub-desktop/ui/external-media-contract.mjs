@@ -171,52 +171,6 @@ function parseVideoContextInput(input) {
   };
 }
 
-// ../../../packages/content-tags/src/index.ts
-var TAG_MAX_PER_ITEM = 8;
-var TAG_MAX_LENGTH = 32;
-var LONE_SURROGATE = /[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/;
-var INVISIBLE_FORMAT = /(?!‍)\p{Cf}/gu;
-var SEPARATORS = /[\s,、，]+/u;
-var FORBIDDEN_INSIDE = /[#,、，]/u;
-var WHITESPACE = /\s/u;
-var CONTROL = /\p{Cc}/u;
-function stripStrayJoiners(s) {
-  return s.replace(/‍{2,}/g, "\u200D").replace(/^‍+|‍+$/g, "");
-}
-function foldCase(s) {
-  return s.toUpperCase().toLowerCase().normalize("NFKC");
-}
-function normalizeTag(raw) {
-  if (typeof raw !== "string") return null;
-  if (LONE_SURROGATE.test(raw)) return null;
-  let s = raw.normalize("NFKC").replace(INVISIBLE_FORMAT, "");
-  s = s.trim().replace(/^#+/, "").trim();
-  s = stripStrayJoiners(s);
-  if (!s) return null;
-  if (CONTROL.test(s) || WHITESPACE.test(s) || FORBIDDEN_INSIDE.test(s)) return null;
-  if (Array.from(s).length > TAG_MAX_LENGTH) return null;
-  return { key: foldCase(s), display: s };
-}
-function splitTagInput(text2) {
-  if (typeof text2 !== "string") return [];
-  return text2.normalize("NFKC").split(SEPARATORS).filter((part) => part.length > 0);
-}
-function normalizeTagList(input, max = TAG_MAX_PER_ITEM) {
-  const parts = [];
-  if (typeof input === "string") parts.push(...splitTagInput(input));
-  else for (const item of input) if (typeof item === "string") parts.push(...splitTagInput(item));
-  const seen = /* @__PURE__ */ new Set();
-  const out = [];
-  for (const part of parts) {
-    if (out.length >= max) break;
-    const tag = normalizeTag(part);
-    if (!tag || seen.has(tag.key)) continue;
-    seen.add(tag.key);
-    out.push(tag);
-  }
-  return out;
-}
-
 // ../../hub/lib/music-source.ts
 var InvalidMusicSourceError = class extends Error {
   constructor(message) {
@@ -240,12 +194,31 @@ function normalizeMusicSource(raw) {
   const url = secureUrl(raw.trim());
   const host = url.hostname.toLowerCase();
   const parts = url.pathname.split("/").filter(Boolean);
+  if (host === "open.spotify.com") {
+    const kind = parts[0];
+    const id = parts[1];
+    if (!kind || !["track", "album", "playlist", "episode", "show"].includes(kind) || !id || !/^[A-Za-z0-9]{10,32}$/.test(id)) throw new InvalidMusicSourceError("Spotify\u306E\u4F5C\u54C1URL\u3092\u6307\u5B9A\u3057\u3066\u304F\u3060\u3055\u3044\u3002");
+    const sourceUrl = `https://open.spotify.com/${kind}/${id}`;
+    return { provider: "spotify", label: "Spotify", url: sourceUrl, embedUrl: `https://open.spotify.com/embed/${kind}/${id}` };
+  }
   if (["youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com", "youtu.be"].includes(host)) {
     const id = host === "youtu.be" ? parts[0] : url.pathname === "/watch" ? url.searchParams.get("v") : parts[0] === "shorts" ? parts[1] : void 0;
     if (!id || !/^[\w-]{11}$/.test(id)) throw new InvalidMusicSourceError("YouTube\u306E\u52D5\u753BURL\u3092\u6307\u5B9A\u3057\u3066\u304F\u3060\u3055\u3044\u3002");
     return { provider: "youtube", label: host === "music.youtube.com" ? "YouTube Music" : "YouTube", url: `https://www.youtube.com/watch?v=${id}`, embedUrl: `https://www.youtube-nocookie.com/embed/${id}` };
   }
-  throw new InvalidMusicSourceError("YouTube\u307E\u305F\u306FYouTube Music\u306EURL\u3092\u6307\u5B9A\u3057\u3066\u304F\u3060\u3055\u3044\u3002");
+  if (host === "music.apple.com") {
+    if (parts.length < 2) throw new InvalidMusicSourceError("Apple Music\u306E\u4F5C\u54C1URL\u3092\u6307\u5B9A\u3057\u3066\u304F\u3060\u3055\u3044\u3002");
+    return { provider: "apple", label: "Apple Music", url: url.toString() };
+  }
+  if (["music.amazon.co.jp", "music.amazon.com", "music.amazon.co.uk", "music.amazon.de"].includes(host)) {
+    url.searchParams.delete("tag");
+    return { provider: "amazon", label: "Amazon Music", url: url.toString() };
+  }
+  if (host === "bandcamp.com" || host.endsWith(".bandcamp.com")) {
+    if (parts.length === 0) throw new InvalidMusicSourceError("Bandcamp\u306E\u4F5C\u54C1URL\u3092\u6307\u5B9A\u3057\u3066\u304F\u3060\u3055\u3044\u3002");
+    return { provider: "bandcamp", label: "Bandcamp", url: url.toString() };
+  }
+  throw new InvalidMusicSourceError("\u5BFE\u5FDC\u3057\u3066\u3044\u308B\u97F3\u697D\u30B5\u30FC\u30D3\u30B9\u306EURL\u3092\u6307\u5B9A\u3057\u3066\u304F\u3060\u3055\u3044\u3002");
 }
 function text(value, label, max) {
   if (typeof value !== "string") throw new InvalidMusicSourceError(`${label}\u3092\u5165\u529B\u3057\u3066\u304F\u3060\u3055\u3044\u3002`);
@@ -262,7 +235,7 @@ function parseMusicWorkInput(input) {
   if (!services.some((service) => service.provider === "youtube" && service.embedUrl)) throw new InvalidMusicSourceError("\u30B5\u30A4\u30C8\u5185\u3067\u518D\u751F\u3067\u304D\u308BYouTube\u307E\u305F\u306FYouTube Music\u306EURL\u304C\u5FC5\u8981\u3067\u3059\u3002");
   const year = Number(record.year);
   if (!Number.isInteger(year) || year < 1e3 || year > (/* @__PURE__ */ new Date()).getFullYear() + 1) throw new InvalidMusicSourceError("\u30EA\u30EA\u30FC\u30B9\u5E74\u304C\u6B63\u3057\u304F\u3042\u308A\u307E\u305B\u3093\u3002");
-  const tags = Array.isArray(record.tags) ? normalizeTagList(record.tags).map((tag) => tag.display) : [];
+  const tags = Array.isArray(record.tags) ? [...new Set(record.tags.map((value) => text(value, "\u30BF\u30B0", 40)))].slice(0, 12) : [];
   return { title: text(record.title, "\u66F2\u540D\u30FB\u4F5C\u54C1\u540D", 180), artist: text(record.artist, "\u30A2\u30FC\u30C6\u30A3\u30B9\u30C8\u540D", 120), description: text(record.description, "\u8AAC\u660E", 500), genre: text(record.genre, "\u30B8\u30E3\u30F3\u30EB", 60), tags, year, services };
 }
 export {

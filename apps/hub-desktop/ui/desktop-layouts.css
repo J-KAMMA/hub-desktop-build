@@ -1,0 +1,249 @@
+/* Hub Desktop layouts (design system section 1 and 3). Loaded last, after desktop-views.css.
+   Owns: the split of messages and mail (list 380 + detail 600), the video watch page in the wide template
+   (player 980, then 600 + 350), the context column in narrow windows, and the ranking, services and code views.
+   Values come from tokens.css (--ds-*). Colors are semantic tokens only; gold stays a line. */
+
+/* ===== Narrow windows (under 1180): the context column is part of the grid, never an overlay ===== */
+@media (min-width: 721px) and (max-width: 1179px) {
+  #hub-shell.app-shell:not(.sidebar-collapsed):not([data-template="browser"]):is([data-template="split"], [data-template="settings"], .ai-active, .apps-active) {
+    --ctx-col: var(--desktop-sidebar-width, 240px);
+  }
+  #hub-shell.app-shell:not(.sidebar-collapsed):is([data-template="split"], [data-template="settings"]) { --main-w: var(--ds-col-main); }
+  #hub-shell.app-shell:not([data-template="browser"]) > .sidebar {
+    position: static;
+    z-index: auto;
+    width: auto;
+    height: auto;
+    box-shadow: none;
+  }
+  #hub-shell.app-shell:not([data-template="browser"]) > #layout-backdrop { display: none; }
+}
+
+/* ===== Messages and mail: the split template ===== */
+/* At 1100 and wider: list 380 (the context column, or the left of the page when the column is folded) + detail 600.
+   JS gives the column 380 (applyColumnWidths); the detail shrinks first when the window is short of 980. */
+@media (min-width: 1100px) {
+  #hub-shell.app-shell:not(.sidebar-holds-messages) #view-messages .messages-layout {
+    display: grid;
+    grid-template-columns: var(--ds-col-list) minmax(0, 1fr);
+    gap: 0;
+    min-height: 0;
+  }
+  #hub-shell.app-shell:not(.sidebar-holds-messages) #view-messages .messages-side { border-right: 1px solid var(--line); }
+  #hub-shell.app-shell:not(.sidebar-holds-mail) #mail-main .mail-layout {
+    grid-template-columns: var(--ds-col-list) minmax(0, 1fr);
+    gap: 0;
+    align-items: stretch;
+  }
+  #hub-shell.app-shell:not(.sidebar-holds-mail) #mail-main .mail-list-col { border-right: 1px solid var(--line); }
+  #hub-shell.app-shell.sidebar-holds-mail #mail-main .mail-layout { grid-template-columns: minmax(0, 1fr); }
+}
+/* Under 1100: the list only, until a conversation or a message is open. Then the detail alone, with a back button. */
+@media (min-width: 721px) and (max-width: 1099px) {
+  #hub-shell.app-shell:not(.sidebar-collapsed):not([data-template="browser"]):is(.sidebar-holds-messages:not(.dm-thread-open), .sidebar-holds-mail:not(.mail-reader-open)) {
+    --ctx-col: minmax(0, 1fr);
+    --main-w: 0px;
+    --spacer: 0px;
+  }
+  #hub-shell.app-shell:not(.sidebar-collapsed):not([data-template="browser"]):is(.sidebar-holds-messages:not(.dm-thread-open), .sidebar-holds-mail:not(.mail-reader-open)) > .workspace-main { display: none; }
+  #hub-shell.app-shell:not(.sidebar-collapsed):not([data-template="browser"]):is(.sidebar-holds-messages:not(.dm-thread-open), .sidebar-holds-mail:not(.mail-reader-open)) > .sidebar { border-right: 0; }
+  #hub-shell.app-shell:not(.sidebar-collapsed):not([data-template="browser"]):is(.sidebar-holds-messages.dm-thread-open, .sidebar-holds-mail.mail-reader-open) {
+    --ctx-col: 0px;
+    --main-w: 4000px;
+    --spacer: 0px;
+  }
+  #hub-shell.app-shell:not(.sidebar-collapsed):not([data-template="browser"]):is(.sidebar-holds-messages.dm-thread-open, .sidebar-holds-mail.mail-reader-open) > :is(.sidebar, #sidebar-resizer) { display: none; }
+}
+@media (max-width: 1099px) {
+  /* The list sits in the page (the column is folded or the window is narrow): one pane at a time. */
+  #hub-shell #view-messages .messages-layout,
+  #hub-shell #mail-main .mail-layout { display: block; }
+  #hub-shell.app-shell:not(.dm-thread-open) #view-messages .messages-thread { display: none; }
+  #hub-shell.app-shell.dm-thread-open #view-messages .messages-side { display: none; }
+  #hub-shell.app-shell:not(.mail-reader-open) #mail-main .mail-reader { display: none; }
+  #hub-shell.app-shell.mail-reader-open #mail-main .mail-list-col { display: none; }
+  #hub-shell.app-shell.dm-thread-open #thread-back,
+  #hub-shell #mail-main.is-reading #mail-reader-back { display: inline-flex; }
+}
+/* The back button: a 36px ghost icon button. It exists only under 1100. */
+#hub-shell .thread-back {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--ds-icon-btn);
+  height: var(--ds-icon-btn);
+  margin: var(--ds-space-2) var(--ds-space-3) 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+}
+#hub-shell .thread-back:hover { background: var(--interactive); color: var(--text); }
+#hub-shell .thread-back:focus-visible { outline: 2px solid var(--ds-focus-ring); outline-offset: 2px; }
+#hub-shell .thread-back svg { width: var(--ds-icon-size); height: var(--ds-icon-size); fill: none; stroke: currentColor; stroke-width: 2; }
+
+/* Conversation and mail rows: divider rows, the name in 700, no boxes. */
+#hub-shell :is(#messages-list, #mail-list) { display: block; margin: 0; padding: 0; }
+#hub-shell :is(.conversation, .mail-item) {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-3);
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: var(--ds-space-3) var(--ds-page-inset);
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+#hub-shell :is(.conversation, .mail-item):hover { background: var(--interactive); }
+#hub-shell :is(.conversation.active, .mail-item.active) { background: var(--interactive); box-shadow: inset 2px 0 0 var(--emphasis); }
+#hub-shell .mail-item { display: grid; gap: 2px; align-items: start; }
+#hub-shell .mail-item-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--ds-space-2); min-width: 0; }
+#hub-shell .mail-item-head strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); font-weight: var(--ds-weight-text); }
+#hub-shell .mail-item.unread .mail-item-head strong,
+#hub-shell .mail-item.unread .mail-item-subject { font-weight: var(--ds-weight-strong); }
+#hub-shell .mail-item .when { flex: none; color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); font-weight: var(--ds-weight-text); }
+#hub-shell .mail-item-subject { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); }
+#hub-shell .mail-item-preview { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); }
+#hub-shell .mail-draft-row { display: flex; align-items: stretch; }
+#hub-shell .mail-draft-row .mail-item { flex: 1 1 auto; }
+#hub-shell .mail-item-delete { flex: none; align-self: center; margin-right: var(--ds-page-inset); }
+/* The mail list moved into the column scrolls there, like the conversation list. */
+#hub-shell #sidebar-context .mail-list-col { flex: 1; min-height: 0; margin: 0; overflow-y: auto; border: 0; }
+#hub-shell #mail-main .mail-reader { min-width: 0; padding: var(--ds-space-3) var(--ds-page-inset); }
+#hub-shell #mail-main .mail-reader .thread-back { margin-inline: 0 var(--ds-space-3); }
+
+/* ===== Video watch: the wide template ===== */
+/* The page itself carries no inset here; the player runs the full 980, the rows carry their own 16. */
+#hub-shell #view-videos.view.on:has(#video-watch:not([hidden])) { width: 100%; max-width: none; margin: 0; padding-inline: 0; }
+#hub-shell #video-watch { container: watch / inline-size; }
+#hub-shell #video-watch > .video-back { margin: var(--ds-space-2) var(--ds-page-inset); }
+#hub-shell .video-watch-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; align-items: start; }
+#hub-shell #video-watch-main > :not(:first-child):not(.video-posts-stack) { box-sizing: border-box; padding-inline: var(--ds-page-inset); }
+#hub-shell #video-watch-main > .video-posts-stack { padding-inline: 0; }
+#hub-shell #video-watch-main .vh-stage { margin: 0; }
+#hub-shell #video-watch-main :is(.yt-player, .video-player-preview, .vh-native-player, .yt-player-slot) { border-radius: 0; background: var(--bg); }
+/* 16:9 across the 980 is tall; keep the rows under it in view on a short window. */
+#hub-shell #video-watch-main .vh-stage { max-height: 62vh; overflow: hidden; }
+#hub-shell .vh-watch-title { margin: var(--ds-space-3) 0 var(--ds-space-2); font-size: var(--ds-type-name-size); line-height: var(--ds-type-name-leading); font-weight: var(--ds-weight-strong); }
+#hub-shell .vh-watch-desc {
+  margin: 0;
+  padding-block: var(--ds-space-3);
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--ds-type-body-size);
+  line-height: var(--ds-type-body-leading);
+}
+/* Related: the column header and plain tiles, no boxes. */
+#hub-shell #video-watch-related { box-sizing: border-box; padding: var(--ds-space-3) var(--ds-page-inset) var(--ds-space-6); }
+#hub-shell #video-watch-related h3 { margin: 0 0 var(--ds-space-3); font-size: var(--ds-type-title-size); line-height: var(--ds-type-title-leading); font-weight: var(--ds-weight-heavy); }
+#hub-shell #video-watch-related .video-card {
+  grid-template-columns: 168px minmax(0, 1fr);
+  gap: var(--ds-space-3);
+  margin: 0 0 var(--ds-space-3);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+#hub-shell #video-watch-related .video-card:hover { background: transparent; }
+#hub-shell #video-watch-related .video-card .video-thumbnail { width: 168px; height: 94px; border-radius: var(--ds-radius-tile-video); }
+#hub-shell #video-watch-related .video-card-copy strong { font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); font-weight: var(--ds-weight-strong); }
+#hub-shell #video-watch-related .video-card-copy > span { font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); color: var(--muted); }
+/* Comments are divider rows. */
+#hub-shell .video-posts { margin-top: 0; padding-top: var(--ds-space-3); border-top: 0; }
+#hub-shell .video-posts > :not(.video-posts-list) { box-sizing: border-box; padding-inline: var(--ds-page-inset); }
+#hub-shell .video-posts .video-posts-list { margin: 0; }
+#hub-shell .video-posts .video-posts-list > .post,
+#hub-shell .video-posts .video-posts-list > :is(article, div) {
+  margin: 0;
+  padding: var(--ds-space-3) var(--ds-page-inset);
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+#hub-shell .video-posts .video-posts-list > .post:hover { background: var(--interactive); }
+/* Wide enough for the in-page split: player 980; 600 on the left (title, actions, description, comments); 350 on the right. */
+@container watch (min-width: 900px) {
+  #hub-shell .video-watch-layout {
+    grid-template-columns: minmax(0, var(--ds-col-main)) minmax(0, var(--ds-col-right));
+    column-gap: var(--ds-col-gap);
+  }
+  #hub-shell .video-watch-layout > #video-watch-main { display: contents; }
+  #hub-shell .video-watch-layout > #video-watch-main > :first-child { grid-column: 1 / -1; grid-row: 1; }
+  #hub-shell .video-watch-layout > #video-watch-main > :not(:first-child) { grid-column: 1; }
+  #hub-shell .video-watch-layout > #video-watch-related { grid-column: 2; grid-row: 2 / span 12; position: sticky; top: var(--ds-space-4); padding-inline: 0; }
+}
+
+/* ===== Ranking and services: the list is rows, the detail is a fact table ===== */
+#hub-shell :is(#ranking-results, #services-results) { display: block; margin: 0; padding: 0; }
+#hub-shell :is(#ranking-results, #services-results) > .result-card {
+  display: grid;
+  gap: 2px;
+  box-sizing: border-box;
+  margin: 0;
+  padding: var(--ds-space-3) var(--ds-page-inset);
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+#hub-shell :is(#ranking-results, #services-results) > .result-card:hover { background: var(--interactive); }
+#hub-shell :is(#ranking-results, #services-results) > .result-card strong { font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); font-weight: var(--ds-weight-strong); }
+#hub-shell :is(#ranking-results, #services-results) > .result-card p { margin: 0; color: var(--muted); font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); }
+#hub-shell :is(#ranking-results, #services-results) > .result-card .meta { font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); }
+#hub-shell :is(#ranking-state, #services-state, #world-state) { padding-inline: var(--ds-page-inset); }
+
+#hub-shell #detail-content .detail-lede { margin: 0; padding: var(--ds-space-3) var(--ds-page-inset); border-bottom: 1px solid var(--line); color: var(--text); font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); overflow-wrap: anywhere; }
+#hub-shell #detail-content .fact-rows { margin: 0; padding: 0; }
+#hub-shell #detail-content .fact-row {
+  display: grid;
+  grid-template-columns: minmax(96px, 140px) minmax(0, 1fr);
+  gap: var(--ds-space-3);
+  padding: var(--ds-space-3) var(--ds-page-inset);
+  border-bottom: 1px solid var(--line);
+}
+#hub-shell #detail-content .fact-row dt { margin: 0; color: var(--muted); font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); }
+#hub-shell #detail-content .fact-row dd { margin: 0; min-width: 0; font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); overflow-wrap: anywhere; }
+#hub-shell #detail-content .fact-row code { font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); word-break: break-all; }
+#hub-shell #detail-content .detail-web-open { display: grid; justify-items: start; gap: var(--ds-space-2); padding: var(--ds-space-4) var(--ds-page-inset); }
+#hub-shell #detail-content .detail-web-open .head-action {
+  min-height: var(--ds-btn-h);
+  padding: 0 var(--ds-btn-px);
+  border: 1px solid var(--ds-btn-secondary-line);
+  border-radius: var(--ds-radius-pill);
+  background: transparent;
+  color: var(--ds-btn-secondary-fg);
+  font-size: var(--ds-type-body-size);
+  font-weight: var(--ds-weight-strong);
+}
+#hub-shell #detail-content .detail-web-open .head-action:hover { background: var(--interactive); }
+#hub-shell #detail-content .detail-web-open .meta { margin: 0; max-width: 480px; }
+
+/* ===== Code: a proper empty state ===== */
+#hub-shell #view-code .code-empty {
+  display: block;
+  margin: 0;
+  padding: var(--ds-space-4) var(--ds-page-inset);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  text-align: left;
+}
+#hub-shell #view-code .code-empty strong { display: block; margin: 0 0 var(--ds-space-2); font-size: var(--ds-type-title-size); line-height: var(--ds-type-title-leading); font-weight: var(--ds-weight-heavy); }
+#hub-shell #view-code .code-empty p { max-width: 360px; margin: 0; color: var(--muted); font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); }
+
+/* ===== すべての機能: the old feed column entries (followed tags, lists, yours) ===== */
+#hub-shell #sidebar-context .sidebar-apps-mine { margin-top: var(--ds-space-4); padding-top: var(--ds-space-3); border-top: 1px solid var(--line); }

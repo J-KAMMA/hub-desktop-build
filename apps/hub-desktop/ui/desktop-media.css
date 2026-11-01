@@ -3,21 +3,21 @@
 
 /* ---- 動画：ヒーローは置かず、一覧は minmax(260px, 1fr) の格子。札は 16:9 の媒体枠 ---- */
 #hub-shell #video-home .vh-grid,
-#hub-shell #videos-results { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--space-5) var(--space-4); }
+#hub-shell #videos-results { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--space-6) var(--space-4); }
 #hub-shell #video-home .vh-grid { align-items: start; }
 #hub-shell .vh-card { margin: calc(var(--space-1) * -1); padding: var(--space-1); border-radius: var(--radius-md); transition: background-color var(--dur-fast) var(--ease-out); }
 #hub-shell .vh-card:hover { transform: none; }
 #hub-shell .vh-card .video-thumbnail { aspect-ratio: 16 / 9; border-radius: var(--radius-md); background: var(--interactive); }
 #hub-shell .vh-card .video-thumbnail::before { content: none; }
 #hub-shell .video-thumbnail.ds-media::after { z-index: 1; }
-#hub-shell .video-thumbnail.ds-media > .ds-cover { display: grid; place-items: center; position: absolute; inset: 0; font-size: var(--type-body); line-height: var(--lh-subhead); font-weight: var(--weight-semibold); }
-#hub-shell .video-card-copy strong { font-size: var(--type-body); line-height: var(--lh-subhead); font-weight: var(--weight-semibold); }
+#hub-shell .video-thumbnail.ds-media > .ds-cover { display: grid; place-items: center; position: absolute; inset: 0; font-size: var(--type-body); line-height: var(--lh-subhead); font-weight: var(--weight-bold); }
+#hub-shell .video-card-copy strong { font-size: var(--type-body); line-height: var(--lh-subhead); font-weight: var(--weight-bold); }
 #hub-shell .vh-card-body .video-card-copy > span { font-size: var(--type-subhead); line-height: var(--lh-subhead); }
-#hub-shell .vh-avatar { width: 32px; height: 32px; background: var(--interactive); color: var(--text); font-size: var(--type-subhead); font-weight: var(--weight-semibold); }
-#hub-shell .vh-row-title { font-size: var(--type-title3); line-height: var(--lh-title3); font-weight: var(--weight-semibold); font-feature-settings: "palt"; }
-#hub-shell .vh-home { gap: var(--space-6); }
+#hub-shell .vh-avatar { width: 32px; height: 32px; background: var(--interactive); color: var(--text); font-size: var(--type-subhead); font-weight: var(--weight-bold); }
+#hub-shell .vh-row-title { font-size: var(--type-title3); line-height: var(--lh-title3); font-weight: var(--weight-bold); font-feature-settings: "palt"; }
+#hub-shell .vh-home { gap: var(--space-7); }
 /* 絞り込みの札は 1 行のチップ（選ぶと反転）。 */
-#hub-shell .video-filter, #hub-shell .video-category { min-height: 28px; padding: 0 var(--space-3); border-radius: var(--radius-pill); font-size: var(--type-subhead); font-weight: var(--weight-semibold); }
+#hub-shell .video-filter, #hub-shell .video-category { min-height: 28px; padding: 0 var(--space-3); border-radius: var(--radius-pill); font-size: var(--type-subhead); font-weight: var(--weight-bold); }
 #hub-shell .video-filter.on, #hub-shell .video-category.on { background: var(--text); border-color: var(--text); color: var(--bg); }
 /* 読み込み中：完成形と同じ寸法の骨組み */
 #hub-shell .vh-skeleton { display: grid; gap: var(--space-2); margin: 0; padding: 0; }
@@ -29,20 +29,20 @@
 #hub-shell .vh-watch-title { font-size: var(--type-title3); line-height: var(--lh-title3); font-weight: var(--weight-bold); font-feature-settings: "palt"; }
 #hub-shell .vh-watch-actions > .head-action, #hub-shell .vh-watch-actions .head-action { min-height: var(--control-h); padding: 0 var(--space-4); font-size: var(--type-subhead); }
 #hub-shell .vh-watch-desc { border-radius: var(--radius-md); background: var(--content-nested); }
-#hub-shell #video-watch-related h3 { font-size: var(--type-headline); line-height: var(--lh-headline); font-weight: var(--weight-semibold); }
+#hub-shell #video-watch-related h3 { font-size: var(--type-headline); line-height: var(--lh-headline); font-weight: var(--weight-bold); }
 #hub-shell #video-watch-related .video-card .video-thumbnail { aspect-ratio: auto; border-radius: var(--radius-sm); }
 
 /* ---- 記事の一覧：箱をやめ、16:9 の表紙・題 2 行・要約 2 行の札を格子に並べる ---- */
-#hub-shell #articles-results { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--space-5); align-items: start; }
+#hub-shell #articles-results { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--space-6); align-items: start; }
 #hub-shell #articles-results .result-card.has-cover { display: grid; align-content: start; gap: var(--space-2); margin: 0; padding: 0; border: 1px solid transparent; border-radius: var(--radius-md); background: transparent; box-shadow: none; transition: transform var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out); }
 #hub-shell #articles-results .result-card.has-cover:hover { background: transparent; }
 #hub-shell #articles-results .result-card.has-cover.is-link:hover { transform: translateY(calc(var(--space-1) * -1)); border-color: color-mix(in srgb, var(--action) 30%, var(--line)); box-shadow: var(--elevation-1); }
 #hub-shell #articles-results .result-card.has-cover.is-link:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: var(--space-1); }
 #hub-shell #articles-results .result-card.has-cover .ds-media { margin: 0; }
 #hub-shell #articles-results .result-card.has-cover .ds-media > .ds-cover:not(.ds-cover-generated) { display: grid; place-items: center; position: absolute; inset: 0; font-size: var(--type-headline); line-height: var(--lh-headline); font-weight: var(--weight-bold); font-feature-settings: "palt"; }
-#hub-shell #articles-results .result-card.has-cover .ds-cover-generated { display: block; position: absolute; inset: 0; padding: var(--space-3); background-color: var(--surface-sunken); background-image: radial-gradient(120% 90% at 0% 100%, color-mix(in srgb, var(--emphasis) 12%, transparent), transparent 62%), linear-gradient(160deg, color-mix(in srgb, var(--text) 4%, transparent), transparent 55%); color: var(--muted); font-size: var(--type-caption); line-height: var(--lh-caption); font-weight: var(--weight-semibold); }
-#hub-shell #articles-results .result-card.has-cover .ds-cover-generated > .ds-cover-label { position: absolute; left: var(--space-3); bottom: var(--space-2); max-width: calc(100% - var(--space-6)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#hub-shell #articles-results .result-card.has-cover > strong { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; font-size: var(--type-headline); line-height: var(--lh-headline); font-weight: var(--weight-semibold); text-wrap: pretty; }
+#hub-shell #articles-results .result-card.has-cover .ds-cover-generated { display: block; position: absolute; inset: 0; padding: var(--space-3); background-color: var(--surface-sunken); background-image: none; color: var(--muted); font-size: var(--type-caption); line-height: var(--lh-caption); font-weight: var(--weight-bold); }
+#hub-shell #articles-results .result-card.has-cover .ds-cover-generated > .ds-cover-label { position: absolute; left: var(--space-3); bottom: var(--space-2); max-width: calc(100% - var(--space-7)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#hub-shell #articles-results .result-card.has-cover > strong { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; font-size: var(--type-headline); line-height: var(--lh-headline); font-weight: var(--weight-bold); text-wrap: pretty; }
 #hub-shell #articles-results .result-card.has-cover > p:not(.meta) { display: -webkit-box; overflow: hidden; margin: 0; -webkit-box-orient: vertical; -webkit-line-clamp: 2; color: var(--muted); font-size: var(--type-subhead); line-height: var(--lh-subhead); }
 #hub-shell #articles-results .result-card.has-cover > .meta { margin: 0; color: var(--muted); font-size: var(--type-caption); line-height: var(--lh-caption); }
 #hub-shell #articles-results .result-card.has-cover.is-link:hover > strong { text-decoration: underline; }
@@ -54,5 +54,5 @@
  * 視聴の右の列だけは広い画面で 402px まで広げる。
  */
 @media (min-width: 1600px) {
-  #hub-shell .video-watch-layout { grid-template-columns: minmax(0, 1fr) minmax(300px, 402px); gap: var(--space-6); }
+  #hub-shell .video-watch-layout { grid-template-columns: minmax(0, 1fr) minmax(300px, 402px); gap: var(--space-7); }
 }

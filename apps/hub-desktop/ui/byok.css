@@ -24,7 +24,7 @@
 .byok-chat .hubpedia-ask-sources { display: grid; gap: var(--space-2, 8px); }
 .byok-chat .hubpedia-ask-list { margin: 0; padding-left: var(--space-5, 24px); display: grid; gap: var(--space-2, 8px); font-size: var(--type-subhead); }
 .byok-chat .hubpedia-ask-attribution { margin: 0; }
-.byok-chat .hubpedia-ask-badge { padding: 0 var(--space-2, 8px); border: 1px solid var(--line); border-radius: var(--radius-control, 8px); font-size: var(--type-footnote, 0.8em); }
+.byok-chat .hubpedia-ask-badge { padding: 0 var(--space-2, 8px); border: 1px solid var(--line); border-radius: var(--radius-control, 8px); font-size: var(--type-footnote); }
 .byok-chat .hubpedia-ask-badge.is-verified { color: var(--positive-text); }
 .byok-chat .hubpedia-ask-badge.is-needs_review, .byok-chat .hubpedia-ask-badge.is-unverified { color: var(--warning-text); }
 .byok-chat .byok-assistant.is-ungrounded { color: var(--text-secondary); }

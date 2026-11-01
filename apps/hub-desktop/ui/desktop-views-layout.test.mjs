@@ -49,7 +49,7 @@ test('settings uses a left-aligned reading column with secondary card actions an
   const layout = view.querySelector(':scope > .inner-layout');
   assert.ok(layout.classList.contains('layout-reading'));
   assert.match(settingsCss, /#view-settings \.inner-layout\.layout-reading\s*\{[^}]*max-width:\s*720px/);
-  assert.match(settingsCss, /#view-settings \.inner-layout\.layout-reading\s*\{[^}]*padding:\s*var\(--space-5\)/);
+  assert.match(settingsCss, /#view-settings \.inner-layout\.layout-reading\s*\{[^}]*padding:\s*var\(--space-6\)/);
   const login = view.querySelector('[data-account="login"]');
   assert.ok(login.classList.contains('btn') && login.classList.contains('btn-secondary'));
   const logout = view.querySelector('[data-account="logout"]');

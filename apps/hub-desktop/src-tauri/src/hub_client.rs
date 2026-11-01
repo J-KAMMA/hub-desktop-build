@@ -188,7 +188,6 @@ fn detail_path(name: &str) -> Option<(&'static str, bool)> {
         "research_links_community" => Some(("/api/client/research/{a}/links?kind=community&q={b}", true)),
         "article_save" => Some(("/api/client/articles/{a}/save", true)),
         "video_save" => Some(("/api/client/videos/{a}/save", true)),
-        "video_comments" => Some(("/api/client/videos/{a}/comments", true)),
         "video_engagement" => Some(("/api/client/videos/{a}/engagement", true)),
         "video_channel" => Some(("/api/client/videos/channels/{a}", true)),
         "video_channel_page" => Some(("/api/client/videos/channels/{a}?cursor={b}", true)),
@@ -367,10 +366,6 @@ fn fill_path(template: &'static str, ids: &[String]) -> Result<String, String> {
             url.query_pairs_mut().append_pair("cursor",cursor);
         }
         return Ok(format!("{}?{}",url.path(),url.query().unwrap_or("")));
-    }
-    if template=="/api/client/videos/{a}/comments" {
-        if ids.len()!=1 {return Err("動画の指定が不正です".into());}
-        return Ok(format!("/api/client/videos/{}/comments",discussion_id(Some(&ids[0]))?));
     }
     if template=="/api/client/research/{a}/pdfs" {
         let project=ids.first().filter(|_|ids.len()==1).ok_or("識別子の個数が不正です")?;
@@ -1085,50 +1080,27 @@ fn research_git_management_action(action:&str,target:Option<&str>,request_id:Opt
  }Ok((reqwest::Method::POST,format!("/api/client/research/{project}/git"),body))
 }
 
-fn video_comment_action(action: &str, target: Option<&str>, options: Option<&serde_json::Value>) -> Result<(reqwest::Method, String, serde_json::Value), String> {
-    let raw=target.ok_or("動画の指定がありません")?;
-    if raw.trim()!=raw { return Err("動画の指定が不正です".into()); }
-    let video=discussion_id(Some(raw))?;
-    let values=options.and_then(serde_json::Value::as_object).ok_or("入力が不正です")?;
-    let path=format!("/api/client/videos/{video}/comments");
-    let text=|key:&str,max:usize| -> Result<String,String> {
-        let value=values.get(key).and_then(serde_json::Value::as_str).ok_or("本文が不正です")?.trim();
-        if value.is_empty()||value.encode_utf16().count()>max {return Err("文字数を確認してください".into());}
-        Ok(value.to_owned())
-    };
-    if action=="video_comment_create" {
-        if !values.contains_key("body")||values.keys().any(|key|!matches!(key.as_str(),"body"|"parentCommentId")){return Err("入力項目が不正です".into());}
-        let mut body=serde_json::json!({"body":text("body",1000)?});
-        if let Some(parent)=values.get("parentCommentId").filter(|value|!value.is_null()) {
-            let raw=parent.as_str().ok_or("返信先が不正です")?;
-            if raw.trim()!=raw {return Err("返信先が不正です".into());}
-            body["parentCommentId"]=discussion_id(Some(raw))?.into();
-        }
-        return Ok((reqwest::Method::POST,path,body));
-    }
-    let keys: &[&str]=if action=="video_comment_report" {&["commentId","reason"]}else{&["commentId"]};
-    if values.len()!=keys.len()||values.keys().any(|key|!keys.contains(&key.as_str())){return Err("入力項目が不正です".into());}
-    let raw=values.get("commentId").and_then(serde_json::Value::as_str).ok_or("コメントの指定が不正です")?;
-    if raw.trim()!=raw {return Err("コメントの指定が不正です".into());}
-    let comment=discussion_id(Some(raw))?;
-    match action {
-        "video_comment_like"=>Ok((reqwest::Method::POST,format!("{path}/{comment}/like"),serde_json::json!({}))),
-        "video_comment_unlike"=>Ok((reqwest::Method::DELETE,format!("{path}/{comment}/like"),serde_json::json!({}))),
-        "video_comment_report"=>Ok((reqwest::Method::POST,format!("{path}/{comment}/report"),serde_json::json!({"reason":text("reason",300)?}))),
-        _=>Err("操作が不正です".into())
-    }
-}
-
 fn video_post_action(target: Option<&str>, options: Option<&serde_json::Value>) -> Result<(reqwest::Method, String, serde_json::Value), String> {
     let raw=target.ok_or("動画の指定がありません")?;
     if raw.trim()!=raw { return Err("動画の指定が不正です".into()); }
     let video=discussion_id(Some(raw))?;
     let values=options.and_then(serde_json::Value::as_object).ok_or("入力が不正です")?;
-    if values.keys().any(|key|!matches!(key.as_str(),"body"|"audience")){return Err("入力項目が不正です".into());}
-    // 本文が空ならリポスト（ハブが動画へのリンクを補う）。上限は通常のポストと同じ500字。
+    if values.keys().any(|key|!matches!(key.as_str(),"body"|"audience"|"inFeed"|"parentPostId"|"playbackSeconds")){return Err("入力項目が不正です".into());}
+    // 動画のコメントには本文が要る。上限は通常のポストと同じ500字。
     let text=values.get("body").and_then(serde_json::Value::as_str).ok_or("本文が不正です")?.trim();
-    if text.chars().count()>500 {return Err("文字数を確認してください".into());}
+    if text.is_empty()||text.chars().count()>500 {return Err("文字数を確認してください".into());}
     let mut body=serde_json::json!({"body":text});
+    // フォロワーのフィードにも出すか。省略は「出さない」。
+    if let Some(in_feed)=values.get("inFeed").filter(|value|!value.is_null()) {
+        body["inFeed"]=in_feed.as_bool().ok_or("フィードへの掲載の指定が不正です")?.into();
+    }
+    if let Some(parent)=values.get("parentPostId").filter(|value|!value.is_null()) {
+        body["parentPostId"]=discussion_id(Some(parent.as_str().ok_or("返信先が不正です")?))?.into();
+    }
+    if let Some(seconds)=values.get("playbackSeconds").filter(|value|!value.is_null()) {
+        let seconds=seconds.as_u64().filter(|value|*value<=604_800).ok_or("再生位置が不正です")?;
+        body["playbackSeconds"]=seconds.into();
+    }
     if let Some(audience)=values.get("audience").filter(|value|!value.is_null()) {
         let audience=audience.as_str().filter(|value|matches!(*value,"public"|"followers")).ok_or("公開範囲が不正です")?;
         body["audience"]=audience.into();
@@ -1659,10 +1631,6 @@ fn action_request(
     if action=="video_post_create" {
         if text.is_some()||request_id.is_some(){return Err("固定の入力項目を使ってください".into());}
         return video_post_action(target,options);
-    }
-    if matches!(action,"video_comment_create"|"video_comment_like"|"video_comment_unlike"|"video_comment_report") {
-        if text.is_some()||request_id.is_some(){return Err("固定の入力項目を使ってください".into());}
-        return video_comment_action(action,target,options);
     }
     if matches!(action,"like_video"|"unlike_video") {
         if text.is_some()||request_id.is_some()||options.is_some(){return Err("固定の入力項目を使ってください".into());}
@@ -5451,30 +5419,6 @@ mod library_parity_tests {
  }
 }
 
-#[cfg(test)]
-mod video_comment_wire_tests {
-    use super::*;
-    #[test]
-    fn bounded_video_comment_wire() {
-        let value=serde_json::json!({"body":"行1\n行2","parentCommentId":"parent-1"});
-        let (method,path,body)=action_request("video_comment_create",Some("video-1"),None,None,Some(&value)).unwrap();
-        assert_eq!(method,reqwest::Method::POST);assert_eq!(path,"/api/client/videos/video-1/comments");assert_eq!(body,value);
-        for (action,method,suffix) in [("video_comment_like",reqwest::Method::POST,"like"),("video_comment_unlike",reqwest::Method::DELETE,"like"),("video_comment_report",reqwest::Method::POST,"report")] {
-            let value=if action=="video_comment_report"{serde_json::json!({"commentId":"comment-1","reason":"spam"})}else{serde_json::json!({"commentId":"comment-1"})};
-            let result=action_request(action,Some("video-1"),None,None,Some(&value)).unwrap();assert_eq!(result.0,method);assert_eq!(result.1,format!("/api/client/videos/video-1/comments/comment-1/{suffix}"));
-            assert!(action_request(action,Some("video-1"),Some("override"),None,Some(&value)).is_err());assert!(action_request(action,Some("video-1"),None,Some("operation"),Some(&value)).is_err());
-        }
-        for body in ["😀".repeat(500),"a".repeat(1000)] {assert!(video_comment_action("video_comment_create",Some("video"),Some(&serde_json::json!({"body":body}))).is_ok());}
-        for body in ["😀".repeat(501),"a".repeat(1001)," ".to_owned()] {assert!(video_comment_action("video_comment_create",Some("video"),Some(&serde_json::json!({"body":body}))).is_err());}
-        for value in [serde_json::json!({"body":"x","actor":"other"}),serde_json::json!({"body":"x","parentCommentId":"../parent"}),serde_json::json!({"body":"x","parentCommentId":8}),serde_json::json!({"body":null})] {assert!(video_comment_action("video_comment_create",Some("video"),Some(&value)).is_err());}
-        for target in ["../video","video?x=1","video/other"," video ",""] {assert!(video_comment_action("video_comment_like",Some(target),Some(&serde_json::json!({"commentId":"comment"}))).is_err());}
-        assert!(video_comment_action("video_comment_report",Some("video"),Some(&serde_json::json!({"commentId":"comment","reason":"a".repeat(300)}))).is_ok());
-        assert!(video_comment_action("video_comment_report",Some("video"),Some(&serde_json::json!({"commentId":"comment","reason":"a".repeat(301)}))).is_err());
-        let (template,viewer)=detail_path("video_comments").unwrap();assert!(viewer);assert_eq!(fill_path(template,&["video-1".into()]).unwrap(),"/api/client/videos/video-1/comments");
-        assert!(fill_path(template,&["../video".into()]).is_err());assert!(fill_path(template,&["video".into(),"extra".into()]).is_err());
-    }
-}
-
 
 #[cfg(test)]
 mod playlist_tests {
@@ -7278,7 +7222,9 @@ mod video_post_wire_tests {
     fn bounded_video_post_wire() {
         let (method,path,body)=action_request("video_post_create",Some("video-1"),None,None,Some(&serde_json::json!({"body":" 感想 ","audience":"followers"}))).unwrap();
         assert_eq!(method,reqwest::Method::POST);assert_eq!(path,"/api/client/videos/video-1/posts");assert_eq!(body,serde_json::json!({"body":"感想","audience":"followers"}));
-        let (_,_,repost)=action_request("video_post_create",Some("video-1"),None,None,Some(&serde_json::json!({"body":""}))).unwrap();assert_eq!(repost,serde_json::json!({"body":""}));
+        assert!(action_request("video_post_create",Some("video-1"),None,None,Some(&serde_json::json!({"body":""}))).is_err());
+        let (_,_,comment)=action_request("video_post_create",Some("video-1"),None,None,Some(&serde_json::json!({"body":"x","inFeed":true,"parentPostId":"c-1","playbackSeconds":61}))).unwrap();assert_eq!(comment,serde_json::json!({"body":"x","inFeed":true,"parentPostId":"c-1","playbackSeconds":61}));
+        for value in [serde_json::json!({"body":"x","inFeed":"yes"}),serde_json::json!({"body":"x","parentPostId":"../c"}),serde_json::json!({"body":"x","parentPostId":3}),serde_json::json!({"body":"x","playbackSeconds":-1}),serde_json::json!({"body":"x","playbackSeconds":604801})] {assert!(video_post_action(Some("video"),Some(&value)).is_err());}
         for body in ["😀".repeat(500),"a".repeat(500)] {assert!(video_post_action(Some("video"),Some(&serde_json::json!({"body":body}))).is_ok());}
         assert!(video_post_action(Some("video"),Some(&serde_json::json!({"body":"a".repeat(501)}))).is_err());
         for value in [serde_json::json!({"body":"x","actor":"o"}),serde_json::json!({"body":null}),serde_json::json!({}),serde_json::json!({"body":"x","audience":"secret"}),serde_json::json!({"body":"x","audience":3})] {assert!(video_post_action(Some("video"),Some(&value)).is_err());}

@@ -1,0 +1,359 @@
+/* Hub Desktop per-view components (design system section 3). Loaded last, after desktop-frame.css.
+   One sticky 53px view header, one tab style, one chip bar, divider rows instead of boxes, and gold only as lines.
+   Not here: the frame/nav (desktop-frame.css), messages and mail, the video watch page, narrow-window rules,
+   and the world, ranking, services and code stubs. */
+
+/* ---- 1. View header: one left edge for title, tabs, composer and rows ---- */
+#hub-shell .view:not(#view-browser):not(#view-ai) > :is(.view-head, .page-header) {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 var(--ds-space-3);
+  box-sizing: border-box;
+  min-height: var(--ds-header-h);
+  margin: 0;
+  padding: 0 var(--ds-page-inset);
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--bg);
+}
+#hub-shell .view:not(#view-browser):not(#view-ai) > :is(.view-head, .page-header) > :is(h2, .page-title) {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  font-size: var(--ds-type-title-size);
+  line-height: var(--ds-type-title-leading);
+  font-weight: var(--ds-weight-heavy);
+  letter-spacing: 0;
+}
+#hub-shell .view > :is(.view-head, .page-header) > :is(.view-head-actions, .page-actions) {
+  display: flex;
+  flex: none;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--ds-space-2);
+  margin: 0 0 0 auto;
+}
+#hub-shell .view > :is(.view-head, .page-header) :is(.view-head-actions, .page-actions) > :is(button, .btn) {
+  min-height: var(--ds-btn-h);
+  padding: 0 var(--ds-btn-px);
+  border-radius: var(--ds-radius-pill);
+  font-size: var(--ds-type-body-size);
+  font-weight: var(--ds-weight-strong);
+}
+
+/* Tabs: under the title, 53px, an even split, a 4px gold underline the width of the label. */
+#hub-shell .view > .page-header > .page-tabs,
+#hub-shell .view .page-header > .page-tabs {
+  display: flex;
+  flex: 0 0 calc(100% + var(--ds-page-inset) * 2);
+  align-items: stretch;
+  gap: 0;
+  box-sizing: border-box;
+  margin: 0 calc(var(--ds-page-inset) * -1);
+  padding: 0;
+  border-top: 1px solid var(--line);
+  background: transparent;
+}
+#hub-shell .page-tabs > :is(.page-tab, button),
+#hub-shell .profile-tabs > :is(.profile-tab, button) {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  height: var(--ds-tabs-h);
+  min-height: var(--ds-tabs-h);
+  padding: 0 var(--ds-space-4);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--muted);
+  font-size: var(--ds-type-body-size);
+  line-height: var(--ds-type-body-leading);
+  font-weight: var(--ds-weight-text);
+  text-decoration: none;
+}
+#hub-shell .page-tabs > :is(.page-tab, button):hover,
+#hub-shell .profile-tabs > :is(.profile-tab, button):hover { background: var(--interactive); }
+#hub-shell .page-tabs > :is([aria-selected="true"], .on),
+#hub-shell .profile-tabs > :is([aria-selected="true"], .on) {
+  color: var(--text);
+  font-weight: var(--ds-weight-strong);
+  text-decoration: underline;
+  text-decoration-color: var(--ds-chip-selected-line);
+  text-decoration-thickness: 4px;
+  text-decoration-skip-ink: none;
+  text-underline-offset: 17px;
+}
+#hub-shell .profile-tabs > .profile-tab.on::after { content: none; }
+#hub-shell .page-tabs:has(> :nth-child(6)) {
+  overflow-x: auto;
+  gap: var(--ds-space-7);
+  padding-inline: var(--ds-page-inset);
+  scrollbar-width: none;
+}
+#hub-shell .page-tabs:has(> :nth-child(6)) > * { flex: none; padding-inline: 0; }
+
+/* Everything under the header sits on the same 16px inset. */
+#hub-shell .view > .meta,
+#hub-shell .view .layout-list > .meta,
+#hub-shell .view > form + .meta {
+  margin: 0;
+  padding: var(--ds-space-3) var(--ds-page-inset);
+}
+#hub-shell .view > .meta:empty,
+#hub-shell .view .layout-list > .meta:empty { display: none; }
+
+/* ---- 5. Inline notice: quiet, muted, one line ---- */
+#hub-shell .inline-notice {
+  margin: 0;
+  padding: var(--ds-space-2) var(--ds-page-inset);
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: var(--ds-type-meta-size);
+  line-height: var(--ds-type-meta-leading);
+  font-weight: var(--ds-weight-text);
+}
+#hub-shell #node-public-posts { display: block; margin: 0; padding: 0; border: 0; background: none; }
+#hub-shell #node-public-posts:empty { display: none; }
+
+/* ---- 3. Composer: 40px avatar, 20px input, a quiet toolbar, one primary button ---- */
+#hub-shell #view-feed #composer {
+  gap: var(--ds-space-3);
+  padding: var(--ds-space-3) var(--ds-page-inset);
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+#hub-shell #view-feed #composer .composer-avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--avatar-bg, var(--interactive));
+  color: var(--avatar-fg, var(--muted));
+  font-size: var(--ds-type-body-size);
+  font-weight: var(--ds-weight-strong);
+  line-height: 1;
+}
+#hub-shell #view-feed #composer .composer-avatar svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+#hub-shell #view-feed #composer .composer-avatar.has-image { background: transparent; }
+#hub-shell #view-feed #composer .composer-avatar img { width: 100%; height: 100%; object-fit: cover; }
+#hub-shell #view-feed #composer textarea {
+  font-size: var(--ds-type-title-size);
+  line-height: var(--ds-type-title-leading);
+  font-weight: var(--ds-weight-text);
+}
+#hub-shell #view-feed #composer textarea::placeholder { color: var(--muted); }
+#hub-shell #composer .composer-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ds-space-2); }
+#hub-shell #composer .composer-bar > :is(button.ghost, .composer-image-add) {
+  min-height: var(--ds-btn-h-compact);
+  padding: 0 var(--ds-space-3);
+  border: 0;
+  border-radius: var(--ds-radius-pill);
+  background: transparent;
+  color: var(--ds-chip-selected-line);
+  font-size: var(--ds-type-body-size);
+  font-weight: var(--ds-weight-strong);
+}
+#hub-shell #composer .composer-bar > :is(button.ghost, .composer-image-add):hover { background: var(--interactive); }
+#hub-shell #composer .composer-audience {
+  height: var(--ds-btn-h-compact);
+  padding: 0 var(--ds-space-3);
+  border: 0;
+  border-radius: var(--ds-radius-pill);
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--ds-type-body-size);
+  font-weight: var(--ds-weight-strong);
+}
+#hub-shell #composer .composer-audience:hover { background: var(--interactive); }
+#hub-shell #composer .composer-post { margin-left: auto; min-height: var(--ds-btn-h); padding: 0 var(--ds-btn-px); border-radius: var(--ds-radius-pill); font-size: var(--ds-type-body-size); font-weight: var(--ds-weight-strong); }
+#hub-shell #composer .composer-post:disabled { opacity: .5; }
+
+/* ---- 3. One chip and filter bar ---- */
+#hub-shell .view :is(.chip-row, .segmented, .scopes, .filter-row) {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--ds-space-2);
+  box-sizing: border-box;
+  margin: 0;
+  padding: var(--ds-space-3) var(--ds-page-inset);
+  overflow-x: auto;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  scrollbar-width: none;
+}
+#hub-shell .view :is(.chip-row, .segmented, .scopes) > :is(button, .chip, .scope) {
+  flex: none;
+  min-height: var(--ds-btn-h-compact);
+  padding: 0 var(--ds-space-3);
+  border: 1px solid transparent;
+  border-radius: var(--ds-radius-pill);
+  background: var(--interactive);
+  box-shadow: none;
+  color: var(--text);
+  font-size: var(--ds-type-body-size);
+  line-height: var(--ds-type-body-leading);
+  font-weight: var(--ds-weight-text);
+}
+#hub-shell .view :is(.chip-row, .segmented, .scopes) > :is(button, .chip, .scope):hover { background: var(--interactive-hover); }
+#hub-shell .view :is(.chip-row, .segmented, .scopes) > :is(.on, [aria-pressed="true"], [aria-selected="true"]) {
+  border-color: var(--ds-chip-selected-line);
+  background: transparent;
+  color: var(--text);
+  font-weight: var(--ds-weight-strong);
+}
+#hub-shell .view :is(.segmented button, .scopes .scope).on::after { content: none; }
+#hub-shell .view .filter-row > :is(input[type="search"], input[type="text"]) {
+  flex: 1 1 200px;
+  min-width: 0;
+  height: var(--ds-search-h);
+  padding: 0 var(--ds-space-4);
+  border: 0;
+  border-radius: var(--ds-radius-pill);
+  background: var(--interactive);
+  color: var(--text);
+  font-size: var(--ds-type-body-size);
+}
+#hub-shell .view .filter-row > :is(label, .shop-count) { flex: none; color: var(--muted); font-size: var(--ds-type-meta-size); }
+#hub-shell .view .filter-row select { height: var(--ds-btn-h-compact); border-radius: var(--ds-radius-pill); }
+
+/* ---- 2. Boxes to divider rows ---- */
+/* Lists of items are rows: community, contacts, bookmarks, lists, wallet, threads, purchased, settings groups. */
+#hub-shell :is(#community-results, #contacts-results, #bookmarks-results, #lists-results, #wallet-results, #threads-results, #purchased-results, #compute-results) {
+  display: block;
+  margin: 0;
+  padding: 0;
+}
+#hub-shell .view:where(:not(#view-browser, #view-ai, #view-messages, #view-mail, #view-world, #view-ranking, #view-services, #view-code)) :where(.card, .hero-card, .locked-card, .result-card):where(:not(.has-cover, .login-callout)) {
+  display: block;
+  box-sizing: border-box;
+  margin: 0;
+  padding: var(--ds-space-3) var(--ds-page-inset);
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+#hub-shell .view :is(.result-card.is-link, .card.is-link):hover { background: var(--interactive); }
+#hub-shell .view :is(.result-card, .card) strong { font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); font-weight: var(--ds-weight-strong); }
+#hub-shell .view :is(.result-card, .card) :is(p, .meta) { font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); }
+#hub-shell .view :is(.result-card, .card) .meta { color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); }
+#hub-shell .view .detail-form { margin: 0; }
+#hub-shell .view .detail-form > :is(input, textarea, select) { margin-bottom: var(--ds-space-2); }
+
+/* Settings: groups are sections with a divider, not boxes. */
+#hub-shell #view-settings :is(.card, .hero-card, fieldset, .appearance-group, .setting-group) {
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+#hub-shell #view-settings h3 { margin: 0; padding: var(--ds-space-3) var(--ds-page-inset); font-size: var(--ds-type-title-size); line-height: var(--ds-type-title-leading); font-weight: var(--ds-weight-heavy); }
+#hub-shell #view-settings .setting-row { padding: var(--ds-space-3) var(--ds-page-inset); border-top: 0; border-bottom: 1px solid var(--line); }
+
+/* Grids of media keep tiles: the thumbnail carries the radius, nothing is boxed around it. */
+#hub-shell :is(#shop-results, #market-listings .result-grid, #articles-results, #hubpedia-results.result-grid) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--ds-grid-gap-y) var(--ds-grid-gap-x);
+  padding: var(--ds-space-4) var(--ds-page-inset);
+}
+#hub-shell :is(#shop-results, #articles-results) > :is(.card, .result-card) {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+#hub-shell :is(#shop-results, #articles-results) :is(img, .ds-media, .ds-cover) { border-radius: var(--ds-radius-tile-music); }
+#hub-shell #shop-results > :is(.card, .result-card):hover { background: transparent; }
+#hub-shell .market-web-links { padding: var(--ds-space-3) var(--ds-page-inset); border-top: 1px solid var(--line); }
+
+/* Wallet: balance and actions are plain sections. */
+#hub-shell #view-wallet :is(.card, .hero-card, .wallet-card) { border-radius: 0; }
+
+/* Tabs: the label carries the underline, so the luxe full-tab bar and the tab-row rule are dropped. */
+#hub-shell .page-tabs { border-bottom: 0; }
+#hub-shell .page-tabs > [role="tab"][aria-selected="true"]::after { content: none; }
+#hub-shell .view > :is(.view-head, .page-header) :is(.view-head-actions, .page-actions) svg.ic circle { fill: currentColor; stroke: none; }
+
+/* Nested cards are not boxes inside boxes; settings sections and the profile card use the same 16px inset. */
+#hub-shell .view .card .card { padding-inline: 0; border-bottom: 0; }
+#hub-shell .view .layout-list { padding-inline: 0; }
+#hub-shell #view-settings .inner-layout.layout-reading { padding-inline: 0; }
+#hub-shell #view-settings .card .setting-row { padding-inline: 0; }
+#hub-shell #view-settings .card .setting-row:last-child { border-bottom: 0; }
+#hub-shell #view-settings .card h3 { padding: 0; }
+#hub-shell #view-profile .profile-tabs { top: var(--ds-header-h); }
+#hub-shell .view > :is(.view-head, .page-header) :is(.view-head-actions, .page-actions) > button:has(> svg.ic:only-child) { width: var(--ds-icon-btn); padding: 0; justify-content: center; }
+#hub-shell .view > :is(.view-head, .page-header) :is(.view-head-actions, .page-actions) svg.ic { width: 20px; height: 20px; }
+#hub-shell #view-profile .layout-list, #hub-shell #view-community .layout-list, #hub-shell #view-lists .layout-list { padding-inline: 0; }
+
+/* Selected conversation / mail row: neutral --interactive plus at most a 1px gold line on the left. No tinted fill. */
+#hub-shell :is(#sidebar-context #messages-list, #view-messages) .conversation.active,
+#hub-shell :is(#sidebar-context #messages-list, #view-messages) .conversation[aria-current],
+#hub-shell :is(.conversation.active, .mail-item.active) {
+  background: var(--interactive);
+  box-shadow: inset 1px 0 0 var(--emphasis);
+}
+
+/* DM / mail / contacts switch: the shared tab style (label-width underline, no box). */
+#hub-shell #sidebar-context .sidebar-switch {
+  display: flex;
+  align-items: stretch;
+  gap: var(--ds-space-5);
+  height: var(--ds-tabs-h);
+  margin: 0;
+  padding: 0 var(--ds-space-4);
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+}
+#hub-shell #sidebar-context .sidebar-switch > button {
+  flex: none;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--muted);
+  font-size: var(--ds-type-body-size);
+  line-height: var(--ds-type-body-leading);
+  font-weight: var(--ds-weight-text);
+}
+#hub-shell #sidebar-context .sidebar-switch > button:hover { background: transparent; color: var(--text); }
+#hub-shell #sidebar-context .sidebar-switch > button[aria-pressed="true"] {
+  background: transparent;
+  box-shadow: none;
+  color: var(--text);
+  font-weight: var(--ds-weight-strong);
+  text-decoration: underline;
+  text-decoration-color: var(--ds-chip-selected-line);
+  text-decoration-thickness: 4px;
+  text-decoration-skip-ink: none;
+  text-underline-offset: 17px;
+}

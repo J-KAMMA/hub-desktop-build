@@ -159,7 +159,7 @@ test('the project sidebar rebuilds its outline from the loaded content and focus
   const end = source.indexOf('\nfunction showView(', start);
   assert.ok(start >= 0 && end > start);
   const renderSidebar = new Function('document', 'state', 'nativeSidebarId', `
-    const {messagesSide, messagesLayout, sidebarContext, researchWorkspace} = state;
+    const {messagesSide, messagesLayout, mailListCol, mailLayoutNode, sidebarContext, researchWorkspace} = state;
     const appendSidebarMine = () => {};
     const nativeSidebar = null, homeAccountEpoch = 0;
     const appsOpen = false, videoWatchIndex = -1, detailReturn = {view:"feed"}, currentView = "detail";
@@ -178,7 +178,7 @@ test('the project sidebar rebuilds its outline from the loaded content and focus
   const dom = new JSDOM('<div class="app-shell"><div class="sidebar"><div class="brand"><h1></h1></div><div id="sidebar-context"></div></div><div id="messages-layout"><div id="messages-side"></div></div><main id="detail-content"></main></div>');
   const document = dom.window.document;
   const state = {
-    messagesSide: document.querySelector('#messages-side'), messagesLayout: document.querySelector('#messages-layout'),
+    messagesSide: document.querySelector('#messages-side'), messagesLayout: document.querySelector('#messages-layout'), mailListCol: document.createElement('div'), mailLayoutNode: document.createElement('div'),
     sidebarContext: document.querySelector('#sidebar-context'), researchWorkspace: {projects:()=>[]},
   };
   renderSidebar(document, state, nativeSidebarId);

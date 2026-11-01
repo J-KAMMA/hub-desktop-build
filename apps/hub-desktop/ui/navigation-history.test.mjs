@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
 import vm from 'node:vm';
+import {templateFor} from './desktop-template.mjs';
 const root=new URL('./',import.meta.url);
 const {JSDOM}=createRequire(new URL('../../hub/package.json',import.meta.url))('jsdom');
 const source=readFileSync(new URL('app.js',root),'utf8');
@@ -11,7 +12,7 @@ function fixture(t){
  const dom=new JSDOM(readFileSync(new URL('index.html',root),'utf8'),{url:'http://localhost'});
  dom.window.HTMLElement.prototype.scrollIntoView=function(){};
  t.after(()=>dom.window.close());
- const ctx=vm.createContext({contentSharePreview:null,document:dom.window.document,Node:dom.window.Node,matchMedia:()=>({matches:false}),requestAnimationFrame:f=>f(),
+ const ctx=vm.createContext({templateFor,navCommunities:{setCurrent(){},refresh:async()=>{}},applyColumnWidths(){},contentSharePreview:null,document:dom.window.document,Node:dom.window.Node,matchMedia:()=>({matches:false}),requestAnimationFrame:f=>f(),
   captureSocialScene(){},socialStreamController:null,loadFeed:async()=>{},disposeExternalMediaRegistration(){},syncSavedSearchView(){},articleEditor:null,syncOwnedEventListings(){},queueMicrotask,notificationsController:{invalidate(){}},releaseWalletTipSettings(){},releaseOwnedEventListings(){},hubPeers:{closeTransfer(){}},communityInviteController:null,researchAccountGeneration:0,currentView:'feed',toolbarTrail:[{view:'feed',title:'フィード'}],toolbarTrailIndex:0,toolbarReplaying:false,detailHistoryReplaying:false,
   detailTrail:[],detailForwardTrail:[],detailReturn:{view:'feed'},DETAIL_PARENT_VIEW:{thread:'threads'},viewScroll:new Map(),appsOpen:false,accountSidebarAutoCollapsed:false,
   threadBoardKey:'',threadBoardTitle:'',rightRailAvailable:()=>false,railChoiceFor:()=>false,syncSidebarForRail(){},renderSidebarContext(){},railActivityReady:false,

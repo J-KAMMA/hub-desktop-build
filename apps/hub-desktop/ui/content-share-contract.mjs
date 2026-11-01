@@ -52,7 +52,7 @@ function contentShareReference(raw) {
   if (catalog) return { kind: catalog[1] === "posts" ? "post" : "project", href: raw };
   const work = raw.match(/^\/v2\/(articles|videos)\/([A-Za-z0-9_-]{1,128})$/);
   if (work) return { kind: work[1] === "articles" ? "article" : "video", href: raw };
-  const music = raw.match(/^\/v2\/music\/works\/([^/?#]+)$/) ?? raw.match(/^\/v2\/music\?work=([^&#=]+)$/);
+  const music = raw.match(/^\/v2\/music\/works\/([^/?#]+)$/);
   if (music) {
     try {
       const id = decodeURIComponent(music[1]);

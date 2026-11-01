@@ -46,12 +46,11 @@ import { createExternalMediaRegistration, createExternalMusicReport, validateExt
 import { createCommunityNotifications } from "./community-notifications.mjs";
 import { createMediaPlaylists } from './media-playlists.mjs';
 import { createVideoPosts, createContentPosts } from './video-posts.mjs';
-import { createVideoComments } from './video-comments.mjs';
-// 動画の下は「ポスト」（投稿）。以前の動画コメントがあれば、その下に読むだけで残す。
+// 動画の下は「コメント」（動画に返信するポスト）。旧来の動画コメント表は撤去した。
 function mountVideoPosts(options){
-  const posts=createVideoPosts(document,options),old=createVideoComments(document,{videoId:options.videoId,invoke:options.invoke,isCurrent:options.isCurrent,readOnly:true});
-  const element=document.createElement('div');element.className='video-posts-stack';element.append(posts.element,old.element);
-  return {element,destroy(){posts.destroy();old.destroy();}};
+  const posts=createVideoPosts(document,options);
+  const element=document.createElement('div');element.className='video-posts-stack';element.append(posts.element);
+  return {element,destroy(){posts.destroy();}};
 }
 import { createOmnibox, omniboxAddress } from './omnibox.mjs';
 import { installShortcuts } from './shortcuts.mjs';
@@ -139,6 +138,8 @@ let researchDetailController=null;
 let communityChannelPolicyController=null;
 import {communityInvite} from './community-invite.mjs';
 let communityInviteController=null;
+import { templateFor } from "./desktop-template.mjs";
+import { createNavCommunities } from "./nav-communities.mjs";
 import { initResearch, renderResearchProject, renderResearchDocument } from "./research.mjs";
 import { createReadRecovery, isTransientReadError, isReadAccessDenied, readWaitText } from './hub-read-recovery.mjs';
 import { createHubNetwork } from "./hub-network.mjs";
@@ -628,7 +629,8 @@ function initBrowserControls() { browserControls = initBrowserWorkspace({
 // Web の URL を WebView に詰めるのではなく、同じ目的地を Desktop の画面へ
 // ブラウザでも十分な幅があるときは、別の作業を右列に並べる。
 const rightRailAvailable = (view) => view !== "browser" || matchMedia("(min-width: 1180px)").matches;
-let railUserChoice = matchMedia("(min-width: 1180px)").matches;
+// 既定は 1440 以上で開き、それ未満は閉じる（2026-11-01）。選んだ状態は hub.desktop.railOpen に残り、あれば既定より優先する。
+let railUserChoice = matchMedia("(min-width: 1440px)").matches;
 let browserRailChoice = false;
 let sidebarCollapsedForRail = false;
 const RAIL_VIEWS = ["browser", "posts", "search", "notifications", "messages", "music", "wallet", "ai"];
@@ -678,7 +680,7 @@ let appsOpen = false;
 const readingDirectory = new Map(["articles", "hubpedia", "community", "threads"].map(view => [view, { items: [], query: "", filter: "" }]));
 const SIDEBAR_FAMILY = {
   home: "discovery", search: "discovery", hubpedia: "discovery", articles: "discovery", videos: "discovery",
-  music: "discovery", books: "discovery", world: "discovery", ranking: "discovery", services: "discovery",
+  music: "discovery", books: "discovery", ranking: "discovery", services: "discovery",
   node: "discovery", compute: "discovery", community: "community", threads: "threads", bookmarks: "feed", lists: "feed",
   mail: "messages", contacts: "messages", purchased: "market", cart: "market", order: "market",
   profile: "account", settings: "account", wallet: "account",
@@ -694,6 +696,7 @@ const DETAIL_SIDEBAR_FAMILY = {
   research_discussion: "research", research_proposal: "research",
   research_git_management: "research", research_git_history: "research", research_git_commit: "research", research_git_compare: "research", research_git_proposals: "research", research_git_proposal: "research", research_git_discussion: "research",
   post: "feed", thread: "threads", community: "community", tag: "feed", list: "feed",
+  ranking_item: "discovery", service_item: "discovery",
   article: "discovery", hubpedia_article: "discovery", book: "discovery", book_chapter: "discovery", video: "discovery", music_work: "discovery", music_artist: "discovery", music_album: "discovery",
   listing: "market", commerce_product: "market",
   channel_messages: "community", community_reports:"community", community_report:"community", community_appeals:"community", community_appeal:"community", community_appeal_history:"community", community_membership_requests:"community", community_membership_request:"community", community_members: "community", profile: "feed",
@@ -710,6 +713,7 @@ const DETAIL_PARENT_VIEW = {
   research_discussion: "research", research_proposal: "research",
   research_git_management: "research", research_git_history: "research", research_git_commit: "research", research_git_compare: "research", research_git_proposals: "research", research_git_proposal: "research", research_git_discussion: "research",
   post: "feed", thread: "threads", community: "community", tag: "feed", list: "lists", profile: "feed",
+  ranking_item: "ranking", service_item: "services",
   article: "articles", hubpedia_article: "hubpedia", book: "books", book_chapter: "books", video: "videos", music_work: "music", music_artist: "music", music_album: "music",
   listing: "market", commerce_product: "market", channel_messages: "community", community_reports:"community", community_report:"community", community_appeals:"community", community_appeal:"community", community_appeal_history:"community", community_membership_requests:"community", community_membership_request:"community", community_members: "community",
   community_guides: "community", community_guide: "community", community_guide_revisions: "community", community_guide_revision: "community",
@@ -724,29 +728,23 @@ const APP_GROUPS = [
   ["ツール", [["AI", "ai"], ["ブラウザ", "browser"], ["検索", "search"], ["ブックマーク", "bookmarks"], ["リスト", "lists"]]],
   ["アカウント", [["ウォレット", "wallet"], ["プロフィール", "profile"], ["設定", "settings"]]],
   ["この端末", [["Personal Node", "node"], ["Compute", "compute"]]],
-  ["その他", [["概要", "home"], ["世界", "world"], ["ランキング", "ranking"], ["サービス", "services"]]],
+  ["その他", [["概要", "home"], ["ランキング", "ranking"], ["サービス", "services"]]],
 ];
 const sidebarContext = document.querySelector("#sidebar-context");
-{
-  const shell = document.querySelector(".app-shell"), toggle = document.querySelector("#rail-expand-toggle");
-  const apply = (expanded) => {
-    shell.classList.toggle("rail-expanded", expanded);
-    toggle.setAttribute("aria-expanded", String(expanded));
-    toggle.setAttribute("aria-label", expanded ? "メニューを狭める" : "メニューを広げる");
-    toggle.title = toggle.getAttribute("aria-label");
-  };
-  let stored = false;
-  try { stored = localStorage.getItem("hub.rail.expanded") === "1"; } catch {}
-  apply(stored);
-  toggle.addEventListener("click", () => {
-    const expanded = !shell.classList.contains("rail-expanded");
-    apply(expanded);
-    try { localStorage.setItem("hub.rail.expanded", expanded ? "1" : "0"); } catch {}
-  });
-}
+// 左ナビのコミュニティの下の「参加中」（最大5件）。5分は読み直さない。
+const navCommunities = createNavCommunities({
+  document, host: document.querySelector("#nav-communities"), asset: (img, url) => hubAsset(img, url),
+  load: () => invoke("hub_resource", { resource: "communities", query: "" }),
+  signedIn: () => desktopAccount.state === "registered",
+  onOpen: (row) => void openDetail("community", [row.id], { title: row.name }),
+  onAll: () => void navigateFrom({ dataset: { view: "community" }, childNodes: [] }),
+});
+window.addEventListener("hub-account-changed", () => { navCommunities.clear(); void navCommunities.refresh(); });
 let nativeSidebar = null;
 const messagesSide = document.querySelector(".messages-side");
 const messagesLayout = document.querySelector(".messages-layout");
+const mailListCol = document.querySelector(".mail-list-col");
+const mailLayoutNode = document.querySelector(".mail-layout");
 
 // 内側左列の下段「あなたのもの」（sidebar-mine.mjs、2026-10-29）。読み出しは既存の hub_client / hub_detail と端末の状態だけ。
 // 先頭固定は端末の保存領域に、端末のアカウント（deviceId）ごとに覚える。
@@ -834,12 +832,23 @@ function renderSidebarContext(view) {
   appendSidebarMine(view);
   finishSidebarContext(view);
 }
+// 一覧と詳細を並べる画面（メッセージとメール）。一覧は内側の列に置き、列を畳むか窓が狭いと本文の左へ戻る。
+// 1100 以上は 一覧 380 + 詳細 600、未満は選ぶまで一覧だけ（desktop-layouts.css）。
 function placeMessagesSide() {
   const shell = document.querySelector(".app-shell");
-  const inColumn = currentView === "messages" && !appsOpen && !shell.classList.contains("sidebar-collapsed") && matchMedia("(min-width: 861px)").matches;
+  const open = !appsOpen && !shell.classList.contains("sidebar-collapsed") && matchMedia("(min-width: 861px)").matches;
+  const inColumn = currentView === "messages" && open;
+  const mailInColumn = currentView === "mail" && open && !document.querySelector("#mail-main").hidden;
   if (inColumn) { if (messagesSide.parentElement !== sidebarContext) sidebarContext.append(messagesSide); }
   else if (messagesSide.parentElement !== messagesLayout) messagesLayout.prepend(messagesSide);
+  if (mailInColumn) { if (mailListCol.parentElement !== sidebarContext) sidebarContext.append(mailListCol); }
+  else if (mailListCol.parentElement !== mailLayoutNode) mailLayoutNode.prepend(mailListCol);
   shell.classList.toggle("sidebar-holds-messages", inColumn);
+  shell.classList.toggle("sidebar-holds-mail", mailInColumn);
+}
+// 狭い窓で会話を開いているか。状態はシェルの class だけが持つ（初期化の順に左右されない）。
+function setDmThreadShown(open) {
+  document.querySelector(".app-shell")?.classList.toggle("dm-thread-open", open);
 }
 function finishSidebarContext(view) {
   const shell = document.querySelector(".app-shell");
@@ -1051,6 +1060,16 @@ function fillSidebarContext(view) {
     empty.textContent = "該当する機能はありません";
     empty.hidden = true;
     sidebarContext.append(empty);
+    // 旧フィード列にあった「フォロー中のタグ」「リスト」「あなたのもの」の居場所（2026-11-01）。第2の列は戻さず、ここに置く。
+    // 読むのは sidebarMine（hub_client / hub_detail の既存の読み出しと端末の状態だけ）。
+    let mineBox = null;
+    const mineNode = sidebarMine.render("feed");
+    if (mineNode) {
+      mineBox = document.createElement("div");
+      mineBox.className = "sidebar-apps-mine";
+      mineBox.append(mineNode);
+      sidebarContext.append(mineBox);
+    }
     search.oninput = () => {
       const query = search.value.trim().toLocaleLowerCase();
       let visible = 0;
@@ -1063,6 +1082,7 @@ function fillSidebarContext(view) {
         heading.hidden = buttons.every((button) => button.hidden);
       }
       empty.hidden = visible > 0;
+      if (mineBox) mineBox.hidden = query !== "";
     };
     sidebarContext.scrollTop = 0;
     return;
@@ -1374,9 +1394,16 @@ function showView(view, title, history = {}) {
   shell?.classList.toggle("ai-active", view === "ai");
   shell?.classList.toggle("browser-active", view === "browser");
   shell?.classList.toggle("messages-active", view === "messages");
+  shell?.classList.toggle("mail-active", view === "mail");
+  if (viewChanged && view === "messages") setDmThreadShown(false);
+  if (shell) shell.dataset.template = templateFor(view, detailTrail.at(-1)?.name);
+  navCommunities.setCurrent(view === "detail" && detailTrail.at(-1)?.name === "community" ? detailTrail.at(-1).ids?.[0] : "");
+  void navCommunities.refresh();
+  // 既定の列幅は画面（メッセージ・ブラウザ）で変わるので、クラスを替えたあとに引き直す。
+  queueMicrotask(() => { try { applyColumnWidths(); } catch { /* 起動前の呼び出しは何もしない */ } });
   renderSidebarContext(view);
   const contextView = view === "detail" ? (DETAIL_PARENT_VIEW[detailTrail.at(-1)?.name] || view) : view;
-  const main = contextView === "hubpedia" ? "research" : ["threads","community"].includes(contextView) ? "feed" : document.querySelector(`.icon-rail .icon-nav-item[data-view="${contextView}"]`) ? contextView : ({ discovery: "home", account: view === "wallet" ? "wallet" : "profile", market: "market", messages: "messages", feed: "feed" }[shell?.dataset.sidebarContext] || contextView);
+  const main = contextView === "hubpedia" ? "research" : contextView === "threads" ? "feed" : document.querySelector(`.icon-rail .icon-nav-item[data-view="${contextView}"]`) ? contextView : ({ discovery: "home", account: view === "wallet" ? "wallet" : "profile", market: "market", messages: "messages", feed: "feed" }[shell?.dataset.sidebarContext] || contextView);
   let selectedVisible = false;
   for (const item of document.querySelectorAll(".icon-rail .icon-nav-item")) {
     const selected = item.dataset.view === main;
@@ -1389,7 +1416,7 @@ function showView(view, title, history = {}) {
     selectedVisible ||= selected && item.getClientRects().length > 0;
   }
   const appsButton = document.querySelector("#desktop-apps");
-  const inMore = !selectedVisible && contextView !== "search";
+  const inMore = !selectedVisible;
   appsButton?.classList.toggle("current", inMore);
   if (inMore) appsButton?.setAttribute("aria-current", "page");
   else appsButton?.removeAttribute("aria-current");
@@ -1693,9 +1720,9 @@ async function openHubPath(path, title, isCurrent = () => true) {
     await navigateFrom({ dataset: { view: "threads", title: "スレッド", boardKey: board[1], boardTitle: title || "掲示板" }, childNodes: [] });
     return;
   }
-  const catalog = path.match(/^\/(?:v2\/)?(world|token|services)(?:[/?#]|$)/)?.[1];
+  const catalog = path.match(/^\/(?:v2\/)?(token|services)(?:[/?#]|$)/)?.[1];
   if (catalog) {
-    const destinations = { world: ["world", "世界"], token: ["ranking", "ランキング"], services: ["services", "サービス"] };
+    const destinations = { token: ["ranking", "ランキング"], services: ["services", "サービス"] };
     const [view, label] = destinations[catalog];
     await navigateFrom({ dataset: { view, title: label }, childNodes: [] });
     return;
@@ -2831,6 +2858,8 @@ const researchWorkspace = initResearch({
     catch (error) { showNotice(friendlyError(error)); }
   },
 });
+const SERVICE_STATUS = { approved: "承認済み", pending: "審査中", submitted: "審査中", draft: "下書き", rejected: "却下", suspended: "停止中" };
+const RANKING_VERIFY = { verified: "確認済み", failed: "確認に失敗", pending: "確認待ち", unverified: "未確認" };
 const CATALOGS = {
   // 参加中かどうかは右列と同じ memberships（active / muted）で決める。人数は返るときだけ出す。
   community: { resource: "communities", items: (d) => {
@@ -2854,16 +2883,16 @@ const CATALOGS = {
     card: (l) => catalogCard({ title: l.title, body: l.summary, meta: [l.category, l.priceLabel, l.providerLabel], onOpen: l.id ? () => void openDetail("listing", [l.id], { title: l.title }) : null }) },
   books: { resource: "books", items: (d) => d?.books, empty: "本はまだありません",
     card: (b) => catalogCard({ title: b.title, body: b.description, imageUrl: b.coverImageUrl, meta: [b.author, b.licenseName, b.sourceSiteName], onOpen: () => void openDetail("book", [b.id], { title: b.title }) }) },
-  world: { resource: "world", items: (d) => d?.servers, empty: "公開されている世界はまだありません",
-    card: (s) => catalogCard({ title: s.title || s.name, body: s.about, meta: [`運営: ${s.operator}`, s.status] }) },
   ranking: { resource: "rankings", items: (d) => d?.rankings, empty: "ランキングはまだありません",
-    card: (r) => catalogCard({ title: r.title, body: r.description, meta: [r.symbol, r.network, `${r.holderCount ?? 0} 保有者`] }) },
+    card: (r) => catalogCard({ title: r.title, body: r.description, meta: [r.symbol, r.network, `${r.holderCount ?? 0} 保有者`],
+      onOpen: r.id ? () => void openDetail("ranking_item", [r.id], { local: true, data: r, title: r.title }) : null }) },
   contacts: { client: "contacts", items: (d) => d?.contacts, empty: "連絡先はまだありません", card: contactCard },
   bookmarks: { client: "bookmarks", items: (d) => d?.items, empty: "ブックマークはまだありません", card: bookmarkCard },
   lists: { client: "lists", items: (d) => d?.lists, empty: "リストはまだありません",
     card: (l) => catalogCard({ title: l.name, body: l.description, meta: [`${(l.profileIds ?? []).length} 人`, `${(l.threadIds ?? []).length} スレッド`, l.visibility === "public" ? "公開" : "非公開"], onOpen: l.id ? () => void openDetail("list", [l.id], { title: l.name }) : null }) },
   services: { client: "services", items: (d) => d?.services, empty: "サービスはまだありません",
-    card: (s) => catalogCard({ title: s.displayName || s.serviceName, body: s.description, meta: [s.serviceName] }) },
+    card: (s) => catalogCard({ title: s.displayName || s.serviceName, body: s.description, meta: [s.serviceName, SERVICE_STATUS[s.status]],
+      onOpen: s.id ? () => void openDetail("service_item", [s.id], { local: true, data: s, title: s.displayName || s.serviceName }) : null }) },
   wallet: { client: "wallet", render: renderWallet },
 };
 
@@ -3933,6 +3962,71 @@ function renderShopResults() {
     more.append(actionButton("さらに表示", "ghost", loadMoreShop));
     target.append(more);
   }
+}
+
+// ランキングとサービスの詳細。一覧（hub_resource rankings / hub_client services）で読んだ項目をそのまま見せる。
+// 順位・参加者・ウォレット確認・サービスの登録は Hub のウェブにしか無いので、「ウェブで開く」は既定のブラウザへ（open_external）。
+function factRows(rows) {
+  const list = document.createElement("dl");
+  list.className = "fact-rows";
+  for (const [label, value] of rows) {
+    if (value === undefined || value === null || value === "") continue;
+    const row = document.createElement("div");
+    row.className = "fact-row";
+    const term = document.createElement("dt");
+    term.textContent = label;
+    const desc = document.createElement("dd");
+    if (value instanceof Node) desc.append(value); else desc.textContent = String(value);
+    row.append(term, desc);
+    list.append(row);
+  }
+  return list;
+}
+function detailLede(text) {
+  const node = document.createElement("p");
+  node.className = "detail-lede";
+  node.textContent = text;
+  return node;
+}
+function webOpenRow(label, path, note) {
+  const row = document.createElement("div");
+  row.className = "detail-web-open";
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "head-action";
+  button.textContent = label;
+  button.onclick = () => void openHubWebPath(path);
+  const hint = document.createElement("p");
+  hint.className = "meta";
+  hint.textContent = note;
+  row.append(button, hint);
+  return row;
+}
+function renderRankingDetail(target, data, entry) {
+  const ranking = data ?? {};
+  const address = document.createElement("code");
+  address.textContent = typeof ranking.contractAddress === "string" ? ranking.contractAddress : "";
+  address.title = address.textContent;
+  const holders = Number.isSafeInteger(ranking.holderCount) ? `${ranking.holderCount.toLocaleString("ja-JP")}人` : "";
+  const synced = ranking.lastSyncedAt ? relTime(ranking.lastSyncedAt) : "";
+  target.replaceChildren(
+    detailLede(ranking.description || `${ranking.symbol || "トークン"} の公開残高ランキングです。`),
+    factRows([["シンボル", ranking.symbol], ["ネットワーク", ranking.network], ["保有者", holders],
+      ["確認", RANKING_VERIFY[ranking.verificationStatus]], ["コントラクト", address.textContent ? address : ""], ["最終更新", synced]]),
+    webOpenRow("ウェブで順位と参加者を見る", `/v2/token?ranking=${encodeURIComponent(ranking.id ?? entry.ids[0])}`,
+      "順位、参加者、ウォレットの確認と貢献は Hub のウェブで行います。ここには概要だけを表示します。"));
+}
+function renderServiceDetail(target, data, entry) {
+  const service = data ?? {};
+  const capability = [service.capabilityName, service.capabilityDescription].filter(Boolean).join(" — ");
+  const cost = { free: "無料", paid: "有料", mixed: "一部有料" }[service.costMode] ?? service.costMode;
+  const updated = service.updatedAt ? relTime(service.updatedAt) : "";
+  target.replaceChildren(
+    detailLede(service.description || "説明はまだありません。"),
+    factRows([["サービス名", service.serviceName], ["状態", SERVICE_STATUS[service.status] ?? service.status], ["機能", capability],
+      ["呼び出し", service.httpMethod], ["費用", cost], ["実行前の確認", service.humanApproval === true ? "あなたの承認が必要" : service.humanApproval === false ? "不要" : ""],
+      ["ホームページ", service.homepageUrl], ["プライバシー", service.privacyUrl], ["利用規約", service.termsUrl], ["更新", updated]]),
+    webOpenRow("ウェブでサービスを管理", "/v2/services", "サービスの登録・審査の依頼・取り下げは Hub のウェブで行います。"));
 }
 
 // Hubのウェブのマーケットだけにある面（デジタル・予約とチケット・仕事）は既定のブラウザで開く。
@@ -9389,6 +9483,8 @@ const DETAIL_RENDERERS = {
   community_guide_revisions: renderCommunityGuides, community_guide_revision: renderCommunityGuide,
   community_guide_proposals:renderCommunityGuides, community_guide_proposal:(target,data,entry)=>target.replaceChildren(communityGuideProposal(document,{data,communityId:entry.ids[0],proposalId:entry.ids[1],invoke:researchEditorOptions(entry).invoke,state:entry.guideDraft??={},onOpen:(name,ids,title)=>void openDetail(name,ids,{title})})),
   channel_messages: renderChannelMessages,
+  ranking_item: renderRankingDetail,
+  service_item: renderServiceDetail,
   listing: renderListingDetail,
   commerce_product: renderCommerceProductDetail,
   video: renderVideoDetail,
@@ -9585,7 +9681,7 @@ window.addEventListener("resize", placeBrowserStrip);
 if (desktopShell && typeof MutationObserver === "function") new MutationObserver(placeBrowserStrip).observe(desktopShell, { attributes: true, attributeFilter: ["class"] });
 placeBrowserStrip();
 const columnKeys = { sidebar: "hub.desktop.sidebarWidth.compact", rail: "hub.desktop.railWidth" };
-const columnLimits = { sidebar: [190, 260], rail: [240, 480] };
+const columnLimits = { sidebar: [190, 420], rail: [240, 480] };
 const columnCollapseDistance = 40;
 const nativeColumnBridge = !startupTool && typeof window.__TAURI__?.core?.invoke === "function" && typeof window.__TAURI__?.event?.listen === "function";
 const nativeColumnReady = { sidebar: false, rail: false }, columnPointerStyle = {}, columnDomDrag = {};
@@ -9606,18 +9702,23 @@ function applyColumnWidths() {
   const sidebarVisible = viewport >= 861 && !desktopShell.classList.contains("sidebar-collapsed");
   const browser = desktopShell.classList.contains("browser-active");
   const railOpen = desktopShell.classList.contains("rail-open");
-  const mainMin = wide ? 600 : 480;
-  const sidebarDefault = wide ? clampColumn(viewport * .135, 210, 250) : clampColumn(viewport * .22, 200, 235);
+  const splitList = desktopShell.classList.contains("messages-active") || desktopShell.classList.contains("mail-active");
+  const mainMin = splitList ? 480 : wide ? 600 : 480;
+  // 左ナビは 1280 以上で 275、それ未満と、ブラウザ画面では 88 の記号列（desktop-frame.css と同じ値）。
+  const navWidth = viewport >= 1280 && !desktopShell.classList.contains("browser-active") ? 275 : 88;
+  // 内側の列の既定幅：メッセージは 380（一覧 380 + スレッド 600）、ブラウザのタブ列は細く、そのほかの文脈の列は 300。
+  const sidebarDefault = splitList ? 380
+    : desktopShell.classList.contains("browser-active") ? clampColumn(viewport * .135, 210, 250) : wide ? 300 : clampColumn(viewport * .22, 200, 235);
   const sidebarDesired = preferredColumnWidth.sidebar ?? sidebarDefault;
   // 右列ブラウザはスマホ幅（帯の48pxを足して420。中身は約360px）から始める。保存した幅があればそれを使う。
   // 2026-10-18 所有者「あと右側」：1600px 以上の窓では右列を 380 に広げ、通知・会話の行を 1 行で読めるようにする（Web の右列 372 に近づける）。
   const railDesired = preferredColumnWidth.rail ?? (desktopShell.classList.contains("rail-browser-view") ? 420 : viewport >= 1600 ? 380 : wide ? 300 : 360);
   const railInGrid = viewport >= 861 && railOpen;
   const railMax = Math.max(240, Math.min(480,
-    railInGrid ? viewport - 52 - mainMin - (sidebarVisible ? sidebarDesired : 0) : viewport - 80));
+    railInGrid ? viewport - navWidth - mainMin - (sidebarVisible ? sidebarDesired : 0) : viewport - 80));
   const railWidth = clampColumn(railDesired, 240, railMax);
   const sidebarMax = Math.max(columnLimits.sidebar[0], Math.min(columnLimits.sidebar[1],
-    viewport - 52 - mainMin - (railInGrid ? railWidth : browser || railOpen ? 0 : 48)));
+    viewport - navWidth - mainMin - (railInGrid ? railWidth : browser || railOpen ? 0 : 48)));
   const sidebarWidth = clampColumn(sidebarDesired, columnLimits.sidebar[0], sidebarMax);
   desktopShell.style.setProperty("--desktop-sidebar-width", `${sidebarWidth}px`);
   desktopShell.style.setProperty("--desktop-rail-width", `${railWidth}px`);
@@ -12518,6 +12619,11 @@ function setBadge(id, count) {
   const badge = document.querySelector(`#${id}`);
   badge.hidden = !count;
   badge.textContent = count > 99 ? "99+" : String(count);
+  // 左ナビの件数の札（同じ名前の data-badge）も同じ値にする。
+  for (const mark of document.querySelectorAll(`.rail-badge[data-badge="${id.replace("nav-badge-", "")}"]`)) {
+    mark.hidden = !count;
+    mark.textContent = badge.textContent;
+  }
 }
 
 function noticeCard(iconName, title, detail) {
@@ -13293,10 +13399,13 @@ let activeConversationId = null;
 async function openConversation(id,ticket){
   if(currentView!=='messages'||!dmController)return false;
   if(ticket&&!dmController.isTicketCurrent(ticket))return false;
+  document.querySelector(".app-shell")?.classList.add("dm-thread-open");
   if(!messagesData?.conversations?.some(item=>item.id===id)){
-    if(!await dmController.load(id)||currentView!=='messages')return false;ticket=dmController.capture();
+    if(!await dmController.load(id)||currentView!=='messages'){document.querySelector(".app-shell")?.classList.remove("dm-thread-open");return false;}ticket=dmController.capture();
   }
-  return dmController.select(id,ticket);
+  const opened=await dmController.select(id,ticket);
+  if(!opened)document.querySelector(".app-shell")?.classList.remove("dm-thread-open");
+  return opened;
 }
 async function loadMessages(conversation){
   if(currentView!=='messages'||!dmController)return false;
@@ -13532,7 +13641,18 @@ function renderMailPane() {
   mailEl("#mail-preview").hidden = !mailState.previewing;
   const state = mailEl("#mail-reader-state");
   state.hidden = reading || composing || mailState.previewing;
+  // 狭い窓では詳細を開いている間だけ一覧を隠す（desktop-layouts.css）。戻る操作は読んでいるときだけ。
+  document.querySelector(".app-shell")?.classList.toggle("mail-reader-open", reading || composing || mailState.previewing);
+  mailEl("#mail-main").classList.toggle("is-reading", reading);
 }
+mailEl("#mail-reader-back").onclick = () => {
+  if (mailUnresolvedAttempt()) return;
+  mailState.selected = null;
+  mailState.composing = false;
+  mailInvalidatePreview();
+  renderMailList();
+  renderMailPane();
+};
 
 async function openMail(id) {
   if (mailState.busy || mailUnresolvedAttempt()) return;
@@ -14678,6 +14798,7 @@ dmController=createDmController({invoke,getScope:getDmScope,isCurrent:()=>curren
   }
 });
 dmForm.onsubmit=event=>{event.preventDefault();void dmController.send();};
+document.querySelector("#thread-back").onclick=()=>setDmThreadShown(false);
 window.addEventListener('hub-account-changed',()=>{dmController.invalidate('account');dmScopeKey=null;if(currentView==='messages')void loadMessages();});
 window.addEventListener('hub-origin-changed',()=>{dmController.invalidate('scope');dmScopeKey=null;if(currentView==='messages')void loadMessages();});
 

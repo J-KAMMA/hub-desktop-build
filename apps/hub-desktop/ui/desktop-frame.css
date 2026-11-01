@@ -1,0 +1,272 @@
+/* Hub Desktop の外郭：一つの格子と左ナビ（2026-11-01、docs/hub-ui-reference/DESIGN-SYSTEM.md §1〜§3）。
+   これ以前に styles.css・browser-ui.css・browser-vertical-tabs.css に積まれていた .app-shell の
+   grid-template-* / grid-column / grid-row は削除した。外郭の格子はこのファイルの一つだけ。
+   値は tokens.css の --ds-*。色は意味トークンだけ。金は線と字だけで、塗りには使わない。 */
+
+/* ===== 一つの格子 =====
+   列: [左ナビ] [余白] [内側の列] [本文] [余白] [右の帯]。
+   左ナビは常に窓の左端（列 1、どの型・どの幅でも同じ x）。内側の列 + 本文 のかたまりだけを、ナビの右の残りの中央に置く。ブラウザ画面だけは余白 0 で窓いっぱい。
+   行: 上の帯（44）と残り。 */
+@media (min-width: 721px) {
+  #hub-shell.app-shell {
+    --nav-w: var(--ds-nav-w-rail);
+    --rail-w: var(--nav-w);
+    --ctx-col: 0px;
+    --rail-col: 48px;
+    --main-w: var(--ds-col-main);
+    --nav-item-h: var(--ds-btn-h-nav);
+    --spacer: minmax(0, 1fr);
+    display: grid;
+    grid-template-columns: var(--nav-w) var(--spacer) var(--ctx-col) minmax(0, var(--main-w)) var(--spacer) var(--rail-col);
+    grid-template-rows: var(--titlebar-h) minmax(0, 1fr);
+    grid-template-areas:
+      "bar bar bar bar bar bar"
+      "nav gl ctx main gr rail";
+    max-width: none;
+    height: 100vh;
+    min-height: 0;
+    margin: 0;
+  }
+  #hub-shell.app-shell > .app-toolbar { grid-area: bar; }
+  #hub-shell.app-shell > .icon-rail { grid-area: nav; }
+  #hub-shell.app-shell > .sidebar { grid-area: ctx; }
+  #hub-shell.app-shell > #sidebar-resizer { grid-area: ctx; }
+  #hub-shell.app-shell > .workspace-main { grid-area: main; }
+  #hub-shell.app-shell > .rail { grid-area: rail; }
+  #hub-shell.app-shell > #rail-resizer { grid-area: rail; }
+
+  /* 右の列を開いたら帯の幅から利用者が決めた幅へ。 */
+  #hub-shell.app-shell.rail-open { --rail-col: var(--desktop-rail-width, 300px); }
+
+  /* 型ごとの本文の幅（DESIGN-SYSTEM §1）。stream 600 · wide 980 · reading 680 · split と settings は 980。 */
+  #hub-shell.app-shell[data-template="stream"] { --main-w: var(--ds-col-main); }
+  #hub-shell.app-shell:is([data-template="wide"], [data-template="split"], [data-template="settings"]) { --main-w: var(--ds-col-wide); }
+  #hub-shell.app-shell[data-template="reading"] { --main-w: var(--ds-col-reading); }
+  #hub-shell.app-shell[data-template="browser"] { --main-w: 100vw; --spacer: 0px; }
+}
+
+/* 左ナビ: 1280 以上は 275、それ未満は 88 の記号列。ブラウザ画面は常に 88（本文を広く取る）。 */
+@media (min-width: 1280px) {
+  #hub-shell.app-shell:not([data-template="browser"]) { --nav-w: var(--ds-nav-w); }
+}
+
+/* 内側の列を持つのは、一覧と本文を並べる画面（split・settings）、ブラウザのタブ列、AI の履歴、すべての機能の一覧だけ。
+   そのほかの型には「左ナビの隣の目録の列」は無い（DESIGN-SYSTEM §1）。持つ画面でも 1180 以上でだけ格子に入り、
+   それ未満は重なる板（styles.css）。一覧 380 + 本文 600 = 980。 */
+@media (min-width: 721px) {
+  #hub-shell.app-shell:not(:is([data-template="split"], [data-template="settings"], [data-template="browser"], .ai-active, .apps-active)) > :is(.sidebar, #sidebar-resizer),
+  #hub-shell.app-shell:not(:is([data-template="split"], [data-template="settings"], [data-template="browser"], .ai-active, .apps-active)) #toolbar-sidebar { display: none; }
+}
+@media (min-width: 1180px) {
+  #hub-shell.app-shell:not(.sidebar-collapsed):is([data-template="split"], [data-template="settings"], [data-template="browser"], .ai-active, .apps-active) { --ctx-col: var(--desktop-sidebar-width, 300px); }
+  #hub-shell.app-shell:not(.sidebar-collapsed):is([data-template="split"], [data-template="settings"]) { --main-w: var(--ds-col-main); }
+}
+
+/* 本文の列は地（--bg）に左右 1px の線。画面は列いっぱい。 */
+@media (min-width: 721px) {
+  #hub-shell.app-shell:not([data-template="browser"]) > .workspace-main {
+    border-inline: var(--divider);
+    border-left-color: var(--line);
+    border-right-color: var(--line);
+  }
+}
+
+/* ===== 左ナビ ===== */
+#hub-shell .icon-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: var(--nav-w);
+  min-height: 0;
+  box-sizing: border-box;
+  padding: var(--ds-space-2) var(--ds-space-3) var(--ds-space-3);
+  gap: 0;
+  overflow: hidden;
+  border: 0;
+  background: var(--bg);
+}
+html[data-material="mica"] #hub-shell .icon-rail { background: var(--material-mica-tint); }
+#hub-shell .icon-rail :is(.icon-rail-main, .icon-rail-bottom) {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+/* 上の群が余れば縮み、足りなければここだけが縦に送られる（下の群は常に見える）。 */
+#hub-shell .icon-rail .icon-rail-main { flex: 1 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; scrollbar-width: none; }
+#hub-shell .icon-rail .icon-rail-main::-webkit-scrollbar { display: none; }
+#hub-shell .icon-rail .icon-rail-main > * { flex-shrink: 0; }
+#hub-shell .icon-rail .icon-rail-bottom { flex: none; }
+/* 群の間は線でなく余白。 */
+#hub-shell .icon-rail .navigation-group-start { margin-top: var(--ds-space-4); }
+
+/* 項目: 幅いっぱい、高さ 52、丸。字 20/24（現在地は 700）。 */
+#hub-shell .icon-rail :is(.icon-button, .icon-nav-item):not([hidden]) {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--ds-space-5);
+  width: 100%;
+  height: var(--nav-item-h);
+  min-height: var(--nav-item-h);
+  margin: 0;
+  padding: 0 var(--ds-space-4);
+  box-sizing: border-box;
+  border: 0;
+  border-radius: var(--ds-radius-pill);
+  background: transparent;
+  color: var(--text);
+  font-size: 0;
+  line-height: 0;
+  text-align: left;
+}
+#hub-shell .icon-rail :is(.icon-button, .icon-nav-item) svg {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  stroke-width: 1.75;
+  fill: none;
+}
+#hub-shell .icon-rail :is(.icon-button, .icon-nav-item)::after {
+  display: block;
+  content: attr(aria-label);
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--ds-type-title-size);
+  font-weight: var(--ds-weight-text);
+  line-height: var(--ds-type-title-leading);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+#hub-shell .icon-rail :is(.icon-button, .icon-nav-item):hover { background: var(--interactive); color: var(--text); }
+#hub-shell .icon-rail :is(.icon-nav-item.on, .icon-button.current, #desktop-apps[aria-current="page"], .icon-nav-item[aria-current="page"]) { background: transparent; color: var(--text); }
+#hub-shell .icon-rail :is(.icon-nav-item.on, .icon-button.current, #desktop-apps[aria-current="page"], .icon-nav-item[aria-current="page"])::after { font-weight: var(--ds-weight-strong); }
+#hub-shell .icon-rail :is(.icon-nav-item.on, .icon-button.current):hover { background: var(--interactive); }
+#hub-shell.apps-active .icon-rail #desktop-apps { background: transparent; color: var(--text); }
+#hub-shell .icon-rail :is(.icon-button, .icon-nav-item):focus-visible { outline: 2px solid var(--ds-focus-ring); outline-offset: -2px; }
+/* 黒金: 現在地の記号の線を金にする（塗らない）。 */
+html[data-palette="gold-ivory"] #hub-shell .icon-rail :is(.icon-nav-item.on, .icon-button.current, #desktop-apps[aria-current="page"]) svg { color: var(--emphasis); }
+
+/* 自分の顔（プロフィールの項目）。 */
+#hub-shell .icon-rail .rail-avatar { display: grid; flex: 0 0 24px; place-items: center; width: 24px; height: 24px; overflow: hidden; border-radius: 50%; background: var(--interactive); color: var(--text); font-size: var(--ds-type-meta-size); font-weight: var(--ds-weight-strong); line-height: 24px; }
+#hub-shell .icon-rail .rail-avatar.has-image { background: transparent; }
+#hub-shell .icon-rail .rail-avatar img { display: block; width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
+#hub-shell .icon-rail .icon-nav-item.on .rail-avatar { box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--emphasis); }
+
+/* 件数の札: 高さ 20・最小幅 20・丸・1px の線と字（黒金は金、白黒は --text）。塗らない。 */
+#hub-shell .nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: var(--ds-badge-count-min-w);
+  height: var(--ds-badge-h);
+  padding: 0 var(--ds-space-1);
+  border: 1px solid var(--ds-badge-count-line);
+  border-radius: var(--ds-radius-pill);
+  background: transparent;
+  color: var(--ds-badge-count-fg);
+  font-size: var(--ds-type-meta-size);
+  font-weight: var(--ds-weight-strong);
+  line-height: 1;
+}
+#hub-shell .nav-badge[hidden] { display: none; }
+#hub-shell .icon-rail :is(.icon-button, .icon-nav-item)::after { order: 1; }
+#hub-shell .icon-rail .rail-badge { order: 2; margin-left: auto; }
+
+/* 投稿する: 幅いっぱいの丸、高さ 52。白黒は --text の塗り、黒金は金の線と金の字（塗りなし）。 */
+#hub-shell .icon-rail #desktop-compose:not([hidden]) {
+  flex: none;
+  justify-content: center;
+  gap: var(--ds-space-3);
+  width: 100%;
+  margin: var(--ds-space-3) 0 var(--ds-space-1);
+  padding: 0 var(--ds-space-6);
+  border: 1px solid var(--ds-btn-primary-line);
+  background: var(--ds-btn-primary-bg);
+  color: var(--ds-btn-primary-fg);
+}
+#hub-shell .icon-rail #desktop-compose::after { content: attr(aria-label); flex: 0 1 auto; font-size: var(--ds-type-body-size); font-weight: var(--ds-weight-strong); line-height: var(--ds-type-title-leading); }
+#hub-shell .icon-rail #desktop-compose svg { flex: 0 0 20px; width: 20px; height: 20px; stroke-width: 2; }
+#hub-shell .icon-rail #desktop-compose:not([hidden]):hover { background: var(--ds-btn-primary-bg); color: var(--ds-btn-primary-fg); opacity: .88; }
+html[data-palette="gold-ivory"] #hub-shell .icon-rail #desktop-compose:not([hidden]):hover { background: var(--interactive); opacity: 1; }
+#hub-shell .icon-rail #desktop-compose:focus-visible { outline: 2px solid var(--ds-focus-ring); outline-offset: 2px; }
+
+/* 参加中のコミュニティ（最大5件 + すべて見る）。275 のナビだけに出す。 */
+#hub-shell .nav-communities { display: flex; flex-direction: column; width: 100%; }
+#hub-shell .nav-communities[hidden] { display: none; }
+#hub-shell .nav-community {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-3);
+  width: 100%;
+  height: 40px;
+  min-height: 40px;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0 var(--ds-space-4) 0 62px;
+  border: 0;
+  border-radius: var(--ds-radius-pill);
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--ds-type-body-size);
+  font-weight: var(--ds-weight-text);
+  line-height: var(--ds-type-body-leading);
+  text-align: left;
+}
+#hub-shell .nav-community:hover { background: var(--interactive); color: var(--text); }
+#hub-shell .nav-community:focus-visible { outline: 2px solid var(--ds-focus-ring); outline-offset: -2px; }
+#hub-shell .nav-community-face {
+  display: grid;
+  flex: 0 0 20px;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--ds-radius-badge);
+  color: var(--muted);
+  font-size: var(--ds-type-meta-size);
+  font-weight: var(--ds-weight-strong);
+  line-height: 1;
+}
+#hub-shell .nav-community-face img { display: block; width: 100%; height: 100%; object-fit: cover; }
+#hub-shell .nav-community-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#hub-shell .nav-community[aria-current="true"] { color: var(--text); font-weight: var(--ds-weight-strong); }
+#hub-shell .nav-community[aria-current="true"] .nav-community-face { border-color: var(--emphasis); color: var(--text); }
+#hub-shell .nav-community-all { padding-left: 62px; color: var(--muted); }
+
+/* 88 の記号列: 記号だけ。52 の丸。件数の札は記号の右上。コミュニティの一覧は出さない。 */
+@media (max-width: 1279px) {
+  #hub-shell .icon-rail { align-items: center; padding-inline: var(--ds-space-4); }
+  #hub-shell .icon-rail :is(.icon-rail-main, .icon-rail-bottom) { align-items: center; }
+  #hub-shell .icon-rail :is(.icon-button, .icon-nav-item):not([hidden]) { justify-content: center; width: var(--nav-item-h); padding: 0; gap: 0; }
+  #hub-shell .icon-rail :is(.icon-button, .icon-nav-item)::after { display: none; }
+  #hub-shell .icon-rail #desktop-compose:not([hidden]) { width: var(--nav-item-h); padding: 0; }
+  #hub-shell .icon-rail #desktop-compose::after { display: none; }
+  #hub-shell .icon-rail .rail-badge { position: absolute; top: 4px; right: 2px; margin: 0; }
+  #hub-shell .nav-communities { display: none; }
+}
+/* ブラウザ画面は常に 88 の記号列。 */
+#hub-shell[data-template="browser"] .icon-rail { align-items: center; padding-inline: var(--ds-space-4); }
+#hub-shell[data-template="browser"] .icon-rail :is(.icon-rail-main, .icon-rail-bottom) { align-items: center; }
+#hub-shell[data-template="browser"] .icon-rail :is(.icon-button, .icon-nav-item):not([hidden]) { justify-content: center; width: var(--nav-item-h); padding: 0; gap: 0; }
+#hub-shell[data-template="browser"] .icon-rail :is(.icon-button, .icon-nav-item)::after { display: none; }
+#hub-shell[data-template="browser"] .icon-rail #desktop-compose:not([hidden]) { width: var(--nav-item-h); padding: 0; }
+#hub-shell[data-template="browser"] .icon-rail #desktop-compose::after { display: none; }
+#hub-shell[data-template="browser"] .icon-rail .rail-badge { position: absolute; top: 4px; right: 2px; margin: 0; }
+#hub-shell[data-template="browser"] .nav-communities { display: none; }
+
+/* 窓の高さが足りないとき（800 など）は項目を 44 に詰め、1 画面に収める。 */
+@media (max-height: 899px) {
+  #hub-shell.app-shell { --nav-item-h: 40px; }
+  #hub-shell .icon-rail #desktop-compose:not([hidden]) { margin-top: var(--ds-space-2); }
+  #hub-shell .icon-rail .navigation-group-start { margin-top: var(--ds-space-3); }
+  #hub-shell .nav-community { height: 36px; min-height: 36px; }
+}

@@ -11,8 +11,8 @@ const rule=selector=>{
 };
 test('one gutter token, one hairline, one surface for both flanking columns',()=>{
   const root=rule('#hub-shell');
-  // 2026-10-24 所有者（参考画面の「余白を増やす」）：本文の左右は --space-6。左右は同じまま。
-  assert.match(root,/--pane-gutter:\s*var\(--space-6\)/);
+  // 2026-11-01 統一デザインシステム: 本文の左右は --ds-page-inset（16）。左右は同じまま。
+  assert.match(root,/--pane-gutter:\s*var\(--ds-page-inset\)/);
   assert.match(root,/--pane-hairline:\s*1px solid color-mix\(in srgb, var\(--line\) 75%, transparent\)/);
   // 本文と右の列は地のまま（2026-10-24 所有者「丸くして色変えるの微妙かも」）。
   assert.match(root,/--pane-surface:\s*var\(--bg\)/);

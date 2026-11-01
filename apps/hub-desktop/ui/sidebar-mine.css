@@ -52,7 +52,7 @@
   background: var(--avatar-bg, var(--interactive));
   color: var(--avatar-fg, var(--text));
   font-size: var(--type-caption);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
 }
 #hub-shell #sidebar-context .sidebar-mine-face.is-tag { border-radius: var(--radius-sm); }
 #hub-shell #sidebar-context .sidebar-mine-face[data-tint="1"] { --avatar-bg: var(--avatar-1); --avatar-fg: var(--avatar-1-text); }
@@ -76,7 +76,7 @@
 }
 #hub-shell #sidebar-context .sidebar-mine-item:is(:hover, :focus-within) .sidebar-mine-pin,
 #hub-shell #sidebar-context .sidebar-mine-item.is-pinned .sidebar-mine-pin { opacity: 1; }
-#hub-shell #sidebar-context .sidebar-mine-pin[aria-pressed="true"] { color: var(--text); font-weight: var(--weight-semibold); }
+#hub-shell #sidebar-context .sidebar-mine-pin[aria-pressed="true"] { color: var(--text); font-weight: var(--weight-bold); }
 #hub-shell #sidebar-context .sidebar-mine-note { margin: 0; padding: var(--space-1) var(--space-3); color: var(--muted); font-size: var(--type-caption); }
 #hub-shell #sidebar-context :is(.sidebar-mine-action, .sidebar-mine-all) {
   height: var(--tap-height);
@@ -88,7 +88,7 @@
   font-size: var(--type-caption);
   text-align: left;
 }
-#hub-shell #sidebar-context .sidebar-mine-action { color: var(--text); font-weight: var(--weight-medium); }
+#hub-shell #sidebar-context .sidebar-mine-action { color: var(--text); font-weight: var(--weight-regular); }
 #hub-shell #sidebar-context :is(.sidebar-mine-action, .sidebar-mine-all):hover { background: var(--interactive); color: var(--text); }
 #hub-shell #sidebar-context :is(.sidebar-mine-row, .sidebar-mine-pin, .sidebar-mine-action, .sidebar-mine-all):focus-visible {
   outline: var(--focus-ring-width) solid var(--focus-ring);

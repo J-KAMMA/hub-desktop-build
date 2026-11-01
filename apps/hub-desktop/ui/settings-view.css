@@ -7,22 +7,22 @@
   margin: var(--space-4, 16px) 0 var(--space-1, 4px);
   padding: 0 var(--space-3);
   color: var(--muted);
-  font-size: var(--text-meta, 12px);
-  font-weight: 600;
+  font-size: var(--type-caption);
+  font-weight: 700;
   letter-spacing: .04em;
 }
 #view-settings .inner-nav-head:first-child { margin-top: 0; }
-#view-settings .inner-nav-item { min-height: 36px; font-size: var(--text-body, 14px); }
+#view-settings .inner-nav-item { min-height: 36px; font-size: var(--type-body); }
 #view-settings .inner-nav-item:focus-visible,
 #view-settings .appearance-choice input:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 #view-settings .inner-body > [data-settings-panel] > .card + .card,
 #view-settings .inner-body > [data-settings-panel] > div + .card { margin-top: var(--space-4, 16px); }
-#view-settings h3 { margin: 0 0 var(--space-2, 8px); font-size: var(--text-section, 15px); }
-#view-settings .settings-sub { margin: var(--space-5, 24px) 0 var(--space-2, 8px); color: var(--text); font-size: var(--text-body, 14px); }
+#view-settings h3 { margin: 0 0 var(--space-2, 8px); font-size: var(--type-body); }
+#view-settings .settings-sub { margin: var(--space-5, 24px) 0 var(--space-2, 8px); color: var(--text); font-size: var(--type-body); }
 
 /* --- 外観 --- */
 #view-settings .appearance-group { margin: 0 0 var(--space-5, 24px); padding: 0; border: 0; min-width: 0; }
-#view-settings .appearance-group legend { padding: 0; margin-bottom: var(--space-2, 8px); color: var(--text); font-size: var(--text-body, 14px); font-weight: 600; }
+#view-settings .appearance-group legend { padding: 0; margin-bottom: var(--space-2, 8px); color: var(--text); font-size: var(--type-body); font-weight: 700; }
 #view-settings .appearance-choices { display: flex; flex-wrap: wrap; gap: var(--space-2, 8px); }
 #view-settings .appearance-choice {
   display: inline-flex; align-items: center; gap: var(--space-2, 8px);
@@ -31,20 +31,20 @@
   background: var(--content-surface); color: var(--text); cursor: pointer;
 }
 #view-settings .appearance-choice:hover { background: var(--interactive); }
-#view-settings .appearance-choice:has(input:checked) { border-color: var(--action); background: var(--selected); font-weight: 600; }
+#view-settings .appearance-choice:has(input:checked) { border-color: var(--action); background: var(--selected); font-weight: 700; }
 #view-settings .appearance-settings .meta { margin: var(--space-2, 8px) 0 0; }
 #view-settings .appearance-settings > .head-action { margin-top: var(--space-4, 16px); border: 1px solid var(--line); }
 
 /* --- 身元の鍵・フォーム --- */
-#view-settings .settings-field { display: grid; gap: var(--space-1, 4px); margin: 0 0 var(--space-3, 12px); color: var(--muted); font-size: var(--text-meta, 12px); }
+#view-settings .settings-field { display: grid; gap: var(--space-1, 4px); margin: 0 0 var(--space-3, 12px); color: var(--muted); font-size: var(--type-caption); }
 #view-settings .settings-field input,
 #view-settings input.settings-readonly,
 #view-settings textarea.settings-readonly {
   width: 100%; box-sizing: border-box; padding: var(--space-2) var(--space-2);
   border: 1px solid var(--line); border-radius: var(--radius-control, 8px);
-  background: var(--surface-sunken); color: var(--text); font-size: var(--text-body, 14px);
+  background: var(--surface-sunken); color: var(--text); font-size: var(--type-body);
 }
-#view-settings textarea.settings-readonly { margin-top: var(--space-3, 12px); font-family: var(--font-mono, ui-monospace, monospace); font-size: var(--text-meta, 12px); resize: vertical; }
+#view-settings textarea.settings-readonly { margin-top: var(--space-3, 12px); font-family: var(--font-mono, ui-monospace, monospace); font-size: var(--type-caption); resize: vertical; }
 #view-settings .settings-confirm { margin: var(--space-3, 12px) 0; padding: var(--space-3, 12px) var(--space-4, 16px); border: 1px solid var(--warning-line); border-radius: var(--radius-control, 8px); background: var(--warning-bg); color: var(--warning-text); }
 #view-settings .settings-confirm p { margin: 0 0 var(--space-3, 12px); }
 #view-settings .settings-about { display: grid; grid-template-columns: max-content 1fr; gap: var(--space-2, 8px) var(--space-5, 24px); margin: 0 0 var(--space-3, 12px); }
@@ -147,7 +147,7 @@ html[data-motion="reduce"] *, html[data-motion="reduce"] *::before, html[data-mo
   width: 100%;
   max-width: 720px;
   margin-inline: 0;
-  padding: var(--space-5);
+  padding: var(--space-6);
   grid-template-columns: minmax(0, 1fr);
   gap: 0;
 }
@@ -159,7 +159,7 @@ html[data-motion="reduce"] *, html[data-motion="reduce"] *::before, html[data-mo
 #hub-shell #view-settings .card h3,
 #hub-shell #view-settings .setting-header .setting-label {
   font-size: var(--type-headline);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   line-height: var(--lh-headline);
 }
 #hub-shell #view-settings .setting-desc {

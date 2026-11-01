@@ -1,13 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { JSDOM } from 'jsdom';
-import { createVideoPosts } from './video-posts.mjs';
+import { createVideoPosts, createContentPosts } from './video-posts.mjs';
 
 const videoId = 'video_1';
 const post = (n, extra = {}) => ({ id: `post_${n}`, body: `本文${n}`, ...extra });
 const tick = () => new Promise(resolve => setImmediate(resolve));
 function deferred() { let resolve, reject; const promise = new Promise((yes, no) => { resolve = yes; reject = no; }); return { promise, resolve, reject }; }
-async function fixture(t, { data = { posts: [post(1), post(2)], nextCursor: null }, state = {}, ...options } = {}) {
+async function fixture(t, { data = { posts: [post(1), post(2)], nextCursor: null }, state = {}, create = createVideoPosts, ...options } = {}) {
   const dom = new JSDOM('<main></main>', { url: 'http://localhost' }), document = dom.window.document;
   const f = { dom, document, state, data, calls: [] };
   f.respond = async (name) => name === 'hub_detail' ? f.data : { post: post(99) };
@@ -17,7 +17,7 @@ async function fixture(t, { data = { posts: [post(1), post(2)], nextCursor: null
     invoke: async (name, args) => { f.calls.push([name, args]); return f.respond(name, args); },
     ...options,
   };
-  const controller = createVideoPosts(document, f.settings);
+  const controller = create(document, f.settings);
   document.querySelector('main').append(controller.element);
   f.controller = controller; f.element = controller.element;
   await controller.ready;
@@ -34,7 +34,7 @@ test('loads through the exact native detail and renders with the injected render
   assert.deepEqual(f.calls, [['hub_detail', { name: 'video_posts', ids: [videoId] }]]);
   assert.deepEqual(ids(f), ['post_1', 'post_2']);
   assert.equal(button(f, 'もっと見る').hidden, true);
-  assert.match(f.element.querySelector('h3').textContent, /ポスト/);
+  assert.match(f.element.querySelector('h3').textContent, /コメント/);
 });
 
 test('empty list says so, and a bad payload keeps the draft with a friendly message', async t => {
@@ -70,22 +70,32 @@ test('posting sends the closed payload, prepends the result and clears the draft
   fill(f, '  面白かった  ');
   assert.equal(f.state.body, '  面白かった  ');
   await submit(f);
-  assert.deepEqual(f.calls[1], ['hub_client_action', { action: 'video_post_create', target: videoId, options: { body: '面白かった' } }]);
+  assert.deepEqual(f.calls[1], ['hub_client_action', { action: 'video_post_create', target: videoId, options: { body: '面白かった', inFeed: false } }]);
   assert.deepEqual(ids(f), ['post_99', 'post_1', 'post_2']);
   assert.equal(f.state.body, '');
   assert.equal(f.element.querySelector('textarea').value, '');
 });
 
-test('repost sends an empty body and is unavailable while text is typed', async t => {
+test('a video comment has no repost button and the feed checkbox defaults to off and is sent when ticked', async t => {
   const f = await fixture(t);
+  assert.equal(button(f, 'リポスト'), undefined);
+  const box = f.element.querySelector('input[type=checkbox]');
+  assert.equal(box.checked, false);
+  assert.match(f.element.textContent, /フィードにも出す/);
+  box.checked = true; box.onchange();
+  assert.equal(f.state.inFeed, true);
+  fill(f, 'のせる');
+  await submit(f);
+  assert.deepEqual(f.calls[1], ['hub_client_action', { action: 'video_post_create', target: videoId, options: { body: 'のせる', inFeed: true } }]);
+});
+
+test('a music post keeps its repost button (empty body) and never sends inFeed', async t => {
+  const f = await fixture(t, { create: createContentPosts, kind: 'music', id: 'work_1' });
   fill(f, 'x');
   assert.equal(button(f, 'リポスト').disabled, true);
-  await button(f, 'リポスト').onclick();
-  assert.equal(f.calls.length, 1);
   fill(f, '');
   await button(f, 'リポスト').onclick();
-  assert.deepEqual(f.calls[1], ['hub_client_action', { action: 'video_post_create', target: videoId, options: { body: '' } }]);
-  assert.equal(ids(f)[0], 'post_99');
+  assert.deepEqual(f.calls[1], ['hub_client_action', { action: 'music_post_create', target: 'work_1', options: { body: '' } }]);
 });
 
 test('empty text, over-limit text and double submit never send twice', async t => {
@@ -96,7 +106,7 @@ test('empty text, over-limit text and double submit never send twice', async t =
   const gate = deferred();
   f.respond = async () => gate.promise;
   fill(f, 'ok');
-  const first = submit(f); await submit(f); await button(f, 'リポスト').onclick();
+  const first = submit(f); await submit(f);
   assert.equal(f.calls.length, 2);
   gate.resolve({ post: post(7) }); await first;
   assert.equal(ids(f)[0], 'post_7');

@@ -223,14 +223,14 @@ test('notifications and sidebar conversations get the specified avatar and type 
   assert.match(css, /& \.notif-avatars \.post-avatar \{[^}]*width: 32px;[^}]*height: 32px;/);
   assert.match(sidebar, /#messages-list \.conversation \{[^}]*grid-template-columns: 36px minmax\(0, 1fr\) auto;/);
   assert.match(sidebar, /#messages-list \.conversation \.post-avatar \{ width: 36px; height: 36px;/);
-  assert.match(sidebar, /#messages-list \.conversation-head strong \{[^}]*font-size: var\(--type-body\);[^}]*font-weight: var\(--weight-semibold\);/);
+  assert.match(sidebar, /#messages-list \.conversation-head strong \{[^}]*font-size: var\(--type-body\);[^}]*font-weight: var\(--weight-bold\);/);
   assert.match(sidebar, /#messages-list \.conversation-preview \{[^}]*font-size: var\(--type-subhead\);/);
 });
 
-test('feed: sources and connections are behind the "…" toggle; the feed body fills the column up to --width-collection (owner 2026-10-17: the 600 column left ~300px empty on each side)', () => {
+test('feed: sources and connections are behind the "…" toggle; the feed body fills the column, whose width the template decides (2026-11-01)', () => {
   assert.match(html, /id="feed-sources-toggle"/);
   assert.match(css, /#view-feed \.hub-network-bar,[\s\S]*?\{ display: none; \}/);
-  assert.match(css, /max-width: var\(--width-collection\)/);
+  assert.match(css, /:is\(#view-feed, #view-notifications, #view-profile\) \{\s*max-width: none;/);
   assert.match(app, /rootMargin: "0px 0px 600px 0px"/);
 });
 

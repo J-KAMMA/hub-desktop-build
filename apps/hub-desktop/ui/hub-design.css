@@ -3,20 +3,14 @@
    意味トークンだけを使う（ライト・ダークは styles.css 側で切り替わる）。
    ブラウザとAIの作業画面は独自の配置を持つので対象外にする。 */
 
-/* 画面の幅は2種類だけ。読む画面は狭く、一覧と道具の画面は広く。 */
+/* 画面の幅は列（.workspace-main）が型（data-template）ごとに一か所で決める（desktop-frame.css）。画面は列いっぱいで、左右の余白は --pane-gutter。 */
 #hub-shell .view:not(#view-browser):not(#view-ai) {
   width: 100%;
-  max-width: var(--width-collection);
-  margin: 0 auto;
-  padding: var(--space-5) var(--space-6) var(--space-7);
+  max-width: none;
+  margin: 0;
+  padding: var(--space-6) var(--pane-gutter) var(--space-8);
   border-inline: 0;
   box-sizing: border-box;
-}
-#hub-shell .view:not(#view-browser):not(#view-ai):is(#view-feed, #view-threads, #view-detail, #view-profile, #view-notifications, #view-home, #view-wallet, #view-settings, #view-cart, #view-order, #view-compute, #view-mail) {
-  max-width: calc(var(--width-reading) + 2 * var(--space-6));
-  /* 広い画面と左端をそろえる（画面を替えても見出しが横へ動かない）。 */
-  margin-left: max(0px, calc((100% - var(--width-collection)) / 2));
-  margin-right: auto;
 }
 
 /* 見出し行：題名と操作を一行に。下線は引かず、余白で区切る。 */
@@ -34,8 +28,8 @@
 }
 #hub-shell .view-head h2 {
   margin: 0;
-  font-size: var(--text-title);
-  font-weight: var(--weight-medium);
+  font-size: var(--type-title2);
+  font-weight: var(--weight-regular);
   letter-spacing: -0.02em;
   line-height: 1.25;
 }
@@ -65,11 +59,12 @@
   cursor: pointer;
 }
 #hub-shell .view .approve {
-  background: var(--action);
-  color: var(--action-text);
+  background: var(--ds-btn-primary-bg);
+  color: var(--ds-btn-primary-fg);
+  box-shadow: inset 0 0 0 1px var(--ds-btn-primary-line);
 }
-#hub-shell .view .approve:hover:not(:disabled) { background: var(--action-hover); }
-#hub-shell .view .approve:active:not(:disabled) { background: var(--action-active); }
+#hub-shell .view .approve:hover:not(:disabled) { opacity: .86; }
+#hub-shell .view .approve:active:not(:disabled) { opacity: .72; }
 #hub-shell .view :is(.deny, .head-action) {
   background: var(--interactive);
   color: var(--text);
@@ -108,7 +103,7 @@
   border-radius: var(--radius-control);
   background-color: var(--surface-sunken);
   color: var(--text);
-  font-size: var(--text-body);
+  font-size: var(--type-body);
   line-height: 1.6;
 }
 #hub-shell .view select,
@@ -157,7 +152,7 @@
 #hub-shell .view .meta {
   margin: 0 0 var(--space-3);
   color: var(--muted);
-  font-size: var(--text-meta);
+  font-size: var(--type-caption);
   line-height: 1.6;
 }
 #hub-shell .view .meta:empty { display: none; }
@@ -184,7 +179,7 @@
   background: transparent;
   color: var(--muted);
   font-size: var(--type-subhead);
-  font-weight: 600;
+  font-weight: 700;
 }
 #hub-shell .view :is(.segmented, .scopes) button:is(.on, [aria-pressed="true"], [aria-selected="true"]) {
   background: var(--content-surface);
@@ -196,15 +191,15 @@
   margin: calc(-1 * var(--space-2)) 0 var(--space-4);
   padding: 0;
   border: 0;
-  font-size: var(--text-meta);
+  font-size: var(--type-caption);
   color: var(--muted);
 }
 #hub-shell .view .hub-network-bar select { min-height: 28px; font-size: var(--type-caption); }
 
 /* 空の状態は枠を描かず、中央に静かに。 */
 #hub-shell .view .empty-state {
-  margin: var(--space-5) 0;
-  padding: var(--space-7) var(--space-5);
+  margin: var(--space-6) 0;
+  padding: var(--space-8) var(--space-6);
   border: 0;
   background: transparent;
 }
@@ -212,7 +207,7 @@
 /* 左の内側の列：題名を一段小さくし、開発用の環境表示は出さない。 */
 #hub-shell .sidebar .brand h1 {
   font-size: var(--type-headline);
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.01em;
 }
 #hub-shell .sidebar .brand .environment { display: none; }
@@ -235,7 +230,7 @@
 }
 #hub-shell #view-feed .social-stream-card:hover { background: var(--interactive); }
 #hub-shell #view-feed .social-stream-card .social-stream-kind { margin: 0; }
-#hub-shell #view-feed .social-stream-card h3 { margin: 0; font-size: var(--text-section); font-weight: 600; line-height: 1.45; }
+#hub-shell #view-feed .social-stream-card h3 { margin: 0; font-size: var(--type-body); font-weight: 700; line-height: 1.45; }
 #hub-shell #view-feed .social-stream-card .post-body { margin: 0; color: var(--muted); font-size: var(--type-subhead); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 #hub-shell #view-feed .social-stream-card .social-stream-open { justify-self: start; min-height: 26px; margin-top: var(--space-1); padding: 0 var(--space-2); font-size: var(--type-caption); }
 #hub-shell #view-feed .social-stream-item > .social-stream-kind { margin: var(--space-3) 0 0; }
@@ -298,8 +293,8 @@
   margin: 0;
 }
 #hub-shell :is(#view-search, #view-world, #view-ranking, #view-services, #view-contacts) .result-card strong {
-  font-size: var(--text-section);
-  font-weight: 600;
+  font-size: var(--type-body);
+  font-weight: 700;
   line-height: 1.45;
   overflow-wrap: anywhere;
 }
@@ -326,17 +321,17 @@
   border: 0;
   background: var(--interactive);
   color: var(--muted);
-  font-weight: 600;
+  font-weight: 700;
 }
 #hub-shell #view-search .chip:hover { background: var(--interactive-hover); }
 #hub-shell #view-search .chip.on { background: var(--selected); color: var(--text); }
 #hub-shell #view-search .web-search {
-  margin-top: var(--space-5);
+  margin-top: var(--space-6);
   padding-top: var(--space-4);
   border-top: 1px solid var(--line);
 }
 #hub-shell #view-search .web-search .actions { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
-#hub-shell #view-search .web-search h3 { font-size: var(--text-section); }
+#hub-shell #view-search .web-search h3 { font-size: var(--type-body); }
 #hub-shell #view-search .web-search .meta { margin: var(--space-1) 0 0; }
 
 /* 研究：検索欄・表示元・接続先を1本のフィルタ行に並べる。作成欄は閉じている間は出さない。 */
@@ -402,29 +397,29 @@
 #hub-shell #view-research .research-project-card .meta { margin: 0; }
 /* --- end C --- */
 /* --- D: 取引（market / cart / order / purchased / vault / wallet / compute） --- */
-#hub-shell :is(.seller-product-details, .compute-demo) > summary { cursor: pointer; font-size: var(--text-section); font-weight: 600; }
+#hub-shell :is(.seller-product-details, .compute-demo) > summary { cursor: pointer; font-size: var(--type-body); font-weight: 700; }
 #hub-shell :is(.seller-product-details, .compute-demo)[open] > summary { margin-bottom: var(--space-3); }
 #hub-shell #shop-results.result-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
 #hub-shell #shop-results .shop-product-card { min-height: 0; gap: var(--space-2); padding: var(--space-4); }
 #hub-shell #shop-results .shop-product-card .result-media { aspect-ratio: 4 / 3; margin: calc(-1 * var(--space-4)) calc(-1 * var(--space-4)) var(--space-1); border-radius: var(--radius-card) var(--radius-card) 0 0; background: var(--content-nested); }
 #hub-shell #shop-results .shop-product-card .result-media img { object-fit: cover; }
-#hub-shell #shop-results .shop-product-card > strong { display: -webkit-box; overflow: hidden; font-size: var(--text-body); line-height: 1.4; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+#hub-shell #shop-results .shop-product-card > strong { display: -webkit-box; overflow: hidden; font-size: var(--type-body); line-height: 1.4; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 #hub-shell #shop-results .shop-product-card > p:not(.shop-product-meta):not(.meta) { -webkit-line-clamp: 2; }
 #hub-shell #shop-results .shop-product-card > .meta { display: -webkit-box; overflow: hidden; margin: 0; -webkit-box-orient: vertical; -webkit-line-clamp: 1; }
-#hub-shell #shop-results .shop-product-meta strong { font-size: var(--text-section); font-variant-numeric: tabular-nums; }
+#hub-shell #shop-results .shop-product-meta strong { font-size: var(--type-body); font-variant-numeric: tabular-nums; }
 #hub-shell #shop-results .shop-card-actions .approve { min-height: 28px; padding: 0 var(--space-3); }
 /* --- end D --- */
 /* --- E: 個人と設定（profile / detail / settings / node / messages / mail / home） --- */
 #hub-shell #view-settings .account-card-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-2); }
-#hub-shell #view-settings .account-card-head h3 { margin: 0; font-size: var(--text-section); }
+#hub-shell #view-settings .account-card-head h3 { margin: 0; font-size: var(--type-body); }
 #hub-shell #view-settings .account-card .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
-#hub-shell #view-settings .card h3 { margin: 0 0 var(--space-2); font-size: var(--text-section); }
+#hub-shell #view-settings .card h3 { margin: 0 0 var(--space-2); font-size: var(--type-body); }
 /* Personal Node：公開原本の作成は畳んでおく。 */
 #hub-shell #view-node details.content-compose > summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); cursor: pointer; list-style: none; }
 #hub-shell #view-node details.content-compose > summary::-webkit-details-marker { display: none; }
-#hub-shell #view-node details.content-compose > summary::after { content: "開く"; color: var(--muted); font-size: var(--type-subhead); font-weight: 600; }
+#hub-shell #view-node details.content-compose > summary::after { content: "開く"; color: var(--muted); font-size: var(--type-subhead); font-weight: 700; }
 #hub-shell #view-node details.content-compose[open] > summary::after { content: "閉じる"; }
-#hub-shell #view-node details.content-compose > summary h3 { margin: 0; font-size: var(--text-section); }
+#hub-shell #view-node details.content-compose > summary h3 { margin: 0; font-size: var(--type-body); }
 #hub-shell #view-node details.content-compose[open] > summary { margin-bottom: var(--space-3); }
 /* メッセージ：左の列の会話を、ほかの列の項目と同じ見た目に揃える。 */
 #hub-shell.messages-active #sidebar-context .messages-side { margin-top: 0; border-top: 0; }
@@ -444,58 +439,6 @@
 .piw-purchase dt { color: var(--muted); }
 .piw-purchase dd { margin: 0; overflow-wrap: anywhere; }
 /* --- end AI --- */
-
-/* ===== 左列（一本の列。☰で名前付きの幅へ広がる） ===== */
-#hub-shell .icon-rail {
-  width: var(--rail-w);
-  box-sizing: border-box;
-  align-items: stretch;
-  gap: 2px;
-  padding: var(--space-2) 6px;
-  overflow-x: hidden;
-  transition: width .16s ease;
-}
-#hub-shell .icon-rail :is(.icon-rail-main, .icon-rail-bottom) {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 2px;
-  width: 100%;
-}
-#hub-shell .icon-rail :is(.icon-button, .icon-nav-item):not([hidden]) {
-  display: flex;
-  width: 100%;
-  min-height: 40px;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-start;
-  gap: var(--space-3);
-  margin: 0;
-  padding: 0 var(--space-3);
-  border: 0;
-  border-radius: var(--radius-control);
-  background: transparent;
-  color: var(--muted);
-  font-size: 0;
-  box-sizing: border-box;
-}
-#hub-shell .icon-rail :is(.icon-button, .icon-nav-item) svg { flex: 0 0 20px; width: 20px; height: 20px; }
-#hub-shell.rail-expanded .icon-rail :is(.icon-button, .icon-nav-item)::after {
-  display: block;
-  content: attr(aria-label);
-  overflow: hidden;
-  font-size: var(--type-subhead);
-  font-weight: 500;
-  line-height: 1.2;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-#hub-shell:not(.rail-expanded) .icon-rail :is(.icon-button, .icon-nav-item)::after { display: none; }
-#hub-shell .icon-rail :is(.icon-button, .icon-nav-item):hover { background: var(--interactive); color: var(--text); }
-#hub-shell .icon-rail .icon-nav-item.on { background: var(--selected); color: var(--text); }
-#hub-shell .icon-rail .icon-nav-item.on::after { font-weight: 600; }
-#hub-shell .icon-rail .navigation-group-start { margin-top: var(--space-2); }
-#hub-shell .icon-rail .icon-rail-main > .rail-bottom-start { margin-top: auto; }
 
 /* ===== AI作業画面（Hub自前） ===== */
 /* 左列に「＋ 新しい作業」があるあいだは、見出しの「＋ 新規」を重ねて出さない。 */
@@ -585,9 +528,9 @@
 /* ===== 画面の見直し（2026-10-11） ===== */
 /* 列の境目の線は普段は出さない（列の右の1px線で足りる）。つかんでいるときと焦点のときだけ見せる。 */
 #hub-shell .column-resizer::before { background: transparent; }
-#hub-shell .column-resizer:focus-visible::before, #hub-shell .column-resizer.dragging::before { background: var(--action); }
+#hub-shell .column-resizer:focus-visible::before, #hub-shell .column-resizer.dragging::before { background: var(--line-strong); }
 /* 左の列の節の見出しは、上の項目から離して小さく薄く。項目と見分けられるように。 */
-#hub-shell #sidebar-context .nav-group { margin: var(--space-4) 12px var(--space-1); font-size:var(--type-caption); font-weight: 600; letter-spacing: .04em; color: var(--muted); }
+#hub-shell #sidebar-context .nav-group { margin: var(--space-4) 12px var(--space-1); font-size:var(--type-caption); font-weight: 700; letter-spacing: .04em; color: var(--muted); }
 #hub-shell #sidebar-context .nav-group:first-child { margin-top: var(--space-1); }
 /* 一覧の中の「再試行」は文字の幅だけ。一覧の幅いっぱいに伸ばさない。 */
 #hub-shell .view button.head-action { justify-self: start; align-self: start; width: auto; padding-inline: var(--space-4); }
@@ -606,7 +549,7 @@
 #hub-shell .rail-marks .rail-view-button[aria-pressed="true"] svg { fill: currentColor; fill-opacity: .22; stroke-width: 2.1; }
 #hub-shell .rail-marks .rail-view-button:disabled { opacity: .38; }
 #hub-shell .rail-marks .rail-mark:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
-#hub-shell .rail-activity-head .rail-view-name { margin: 0; color: var(--text); font-size: var(--type-body); font-weight: 600; }
+#hub-shell .rail-activity-head .rail-view-name { margin: 0; color: var(--text); font-size: var(--type-body); font-weight: 700; }
 /* ブラウザのアドレス欄と操作は一番上の行へ（位置は app.js の placeBrowserStrip が測って入れる）。 */
 #hub-shell.browser-active #view-browser .browser-strip {
   position: fixed;
@@ -656,7 +599,7 @@
 #hub-shell #sidebar-tabs > #sidebar-tabs-list { min-height: 0; overflow-y: auto; }
 /* ブラウザの設定（メニューの「設定」） */
 #hub-shell #view-browser .browser-settings { display: grid; gap: var(--space-2); padding: var(--space-1) 2px var(--space-2); }
-#hub-shell #view-browser .browser-settings-head { margin: var(--space-2) 0 0; color: var(--muted); font-size: var(--type-caption); font-weight: 600; letter-spacing: .04em; }
+#hub-shell #view-browser .browser-settings-head { margin: var(--space-2) 0 0; color: var(--muted); font-size: var(--type-caption); font-weight: 700; letter-spacing: .04em; }
 #hub-shell #view-browser .browser-settings-head:first-child { margin-top: 0; }
 #hub-shell #view-browser :is(.browser-settings-check, .browser-settings-field) { display: flex; align-items: center; gap: var(--space-2); color: var(--text); font-size: var(--type-subhead); }
 #hub-shell #view-browser .browser-settings-field :is(input, select) { flex: 1; min-width: 0; }
@@ -679,7 +622,7 @@
 .omnibox-suggestions { position: fixed; z-index: 60; top: var(--omnibox-top, 48px); left: var(--omnibox-left, 50%); width: var(--omnibox-width, 600px); box-sizing: border-box; padding: var(--space-1); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--panel); box-shadow: var(--shadow-lg); }
 .omnibox-suggestions .omnibox-row { display: grid; gap: 2px; width: 100%; padding: var(--space-2) var(--space-3); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text); text-align: left; cursor: pointer; }
 .omnibox-suggestions .omnibox-row[aria-selected="true"], .omnibox-suggestions .omnibox-row:hover { background: var(--interactive); }
-.omnibox-suggestions .omnibox-row strong { overflow: hidden; font-size: var(--type-subhead); font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.omnibox-suggestions .omnibox-row strong { overflow: hidden; font-size: var(--type-subhead); font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
 .omnibox-suggestions .omnibox-row small { overflow: hidden; color: var(--muted); font-size:var(--type-caption); text-overflow: ellipsis; white-space: nowrap; }
 #hub-shell .app-toolbar #toolbar-search-form { max-width: none; min-width: 0; flex: none; }
 #hub-shell.browser-active #view-browser #browser-navigation { padding: 0; margin: 0; }
@@ -707,7 +650,7 @@
 /* ===== 最初の画面（タイムライン）を引き締める。2026-10-12 =====
    投稿欄の保存先・配信先は書いているときだけ出す。投稿は本文を主役に、操作の記号は詰めて控えめに。 */
 #hub-shell #composer:not(:focus-within):not(:has(textarea:not(:placeholder-shown))) :is(label:has(#composer-storage), details.detail-form) { display: none; }
-#hub-shell #view-feed .view-head h2 { font-size: var(--type-title3); font-weight: var(--weight-medium); letter-spacing: -.01em; }
+#hub-shell #view-feed .view-head h2 { font-size: var(--type-title3); font-weight: var(--weight-regular); letter-spacing: -.01em; }
 #hub-shell #view-feed .hub-network-bar { margin: 0 0 var(--space-2); font-size: var(--type-caption); color: var(--muted); }
 #hub-shell #view-feed #feed-list .post { padding: var(--space-4) var(--space-3); border-radius: 0; transition: background-color .12s ease; }
 #hub-shell #view-feed #feed-list .post:hover { background: var(--content-surface); }
@@ -715,7 +658,7 @@
 #hub-shell #view-feed #feed-list .post-body { font-size: var(--type-body); line-height: 1.6; color: var(--text); }
 #hub-shell #view-feed #feed-list .post-actions { display: flex; justify-content: space-between; max-width: 420px; margin-top: var(--space-2); }
 #hub-shell #view-feed #feed-list .post-action { display: inline-flex; align-items: center; gap: var(--space-1); min-height: 32px; height: 32px; padding: 0 var(--space-2); border-radius: var(--radius-pill); background: transparent; color: var(--muted); font-weight: 400; }
-#hub-shell #view-feed #feed-list .post-action:hover { background: color-mix(in srgb, var(--action) 14%, transparent); color: var(--action); }
+#hub-shell #view-feed #feed-list .post-action:hover { background: var(--interactive); color: var(--action); }
 #hub-shell #view-feed #feed-list .post-action svg { width: 17px; height: 17px; }
 #hub-shell #view-feed .social-stream-kind { margin: 0 0 2px 54px; font-size: var(--type-caption); color: var(--muted); }
 
@@ -723,7 +666,7 @@
 /* 投稿の操作の記号：どの画面でも詰めて控えめに。 */
 #hub-shell .view .post-actions { display: flex; justify-content: space-between; max-width: 420px; margin-top: var(--space-2); }
 #hub-shell .view .post-action { display: inline-flex; align-items: center; gap: var(--space-1); min-height: 32px; height: 32px; padding: 0 var(--space-2); border-radius: var(--radius-pill); background: transparent; color: var(--muted); font-weight: 400; }
-#hub-shell .view .post-action:hover { background: color-mix(in srgb, var(--action) 14%, transparent); color: var(--action); }
+#hub-shell .view .post-action:hover { background: var(--interactive); color: var(--action); }
 #hub-shell .view .post-action svg { width: 17px; height: 17px; }
 /* 自分の投稿の「編集」「削除」は枠なしの小さな文字に。 */
 #hub-shell .view .post-own-tool { min-height: 26px; height: 26px; padding: 0 var(--space-2); border: 0; border-radius: var(--radius-xs); background: transparent; color: var(--muted); font-size: var(--type-caption); font-weight: 400; }
@@ -734,10 +677,10 @@
 #hub-shell #view-feed .social-stream-card .social-stream-kind { margin: 0 0 var(--space-1); }
 #hub-shell #view-feed .social-stream-card .detail-h { margin: 0 0 var(--space-2); font-size: var(--type-body); font-weight: 700; }
 #hub-shell #view-feed .social-stream-card .post-body { font-size: var(--type-body); line-height: 1.6; }
-#hub-shell #view-feed .social-stream-open { min-height: 26px; height: 26px; padding: 0; border: 0; background: transparent; color: var(--action); font-size: var(--type-caption); font-weight: 500; }
+#hub-shell #view-feed .social-stream-open { min-height: 26px; height: 26px; padding: 0; border: 0; background: transparent; color: var(--action); font-size: var(--type-caption); font-weight: 400; }
 #hub-shell #view-feed .social-stream-open:hover { background: transparent; text-decoration: underline; }
 /* プロフィール：頭を大きく、数字を太く。投稿はタイムラインと同じ行に。 */
-#hub-shell #view-profile .profile-card { display: flex; gap: var(--space-4); align-items: flex-start; padding: var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-md); background: linear-gradient(180deg, color-mix(in srgb, var(--action) 12%, var(--content-surface)), var(--content-surface) 60%); }
+#hub-shell #view-profile .profile-card { display: flex; gap: var(--space-4); align-items: flex-start; padding: var(--space-6); border: 1px solid var(--line); border-radius: var(--radius-md); background: transparent; }
 #hub-shell #view-profile .profile-avatar { width: 88px; height: 88px; flex: none; font-size: var(--type-title1); }
 #hub-shell #view-profile #profile-name { font-size: var(--type-title2); font-weight: 700; }
 #hub-shell #view-profile #profile-stats { color: var(--text); font-size: var(--type-subhead); }
@@ -760,7 +703,7 @@
 /* 会話一覧が空のとき、左の列では空の案内を繰り返さない（中央に同じ案内が出る）。 */
 #hub-shell #sidebar-context .messages-side .empty-state { display: none; }
 /* 読み込み失敗は、空の案内と同じ位置と形で出す。 */
-#hub-shell #music-tracks-state.warning { margin: var(--space-7) auto var(--space-3); max-width: 420px; text-align: center; color: var(--muted); }
+#hub-shell #music-tracks-state.warning { margin: var(--space-8) auto var(--space-3); max-width: 420px; text-align: center; color: var(--muted); }
 #hub-shell #music-tracks > button.head-action:only-child { display: block; margin: 0 auto; }
 /* 画像のない商品は、枠の色と印で「画像なし」と分かるようにする。 */
 #hub-shell .result-media.is-placeholder { background: var(--content-nested); display: grid; place-items: center; }
@@ -772,7 +715,7 @@
 #hub-shell #video-watch-main > .actions > .meta:empty { display: none; }
 #hub-shell .video-posts { margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--line); }
 #hub-shell .video-posts .video-posts-composer textarea { min-height: 56px; }
-#hub-shell .video-posts .video-posts-send:not(:disabled) { background: var(--action); color: var(--action-text); border-color: transparent; }
+#hub-shell .video-posts .video-posts-send:not(:disabled) { background: var(--ds-btn-primary-bg); color: var(--ds-btn-primary-fg); box-shadow: inset 0 0 0 1px var(--ds-btn-primary-line); border-color: transparent; }
 #hub-shell .video-posts .video-posts-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin: var(--space-1) 0 0; padding-bottom: var(--space-2); border-bottom: 1px solid var(--line); }
 #hub-shell .video-posts .video-posts-bar .meta { margin: 0; }
 #hub-shell .video-posts .video-posts-bar .head-action { background: transparent; border-color: transparent; color: var(--muted); }

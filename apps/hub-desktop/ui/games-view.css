@@ -1,7 +1,7 @@
 /* ゲーム画面。トークンと components.css の部品だけを使う。 */
-#view-games .games-section { padding-inline: var(--space-5); margin-bottom: var(--space-5); }
+#view-games .games-section { padding-inline: var(--space-6); margin-bottom: var(--space-6); }
 #view-games .games-section > h3,
-#view-games .games-local-head > h3 { margin: 0; font-size: var(--type-headline); line-height: var(--lh-headline); font-weight: var(--weight-semibold); color: var(--text); }
+#view-games .games-local-head > h3 { margin: 0; font-size: var(--type-headline); line-height: var(--lh-headline); font-weight: var(--weight-bold); color: var(--text); }
 #view-games .games-section > h3 { margin-bottom: var(--space-3); }
 #view-games .games-search { min-width: 0; width: 16rem; max-width: 100%; height: var(--control-height); padding-inline: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--interactive); color: var(--text); font: inherit; }
 #view-games .games-search:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
@@ -18,12 +18,12 @@
 #view-games .games-media img { display: block; width: 100%; height: 100%; object-fit: cover; }
 #view-games .games-capsule:hover .games-media { box-shadow: var(--elevation-2); }
 #view-games .games-body { display: grid; gap: var(--space-1); }
-#view-games .games-title { font-size: var(--type-subhead); line-height: var(--lh-subhead); font-weight: var(--weight-semibold); color: var(--text); overflow-wrap: anywhere; }
-#view-games .games-summary { margin: 0; color: var(--text-body); font-size: var(--type-body); line-height: var(--lh-body); }
+#view-games .games-title { font-size: var(--type-subhead); line-height: var(--lh-subhead); font-weight: var(--weight-bold); color: var(--text); overflow-wrap: anywhere; }
+#view-games .games-summary { margin: 0; color: var(--type-body); font-size: var(--type-body); line-height: var(--lh-body); }
 #view-games .games-meta { color: var(--muted); font-size: var(--type-caption); line-height: var(--lh-caption); }
 #view-games .games-badges { display: flex; flex-wrap: wrap; gap: var(--space-1); }
 #view-games .games-badge { padding: 0 var(--space-2); border-radius: var(--radius-pill); background: var(--chip-bg); color: var(--chip-text); font-size: var(--type-caption); line-height: var(--lh-caption); }
-#view-games .games-featured { margin-bottom: var(--space-5); }
+#view-games .games-featured { margin-bottom: var(--space-6); }
 #view-games .games-featured .games-title { font-size: var(--type-title2); line-height: var(--lh-title2); }
 #view-games .games-grid,
 #view-games .games-skeleton { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: var(--space-4); }

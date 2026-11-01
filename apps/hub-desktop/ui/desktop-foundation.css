@@ -60,7 +60,7 @@ html[data-motion="reduce"] *::after {
   color: var(--text);
   font: inherit;
   font-size: var(--type-subhead);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   line-height: 1.2;
   white-space: nowrap;
   cursor: pointer;
@@ -71,9 +71,9 @@ html[data-motion="reduce"] *::after {
 :where(.ds-btn:disabled) { opacity: .45; cursor: default; }
 :where(.ds-btn.is-lg) { min-height: var(--control-h-lg); padding: 0 var(--space-4); }
 :where(.ds-btn.is-pill) { border-radius: var(--radius-pill); }
-:where(.ds-btn-primary) { background: var(--action); color: var(--action-text); }
-:where(.ds-btn-primary:hover:not(:disabled)) { background: var(--action-hover); }
-:where(.ds-btn-primary:active:not(:disabled)) { background: var(--action-active); }
+:where(.ds-btn-primary) { background: var(--ds-btn-primary-bg); color: var(--ds-btn-primary-fg); box-shadow: inset 0 0 0 1px var(--ds-btn-primary-line); }
+:where(.ds-btn-primary:hover:not(:disabled)) { opacity: .86; }
+:where(.ds-btn-primary:active:not(:disabled)) { opacity: .72; }
 :where(.ds-btn-plain) { background: transparent; color: var(--muted); }
 :where(.ds-btn-plain:hover:not(:disabled)) { background: var(--interactive); color: var(--text); }
 :where(.ds-btn-danger) { color: var(--danger-text); }
@@ -102,7 +102,7 @@ html[data-motion="reduce"] *::after {
   color: var(--text);
   font: inherit;
   font-size: var(--type-subhead);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   white-space: nowrap;
   cursor: pointer;
   transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
@@ -128,7 +128,7 @@ html[data-motion="reduce"] *::after {
   color: var(--muted);
   font: inherit;
   font-size: var(--type-subhead);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   cursor: pointer;
   transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
 }
@@ -144,7 +144,7 @@ html[data-motion="reduce"] *::after {
   color: var(--muted);
   font: inherit;
   font-size: var(--type-subhead);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   cursor: pointer;
 }
 :where(.ds-tab[aria-selected="true"], .ds-tab.is-on) { color: var(--text); }
@@ -165,9 +165,9 @@ html[data-motion="reduce"] *::after {
 }
 :where(.ds-switch-track)::after {
   content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%;
-  background: var(--action-text); transition: transform var(--dur-fast) var(--ease-spring);
+  background: var(--text); transition: transform var(--dur-fast) var(--ease-spring);
 }
-:where(.ds-switch input:checked + .ds-switch-track) { background: var(--action); }
+:where(.ds-switch input:checked + .ds-switch-track) { background: transparent; box-shadow: inset 0 0 0 1px var(--emphasis); }
 :where(.ds-switch input:checked + .ds-switch-track)::after { transform: translateX(16px); }
 :where(.ds-switch input:disabled + .ds-switch-track) { opacity: .45; }
 
@@ -197,7 +197,7 @@ html[data-motion="reduce"] *::after {
   background: var(--interactive);
   color: var(--text);
   font-size: calc(var(--size) * .4);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   line-height: 1;
 }
 :where(.ds-avatar.is-20) { --size: 20px; }
@@ -222,7 +222,7 @@ html[data-motion="reduce"] *::after {
   position: absolute; right: var(--space-2); bottom: var(--space-2);
   padding: 2px var(--space-1); border-radius: var(--radius-xs);
   background: var(--media-badge-bg); color: var(--media-badge-text);
-  font-size: var(--type-caption); font-weight: 500; line-height: var(--lh-caption); font-variant-numeric: tabular-nums;
+  font-size: var(--type-caption); font-weight: 400; line-height: var(--lh-caption); font-variant-numeric: tabular-nums;
 }
 :where(.ds-cover) {
   display: grid; place-items: center; width: 100%; height: 100%; padding: var(--space-4);
@@ -266,7 +266,7 @@ html[data-motion="reduce"] *::after {
 
 /* ---- トースト：下中央、高さ 36 ---- */
 :where(.ds-toast) {
-  position: fixed; left: 50%; bottom: var(--space-5); transform: translateX(-50%);
+  position: fixed; left: 50%; bottom: var(--space-6); transform: translateX(-50%);
   display: inline-flex; align-items: center; gap: var(--space-3);
   min-height: 36px; padding: 0 var(--space-4);
   border-radius: var(--radius-pill);
@@ -278,7 +278,7 @@ html[data-motion="reduce"] *::after {
 }
 
 /* ---- 空の状態：記号 40、題 15/600、説明 13 muted、押し手 1 つ ---- */
-:where(.ds-empty) { display: grid; justify-items: center; gap: var(--space-2); padding: var(--space-7) var(--space-5); color: var(--muted); text-align: center; }
+:where(.ds-empty) { display: grid; justify-items: center; gap: var(--space-2); padding: var(--space-8) var(--space-6); color: var(--muted); text-align: center; }
 :where(.ds-empty > svg) { width: 40px; height: 40px; }
-:where(.ds-empty > strong) { color: var(--text); font-size: var(--type-body); font-weight: var(--weight-semibold); }
+:where(.ds-empty > strong) { color: var(--text); font-size: var(--type-body); font-weight: var(--weight-bold); }
 :where(.ds-empty > p) { margin: 0; font-size: var(--type-subhead); line-height: var(--lh-subhead); }

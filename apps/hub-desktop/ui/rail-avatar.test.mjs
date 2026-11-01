@@ -5,7 +5,7 @@ import { JSDOM } from 'jsdom';
 import { railAvatarModel, paintRailAvatar } from './rail-avatar.mjs';
 
 const html = readFileSync(new URL('./index.html', import.meta.url), 'utf8');
-const css = readFileSync(new URL('./desktop-shell.css', import.meta.url), 'utf8');
+const css = readFileSync(new URL('./desktop-frame.css', import.meta.url), 'utf8');
 const app = readFileSync(new URL('./app.js', import.meta.url), 'utf8');
 const slot = () => new JSDOM('<span id="rail-profile-avatar"></span>').window.document.querySelector('#rail-profile-avatar');
 const resolve = (img, url) => { img.src = 'https://hub.example' + url; };

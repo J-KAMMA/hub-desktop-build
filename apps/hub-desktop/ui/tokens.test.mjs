@@ -145,13 +145,13 @@ test('new foundation and lane css use tokens only: no raw colours', () => {
   }
 });
 
-test('font stack is the web one (no proprietary Apple faces) and weights are 400/600/700 families only', () => {
+test('font stack is the web one (no proprietary Apple faces) and weights never use 500, 600, 650, 760 or 900 (400 · 700 · 800 only)', () => {
   const css = stripComments(read('tokens.css'));
   assert.match(css, /"Segoe UI Variable Text"/);
   assert.match(css, /"Hiragino Sans"/);
   assert.doesNotMatch(css, /SF Pro/);
   for (const file of readdirSync(dir).filter((f) => f.endsWith('.css'))) {
-    assert.doesNotMatch(stripComments(read(file)), /font-weight\s*:\s*(650|760|800|900)\b/, file);
+    assert.doesNotMatch(stripComments(read(file)), /font-weight\s*:\s*(500|600|650|760|900)\b/, file);
   }
 });
 

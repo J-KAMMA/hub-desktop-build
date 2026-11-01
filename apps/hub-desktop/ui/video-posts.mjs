@@ -30,10 +30,10 @@ export function createContentPosts(document, { kind = 'video', id: contentId, in
   element.className = 'detail-section video-posts';
   element.setAttribute('aria-label', kind === 'music' ? '曲のポスト' : '動画のポスト');
   const heading = document.createElement('h3');
-  heading.textContent = 'ポスト';
+  heading.textContent = kind === 'music' ? 'ポスト' : 'コメント';
   const note = document.createElement('p');
   note.className = 'meta';
-  note.textContent = kind === 'music' ? 'この曲についてのHubのポストです。リポストすると曲へのリンクが付きます。' : 'この動画についてのHubのポストです。リポストすると動画へのリンクが付きます。';
+  note.textContent = kind === 'music' ? 'この曲についてのHubのポストです。リポストすると曲へのリンクが付きます。' : 'この動画へのコメントです。「フィードにも出す」にチェックを入れたときだけ、フォロワーのフィードにも載ります。';
   const status = document.createElement('p');
   status.className = 'meta';
   status.setAttribute('role', 'status');
@@ -44,7 +44,7 @@ export function createContentPosts(document, { kind = 'video', id: contentId, in
   input.maxLength = LIMIT;
   input.setAttribute('aria-label', kind === 'music' ? '曲についてのポスト' : '動画についてのポスト');
   input.value = typeof state.body === 'string' ? state.body : '';
-  input.placeholder = kind === 'music' ? 'この曲について書く' : 'この動画について書く';
+  input.placeholder = kind === 'music' ? 'この曲について書く' : 'この動画へのコメントを書く';
   const count = document.createElement('span');
   count.className = 'meta';
   const button = (text, action) => {
@@ -55,7 +55,15 @@ export function createContentPosts(document, { kind = 'video', id: contentId, in
     node.onclick = action;
     return node;
   };
-  const send = button('ポストする', null);
+  const send = button(kind === 'music' ? 'ポストする' : 'コメントする', null);
+  // 動画のコメントだけ「フィードにも出す」を持つ。既定は出さない。
+  const feedLabel = document.createElement('label');
+  feedLabel.className = 'meta video-posts-feed';
+  const feedBox = document.createElement('input');
+  feedBox.type = 'checkbox';
+  feedBox.checked = state.inFeed === true;
+  feedBox.onchange = () => { state.inFeed = feedBox.checked; };
+  feedLabel.append(feedBox, ' フィードにも出す');
   send.type = 'submit';
   send.classList.add('video-posts-send');
   const repost = button('リポスト', () => submit(true));
@@ -106,7 +114,8 @@ export function createContentPosts(document, { kind = 'video', id: contentId, in
     event.preventDefault();
     return submit(false);
   };
-  form.append(input, count, send, repost);
+  if (kind === 'music') form.append(input, count, send, repost);
+  else form.append(input, feedLabel, count, send);
   // 件数と「更新」は1行にまとめる。
   const bar = document.createElement('div');
   bar.className = 'video-posts-bar';
@@ -162,7 +171,7 @@ export function createContentPosts(document, { kind = 'video', id: contentId, in
     status.textContent = asRepost ? 'リポストしています…' : '投稿しています…';
     paint();
     try {
-      const value = await invoke('hub_client_action', { action: spec.create, target: contentId, options: { body } });
+      const value = await invoke('hub_client_action', { action: spec.create, target: contentId, options: kind === 'music' ? { body } : { body, inFeed: feedBox.checked } });
       if (!active(turn) || !usable()) return;
       const post = value?.post;
       if (!post || typeof post !== 'object' || typeof post.id !== 'string' || !post.id) throw Error('unconfirmed');

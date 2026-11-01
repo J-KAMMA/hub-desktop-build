@@ -16,7 +16,7 @@ test('Browser preserves DOM splitters and prevents Native overlay over external 
  f.shell.classList.remove('browser-active'); await f.flush();
  assert.ok(f.calls.at(-1).args.sidebar); assert.ok(f.calls.at(-1).args.rail);
 });
-async function fixture(t,{tool=null,viewport=1440,registration=null}={}){
+async function fixture(t,{tool=null,viewport=1700,registration=null}={}){
  const dom=new JSDOM(readFileSync(new URL('./index.html',import.meta.url),'utf8'),{url:'https://resize.invalid/',pretendToBeVisual:true}),{document,localStorage}=dom.window,shell=document.querySelector('.app-shell');const events={},frames=[],calls=[],resizes=[];
  const f={dom,document,shell,events,frames,calls,resizes,fail:false,tokens:{'--panel':'#fff','--line-strong':'rgba(0, 0, 0, .3)','--action':'rgba(0, 100, 200, .5)'},rects:{sidebar:{x:240,y:44,width:6,height:800},rail:{x:1070,y:44,width:6,height:800}}};
  shell.classList.add('rail-open');Object.defineProperty(dom.window,'innerWidth',{value:viewport,writable:true});localStorage.setItem('hub.desktop.sidebarWidth.compact','245');localStorage.setItem('hub.desktop.railWidth','360');
@@ -37,11 +37,11 @@ for(const [side,min,initial,sign] of [['sidebar',190,245,1],['rail',240,360,-1]]
  const f=await fixture(t);f.ready();f.event(side,'start',1,400);f.event(side,'move',1,400+(min-initial-40)*sign);assert.equal(f.width(side),min);assert.equal(f.document.body.classList.contains('column-resizing'),true);f.event(side,'move',2,900);assert.equal(f.width(side),min);f.event(side,'cancel',1,400);assert.equal(f.width(side),initial);assert.equal(f.read('preferredColumnWidth.'+side),initial);
  f.event(side,'start',2,400);f.event(side,'move',2,400+10*sign);f.event(side,'end',2,400);assert.equal(f.width(side),initial+10);f.event(side,'move',2,0);assert.equal(f.width(side),initial+10);
  f.event(side,'start',3,400);f.event(side,'move',3,400+(min-(initial+10)-41)*sign);assert.equal(f.read('preferredColumnWidth.'+side),initial+10);assert.equal(f.document.body.classList.contains('column-resizing'),false);f.event(side,'end',3,400);
- f.shell.classList.toggle(side==='sidebar'?'sidebar-collapsed':'rail-open',side!=='sidebar');f.read('applyColumnWidths()');f.event(side,'reset',4,400);assert.equal(f.read('preferredColumnWidth.'+side),null);assert.equal(f.width(side),side==='sidebar'?210:300);f.event(side,'start',3,400);assert.equal(f.document.body.classList.contains('column-resizing'),false);
+ f.shell.classList.toggle(side==='sidebar'?'sidebar-collapsed':'rail-open',side!=='sidebar');f.read('applyColumnWidths()');f.event(side,'reset',4,400);assert.equal(f.read('preferredColumnWidth.'+side),null);assert.equal(f.width(side),side==='sidebar'?300:380);f.event(side,'start',3,400);assert.equal(f.document.body.classList.contains('column-resizing'),false);
 });
 test('malformed exact payload and unsafe numeric widths/session cause no state mutation',async t=>{
  const f=await fixture(t);f.ready();const before=f.width('sidebar'),valid={side:'sidebar',phase:'start',session:1,x:400};for(const payload of [null,[],{...valid,extra:0},{...valid,side:'__proto__'},{...valid,phase:'constructor'},{...valid,session:0},{...valid,session:1.5},{...valid,session:Number.MAX_SAFE_INTEGER+1},{...valid,x:NaN},{...valid,x:Infinity},{...valid,x:32768},Object.create(valid)])f.events['native-shell-resize']({payload});assert.equal(f.width('sidebar'),before);assert.equal(f.document.body.classList.contains('column-resizing'),false);
- f.event('sidebar','start',Number.MAX_SAFE_INTEGER,-32767);f.event('sidebar','move',Number.MAX_SAFE_INTEGER,32767);f.event('sidebar','end',Number.MAX_SAFE_INTEGER,32767);assert.equal(f.width('sidebar'),260);f.event('sidebar','reset',1,0);assert.notEqual(f.read('preferredColumnWidth.sidebar'),null);
+ f.event('sidebar','start',Number.MAX_SAFE_INTEGER,-32767);f.event('sidebar','move',Number.MAX_SAFE_INTEGER,32767);f.event('sidebar','end',Number.MAX_SAFE_INTEGER,32767);assert.equal(f.width('sidebar'),420);f.event('sidebar','reset',1,0);assert.notEqual(f.read('preferredColumnWidth.sidebar'),null);
 });
 test('main/live actual rect and modal checks reject starts; disappearing rect and ready false cancel existing width',async t=>{
  const f=await fixture(t);f.ready();const h=f.document.getElementById('rail-resizer');h.hidden=true;f.event('rail','start',1,400);assert.equal(f.document.body.classList.contains('column-resizing'),false);h.hidden=false;
