@@ -12035,6 +12035,7 @@ feedFreshShow.onclick = () => {
   const syncUpdates = () => {
     for (const section of feed.list.querySelectorAll(".research-feed-updates")) {
       section.dataset.count = String(section.querySelectorAll(".feed-update-row").length);
+      section.hidden = section.dataset.count === "0";
       const head = section.querySelector("h3");
       if (head) head.dataset.countText = section.dataset.count + "件";
       if (!head || head.dataset.bound) continue;

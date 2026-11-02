@@ -416,3 +416,120 @@
 
 /* The sticky header starts at the top of the column: no 24px of view padding above it. */
 #hub-shell .view:not(#view-browser):not(#view-ai):has(> :is(.view-head, .page-header):first-child) { padding-top: 0; }
+
+/* ===== Header breathing room, chips and the four button kinds (2026-11-02, owner: header cramped, buttons cheap) ===== */
+:root { --divider: var(--line); }
+/* Tab row: still the 53px sticky header. Tabs keep a fixed minimum width and 16px side padding; overflow scrolls sideways with no visible scrollbar. */
+#hub-shell .view .page-tabs {
+  scrollbar-width: none;
+  scrollbar-color: transparent transparent;
+  -ms-overflow-style: none;
+}
+#hub-shell .view .page-tabs::-webkit-scrollbar { display: none; width: 0; height: 0; }
+#hub-shell .view > :is(.view-head, .page-header):has(> .page-tabs:not(:empty)) > .page-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+#hub-shell .view > :is(.view-head, .page-header):has(> .page-tabs:not(:empty)) > .page-tabs > :is(.page-tab, [role="tab"], button) {
+  flex: 0 0 auto;
+  min-width: 88px;
+  padding-inline: var(--ds-space-4);
+  font-size: var(--ds-type-body-size);
+  white-space: nowrap;
+}
+#hub-shell .view > :is(.view-head, .page-header):has(> .page-tabs:not(:empty)) > :is(.view-head-actions, .page-actions) { gap: var(--ds-space-1); margin-left: var(--ds-space-2); }
+
+/* Chip bar: 16px above and below, a 1px divider under it, 16px page inset. */
+#hub-shell .view :is(.sidebar-chip-strip, .view-chip-host) {
+  box-sizing: border-box;
+  margin: 0;
+  padding: var(--ds-space-4) var(--ds-page-inset);
+  border-bottom: 1px solid var(--divider);
+}
+#hub-shell .view :is(.sidebar-chip-strip, .view-chip-host):empty { display: none; }
+#hub-shell .view :is(.chip-row, .segmented, .scopes) { padding-block: var(--ds-space-4); }
+
+/* One chip: 32px, pill, 400, 13px, transparent with a hairline. Selected = a 1px line (gold in 黒金, text color in 白黒), never a fill. */
+#hub-shell :is(.chip, .sidebar-chip, .scope, .chip-row > button, .segmented > button, .scopes > button):not(#_) {
+  box-sizing: border-box;
+  height: var(--ds-chip-h);
+  min-height: var(--ds-chip-h);
+  padding: 0 var(--ds-chip-px);
+  border: 1px solid var(--divider);
+  border-radius: var(--ds-radius-pill);
+  background: transparent;
+  box-shadow: none;
+  color: var(--text);
+  font-size: var(--ds-type-meta-size);
+  line-height: var(--ds-type-meta-leading);
+  font-weight: var(--ds-weight-text);
+  letter-spacing: 0;
+}
+#hub-shell :is(.chip, .sidebar-chip, .scope, .chip-row > button, .segmented > button, .scopes > button):not(#_):hover { background: var(--interactive); }
+#hub-shell :is(.chip.on, .sidebar-chip[aria-pressed="true"], .scope.on, .chip-row > .on, .segmented > .on, .scopes > .on, .chip-row > [aria-pressed="true"], .segmented > [aria-pressed="true"], .scopes > [aria-pressed="true"]):not(#_) {
+  border-color: var(--ds-chip-selected-line);
+  background: transparent;
+  color: var(--text);
+  font-weight: var(--ds-weight-text);
+}
+
+/* "新しい作品 N件" never shows for zero. */
+#hub-shell #view-feed .research-feed-updates[hidden],
+#hub-shell #view-feed .research-feed-updates[data-count="0"] { display: none; }
+
+/* Four button kinds, defined once. primary: outline pill (gold line in 黒金). secondary: hairline pill. ghost: text only. icon: 32px round ghost. */
+#hub-shell :where(.btn, .approve, .deny, .head-action, button.ghost):not(#_) {
+  box-sizing: border-box;
+  min-height: var(--ds-btn-h);
+  padding: 0 var(--ds-btn-px);
+  border: 1px solid transparent;
+  border-radius: var(--ds-radius-pill);
+  background: transparent;
+  box-shadow: none;
+  color: var(--text);
+  font-size: var(--ds-type-body-size);
+  font-weight: var(--ds-weight-strong);
+  letter-spacing: 0;
+}
+#hub-shell :is(.btn-primary, .approve):not(#_) { border-color: var(--ds-btn-primary-line); background: var(--ds-btn-primary-bg); color: var(--ds-btn-primary-fg); }
+html[data-palette="gold-ivory"] #hub-shell :is(.btn-primary, .approve):not(#_) { background: transparent; }
+#hub-shell :is(.btn-secondary, .deny, .head-action):not(#_) { border-color: var(--divider); background: transparent; color: var(--text); }
+#hub-shell :is(.btn-secondary, .deny, .head-action):not(#_):hover:not(:disabled) { background: var(--interactive); }
+#hub-shell :is(.btn-ghost, button.ghost):not(#_) { border-color: transparent; background: transparent; color: var(--muted); }
+#hub-shell :is(.btn-ghost, button.ghost):not(#_):hover:not(:disabled) { background: var(--interactive); color: var(--text); }
+#hub-shell .btn-icon:not(#_) {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: var(--ds-icon-btn-compact);
+  height: var(--ds-icon-btn-compact);
+  min-width: var(--ds-icon-btn-compact);
+  min-height: var(--ds-icon-btn-compact);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+}
+#hub-shell .btn-icon:not(#_):hover:not(:disabled) { background: var(--interactive); color: var(--text); }
+#hub-shell .btn-icon:not(#_):focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+#hub-shell .btn-icon:not(#_) svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+#hub-shell .btn-icon:not(#_) svg circle { fill: currentColor; stroke: none; }
+/* The boxy one-offs: the new-posts bubble and the post-preview buttons become pills. */
+#hub-shell #view-feed .feed-fresh button:not(#_) { border: 1px solid var(--ds-btn-primary-line); background: transparent; color: var(--ds-btn-primary-line); box-shadow: none; }
+#hub-shell .rail-post-preview-actions button:not(#_) { border: 1px solid var(--divider); border-radius: var(--ds-radius-pill); background: transparent; }
+#hub-shell .rail-head-action:not(#_) { border-radius: var(--ds-radius-pill); color: var(--muted); }
+
+/* Rail 投稿: still a 48px icon with a gold outline, now a squircle like the other rail items. */
+#hub-shell .icon-rail #desktop-compose:not([hidden]):not(#_) {
+  height: 48px;
+  min-height: 48px;
+  border-radius: var(--ds-radius-card);
+  background: transparent;
+  color: var(--ds-btn-primary-line);
+}
+#hub-shell .icon-rail #desktop-compose:not([hidden]):not(#_):hover { background: var(--interactive); opacity: 1; }

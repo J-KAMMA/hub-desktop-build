@@ -157,7 +157,7 @@
     </section>
 
     <section class="view on" id="view-feed" data-view-panel="feed">
-      <header class="page-header"><h2 class="page-title">タイムライン</h2><div class="page-actions"><button id="feed-refresh" type="button" class="btn btn-secondary">更新</button><button id="feed-sources-toggle" type="button" class="btn btn-ghost" aria-label="表示元と接続先" aria-expanded="false" aria-controls="view-feed" title="表示元と接続先"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="18.5" cy="12" r="1.4"/></svg></button></div><div class="page-tabs" id="feed-tabs" role="tablist" aria-label="タイムラインの種類"></div></header>
+      <header class="page-header"><h2 class="page-title">タイムライン</h2><div class="page-actions"><button id="feed-refresh" type="button" class="btn btn-ghost btn-icon" aria-label="更新" title="更新"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 3.5v3.7h-3.7"/></svg></button><button id="feed-sources-toggle" type="button" class="btn btn-ghost btn-icon" aria-label="表示元と接続先" aria-expanded="false" aria-controls="view-feed" title="表示元と接続先"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="18.5" cy="12" r="1.4"/></svg></button></div><div class="page-tabs" id="feed-tabs" role="tablist" aria-label="タイムラインの種類"></div></header>
       <div class="layout-list" id="feed-body">
         <p class="meta" id="feed-state" aria-live="polite">読み込み中…</p>
         <p class="meta source-summary" id="feed-sources" aria-live="polite"></p>
@@ -308,7 +308,7 @@
 
     <section class="view layout-grid" id="view-videos" data-view-panel="videos">
       <div id="video-discover">
-        <div class="view-head page-header"><h2 class="page-title">動画</h2><div class="view-head-actions page-actions"><span hidden><button id="video-playlists" type="button">プレイリスト</button><button id="video-saved" type="button">あとで見る</button></span><button id="video-refresh" type="button" class="ghost btn btn-ghost">更新</button></div></div>
+        <div class="view-head page-header"><h2 class="page-title">動画</h2><div class="view-head-actions page-actions"><span hidden><button id="video-playlists" type="button">プレイリスト</button><button id="video-saved" type="button">あとで見る</button></span><button id="video-refresh" type="button" class="ghost btn btn-ghost btn-icon" aria-label="更新" title="更新"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 3.5v3.7h-3.7"/></svg></button></div></div>
         <form id="video-search" class="searchbar" role="search"><input id="video-query" type="search" maxlength="100" placeholder="Hubの動画を検索" aria-label="Hubの動画を検索"><button id="video-search-hub" type="submit" class="head-action">検索</button><button id="video-search-web" type="button" class="ghost">Webで探す</button></form>
         <div id="video-home" class="vh-home" hidden></div>
         <div id="video-categories" class="video-categories" role="group" aria-label="読み込んだ動画のカテゴリ" hidden></div>
@@ -330,7 +330,7 @@
     </section>
 
     <section class="view layout-grid" id="view-music" data-view-panel="music">
-      <div class="view-head page-header"><h2 class="page-title">音楽</h2><div class="view-head-actions page-actions"><span hidden><button id="music-playlists" type="button">プレイリスト</button><button id="music-saved" type="button">お気に入り</button></span><button id="music-refresh" type="button" class="ghost btn btn-ghost">更新</button></div></div>
+      <div class="view-head page-header"><h2 class="page-title">音楽</h2><div class="view-head-actions page-actions"><span hidden><button id="music-playlists" type="button">プレイリスト</button><button id="music-saved" type="button">お気に入り</button></span><button id="music-refresh" type="button" class="ghost btn btn-ghost btn-icon" aria-label="更新" title="更新"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 3.5v3.7h-3.7"/></svg></button></div></div>
       <div class="music-tabs" role="tablist" aria-label="音楽の種類">
         <button id="music-tab-home" class="music-tab on" type="button" role="tab" aria-selected="true" aria-controls="music-home">ホーム</button>
         <button id="music-tab-tracks" class="music-tab" type="button" role="tab" aria-selected="false" aria-controls="music-stream">公開曲</button>
@@ -452,7 +452,7 @@
     </section>
 
     <section class="view" id="view-compute" data-view-panel="compute">
-      <div class="view-head"><h2>Compute</h2><div class="view-head-actions"><button id="compute-refresh" type="button" class="ghost">更新</button></div></div>
+      <div class="view-head"><h2>Compute</h2><div class="view-head-actions"><button id="compute-refresh" type="button" class="ghost btn-icon" aria-label="更新" title="更新"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 3.5v3.7h-3.7"/></svg></button></div></div>
       <p class="meta" id="compute-state" aria-live="polite"></p>
       <details class="card compute-demo">
         <summary>デモ（無料）</summary>
@@ -534,7 +534,7 @@
     </section>
 
     <section class="view" id="view-research" data-view-panel="research">
-      <div class="view-head page-header"><h2 class="page-title">プロジェクトと研究</h2><div class="view-head-actions page-actions" id="research-head-actions"><button id="research-refresh" type="button" class="ghost btn btn-ghost">更新</button><button id="research-create-web" type="button" class="approve btn btn-primary">＋ プロジェクトを作成</button></div></div>
+      <div class="view-head page-header"><h2 class="page-title">プロジェクトと研究</h2><div class="view-head-actions page-actions" id="research-head-actions"><button id="research-refresh" type="button" class="ghost btn btn-ghost btn-icon" aria-label="更新" title="更新"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 3.5v3.7h-3.7"/></svg></button><button id="research-create-web" type="button" class="approve btn btn-primary">＋ プロジェクトを作成</button></div></div>
       <p class="meta">コード・論文・データをプロジェクトごとにまとめ、版と検証関係を確認します。</p>
       <div class="research-index-tools filter-row"><input id="research-query" type="search" placeholder="プロジェクト名・概要を検索" aria-label="プロジェクト名・概要を検索" maxlength="100"></div>
       <div id="research-github-panel"></div>
@@ -542,12 +542,12 @@
     </section>
 
     <section class="view" id="view-wallet" data-view-panel="wallet">
-      <div class="view-head"><h2>ウォレット</h2><div class="view-head-actions"><button id="wallet-refresh" type="button" class="ghost">更新</button></div></div>
+      <div class="view-head"><h2>ウォレット</h2><div class="view-head-actions"><button id="wallet-refresh" type="button" class="ghost btn-icon" aria-label="更新" title="更新"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 3.5v3.7h-3.7"/></svg></button></div></div>
       <p class="meta" id="wallet-state" aria-live="polite"></p><div id="wallet-results" class="result-grid"></div>
     </section>
 
     <section class="view" id="view-node" data-view-panel="node">
-      <div class="view-head"><h2>Personal Node</h2><div class="view-head-actions"><button id="node-refresh" type="button" class="ghost">更新</button></div></div>
+      <div class="view-head"><h2>Personal Node</h2><div class="view-head-actions"><button id="node-refresh" type="button" class="ghost btn-icon" aria-label="更新" title="更新"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 3.5v3.7h-3.7"/></svg></button></div></div>
       <div id="personal-node-dashboard"></div>
       <div class="card node-card">
         <div class="field"><label for="node-name">名前</label><input id="node-name" type="text" maxlength="80" spellcheck="false"></div><div class="field"><label for="node-url">公開URL</label><input id="node-url" type="text" inputmode="url" placeholder="https://node.example" spellcheck="false"></div><div class="field"><label for="node-storage">保管先</label><input id="node-storage" type="text" spellcheck="false"></div>
@@ -573,7 +573,7 @@
     </section>
 
     <section class="view layout-list" id="view-notifications" data-view-panel="notifications">
-      <div class="view-head page-header"><h2 class="page-title">通知</h2><div class="view-head-actions page-actions"><span class="meta notif-unread" id="notifications-unread" aria-live="polite"></span><button id="notifications-refresh" type="button" class="ghost btn btn-ghost">更新</button><div class="head-more" id="notifications-more-wrap" hidden><button id="notifications-more" type="button" class="ds-btn ds-btn-icon" aria-label="その他の操作" aria-haspopup="menu" aria-expanded="false" title="その他"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="18.5" cy="12" r="1.4"/></svg></button><div class="post-repost-menu head-more-menu" role="menu" hidden><button id="notifications-read-all" type="button" role="menuitem">すべて既読にする</button></div></div></div></div>
+      <div class="view-head page-header"><h2 class="page-title">通知</h2><div class="view-head-actions page-actions"><span class="meta notif-unread" id="notifications-unread" aria-live="polite"></span><button id="notifications-refresh" type="button" class="ghost btn btn-ghost btn-icon" aria-label="更新" title="更新"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 3.5v3.7h-3.7"/></svg></button><div class="head-more" id="notifications-more-wrap" hidden><button id="notifications-more" type="button" class="ds-btn ds-btn-icon" aria-label="その他の操作" aria-haspopup="menu" aria-expanded="false" title="その他"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="18.5" cy="12" r="1.4"/></svg></button><div class="post-repost-menu head-more-menu" role="menu" hidden><button id="notifications-read-all" type="button" role="menuitem">すべて既読にする</button></div></div></div></div>
       <div class="scopes" role="group" aria-label="通知の絞り込み">
         <button type="button" class="scope on" data-notif-tab="all" aria-pressed="true">すべて</button><button type="button" class="scope" data-notif-tab="unread" aria-pressed="false">未読</button><button type="button" class="scope" data-notif-tab="feed" aria-pressed="false">フィード</button><button type="button" class="scope" data-notif-tab="community" aria-pressed="false">コミュニティ</button><button type="button" class="scope" data-notif-tab="system" aria-pressed="false">お知らせ</button>
       </div>
@@ -581,7 +581,7 @@
     </section>
 
     <section class="view" id="view-messages" data-view-panel="messages" aria-label="メッセージ">
-      <div class="view-head page-header"><h2 class="page-title">メッセージ</h2><div class="view-head-actions page-actions"><button id="messages-refresh" type="button" class="ghost btn btn-ghost">更新</button></div></div>
+      <div class="view-head page-header"><h2 class="page-title">メッセージ</h2><div class="view-head-actions page-actions"><button id="messages-refresh" type="button" class="ghost btn btn-ghost btn-icon" aria-label="更新" title="更新"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 3.5v3.7h-3.7"/></svg></button></div></div>
       <div class="messages-layout">
         <div class="messages-side"><p class="meta" id="messages-state" aria-live="polite">読み込み中…</p><div id="messages-list"></div></div>
         <div class="messages-thread">
@@ -594,7 +594,7 @@
     </section>
 
     <section class="view" id="view-mail" data-view-panel="mail">
-      <div class="view-head"><h2>メール</h2><div class="view-head-actions"><span class="meta" id="mail-address"></span><button id="mail-compose" type="button" class="approve" hidden>新規作成</button><button id="mail-refresh" type="button" class="ghost">更新</button></div></div>
+      <div class="view-head"><h2>メール</h2><div class="view-head-actions"><span class="meta" id="mail-address"></span><button id="mail-compose" type="button" class="approve" hidden>新規作成</button><button id="mail-refresh" type="button" class="ghost btn-icon" aria-label="更新" title="更新"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 3.5v3.7h-3.7"/></svg></button></div></div>
       <p class="meta" id="mail-state" aria-live="polite"></p>
       <div id="mail-gate"></div>
       <div id="mail-setup" class="card" hidden>
@@ -777,7 +777,7 @@
 
   <aside class="rail" aria-label="並べて見る">
     <div class="rail-body">
-      <div class="rail-activity-head"><div class="rail-history-nav"><button id="rail-back" class="rb-button rail-nav-button" type="button" aria-label="右列で戻る" title="戻る" disabled><svg class="ic" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg></button><button id="rail-forward" class="rb-button rail-nav-button" type="button" aria-label="右列で進む" title="進む" disabled><svg class="ic" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></button></div><div class="rail-activity-heading"><h2 id="rail-view-title" class="rail-view-name" aria-live="polite">ブラウザ</h2></div><div class="rail-activity-actions"><button id="rail-ai-new" type="button" hidden>＋ 新規</button><button id="rail-open-ai-full" type="button" hidden aria-label="AI画面を広げる">広げる</button><button id="rail-mark-all" type="button" hidden>すべて既読</button><button id="rail-refresh" type="button" hidden>更新</button></div></div>
+      <div class="rail-activity-head"><div class="rail-history-nav"><button id="rail-back" class="rb-button rail-nav-button" type="button" aria-label="右列で戻る" title="戻る" disabled><svg class="ic" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg></button><button id="rail-forward" class="rb-button rail-nav-button" type="button" aria-label="右列で進む" title="進む" disabled><svg class="ic" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></button></div><div class="rail-activity-heading"><h2 id="rail-view-title" class="rail-view-name" aria-live="polite">ブラウザ</h2></div><div class="rail-activity-actions"><button id="rail-ai-new" type="button" hidden>＋ 新規</button><button id="rail-open-ai-full" type="button" hidden aria-label="AI画面を広げる">広げる</button><button id="rail-mark-all" type="button" hidden>すべて既読</button><button id="rail-refresh" type="button" class="btn-icon" hidden aria-label="更新" title="更新"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 3.5v3.7h-3.7"/></svg></button></div></div>
       <div id="rail-browser-reference" hidden></div>
       <section class="rail-view rail-view--browser" data-rail-view="browser" aria-label="ブラウザ" hidden>
         <div class="rb-bar" role="toolbar" aria-label="右列のブラウザ">
