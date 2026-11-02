@@ -3,10 +3,8 @@
    古い規則（styles.css・hub-design.css）と同じ特異度で後から勝つため、行の規則は :is() で
    画面ごとの入れ物を束ね、入れ子の & で書く。 */
 
-/* ---- 本文の幅は列が決める（desktop-frame.css）。フィード・通知・プロフィールは行が左右 16 を持つので、画面の左右は 0。 ---- */
+/* ---- 本文の幅は型（data-template）が決める（desktop-layouts.css）。フィード・通知・プロフィールは行が左右 16 を持つので、画面の左右は 0。 ---- */
 #hub-shell .view:not(#view-browser):not(#view-ai):is(#view-feed, #view-notifications, #view-profile) {
-  max-width: none;
-  margin-inline: 0;
   padding-inline: 0;
 }
 
@@ -458,8 +456,6 @@
 
 /* ---- メッセージ：左に会話の一覧 320、右に会話。<1000 は 1 列 ---- */
 #hub-shell .view:not(#view-browser):not(#view-ai)#view-messages {
-  max-width: none;
-  margin: 0;
   padding: 0;
   height: calc(100vh - var(--toolbar-height, 44px));
 }

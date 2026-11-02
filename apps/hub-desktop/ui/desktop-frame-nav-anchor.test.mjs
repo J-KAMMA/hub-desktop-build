@@ -2,32 +2,49 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync, readdirSync} from 'node:fs';
 
-const frame = readFileSync(new URL('./desktop-frame.css', import.meta.url), 'utf8');
-const TEMPLATES = ['stream', 'wide', 'split', 'settings', 'reading', 'browser'];
+// The owner does not want the left column to move: the icon rail is grid column 1 at --rail-w (56, or 208 when the menu is open),
+// the context column is column 2, and no view, template or split changes either of them.
+const files = readdirSync(new URL('.', import.meta.url)).filter((f) => f.endsWith('.css'));
+const read = (file) => readFileSync(new URL(`./${file}`, import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
 
-test('the left nav is the first grid column and nothing before it can move it', () => {
-  const columns = frame.match(/grid-template-columns:\s*([^;]+);/)[1].trim();
-  assert.match(columns, /^var\(--nav-w\)\s+var\(--spacer\)\s/, 'nav column starts the grid; spacers sit to its right');
-  const areas = frame.match(/grid-template-areas:\s*"[^"]*"\s*"([^"]*)"/)[1].trim().split(/\s+/);
-  assert.equal(areas[0], 'nav', 'nav is area column 1');
-  assert.match(frame, /#hub-shell\.app-shell > \.icon-rail \{ grid-area: nav; \}/);
+test('--rail-w is 56, becomes 208 only with the menu open, and nothing else sets it', () => {
+  const setters = [];
+  for (const file of files) for (const m of read(file).matchAll(/([^{}@;]+)\{[^{}]*--rail-w\s*:\s*([^;}]+)/g)) setters.push([file, m[1].trim(), m[2].trim()]);
+  assert.deepEqual(setters.map(([file, selector, value]) => `${file}|${selector}|${value}`).sort(), [
+    'desktop-shell.css|#hub-shell.rail-expanded|208px',
+    'desktop-shell.css|#hub-shell|56px',
+  ]);
 });
 
-test('no template redefines the grid columns, areas or the nav placement', () => {
-  const css = readdirSync(new URL('.', import.meta.url)).filter((f) => f.endsWith('.css'));
-  for (const file of css) {
-    const text = readFileSync(new URL(`./${file}`, import.meta.url), 'utf8');
-    for (const template of TEMPLATES) {
-      const rules = [...text.matchAll(new RegExp(`data-template="${template}"[^{]*\{([^}]*)\}`, 'g'))].map((m) => m[1]);
-      for (const body of rules) {
-        assert.doesNotMatch(body, /grid-template-(columns|areas)/, `${file}: ${template}`);
-      }
+test('every desktop shell grid starts with the rail column, so the rail sits at the same x in every view', () => {
+  let desktopRules = 0;
+  for (const file of files) {
+    for (const [, selector, body] of read(file).matchAll(/([^{}@]+)\{([^{}]*)\}/g)) {
+      const columns = body.match(/grid-template-columns:\s*([^;}]+)/)?.[1];
+      const shellRule = selector.split(',').some((part) => /^(?:#hub-shell)?\.app-shell[^\s>+~]*$/.test(part.trim()));
+      if (!columns || !shellRule) continue;
+      if (/^(?:236px|72px)\b/.test(columns.trim())) continue; // 721 未満・旧い下限の既定（styles.css の先頭付近）
+      desktopRules++;
+      assert.match(columns.trim(), /^var\(--rail-w\)\s/, `${file}: ${selector.trim().slice(0, 90)} -> ${columns}`);
     }
   }
-  for (const template of TEMPLATES) {
-    // Templates only change --main-w / --spacer, never the nav column (browser keeps the 88 rail at the same x).
-    const rule = [...frame.matchAll(new RegExp(`data-template="${template}"[^{]*\{([^}]*)\}`, 'g'))].map((m) => m[1]).join(' ');
-    assert.doesNotMatch(rule, /--spacer\s*:\s*minmax/);
+  assert.ok(desktopRules >= 10, `found ${desktopRules} shell grids`);
+});
+
+test('templates only change the width of the main column, never the grid', () => {
+  for (const file of files) {
+    for (const [, selector, body] of read(file).matchAll(/([^{}@]+)\{([^{}]*)\}/g)) {
+      if (!/data-template/.test(selector)) continue;
+      assert.doesNotMatch(body, /grid-template|grid-column|grid-row|grid-area|--rail-w|--desktop-sidebar-width/, `${file}: ${selector.trim()}`);
+    }
   }
-  assert.match(frame, /\[data-template="browser"\] \{ --main-w: 100vw; --spacer: 0px; \}/);
+  const layouts = read('desktop-layouts.css');
+  assert.match(layouts, /\.app-shell\[data-template="wide"\] \{ --main-w: var\(--ds-col-wide\); \}/);
+  assert.match(layouts, /\.app-shell\[data-template="reading"\] \{ --main-w: var\(--ds-col-reading\); \}/);
+});
+
+test('the rail and the context column are the first two items of the shell in the document', () => {
+  const html = readFileSync(new URL('./index.html', import.meta.url), 'utf8');
+  const order = ['<header class="app-toolbar"', '<nav class="icon-rail"', '<aside class="sidebar"', '<main class="workspace-main"'].map((token) => html.indexOf(token));
+  assert.ok(order.every((x, i) => x > 0 && (i === 0 || x > order[i - 1])), order.join(','));
 });

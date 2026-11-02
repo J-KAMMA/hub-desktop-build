@@ -97,7 +97,6 @@
   --ds-search-h: 40px;
   --ds-btn-h: 36px;
   --ds-btn-h-compact: 32px;
-  --ds-btn-h-nav: 52px;
   --ds-btn-px: var(--ds-space-4);
   --ds-icon-btn: 36px;
   --ds-icon-btn-compact: 32px;
@@ -109,7 +108,7 @@
   --ds-badge-count-min-w: 20px;
   --ds-badge-status-px: 6px;
 
-  /* 列の寸法（型は data-template: stream · wide · reading · split · settings）。左ナビは 1280 以上で 275、それ未満は 88 の記号列。 */
+  /* 列の寸法（型は data-template: stream · wide · reading · split · settings）。左の記号の帯は 56（メニューで 208、desktop-shell.css の --rail-w）、内側の列は --desktop-sidebar-width。 */
   --ds-col-main: 600px;
   --ds-col-gap: 30px;
   --ds-col-right: 350px;
@@ -117,8 +116,6 @@
   --ds-col-reading: 680px;
   --ds-col-list: 380px;
   --ds-reading-measure: 648px;
-  --ds-nav-w: 275px;
-  --ds-nav-w-rail: 88px;
 
   /* 動き */
   --ease-out: cubic-bezier(.22, 1, .36, 1);

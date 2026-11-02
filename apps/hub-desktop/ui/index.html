@@ -41,7 +41,6 @@
   <link rel="stylesheet" href="./sidebar-mine.css">
   <link rel="stylesheet" href="./profile-view.css">
 <link rel="stylesheet" href="./desktop-luxe.css">
-  <link rel="stylesheet" href="./desktop-frame.css">
   <link rel="stylesheet" href="./desktop-views.css">
   <link rel="stylesheet" href="./desktop-layouts.css">
 </head>
@@ -49,6 +48,7 @@
 <div id="hub-shell" class="app-shell">
   <header class="app-toolbar" aria-label="共通操作">
     <div class="toolbar-navigation">
+      <button id="rail-expand-toggle" class="toolbar-button rail-expand-toggle" type="button" aria-label="メニューを広げる" aria-expanded="false" title="メニューを広げる"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
       <button id="toolbar-back" class="toolbar-button" type="button" aria-label="戻る" title="戻る" disabled><svg class="ic" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg></button>
       <button id="toolbar-forward" class="toolbar-button" type="button" aria-label="進む" title="進む" disabled><svg class="ic" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></button>
       <button id="browser-back" class="toolbar-button" type="button" aria-label="ページを戻る" title="ページを戻る"><svg class="ic" viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg></button>
@@ -73,20 +73,17 @@
   </header>
   <nav class="icon-rail" aria-label="主な画面">
     <div class="icon-rail-main" role="group" aria-label="画面">
-    <button class="nav-item icon-nav-item" data-view="search" type="button" aria-label="検索" title="検索"><svg class="ic" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg></button>
     <button class="nav-item icon-nav-item on" data-view="feed" aria-current="page" type="button" aria-label="タイムライン" title="タイムライン"><svg class="ic" viewBox="0 0 24 24"><path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 20.5l1.5-5.3A8.5 8.5 0 1 1 21 11.5ZM8.5 11.5h.01M12.5 11.5h.01M16.5 11.5h.01"/></svg></button>
     <button class="nav-item icon-nav-item" data-view="notifications" type="button" aria-label="通知" title="通知"><svg class="ic" viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 5-2.5 6-2.5 8h17c0-2-2.5-3-2.5-8ZM10 20h4"/></svg><b class="nav-badge rail-badge" data-badge="notifications" hidden></b></button>
     <button class="nav-item icon-nav-item" data-view="messages" type="button" aria-label="メッセージ" title="メッセージ"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg><b class="nav-badge rail-badge" data-badge="messages" hidden></b></button>
-    <button class="nav-item icon-nav-item" data-view="community" type="button" aria-label="コミュニティ" title="コミュニティ"><svg class="ic" viewBox="0 0 24 24"><path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM3 19a6 6 0 0 1 12 0M16 4a3.5 3.5 0 0 1 0 7M14 18a4 4 0 0 1 7 0"/></svg></button>
-    <div id="nav-communities" class="nav-communities" role="group" aria-label="参加中のコミュニティ" hidden></div>
     <button class="nav-item icon-nav-item navigation-group-start" data-view="articles" type="button" aria-label="記事" title="記事"><svg class="ic" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6V3Zm9 0v4h4M9 12h6M9 16h6"/></svg></button>
     <button class="nav-item icon-nav-item" data-view="videos" type="button" aria-label="動画" title="動画"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3V9Z"/></svg></button>
     <button class="nav-item icon-nav-item" data-view="music" type="button" aria-label="音楽" title="音楽"><svg class="ic" viewBox="0 0 24 24"><path d="M9 17V5l10-2v12M9 7l10-2"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg></button>
     <button id="rail-games" class="nav-item icon-nav-item" data-view="games" type="button" aria-label="ゲーム" title="ゲーム"><svg class="ic" viewBox="0 0 24 24"><path d="M7 8h10a4 4 0 0 1 4 4v1.5a3.5 3.5 0 0 1-6.2 2.2L13.5 14h-3l-1.3 1.7A3.5 3.5 0 0 1 3 13.5V12a4 4 0 0 1 4-4ZM8 10.5v3M6.5 12h3M16 11.5h.01M18 13h.01"/></svg></button>
     <button class="nav-item icon-nav-item" data-view="research" type="button" aria-label="研究" title="研究"><svg class="ic" viewBox="0 0 24 24"><path d="M8 4h8M10 4v6l-6 9a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1l-6-9V4M8 15h8"/></svg></button>
-    <button class="nav-item icon-nav-item navigation-group-start" data-view="market" type="button" aria-label="マーケット" title="マーケット"><svg class="ic" viewBox="0 0 24 24"><path d="m3 10 2-6h14l2 6M3 10a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0M5 13v7h14v-7M9 20v-5h6v5"/></svg></button>
-    <button class="nav-item icon-nav-item" data-view="browser" type="button" aria-label="ブラウザ" title="ブラウザ"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a17 17 0 0 1 0 18 17 17 0 0 1 0-18Z"/></svg></button>
     <button id="desktop-apps" class="icon-button" type="button" aria-label="すべての機能" data-short-label="すべて" aria-expanded="false" title="すべての機能"><svg class="ic" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg></button>
+    <button class="nav-item icon-nav-item rail-bottom-start" data-view="market" type="button" aria-label="マーケット" title="マーケット"><svg class="ic" viewBox="0 0 24 24"><path d="m3 10 2-6h14l2 6M3 10a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0M5 13v7h14v-7M9 20v-5h6v5"/></svg></button>
+    <button class="nav-item icon-nav-item" data-view="browser" type="button" aria-label="ブラウザ" title="ブラウザ"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a17 17 0 0 1 0 18 17 17 0 0 1 0-18Z"/></svg></button>
     <button class="nav-item icon-nav-item" data-view="ai" type="button" aria-label="AI" title="AI"><svg class="ic" viewBox="0 0 24 24"><rect class="ai-chip" x="3" y="3" width="18" height="18" rx="5"/><path fill="none" d="M7.5 16.5 10.25 8l2.75 8.5M8.5 13.3H12M16.5 8v8.5"/></svg></button>
     </div>
     <button id="desktop-compose" class="icon-button rail-compose" type="button" aria-label="投稿する" title="投稿する（N）" data-short-label="投稿"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5"/><path d="m10 14 7.5-7.5a1.8 1.8 0 0 1 2.5 2.5L12.5 16.5 9 17l1-3Z"/></svg></button>

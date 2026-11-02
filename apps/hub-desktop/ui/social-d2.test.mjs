@@ -230,7 +230,7 @@ test('notifications and sidebar conversations get the specified avatar and type 
 test('feed: sources and connections are behind the "…" toggle; the feed body fills the column, whose width the template decides (2026-11-01)', () => {
   assert.match(html, /id="feed-sources-toggle"/);
   assert.match(css, /#view-feed \.hub-network-bar,[\s\S]*?\{ display: none; \}/);
-  assert.match(css, /:is\(#view-feed, #view-notifications, #view-profile\) \{\s*max-width: none;/);
+  assert.match(css, /:is\(#view-feed, #view-notifications, #view-profile\) \{\s*padding-inline: 0;/);
   assert.match(app, /rootMargin: "0px 0px 600px 0px"/);
 });
 

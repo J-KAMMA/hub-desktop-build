@@ -731,15 +731,38 @@ const APP_GROUPS = [
   ["その他", [["概要", "home"], ["ランキング", "ranking"], ["サービス", "services"]]],
 ];
 const sidebarContext = document.querySelector("#sidebar-context");
-// 左ナビのコミュニティの下の「参加中」（最大5件）。5分は読み直さない。
+{
+  const shell = document.querySelector(".app-shell"), toggle = document.querySelector("#rail-expand-toggle");
+  const apply = (expanded) => {
+    shell.classList.toggle("rail-expanded", expanded);
+    toggle.setAttribute("aria-expanded", String(expanded));
+    toggle.setAttribute("aria-label", expanded ? "メニューを狭める" : "メニューを広げる");
+    toggle.title = toggle.getAttribute("aria-label");
+  };
+  let stored = false;
+  try { stored = localStorage.getItem("hub.rail.expanded") === "1"; } catch {}
+  apply(stored);
+  toggle.addEventListener("click", () => {
+    const expanded = !shell.classList.contains("rail-expanded");
+    apply(expanded);
+    try { localStorage.setItem("hub.rail.expanded", expanded ? "1" : "0"); } catch {}
+    queueMicrotask(() => { try { applyColumnWidths(); } catch { /* 起動前の呼び出しは何もしない */ } });
+  });
+}
+// コミュニティ画面の内側の列にだけ出す「参加中」（最大5件）。5分は読み直さない。左の記号の帯には置かない。
+const communitiesHost = document.createElement("div");
+communitiesHost.className = "nav-communities";
+communitiesHost.setAttribute("role", "group");
+communitiesHost.setAttribute("aria-label", "参加中のコミュニティ");
+communitiesHost.hidden = true;
 const navCommunities = createNavCommunities({
-  document, host: document.querySelector("#nav-communities"), asset: (img, url) => hubAsset(img, url),
+  document, host: communitiesHost, asset: (img, url) => hubAsset(img, url),
   load: () => invoke("hub_resource", { resource: "communities", query: "" }),
   signedIn: () => desktopAccount.state === "registered",
   onOpen: (row) => void openDetail("community", [row.id], { title: row.name }),
   onAll: () => void navigateFrom({ dataset: { view: "community" }, childNodes: [] }),
 });
-window.addEventListener("hub-account-changed", () => { navCommunities.clear(); void navCommunities.refresh(); });
+window.addEventListener("hub-account-changed", () => { navCommunities.clear(); if (currentView === "community" || sidebarParentView() === "community") renderSidebarContext(currentView); });
 let nativeSidebar = null;
 const messagesSide = document.querySelector(".messages-side");
 const messagesLayout = document.querySelector(".messages-layout");
@@ -1060,16 +1083,6 @@ function fillSidebarContext(view) {
     empty.textContent = "該当する機能はありません";
     empty.hidden = true;
     sidebarContext.append(empty);
-    // 旧フィード列にあった「フォロー中のタグ」「リスト」「あなたのもの」の居場所（2026-11-01）。第2の列は戻さず、ここに置く。
-    // 読むのは sidebarMine（hub_client / hub_detail の既存の読み出しと端末の状態だけ）。
-    let mineBox = null;
-    const mineNode = sidebarMine.render("feed");
-    if (mineNode) {
-      mineBox = document.createElement("div");
-      mineBox.className = "sidebar-apps-mine";
-      mineBox.append(mineNode);
-      sidebarContext.append(mineBox);
-    }
     search.oninput = () => {
       const query = search.value.trim().toLocaleLowerCase();
       let visible = 0;
@@ -1082,7 +1095,6 @@ function fillSidebarContext(view) {
         heading.hidden = buttons.every((button) => button.hidden);
       }
       empty.hidden = visible > 0;
-      if (mineBox) mineBox.hidden = query !== "";
     };
     sidebarContext.scrollTop = 0;
     return;
@@ -1311,6 +1323,17 @@ function fillSidebarContext(view) {
   } else if (view === "music") {
     musicColumn();
   } else if (readingDirectory.has(contextView)) {
+    if (contextView === "community" && desktopAccount.state === "registered") {
+      // 参加中のコミュニティ（hub_resource communities の自分の memberships）。見出しは一覧が描かれたときだけ出す。
+      const heading = section("参加中");
+      heading.hidden = true;
+      sidebarContext.append(communitiesHost);
+      const current = view === "detail" && detailName === "community" ? detailTrail.at(-1)?.ids?.[0] : "";
+      const sync = () => { heading.hidden = communitiesHost.hidden; };
+      navCommunities.setCurrent(current);
+      sync();
+      void navCommunities.refresh().then(sync);
+    }
     if (view === "detail") {
       const returning = detailTrail.length === 1 && detailReturn.view === contextView;
       if (contextView !== "hubpedia" && (returning || !document.querySelector(`.icon-rail [data-view="${contextView}"]`))) destination({ articles: "記事一覧", community: "コミュニティ一覧", threads: "スレッド一覧" }[contextView], contextView);
@@ -1397,13 +1420,11 @@ function showView(view, title, history = {}) {
   shell?.classList.toggle("mail-active", view === "mail");
   if (viewChanged && view === "messages") setDmThreadShown(false);
   if (shell) shell.dataset.template = templateFor(view, detailTrail.at(-1)?.name);
-  navCommunities.setCurrent(view === "detail" && detailTrail.at(-1)?.name === "community" ? detailTrail.at(-1).ids?.[0] : "");
-  void navCommunities.refresh();
   // 既定の列幅は画面（メッセージ・ブラウザ）で変わるので、クラスを替えたあとに引き直す。
   queueMicrotask(() => { try { applyColumnWidths(); } catch { /* 起動前の呼び出しは何もしない */ } });
   renderSidebarContext(view);
   const contextView = view === "detail" ? (DETAIL_PARENT_VIEW[detailTrail.at(-1)?.name] || view) : view;
-  const main = contextView === "hubpedia" ? "research" : contextView === "threads" ? "feed" : document.querySelector(`.icon-rail .icon-nav-item[data-view="${contextView}"]`) ? contextView : ({ discovery: "home", account: view === "wallet" ? "wallet" : "profile", market: "market", messages: "messages", feed: "feed" }[shell?.dataset.sidebarContext] || contextView);
+  const main = contextView === "hubpedia" ? "research" : ["threads","community"].includes(contextView) ? "feed" : document.querySelector(`.icon-rail .icon-nav-item[data-view="${contextView}"]`) ? contextView : ({ discovery: "home", account: view === "wallet" ? "wallet" : "profile", market: "market", messages: "messages", feed: "feed" }[shell?.dataset.sidebarContext] || contextView);
   let selectedVisible = false;
   for (const item of document.querySelectorAll(".icon-rail .icon-nav-item")) {
     const selected = item.dataset.view === main;
@@ -1416,7 +1437,7 @@ function showView(view, title, history = {}) {
     selectedVisible ||= selected && item.getClientRects().length > 0;
   }
   const appsButton = document.querySelector("#desktop-apps");
-  const inMore = !selectedVisible;
+  const inMore = !selectedVisible && contextView !== "search";
   appsButton?.classList.toggle("current", inMore);
   if (inMore) appsButton?.setAttribute("aria-current", "page");
   else appsButton?.removeAttribute("aria-current");
@@ -9681,7 +9702,7 @@ window.addEventListener("resize", placeBrowserStrip);
 if (desktopShell && typeof MutationObserver === "function") new MutationObserver(placeBrowserStrip).observe(desktopShell, { attributes: true, attributeFilter: ["class"] });
 placeBrowserStrip();
 const columnKeys = { sidebar: "hub.desktop.sidebarWidth.compact", rail: "hub.desktop.railWidth" };
-const columnLimits = { sidebar: [190, 420], rail: [240, 480] };
+const columnLimits = { sidebar: [190, 260], rail: [240, 480] };
 const columnCollapseDistance = 40;
 const nativeColumnBridge = !startupTool && typeof window.__TAURI__?.core?.invoke === "function" && typeof window.__TAURI__?.event?.listen === "function";
 const nativeColumnReady = { sidebar: false, rail: false }, columnPointerStyle = {}, columnDomDrag = {};
@@ -9704,11 +9725,10 @@ function applyColumnWidths() {
   const railOpen = desktopShell.classList.contains("rail-open");
   const splitList = desktopShell.classList.contains("messages-active") || desktopShell.classList.contains("mail-active");
   const mainMin = splitList ? 480 : wide ? 600 : 480;
-  // 左ナビは 1280 以上で 275、それ未満と、ブラウザ画面では 88 の記号列（desktop-frame.css と同じ値）。
-  const navWidth = viewport >= 1280 && !desktopShell.classList.contains("browser-active") ? 275 : 88;
-  // 内側の列の既定幅：メッセージは 380（一覧 380 + スレッド 600）、ブラウザのタブ列は細く、そのほかの文脈の列は 300。
-  const sidebarDefault = splitList ? 380
-    : desktopShell.classList.contains("browser-active") ? clampColumn(viewport * .135, 210, 250) : wide ? 300 : clampColumn(viewport * .22, 200, 235);
+  // 左の記号の帯は 56、メニューで広げると 208（desktop-shell.css の --rail-w）。
+  const navWidth = desktopShell.classList.contains("rail-expanded") ? 208 : 56;
+  // 内側の列の既定幅：メッセージとメールは 380（一覧 380 + 詳細 600）、そのほかは従来どおり。
+  const sidebarDefault = splitList ? 380 : wide ? clampColumn(viewport * .135, 210, 250) : clampColumn(viewport * .22, 200, 235);
   const sidebarDesired = preferredColumnWidth.sidebar ?? sidebarDefault;
   // 右列ブラウザはスマホ幅（帯の48pxを足して420。中身は約360px）から始める。保存した幅があればそれを使う。
   // 2026-10-18 所有者「あと右側」：1600px 以上の窓では右列を 380 に広げ、通知・会話の行を 1 行で読めるようにする（Web の右列 372 に近づける）。
@@ -9717,7 +9737,7 @@ function applyColumnWidths() {
   const railMax = Math.max(240, Math.min(480,
     railInGrid ? viewport - navWidth - mainMin - (sidebarVisible ? sidebarDesired : 0) : viewport - 80));
   const railWidth = clampColumn(railDesired, 240, railMax);
-  const sidebarMax = Math.max(columnLimits.sidebar[0], Math.min(columnLimits.sidebar[1],
+  const sidebarMax = Math.max(columnLimits.sidebar[0], Math.min(splitList ? 420 : columnLimits.sidebar[1],
     viewport - navWidth - mainMin - (railInGrid ? railWidth : browser || railOpen ? 0 : 48)));
   const sidebarWidth = clampColumn(sidebarDesired, columnLimits.sidebar[0], sidebarMax);
   desktopShell.style.setProperty("--desktop-sidebar-width", `${sidebarWidth}px`);

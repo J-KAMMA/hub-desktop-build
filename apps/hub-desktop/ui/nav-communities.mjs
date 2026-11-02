@@ -1,4 +1,4 @@
-// 左ナビの「コミュニティ」の下に出す、参加中の一覧（DESIGN-SYSTEM §3「Nav community list」）。
+// コミュニティ画面の内側の列に出す、参加中の一覧（左の記号の帯には置かない）。
 // 最大5件と「すべて見る」。署名前・未参加なら何も描かない。5分は同じ結果を使い、描画のたびには読まない。
 // データは既存の hub_resource の communities（communities と自分の memberships）だけ。新しい通信は足さない。
 
@@ -28,7 +28,7 @@ export function renderNavCommunities(document, host, model, { onOpen, onAll, cur
   for (const row of model.rows) {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "nav-community";
+    button.className = "nav-community sidebar-context-item";
     button.dataset.communityId = row.id;
     if (row.id === current) button.setAttribute("aria-current", "true");
     const face = document.createElement("span");
@@ -56,7 +56,7 @@ export function renderNavCommunities(document, host, model, { onOpen, onAll, cur
   }
   const all = document.createElement("button");
   all.type = "button";
-  all.className = "nav-community nav-community-all";
+  all.className = "nav-community nav-community-all sidebar-context-item";
   all.textContent = "すべて見る";
   all.addEventListener("click", () => onAll?.());
   host.append(all);

@@ -1,6 +1,6 @@
-/* Hub Desktop per-view components (design system section 3). Loaded last, after desktop-frame.css.
+/* Hub Desktop per-view components (design system section 3). Loaded after desktop-luxe.css.
    One sticky 53px view header, one tab style, one chip bar, divider rows instead of boxes, and gold only as lines.
-   Not here: the frame/nav (desktop-frame.css), messages and mail, the video watch page, narrow-window rules,
+   Not here: the left rail and shell grid (desktop-shell.css, styles.css), messages and mail, the video watch page, narrow-window rules,
    and the world, ranking, services and code stubs. */
 
 /* ---- 1. View header: one left edge for title, tabs, composer and rows ---- */

@@ -9,7 +9,7 @@ import { matchesSearch } from "./search-input.mjs";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { JSDOM } from 'jsdom';
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
@@ -554,22 +554,21 @@ test("the main AI view owns work while other tool windows skip it", () => {
   assert.match(app, /if \(!startupTool \|\| startupTool === "games"\)/);
 });
 
-test("desktop keeps the web nav, the contextual sidebar and the workspace in one grid", () => {
+test("desktop keeps the icon rail, the contextual sidebar and the workspace in one grid", () => {
   const directory = path.dirname(fileURLToPath(import.meta.url));
   const html = readFileSync(path.join(directory, "index.html"), "utf8");
   const app = readFileSync(path.join(directory, "app.js"), "utf8");
   const rail = html.match(/<nav class="icon-rail"[\s\S]*?<\/nav>/)?.[0];
   assert.ok(rail);
-  for (const view of ["search", "feed", "messages", "notifications", "community", "videos", "music", "articles", "ai", "market", "browser", "settings"]) {
+  for (const view of ["feed", "messages", "notifications", "videos", "music", "articles", "ai", "market", "browser", "settings"]) {
     assert.match(rail, new RegExp(`data-view="${view}"`));
   }
   assert.doesNotMatch(rail, /data-view="hubpedia"/);
   assert.doesNotMatch(rail, /rail-expand-toggle/);
-  // 2026-11-01 (DESIGN-SYSTEM §3): Web の並び。検索が先頭、タイムライン、通知、メッセージ、コミュニティ（参加中の一覧つき）。
-  const firstFive = [...rail.matchAll(/<button[^>]*data-view="([^"]+)"/g)].map((m) => m[1]).slice(0, 5);
-  assert.deepEqual(firstFive, ["search", "feed", "notifications", "messages", "community"]);
-  assert.ok(rail.indexOf('data-view="community"') < rail.indexOf('id="nav-communities"'), "joined communities sit under the community item");
-  assert.ok(rail.indexOf('id="nav-communities"') < rail.indexOf('data-view="articles"'));
+  // 2026-11-02: 元の左の帯に戻した。タイムライン、通知、メッセージが先頭。検索とコミュニティは帯に置かない（コミュニティは内側の列に参加中の一覧を持つ）。
+  const firstFour = [...rail.matchAll(/<button[^>]*data-view="([^"]+)"/g)].map((m) => m[1]).slice(0, 4);
+  assert.deepEqual(firstFour, ["feed", "notifications", "messages", "articles"]);
+  assert.doesNotMatch(rail, /data-view="search"|data-view="community"|id="nav-communities"/);
   // スレッドは今もタイムラインの札。ウォレットは右の帯（右列）にある。
   assert.doesNotMatch(rail, /data-view="threads"/);
   assert.doesNotMatch(rail, /data-view="wallet"/);
@@ -578,9 +577,9 @@ test("desktop keeps the web nav, the contextual sidebar and the workspace in one
   assert.ok(compose, "post button exists in the left column");
   assert.doesNotMatch(compose, /hidden/);
   assert.match(compose, /aria-label="投稿する"/);
-  // 並び（Web）: 記事、動画、音楽、ゲーム、研究、マーケット、デスクトップだけのブラウザ、すべての機能、AI。
-  const railOrder = ['data-view="articles"', 'data-view="videos"', 'data-view="music"', 'id="rail-games"', 'data-view="research"', 'data-view="market"', 'data-view="browser"', 'id="desktop-apps"', 'data-view="ai"'].map((k) => rail.indexOf(k));
-  assert.ok(railOrder.every((x, i) => x > 0 && (i === 0 || x > railOrder[i - 1])), "rail order: articles, video, music, games, research, market, browser, all features, AI");
+  // 並び（元の帯）: 記事、動画、音楽、ゲーム、研究、すべての機能、マーケット、デスクトップだけのブラウザ、AI。
+  const railOrder = ['data-view="articles"', 'data-view="videos"', 'data-view="music"', 'id="rail-games"', 'data-view="research"', 'id="desktop-apps"', 'data-view="market"', 'data-view="browser"', 'data-view="ai"'].map((k) => rail.indexOf(k));
+  assert.ok(railOrder.every((x, i) => x > 0 && (i === 0 || x > railOrder[i - 1])), "rail order: articles, video, music, games, research, all features, market, browser, AI");
   assert.match(rail, /id="rail-games"[^>]*aria-label="ゲーム"/);
   assert.match(rail, /data-view="research"[^>]*aria-label="研究"/);
   assert.ok(rail.indexOf('data-view="ai"') < rail.indexOf('id="desktop-compose"'), "below the main destinations");
@@ -595,12 +594,13 @@ test("desktop keeps the web nav, the contextual sidebar and the workspace in one
   assert.ok(sorted(order(marks, ['data-rail-view="posts" type', 'data-rail-view="notifications"', 'data-rail-view="browser" type', 'data-rail-view="ai" type', 'data-rail-view="wallet" type'])), "strip bottom group: browser, AI, wallet");
   assert.match(marks, /rail-mark--bottom/);
   // 投稿ボタンは白黒で --text の塗り、黒金で金の線と字（塗りなし）。値は --ds-btn-primary-*。
-  const frame = readFileSync(path.join(directory, "desktop-frame.css"), "utf8");
-  const composeCss = frame.slice(frame.indexOf("#hub-shell .icon-rail #desktop-compose:not([hidden]) {"));
+  const shellCss = readFileSync(path.join(directory, "desktop-shell.css"), "utf8");
+  const railCss = shellCss.slice(shellCss.indexOf("/* ===== 左の記号の帯"), shellCss.indexOf("/* ===== 画面のサイドバーと右列の帯"));
+  const composeCss = railCss.slice(railCss.indexOf("#hub-shell .icon-rail #desktop-compose:not([hidden]) {"));
   assert.match(composeCss, /border: 1px solid var\(--ds-btn-primary-line\)/);
   assert.match(composeCss, /background: var\(--ds-btn-primary-bg\)/);
   assert.match(composeCss, /color: var\(--ds-btn-primary-fg\)/);
-  assert.doesNotMatch(frame, /#[0-9a-fA-F]{3,8}\b|rgb\(|hsl\(|gradient/, "frame css uses tokens only and no gradient fill");
+  assert.doesNotMatch(railCss, /#[0-9a-fA-F]{3,8}|rgb\(|hsl\(|gradient/, "rail css uses tokens only and no gradient fill");
   const mobile = html.match(/<nav class="mobile-nav"[\s\S]*?<\/nav>/)?.[0];
   assert.ok(mobile);
   for (const view of ["feed", "ai", "market", "wallet", "browser", "settings"]) {
@@ -608,15 +608,15 @@ test("desktop keeps the web nav, the contextual sidebar and the workspace in one
   }
   assert.match(html, /<div\b[^>]*\bclass="app-shell"[^>]*>\s*<header\b[^>]*\bclass="app-toolbar"/);
   for (const action of ["back", "forward", "sidebar", "search"]) assert.match(html, new RegExp(`id="toolbar-${action}"`));
-  // 外郭の格子は desktop-frame.css に一つだけ: 余白・左ナビ・内側の列・本文・余白・右の帯、行は上の帯 + 残り。
-  assert.ok(frame.includes("grid-template-rows: var(--titlebar-h) minmax(0, 1fr);"));
-  assert.ok(frame.includes("grid-template-columns: var(--nav-w) var(--spacer) var(--ctx-col) minmax(0, var(--main-w)) var(--spacer) var(--rail-col);"));
-  for (const area of ["bar", "nav", "ctx", "main", "rail"]) assert.match(frame, new RegExp(`grid-area: ${area};`));
-  assert.equal([...frame.matchAll(/grid-template-columns:/g)].length, 1, "exactly one grid-template-columns in the frame");
-  // 型ごとの本文の幅は --ds-col-*（stream 600 · wide 980 · reading 680 · split と settings は 980）。
-  assert.match(frame, /\[data-template="stream"\] \{ --main-w: var\(--ds-col-main\); \}/);
-  assert.match(frame, /\[data-template="wide"\], \[data-template="split"\], \[data-template="settings"\]\) \{ --main-w: var\(--ds-col-wide\); \}/);
-  assert.match(frame, /\[data-template="reading"\] \{ --main-w: var\(--ds-col-reading\); \}/);
+  // 外郭の格子は元の構造: 左の記号の帯（56 / 208）→ 内側の列 → 本文 → 右の帯。型は本文の幅だけを変える。
+  const styles = readFileSync(path.join(directory, "styles.css"), "utf8");
+  assert.ok(styles.includes(".app-shell:not(.browser-active):not(.sidebar-collapsed){grid-template-columns:var(--rail-w) var(--desktop-sidebar-width,clamp(210px,13.5vw,250px)) minmax(0,1fr) 48px}"));
+  assert.ok(styles.includes(".app-toolbar{position:relative;z-index:30;grid-column:1/-1;grid-row:1;"));
+  assert.ok(!existsSync(path.join(directory, "desktop-frame.css")), "the 275/88 frame is gone");
+  const layouts = readFileSync(path.join(directory, "desktop-layouts.css"), "utf8");
+  assert.match(layouts, /\.app-shell \{ --main-w: var\(--ds-col-main\); \}/);
+  assert.match(layouts, /\[data-template="wide"\] \{ --main-w: var\(--ds-col-wide\); \}/);
+  assert.match(layouts, /\[data-template="reading"\] \{ --main-w: var\(--ds-col-reading\); \}/);
   assert.match(app, /shell\.dataset\.template = templateFor\(view, detailTrail\.at\(-1\)\?\.name\)/);
   assert.match(html, /id="sidebar-ai-new"/);
   // 会話の一覧は内側左列に置き、上に DM・メール・連絡先の切り替えを置く（2026-10-15、旦那様「内側左列の使い方が下手すぎる」）。
@@ -679,9 +679,8 @@ test("content lists and their details keep their own primary destination selecte
   const shell = {dataset:{sidebarContext:"discovery"}};
   for (const view of ["articles", "research", "videos", "music"]) assert.equal(select(view, shell, document), view);
   assert.equal(select("hubpedia", shell, document), "research");
-  // 2026-11-01: コミュニティは左ナビの項目を持つ。スレッドだけがタイムラインの下に付く。
-  for(const view of ["feed","threads"])assert.equal(select(view,shell,document),"feed");
-  assert.equal(select("community",shell,document),"community");
+  // 2026-11-02: 元の左の帯に戻した。コミュニティもスレッドもタイムラインの項目の下に付く（帯にコミュニティの項目は無い）。
+  for(const view of ["feed","threads","community"])assert.equal(select(view,shell,document),"feed");
   const parents = new Function(`return (${source.match(/const DETAIL_PARENT_VIEW = (\{[\s\S]*?\});/)[1]});`)();
   for (const [detail, view] of [["article","articles"],["hubpedia_article","research"],["research_project","research"],["research_document","research"]]) {
     assert.equal(select(parents[detail], shell, document), view);

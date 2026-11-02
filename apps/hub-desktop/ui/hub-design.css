@@ -3,7 +3,7 @@
    意味トークンだけを使う（ライト・ダークは styles.css 側で切り替わる）。
    ブラウザとAIの作業画面は独自の配置を持つので対象外にする。 */
 
-/* 画面の幅は列（.workspace-main）が型（data-template）ごとに一か所で決める（desktop-frame.css）。画面は列いっぱいで、左右の余白は --pane-gutter。 */
+/* 画面の幅は列（.workspace-main）が型（data-template）ごとに一か所で決める（desktop-layouts.css）。画面は列いっぱいで、左右の余白は --pane-gutter。 */
 #hub-shell .view:not(#view-browser):not(#view-ai) {
   width: 100%;
   max-width: none;

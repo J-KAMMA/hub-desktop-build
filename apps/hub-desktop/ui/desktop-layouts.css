@@ -1,22 +1,24 @@
 /* Hub Desktop layouts (design system section 1 and 3). Loaded last, after desktop-views.css.
-   Owns: the split of messages and mail (list 380 + detail 600), the video watch page in the wide template
-   (player 980, then 600 + 350), the context column in narrow windows, and the ranking, services and code views.
+   The shell grid is the original one (styles.css): [left rail 56 or 208] [context column] [main] [right rail].
+   The left rail and the context column keep the same x in every view; the main column sits in the space to their right.
+   Owns: the main column width per template, the split of messages and mail (list 380 + detail 600),
+   the video watch page in the wide template (player 980, then 600 + 350), and the ranking, services and code views.
    Values come from tokens.css (--ds-*). Colors are semantic tokens only; gold stays a line. */
 
-/* ===== Narrow windows (under 1180): the context column is part of the grid, never an overlay ===== */
-@media (min-width: 721px) and (max-width: 1179px) {
-  #hub-shell.app-shell:not(.sidebar-collapsed):not([data-template="browser"]):is([data-template="split"], [data-template="settings"], .ai-active, .apps-active) {
-    --ctx-col: var(--desktop-sidebar-width, 240px);
+/* ===== Main column width per template (data-template, desktop-template.mjs) ===== */
+/* The column is centered in the space right of the context column. Messages and mail (split) sit against the list. */
+#hub-shell.app-shell { --main-w: var(--ds-col-main); }
+#hub-shell.app-shell[data-template="wide"] { --main-w: var(--ds-col-wide); }
+#hub-shell.app-shell[data-template="reading"] { --main-w: var(--ds-col-reading); }
+#hub-shell.app-shell.sidebar-collapsed:is([data-template="split"], [data-template="settings"]) { --main-w: var(--ds-col-wide); }
+@media (min-width: 721px) {
+  #hub-shell.app-shell:not([data-template="browser"]) .view:not(#view-browser):not(#view-ai) {
+    width: 100%;
+    max-width: var(--main-w);
+    margin-inline: auto;
+    box-sizing: border-box;
   }
-  #hub-shell.app-shell:not(.sidebar-collapsed):is([data-template="split"], [data-template="settings"]) { --main-w: var(--ds-col-main); }
-  #hub-shell.app-shell:not([data-template="browser"]) > .sidebar {
-    position: static;
-    z-index: auto;
-    width: auto;
-    height: auto;
-    box-shadow: none;
-  }
-  #hub-shell.app-shell:not([data-template="browser"]) > #layout-backdrop { display: none; }
+  #hub-shell.app-shell[data-template="split"] .view:not(#view-browser):not(#view-ai) { margin-inline: 0 auto; }
 }
 
 /* ===== Messages and mail: the split template ===== */
@@ -38,21 +40,20 @@
   #hub-shell.app-shell:not(.sidebar-holds-mail) #mail-main .mail-list-col { border-right: 1px solid var(--line); }
   #hub-shell.app-shell.sidebar-holds-mail #mail-main .mail-layout { grid-template-columns: minmax(0, 1fr); }
 }
-/* Under 1100: the list only, until a conversation or a message is open. Then the detail alone, with a back button. */
+/* Under 1100: the list only (the context column takes the whole width), until a conversation or a message is open.
+   Then the detail alone, with a back button. Columns of the original grid: rail, context, main, right rail. */
 @media (min-width: 721px) and (max-width: 1099px) {
-  #hub-shell.app-shell:not(.sidebar-collapsed):not([data-template="browser"]):is(.sidebar-holds-messages:not(.dm-thread-open), .sidebar-holds-mail:not(.mail-reader-open)) {
-    --ctx-col: minmax(0, 1fr);
-    --main-w: 0px;
-    --spacer: 0px;
+  #hub-shell.app-shell { --right-col: 48px; }
+  #hub-shell.app-shell.rail-open { --right-col: var(--desktop-rail-width, 300px); }
+  #hub-shell.app-shell:not(.sidebar-collapsed):is(.sidebar-holds-messages:not(.dm-thread-open), .sidebar-holds-mail:not(.mail-reader-open)) {
+    grid-template-columns: var(--rail-w) minmax(0, 1fr) 0 var(--right-col);
   }
-  #hub-shell.app-shell:not(.sidebar-collapsed):not([data-template="browser"]):is(.sidebar-holds-messages:not(.dm-thread-open), .sidebar-holds-mail:not(.mail-reader-open)) > .workspace-main { display: none; }
-  #hub-shell.app-shell:not(.sidebar-collapsed):not([data-template="browser"]):is(.sidebar-holds-messages:not(.dm-thread-open), .sidebar-holds-mail:not(.mail-reader-open)) > .sidebar { border-right: 0; }
-  #hub-shell.app-shell:not(.sidebar-collapsed):not([data-template="browser"]):is(.sidebar-holds-messages.dm-thread-open, .sidebar-holds-mail.mail-reader-open) {
-    --ctx-col: 0px;
-    --main-w: 4000px;
-    --spacer: 0px;
+  #hub-shell.app-shell:not(.sidebar-collapsed):is(.sidebar-holds-messages:not(.dm-thread-open), .sidebar-holds-mail:not(.mail-reader-open)) > .workspace-main { display: none; }
+  #hub-shell.app-shell:not(.sidebar-collapsed):is(.sidebar-holds-messages:not(.dm-thread-open), .sidebar-holds-mail:not(.mail-reader-open)) > .sidebar { border-right: 0; }
+  #hub-shell.app-shell:not(.sidebar-collapsed):is(.sidebar-holds-messages.dm-thread-open, .sidebar-holds-mail.mail-reader-open) {
+    grid-template-columns: var(--rail-w) 0 minmax(0, 1fr) var(--right-col);
   }
-  #hub-shell.app-shell:not(.sidebar-collapsed):not([data-template="browser"]):is(.sidebar-holds-messages.dm-thread-open, .sidebar-holds-mail.mail-reader-open) > :is(.sidebar, #sidebar-resizer) { display: none; }
+  #hub-shell.app-shell:not(.sidebar-collapsed):is(.sidebar-holds-messages.dm-thread-open, .sidebar-holds-mail.mail-reader-open) > :is(.sidebar, #sidebar-resizer) { display: none; }
 }
 @media (max-width: 1099px) {
   /* The list sits in the page (the column is folded or the window is narrow): one pane at a time. */
@@ -244,6 +245,3 @@
 }
 #hub-shell #view-code .code-empty strong { display: block; margin: 0 0 var(--ds-space-2); font-size: var(--ds-type-title-size); line-height: var(--ds-type-title-leading); font-weight: var(--ds-weight-heavy); }
 #hub-shell #view-code .code-empty p { max-width: 360px; margin: 0; color: var(--muted); font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); }
-
-/* ===== すべての機能: the old feed column entries (followed tags, lists, yours) ===== */
-#hub-shell #sidebar-context .sidebar-apps-mine { margin-top: var(--ds-space-4); padding-top: var(--ds-space-3); border-top: 1px solid var(--line); }

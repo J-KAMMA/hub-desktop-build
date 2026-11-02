@@ -3,7 +3,7 @@
 *{box-sizing:border-box} html,body{min-height:100%} body{margin:0;overflow:hidden;background:var(--bg);color:var(--text);font-size:var(--type-subhead);line-height:1.45;-webkit-font-smoothing:antialiased}
 h1,h2,h3,p{margin:0} button,input,textarea,select{font:inherit} button{min-height:36px;background:var(--interactive);color:var(--text);border:0;border-radius:var(--radius-sm);padding:var(--space-2) var(--space-4);cursor:pointer;font-weight:700;letter-spacing:-.01em;transition:background-color .18s ease,color .18s ease,border-color .18s ease,transform .1s ease}button:active:not(:disabled){transform:scale(.98)}
 button:disabled{opacity:.45;cursor:not-allowed} button:focus-visible,summary:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px} input[type="checkbox"],input[type="radio"]{accent-color:var(--action)}[hidden]{display:none!important}
-.app-shell{display:grid;height:100vh}.sidebar{display:flex;min-width:0;min-height:0;flex-direction:column;border-right:1px solid var(--line);background:var(--panel)}
+.app-shell{display:grid;grid-template-columns:236px minmax(0,1fr) 320px;height:100vh}.sidebar{display:flex;min-width:0;min-height:0;flex-direction:column;border-right:1px solid var(--line);background:var(--panel)}
 .brand{display:flex;min-height:var(--header-height);align-items:center;gap:var(--space-2);padding:0 var(--space-3);border-bottom:1px solid var(--line)}.brand h1{font-size:var(--type-headline);font-weight:700;letter-spacing:-.02em}.environment{padding:2px var(--space-1);border:1px solid var(--line);border-radius:var(--radius-pill);color:var(--muted);font-size:var(--type-caption)}
 #primary-nav{display:grid;min-height:0;flex:1;align-content:start;gap:1px;overflow-y:auto;padding:var(--space-2);scrollbar-width:thin;scrollbar-color:var(--line-strong) transparent}
 .nav-item{display:flex;width:100%;min-height:38px;align-items:center;gap:var(--space-3);margin:0 0 1px;padding:0 var(--space-3);border-radius:var(--radius-sm);background:transparent;color:var(--muted);text-align:left;font-size:var(--type-subhead);font-weight:400;transition:background-color .14s,color .14s}.nav-item svg{width:19px;height:19px;flex-shrink:0}.nav-item:hover{background:var(--interactive);color:var(--text)}.nav-item.on{background:var(--selected);color:var(--text);font-weight:700}.nav-item.on svg{color:var(--text)}.account-nav{padding:var(--space-2);border-top:1px solid var(--line)}
@@ -170,7 +170,7 @@ button.rail-open:hover{background:var(--interactive-hover)}
 .piw-send svg,.piw-stop svg{width:15px;height:15px}
 .piw-stop{background:var(--interactive);color:var(--text)}
 .piw-stop:hover{background:var(--interactive-hover)}
-@media(max-width:1180px){.rail{display:none}}
+@media(max-width:1180px){.app-shell{grid-template-columns:236px minmax(0,1fr)}.rail{display:none}}
 @media(max-width:1040px){body{overflow:auto;padding-bottom:var(--space-8)}.app-shell{display:block;height:auto;min-height:100vh}.sidebar{display:none}#view-feed{width:100%}.workspace-main{width:100%;height:auto;overflow:visible}.mobile-nav{position:fixed;right:0;bottom:0;left:0;z-index:20;display:grid;height:64px;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line);background:var(--panel-glass);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px)}.mobile-nav-item{display:flex;min-height:63px;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-radius:0;background:transparent;color:var(--muted);font-size:var(--type-caption);font-weight:700}.mobile-nav-item svg{width:20px;height:20px}.mobile-nav-item.on{background:var(--selected);color:var(--text)}.view{width:100%;padding:var(--space-6) var(--space-6) var(--space-8)}#view-feed{padding:0 var(--space-3) 40px}.scopes{position:sticky;top:0;z-index:5;height:48px;margin:0 -10px var(--space-3);width:calc(100% + 20px);border-radius:0;background:var(--panel-glass);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px)}.scope{flex:1}.login-callout{margin-inline:var(--space-1)}}
 @media(max-width:640px){.view{padding:var(--space-6) var(--space-4) 40px}#view-feed{padding:0 0 40px}.scopes{margin:0;width:100%}.login-callout{margin:var(--space-3) var(--space-3) var(--space-4)}.post{padding-inline:var(--space-3)}.work-review-grid{grid-template-columns:1fr}}
 /* ブラウザの操作面（ワークスペース型）。タブの一覧はサイドバーの「タブ」欄、
@@ -489,8 +489,12 @@ button.rail-open:hover{background:var(--interactive-hover)}
 .app-shell.rail-open #rail-panel-close{position:absolute;top:15px;right:72px;z-index:2}
 .app-shell.rail-open .rail-marks{padding-top:var(--space-4)}
 @media(min-width:1041px){
-  .icon-rail{display:flex;min-height:0;flex-direction:column;align-items:center;gap:var(--space-1);overflow-y:auto;padding:var(--space-3) var(--space-2);border-right:1px solid var(--line);background:var(--surface-sunken)}
-  .rail{position:static;display:flex;width:auto;min-width:0;height:100vh;box-shadow:none}
+  .app-shell{grid-template-columns:72px 244px minmax(0,1fr) 64px}
+  .app-shell.rail-open{grid-template-columns:72px 244px minmax(0,1fr) 64px}
+  .icon-rail{grid-column:1;grid-row:1;display:flex;min-height:0;flex-direction:column;align-items:center;gap:var(--space-1);overflow-y:auto;padding:var(--space-3) var(--space-2);border-right:1px solid var(--line);background:var(--surface-sunken)}
+  .sidebar{grid-column:2;grid-row:1}
+  .workspace-main{grid-column:3;grid-row:1}
+  .rail{position:static;grid-column:4;grid-row:1;display:flex;width:auto;min-width:0;height:100vh;box-shadow:none}
   .rail{background:var(--panel)}
   .app-shell.rail-open .rail-body{height:100%;overflow:hidden;padding:0}
   .rail-pane{display:flex;min-height:0;height:100%;flex-direction:column}
@@ -504,7 +508,11 @@ button.rail-open:hover{background:var(--interactive-hover)}
   .rail-mark::after{content:attr(data-short-label);flex:none;font-size:var(--type-caption);line-height:1.1;white-space:nowrap}
   .app-shell:not(.rail-open) .rail-body{display:none}
   .app-shell:not(.rail-open) .rail-marks{flex-basis:63px;border-left:0}
+  .app-shell.sidebar-collapsed{grid-template-columns:72px minmax(0,1fr) 64px}
+  .app-shell.sidebar-collapsed.rail-open{grid-template-columns:72px minmax(0,1fr) 64px}
   .app-shell.sidebar-collapsed .sidebar{display:none}
+  .app-shell.sidebar-collapsed .workspace-main{grid-column:2}
+  .app-shell.sidebar-collapsed .rail{grid-column:3}
   .icon-rail .icon-button,.icon-rail .icon-nav-item{display:flex;width:58px;min-height:54px;flex-direction:column;align-items:center;justify-content:center;gap:3px;margin:0;padding:3px 0;border-radius:var(--radius-md);font-size:0}
   .icon-rail .icon-button svg,.icon-rail .icon-nav-item svg{width:21px;height:21px}
   .icon-rail .icon-button::after{content:attr(data-short-label);font-size:var(--type-caption);line-height:1.1;white-space:nowrap}
@@ -516,8 +524,8 @@ button.rail-open:hover{background:var(--interactive-hover)}
 @media(min-width:1041px){.app-shell.rail-open .rail{position:fixed;top:0;right:0;z-index:20;display:flex;width:308px;height:100vh;box-shadow:var(--shadow-lg)}}
 @media(min-width:721px) and (max-width:1040px){
   body{overflow:hidden;padding-bottom:0}
-  .app-shell,.app-shell.rail-open{display:grid;height:100vh;min-height:0}
-  .icon-rail{display:flex;min-height:0;flex-direction:column;align-items:center;gap:3px;overflow-y:auto;padding:var(--space-2) var(--space-1);border-right:1px solid var(--line);background:var(--surface-sunken)}
+  .app-shell,.app-shell.rail-open{display:grid;height:100vh;min-height:0;grid-template-columns:72px minmax(0,1fr) 56px}
+  .icon-rail{grid-column:1;grid-row:1;display:flex;min-height:0;flex-direction:column;align-items:center;gap:3px;overflow-y:auto;padding:var(--space-2) var(--space-1);border-right:1px solid var(--line);background:var(--surface-sunken)}
   .icon-rail .icon-button,.icon-rail .icon-nav-item{display:flex;width:58px;min-height:52px;flex-direction:column;align-items:center;justify-content:center;gap:3px;margin:0;padding:2px 0;border-radius:var(--radius-md);font-size:0}
   .icon-rail .icon-button svg,.icon-rail .icon-nav-item svg{width:20px;height:20px}
   .icon-rail .icon-button::after{content:attr(data-short-label);font-size:var(--type-caption);line-height:1.1;white-space:nowrap}
@@ -526,11 +534,11 @@ button.rail-open:hover{background:var(--interactive-hover)}
   .sidebar{position:fixed;top:0;bottom:0;left:72px;z-index:15;display:flex;width:244px;box-shadow:var(--shadow-lg)}
   .app-shell:not(.sidebar-collapsed):not(.rail-open) #layout-backdrop{position:fixed;inset:0;z-index:14;display:block;width:100%;height:100%;border:0;background:var(--overlay);cursor:default}
   .app-shell.sidebar-collapsed .sidebar{display:none}
-  .workspace-main{width:auto;height:100vh;overflow-y:auto}
+  .workspace-main{grid-column:2;grid-row:1;width:auto;height:100vh;overflow-y:auto}
   .workspace-main .view{width:min(820px,100%);margin-inline:auto}
   #view-feed{padding:0 var(--space-4) var(--space-8)}
   .scopes{position:static;width:auto;height:auto;margin:0 0 var(--space-3);border-radius:var(--radius-sm)}
-  .rail{display:flex;width:auto;height:100vh;background:var(--surface-sunken)}
+  .rail{grid-column:3;grid-row:1;display:flex;width:auto;height:100vh;background:var(--surface-sunken)}
   .rail-body{display:none}
   .rail-marks{flex-basis:56px;padding:var(--space-2) var(--space-1);border-left:0}
   .rail-mark{display:flex;width:48px;height:52px;min-height:52px;flex-direction:column;align-items:center;justify-content:center;gap:3px}
@@ -540,6 +548,8 @@ button.rail-open:hover{background:var(--interactive-hover)}
   .mobile-nav{display:none}
 }
 @media(max-width:720px){.icon-rail{display:none}.app-shell.rail-open .rail{display:none}}
+@media(min-width:1041px){.app-shell.browser-active{grid-template-columns:72px 244px minmax(0,1fr)}.app-shell.browser-active.sidebar-collapsed{grid-template-columns:72px minmax(0,1fr)}}
+@media(min-width:721px) and (max-width:1040px){.app-shell.browser-active{grid-template-columns:72px minmax(0,1fr)}}
 @media(min-width:721px){.app-shell.browser-active .rail,.app-shell.browser-active .desktop-rail-toggle{display:none}}
 .native-tool #harness-dialog{width:100vw;max-width:100vw;height:100vh;max-height:100vh;border:0;border-radius:0;background:var(--bg);box-shadow:none}
 .native-tool #harness-dialog .dialog-shell{height:100vh;max-height:100vh;padding:0 0 var(--space-6)}
@@ -618,7 +628,7 @@ button.rail-open:hover{background:var(--interactive-hover)}
 @media(max-width:720px){.mobile-nav{grid-template-columns:repeat(10,minmax(64px,1fr));overflow-x:auto}.mobile-nav-item{padding:var(--space-1) 2px;white-space:nowrap}#view-ai .harness-history{max-height:128px;margin-bottom:var(--space-3);padding:var(--space-2);border:1px solid var(--line);border-radius:var(--radius-md);overflow-y:auto}#view-ai .harness-history h3{margin:0 0 var(--space-2);color:var(--muted);font-size:var(--type-caption)}#view-ai .piw-history-list{display:block}#view-ai .piw-history-item{min-width:0}#view-ai .piw-shell{height:calc(100vh - 360px);min-height:240px}}
 
 /* Desktop workspace: compact destinations, contextual sidebar, open canvas. */
-.app-toolbar{position:relative;z-index:30;display:flex;height:var(--toolbar-height);align-items:center;gap:var(--space-4);padding:0 var(--space-3);border-bottom:1px solid var(--line);background:var(--surface-sunken)}
+.app-toolbar{position:relative;z-index:30;grid-column:1/-1;grid-row:1;display:flex;height:var(--toolbar-height);align-items:center;gap:var(--space-4);padding:0 var(--space-3);border-bottom:1px solid var(--line);background:var(--surface-sunken)}
 .toolbar-navigation{display:flex;align-items:center;gap:2px}
 .toolbar-button{display:grid;width:34px;height:34px;min-height:34px;place-items:center;padding:0;border-radius:var(--radius-sm);background:transparent;color:var(--muted)}
 .toolbar-button:hover:not(:disabled),.toolbar-button[aria-expanded="false"]{background:var(--interactive);color:var(--text)}
@@ -656,8 +666,8 @@ button.rail-open:hover{background:var(--interactive-hover)}
 .discovery-side,#desktop-compose{display:none}
 @media(min-width:721px){
   body{overflow:hidden;padding:0;background:var(--bg)}
-  .app-shell,.app-shell.rail-open,.app-shell.sidebar-collapsed,.app-shell.sidebar-collapsed.rail-open,.app-shell:is(.ai-active,.browser-active,.messages-active,.apps-active),.app-shell:is(.ai-active,.browser-active,.messages-active,.apps-active).sidebar-collapsed{display:grid;max-width:none;height:100vh;min-height:0;margin:0}
-  .icon-rail{display:flex;width:100%;min-height:0;align-items:center;gap:var(--space-2);overflow-x:hidden;overflow-y:auto;padding:var(--space-2) var(--space-1);border:0;border-right:1px solid var(--line);background:var(--surface-sunken);scrollbar-width:none}
+  .app-shell,.app-shell.rail-open,.app-shell.sidebar-collapsed,.app-shell.sidebar-collapsed.rail-open,.app-shell:is(.ai-active,.browser-active,.messages-active,.apps-active),.app-shell:is(.ai-active,.browser-active,.messages-active,.apps-active).sidebar-collapsed{display:grid;max-width:none;height:100vh;min-height:0;margin:0;grid-template-columns:var(--rail-w) clamp(260px,20vw,360px) minmax(0,1fr)}
+  .icon-rail{grid-column:1;grid-row:2;display:flex;width:100%;min-height:0;align-items:center;gap:var(--space-2);overflow-x:hidden;overflow-y:auto;padding:var(--space-2) var(--space-1);border:0;border-right:1px solid var(--line);background:var(--surface-sunken);scrollbar-width:none}
   .icon-rail::-webkit-scrollbar{display:none}
   .icon-rail .desktop-rail-toggle{display:flex;margin-top:0}
   .icon-rail .icon-button,.icon-rail .icon-nav-item{display:flex;width:44px;height:44px;min-height:44px;flex:none;flex-direction:row;align-items:center;justify-content:center;gap:0;margin:0;padding:var(--space-2);border-radius:var(--radius-md);color:var(--muted);font-size:0}
@@ -673,7 +683,7 @@ button.rail-open:hover{background:var(--interactive-hover)}
   #desktop-compose strong{display:none}
   #desktop-compose:hover{opacity:.86}
   #desktop-compose svg{width:24px;height:24px;stroke-width:2.1}
-  .app-shell .sidebar,.app-shell.sidebar-collapsed .sidebar,.app-shell:is(.ai-active,.browser-active,.messages-active,.apps-active) .sidebar,.app-shell:is(.ai-active,.browser-active,.messages-active,.apps-active).sidebar-collapsed .sidebar{position:static;display:flex;width:auto;height:calc(100vh - var(--toolbar-height));box-shadow:none}
+  .app-shell .sidebar,.app-shell.sidebar-collapsed .sidebar,.app-shell:is(.ai-active,.browser-active,.messages-active,.apps-active) .sidebar,.app-shell:is(.ai-active,.browser-active,.messages-active,.apps-active).sidebar-collapsed .sidebar{position:static;grid-column:2;grid-row:2;display:flex;width:auto;height:calc(100vh - var(--toolbar-height));box-shadow:none}
   .sidebar .brand{min-height:56px;padding-inline:var(--space-4)}
   .sidebar .brand h1{font-size:var(--type-headline);font-weight:700}
   #sidebar-context{gap:1px;padding:var(--space-2)}
@@ -684,7 +694,7 @@ button.rail-open:hover{background:var(--interactive-hover)}
   #sidebar-ai-new{margin:0 0 var(--space-2);color:var(--text);font-weight:700}
   .piw-history-item{min-height:36px;padding:var(--space-2) var(--space-3);font-size:var(--type-subhead)}
   #sidebar-context .nav-group:first-of-type{margin-top:var(--space-2)}
-  .app-shell .workspace-main,.app-shell.sidebar-collapsed .workspace-main,.app-shell:is(.ai-active,.browser-active,.messages-active,.apps-active) .workspace-main,.app-shell:is(.ai-active,.browser-active,.messages-active,.apps-active).sidebar-collapsed .workspace-main{width:auto;min-width:0;height:calc(100vh - var(--toolbar-height));overflow-y:auto;border:0;background:var(--bg)}
+  .app-shell .workspace-main,.app-shell.sidebar-collapsed .workspace-main,.app-shell:is(.ai-active,.browser-active,.messages-active,.apps-active) .workspace-main,.app-shell:is(.ai-active,.browser-active,.messages-active,.apps-active).sidebar-collapsed .workspace-main{grid-column:3;grid-row:2;width:auto;min-width:0;height:calc(100vh - var(--toolbar-height));overflow-y:auto;border:0;background:var(--bg)}
   .workspace-main .view,#view-feed,#view-notifications,#view-messages,#view-profile{width:min(1160px,100%);max-width:none;margin-inline:auto;padding:0 var(--space-6) 60px}
   .workspace-main .view-head{min-height:56px;margin-bottom:var(--space-4)}
   #view-feed{width:min(860px,100%)}
@@ -730,7 +740,9 @@ button.rail-open:hover{background:var(--interactive-hover)}
   #desktop-compose{height:44px;min-height:44px}
 }
 @media(min-width:861px){
+  .app-shell.sidebar-collapsed,.app-shell:is(.ai-active,.browser-active,.messages-active,.apps-active).sidebar-collapsed{grid-template-columns:var(--rail-w) minmax(0,1fr)}
   .app-shell.sidebar-collapsed .sidebar,.app-shell:is(.ai-active,.browser-active,.messages-active,.apps-active).sidebar-collapsed .sidebar{display:none}
+  .app-shell.sidebar-collapsed .workspace-main,.app-shell:is(.ai-active,.browser-active,.messages-active,.apps-active).sidebar-collapsed .workspace-main{grid-column:2}
   .app-shell:not(.sidebar-collapsed) #view-feed>.scopes,.app-shell:not(.sidebar-collapsed) #view-notifications>.scopes,.app-shell:not(.sidebar-collapsed) #view-market>.segmented,.app-shell:not(.sidebar-collapsed) #view-purchased>.segmented,.app-shell:not(.sidebar-collapsed) #view-settings .inner-nav,.app-shell:not(.sidebar-collapsed) #view-mail #mail-folders{display:none}
   .app-shell:not(.sidebar-collapsed) #view-market #market-cart-open{display:none}
   .app-shell:not(.sidebar-collapsed) #view-settings .inner-layout{grid-template-columns:minmax(0,1fr);max-width:800px}
@@ -739,10 +751,11 @@ button.rail-open:hover{background:var(--interactive-hover)}
 }
 @media(min-width:721px) and (max-width:860px){
   #view-ai .piw-shell{height:calc(100vh - 245px - var(--toolbar-height))}
-  .app-shell,.app-shell.rail-open,.app-shell.sidebar-collapsed,.app-shell.sidebar-collapsed.rail-open,.app-shell:is(.ai-active,.browser-active,.messages-active,.apps-active),.app-shell:is(.ai-active,.browser-active,.messages-active,.apps-active).sidebar-collapsed{max-width:none}
+  .app-shell,.app-shell.rail-open,.app-shell.sidebar-collapsed,.app-shell.sidebar-collapsed.rail-open,.app-shell:is(.ai-active,.browser-active,.messages-active,.apps-active),.app-shell:is(.ai-active,.browser-active,.messages-active,.apps-active).sidebar-collapsed{max-width:none;grid-template-columns:var(--rail-w) minmax(0,1fr)}
   .app-shell .rail{display:none}
   .app-shell .sidebar,.app-shell.sidebar-collapsed .sidebar,.app-shell:is(.ai-active,.browser-active,.messages-active,.apps-active) .sidebar,.app-shell:is(.ai-active,.browser-active,.messages-active,.apps-active).sidebar-collapsed .sidebar{display:none}
   .app-shell:not(.sidebar-collapsed) .sidebar,.app-shell.apps-active:not(.sidebar-collapsed) .sidebar{position:fixed;top:var(--toolbar-height);bottom:0;left:var(--rail-w);z-index:15;display:flex;width:230px;height:calc(100vh - var(--toolbar-height));box-shadow:var(--shadow-lg)}
+  .app-shell .workspace-main,.app-shell.sidebar-collapsed .workspace-main,.app-shell:is(.ai-active,.browser-active,.messages-active,.apps-active) .workspace-main,.app-shell:is(.ai-active,.browser-active,.messages-active,.apps-active).sidebar-collapsed .workspace-main{grid-column:2}
   .app-shell:not(.sidebar-collapsed):not(.rail-open) #layout-backdrop{position:fixed;inset:0;top:var(--toolbar-height);z-index:14;display:block;width:100%;height:calc(100vh - var(--toolbar-height));border:0;background:var(--overlay)}
 }
 @media(max-width:720px){#toolbar-sidebar{display:none}#view-feed>.scopes{width:100%;margin-inline:0}#view-ai .piw-shell{height:calc(100vh - 360px - var(--toolbar-height))}}
@@ -801,14 +814,23 @@ button.rail-open:hover{background:var(--interactive-hover)}
 
 /* Keep the contextual right column in the desktop grid. Only smaller windows use an overlay. */
 @media(min-width:861px) and (max-width:1179px){
-  .app-shell:not(.browser-active):not(.rail-open) .rail{position:static;display:flex;width:auto;height:calc(100vh - var(--toolbar-height));box-shadow:none}
+  .app-shell:not(.browser-active):not(.sidebar-collapsed):not(.rail-open){grid-template-columns:var(--rail-w) var(--desktop-sidebar-width,clamp(200px,22vw,235px)) minmax(0,1fr) 48px}
+  .app-shell:not(.browser-active):not(.sidebar-collapsed).rail-open{grid-template-columns:var(--rail-w) var(--desktop-sidebar-width,clamp(200px,22vw,235px)) minmax(0,1fr)}
+  .app-shell:not(.browser-active).sidebar-collapsed:not(.rail-open){grid-template-columns:var(--rail-w) minmax(0,1fr) 48px}
+  .app-shell:not(.browser-active):not(.rail-open) .rail{position:static;grid-column:4;grid-row:2;display:flex;width:auto;height:calc(100vh - var(--toolbar-height));box-shadow:none}
+  .app-shell:not(.browser-active).sidebar-collapsed:not(.rail-open) .rail{grid-column:3}
   .app-shell:not(.browser-active):not(.rail-open) .rail-body{display:none}
   .app-shell:not(.browser-active):not(.rail-open) .rail-marks{display:flex;width:100%;flex-basis:100%;align-items:center;padding:var(--space-2) 3px}
   .app-shell:not(.browser-active):not(.rail-open) .rail-mark{width:40px;height:44px;min-height:44px}
   .app-shell:not(.browser-active):not(.rail-open) .rail-mark::after{content:none}
 }
 @media(min-width:1180px){
-  .app-shell:not(.browser-active) .rail,.app-shell:not(.browser-active).rail-open .rail{position:static;z-index:auto;display:flex;width:auto;height:calc(100vh - var(--toolbar-height));overflow:hidden;border-left:1px solid var(--line);background:var(--panel);box-shadow:none}
+  .app-shell:not(.browser-active):not(.sidebar-collapsed){grid-template-columns:var(--rail-w) var(--desktop-sidebar-width,clamp(210px,13.5vw,250px)) minmax(0,1fr) 48px}
+  .app-shell:not(.browser-active):not(.sidebar-collapsed).rail-open{grid-template-columns:var(--rail-w) var(--desktop-sidebar-width,clamp(210px,13.5vw,250px)) minmax(0,1fr) var(--desktop-rail-width,300px)}
+  .app-shell:not(.browser-active).sidebar-collapsed{grid-template-columns:var(--rail-w) minmax(0,1fr) 48px}
+  .app-shell:not(.browser-active).sidebar-collapsed.rail-open{grid-template-columns:var(--rail-w) minmax(0,1fr) var(--desktop-rail-width,300px)}
+  .app-shell:not(.browser-active) .rail,.app-shell:not(.browser-active).rail-open .rail{position:static;z-index:auto;grid-column:4;grid-row:2;display:flex;width:auto;height:calc(100vh - var(--toolbar-height));overflow:hidden;border-left:1px solid var(--line);background:var(--panel);box-shadow:none}
+  .app-shell:not(.browser-active).sidebar-collapsed .rail{grid-column:3}
   .app-shell:not(.browser-active).rail-open #layout-backdrop{display:none}
   .app-shell:not(.browser-active).rail-open .rail-body{display:block;height:auto;min-width:0;overflow-y:auto;padding:0}
   .app-shell:not(.browser-active):not(.rail-open) .rail-body{display:none}
@@ -894,19 +916,25 @@ button.rail-open:hover{background:var(--interactive-hover)}
 .column-resizer:focus-visible{outline:0}
 body.column-resizing,body.column-resizing *{cursor:col-resize!important;user-select:none!important}
 @media(min-width:861px){
-  .app-shell:not(.sidebar-collapsed) #sidebar-resizer{position:relative;z-index:12;display:block;height:100%;justify-self:end;transform:translateX(50%)}
+  .app-shell.browser-active:not(.sidebar-collapsed){grid-template-columns:var(--rail-w) var(--desktop-sidebar-width,clamp(210px,13.5vw,250px)) minmax(0,1fr)}
+  .app-shell:not(.sidebar-collapsed) #sidebar-resizer{position:relative;z-index:12;grid-column:2;grid-row:2;display:block;height:100%;justify-self:end;transform:translateX(50%)}
 }
 @media(min-width:1180px){
-  .app-shell.rail-open:not(.browser-active) #rail-resizer{position:relative;z-index:12;display:block;height:100%;justify-self:start;transform:translateX(-50%)}
+  .app-shell.rail-open:not(.browser-active) #rail-resizer{position:relative;z-index:12;grid-column:4;grid-row:2;display:block;height:100%;justify-self:start;transform:translateX(-50%)}
+  .app-shell.rail-open.sidebar-collapsed #rail-resizer{grid-column:3}
 }
 @media(min-width:721px) and (max-width:860px){
   .app-shell.rail-open:not(.browser-active) #rail-resizer{position:fixed;top:var(--toolbar-height);right:min(var(--desktop-rail-width,360px),calc(100vw - 80px));bottom:0;z-index:21;display:block;transform:translateX(50%)}
   .app-shell.rail-open #layout-backdrop{left:var(--rail-w);width:calc(100vw - var(--rail-w))}
 }
 @media(min-width:861px) and (max-width:1179px){
-  .app-shell:not(.browser-active).rail-open .rail{position:static;z-index:auto;display:flex;width:auto;height:calc(100vh - var(--toolbar-height));overflow:hidden;border-left:1px solid var(--line);background:var(--panel);box-shadow:none}
+  .app-shell:not(.browser-active):not(.sidebar-collapsed).rail-open{grid-template-columns:var(--rail-w) var(--desktop-sidebar-width,clamp(200px,22vw,235px)) minmax(0,1fr) var(--desktop-rail-width,300px)}
+  .app-shell:not(.browser-active).sidebar-collapsed.rail-open{grid-template-columns:var(--rail-w) minmax(0,1fr) var(--desktop-rail-width,300px)}
+  .app-shell:not(.browser-active).rail-open .rail{position:static;z-index:auto;grid-column:4;grid-row:2;display:flex;width:auto;height:calc(100vh - var(--toolbar-height));overflow:hidden;border-left:1px solid var(--line);background:var(--panel);box-shadow:none}
+  .app-shell:not(.browser-active).sidebar-collapsed.rail-open .rail{grid-column:3}
   .app-shell.rail-open #layout-backdrop,.app-shell.rail-open #rail-panel-close{display:none}
-  .app-shell.rail-open:not(.browser-active) #rail-resizer{position:relative;z-index:12;display:block;height:100%;justify-self:start;transform:translateX(-50%)}
+  .app-shell.rail-open:not(.browser-active) #rail-resizer{position:relative;z-index:12;grid-column:4;grid-row:2;display:block;height:100%;justify-self:start;transform:translateX(-50%)}
+  .app-shell.rail-open.sidebar-collapsed #rail-resizer{grid-column:3}
 }
 
 /* Repost and quote share one action, with a choice before either write. */
@@ -1186,14 +1214,20 @@ body.column-resizing,body.column-resizing *{cursor:col-resize!important;user-sel
 /* A wide browser keeps the independent workspace beside the page. Its stage
    resizes with the grid so the child WebView never covers the right column. */
 @media(min-width:1180px){
-  .app-shell.browser-active .rail{position:static;z-index:auto;display:flex;width:auto;height:calc(100vh - var(--toolbar-height));overflow:hidden;border-left:1px solid var(--line);background:var(--panel);box-shadow:none}
+  .app-shell.browser-active:not(.sidebar-collapsed):not(.rail-open){grid-template-columns:var(--rail-w) var(--desktop-sidebar-width,clamp(210px,13.5vw,250px)) minmax(0,1fr) 48px}
+  .app-shell.browser-active:not(.sidebar-collapsed).rail-open{grid-template-columns:var(--rail-w) var(--desktop-sidebar-width,clamp(210px,13.5vw,250px)) minmax(0,1fr) var(--desktop-rail-width,300px)}
+  .app-shell.browser-active.sidebar-collapsed:not(.rail-open){grid-template-columns:var(--rail-w) minmax(0,1fr) 48px}
+  .app-shell.browser-active.sidebar-collapsed.rail-open{grid-template-columns:var(--rail-w) minmax(0,1fr) var(--desktop-rail-width,300px)}
+  .app-shell.browser-active .rail{position:static;z-index:auto;grid-column:4;grid-row:2;display:flex;width:auto;height:calc(100vh - var(--toolbar-height));overflow:hidden;border-left:1px solid var(--line);background:var(--panel);box-shadow:none}
+  .app-shell.browser-active.sidebar-collapsed .rail{grid-column:3}
   .app-shell.browser-active.rail-open #layout-backdrop,.app-shell.browser-active #rail-panel-close{display:none}
   .app-shell.browser-active:not(.rail-open) .rail-body{display:none}
   .app-shell.browser-active.rail-open .rail-body{display:flex;min-height:0;height:auto;flex-direction:column;overflow:hidden;padding:0}
   .app-shell.browser-active .rail-marks{display:flex;min-height:0;flex-basis:48px;align-items:center;gap:var(--space-1);overflow-y:auto;padding:var(--space-3) var(--space-1);border-left:1px solid var(--line)}
   .app-shell.browser-active .rail-mark{width:40px;height:44px;min-height:44px}
   .app-shell.browser-active .rail-mark::after{content:none}
-  .app-shell.browser-active.rail-open #rail-resizer{position:relative;z-index:12;display:block;height:100%;justify-self:start;transform:translateX(-50%)}
+  .app-shell.browser-active.rail-open #rail-resizer{position:relative;z-index:12;grid-column:4;grid-row:2;display:block;height:100%;justify-self:start;transform:translateX(-50%)}
+  .app-shell.browser-active.sidebar-collapsed.rail-open #rail-resizer{grid-column:3}
 }
 #view-hubpedia .searchbar input{min-height:40px}
 #view-hubpedia .searchbar .approve{min-height:40px;min-width:68px;padding:var(--space-2) var(--space-3);font-size:var(--type-subhead)}

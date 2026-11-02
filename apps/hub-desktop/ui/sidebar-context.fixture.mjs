@@ -76,6 +76,7 @@ export function fixture({ projects = [], width = 1280, registered = true } = {})
     const renderVideoChips = () => {}, renderMusicChips = () => {}, renderFeedChips = () => {}, renderReadingChips = () => {}, videoSearchState = null;
     const hubAsset = (img, url) => { img.src = "https://hub.invalid" + url; };
     const desktopAccount = { state: registered ? "registered" : "anonymous" };
+    const communitiesHost = document.createElement("div"), navCommunities = { setCurrent() {}, refresh: async () => {} };
     const invoke = async (command, args) => { calls.push(["invoke", command, args?.name, ...(args?.ids ?? [])]); return hubSidebar(command, args); };
     const sidebarContext = document.querySelector("#sidebar-context");
     const messagesSide = document.querySelector(".messages-side"), messagesLayout = document.querySelector(".messages-layout"), mailListCol = document.querySelector(".mail-list-col"), mailLayoutNode = document.querySelector(".mail-layout");

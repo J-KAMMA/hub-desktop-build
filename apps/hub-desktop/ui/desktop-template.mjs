@@ -1,5 +1,5 @@
 // 画面の型（docs/hub-ui-reference/DESIGN-SYSTEM.md §1、§5）。.app-shell の data-template に入れる。
-// 列の幅は desktop-frame.css が型ごとに一か所で決める（stream 600 · wide 980 · reading 680 · split と settings は 980）。
+// 列の幅は desktop-layouts.css が型ごとに一か所で決める（stream 600 · wide 980 · reading 680 · split と settings は 980）。
 // ブラウザは本文の幅を持たない専用の型（窓いっぱい）。
 
 export const TEMPLATES = Object.freeze(["stream", "wide", "reading", "split", "settings", "browser"]);

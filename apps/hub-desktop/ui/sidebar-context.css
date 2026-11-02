@@ -298,3 +298,27 @@
 #hub-shell .view:is(#view-feed, #view-profile, #view-notifications, #view-search, #view-hubpedia) :is(.post, .social-stream-card, .result-card, .distributed-resource) {
   border-bottom-color: color-mix(in srgb, var(--line) 55%, transparent);
 }
+
+/* コミュニティ画面の内側の列の「参加中」（最大5件 + すべて見る）。行は文脈の列の行と同じ（.sidebar-context-item）。 */
+#hub-shell #sidebar-context .nav-communities { display: flex; flex-direction: column; width: 100%; }
+#hub-shell #sidebar-context .nav-communities[hidden] { display: none; }
+#hub-shell #sidebar-context .nav-community { display: flex; align-items: center; gap: var(--ds-space-3); }
+#hub-shell #sidebar-context .nav-community-face {
+  display: grid;
+  flex: 0 0 20px;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--ds-radius-badge);
+  color: var(--muted);
+  font-size: var(--ds-type-meta-size);
+  font-weight: var(--ds-weight-strong);
+  line-height: 1;
+}
+#hub-shell #sidebar-context .nav-community-face img { display: block; width: 100%; height: 100%; object-fit: cover; }
+#hub-shell #sidebar-context .nav-community-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#hub-shell #sidebar-context .nav-community[aria-current="true"] .nav-community-face { border-color: var(--emphasis); color: var(--text); }
+#hub-shell #sidebar-context .nav-community-all { color: var(--muted); }
+#hub-shell #sidebar-context .nav-community .nav-badge { margin-left: auto; }

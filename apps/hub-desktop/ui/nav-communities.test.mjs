@@ -20,7 +20,7 @@ test('only joined communities appear, at most five, and the sixth makes a more f
   assert.equal(joinedCommunities({ communities: [{ id: 'c0', name: 'a', unreadCount: 3 }], memberships: [{ communityId: 'c0', status: 'muted' }] }).rows[0].unread, 3);
 });
 
-test('rows are 40px buttons with a face and a name, the current one is marked, and the last row links to the list', () => {
+test('rows are context-column buttons with a face and a name, the current one is marked, and the last row links to the list', () => {
   const dom = new JSDOM('<div id="host"></div>');
   const host = dom.window.document.querySelector('#host');
   const opened = []; let all = 0;
@@ -45,7 +45,7 @@ test('an unread count becomes an outlined count badge, never a fill', () => {
   const host = dom.window.document.querySelector('#host');
   renderNavCommunities(dom.window.document, host, joinedCommunities({ communities: [{ id: 'a', name: 'A', unreadCount: 120 }], memberships: [{ communityId: 'a', status: 'active' }] }), {});
   assert.equal(host.querySelector('.nav-badge').textContent, '99+');
-  const css = readFileSync(new URL('./desktop-frame.css', import.meta.url), 'utf8');
+  const css = readFileSync(new URL('./desktop-shell.css', import.meta.url), 'utf8');
   const rule = css.slice(css.indexOf('#hub-shell .nav-badge {'), css.indexOf('#hub-shell .nav-badge[hidden]'));
   assert.match(rule, /border: 1px solid var\(--ds-badge-count-line\)/);
   assert.match(rule, /background: transparent/);
@@ -96,7 +96,19 @@ test('gold is a line and never a fill in any ui stylesheet', () => {
   const gold = /background(?:-color|-image)?\s*:\s*[^;{}]*var\(--(?:emphasis|action|champagne|accent-base)\b/;
   const read = (file) => readFileSync(new URL(`./${file}`, import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
   for (const file of files) assert.doesNotMatch(read(file), gold, `${file}: no gold fill`);
-  for (const file of ['desktop-frame.css', 'desktop-luxe.css', 'desktop-views.css']) {
+  for (const file of ['desktop-luxe.css', 'desktop-views.css', 'desktop-layouts.css']) {
     assert.doesNotMatch(read(file), /gradient/, `${file}: no gradient`);
   }
+});
+
+test('joined communities live in the community view context column, not in the left rail', () => {
+  const html = readFileSync(new URL('./index.html', import.meta.url), 'utf8');
+  const rail = html.match(/<nav class="icon-rail"[\s\S]*?<\/nav>/)[0];
+  assert.doesNotMatch(rail, /nav-communities|nav-community/);
+  const app = readFileSync(new URL('./app.js', import.meta.url), 'utf8');
+  assert.match(app, /if \(contextView === "community" && desktopAccount\.state === "registered"\) \{[\s\S]*?sidebarContext\.append\(communitiesHost\);/);
+  const dom = new JSDOM('<div id="host"></div>');
+  const host = dom.window.document.querySelector('#host');
+  renderNavCommunities(dom.window.document, host, joinedCommunities(data(2)), {});
+  assert.ok([...host.querySelectorAll('.nav-community')].every((button) => button.classList.contains('sidebar-context-item')), 'rows reuse the context-column row style');
 });

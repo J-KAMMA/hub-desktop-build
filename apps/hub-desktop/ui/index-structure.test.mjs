@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync, readdirSync} from 'node:fs';
+import {existsSync, readFileSync, readdirSync} from 'node:fs';
 import {createRequire} from 'node:module';
 import {createMediaSearch} from './media-search.mjs';
 const {JSDOM} = createRequire(new URL('../../../package.json', import.meta.url))('jsdom');
@@ -198,39 +198,70 @@ test('a failed music catalog load shows the state panel and a retry', async () =
   dom.window.close();
 });
 
-// 左ナビは幅で自動に 275 / 88 に変わる（2026-11-01、DESIGN-SYSTEM §1）。メニューの開閉ボタンは廃止した。戻る → 進む が上の帯の先頭。
-test('the toolbar starts with back and forward; the rail-expand button is gone and the first destination is search', () => {
+// 左の記号の帯は 56、メニューで 208（2026-10-15 所有者指定。2026-11-02 に元の構造へ戻した）。メニュー → 戻る → 進む が上の帯の先頭。
+test('the menu button is the first interactive control of the toolbar and is not in the rail', () => {
   const toolbar = document.querySelector('.app-toolbar');
   const first = toolbar.querySelector('button, input, a[href]');
-  assert.equal(first.id, 'toolbar-back');
+  assert.equal(first.id, 'rail-expand-toggle');
   assert.ok(first.closest('.toolbar-navigation'));
-  assert.equal(document.querySelectorAll('#rail-expand-toggle').length, 0);
+  assert.equal(document.querySelectorAll('#rail-expand-toggle').length, 1);
+  assert.equal(document.querySelector('.icon-rail #rail-expand-toggle'), null);
+  assert.ok(first.title && first.getAttribute('aria-label'));
   const order = [...toolbar.querySelectorAll('.toolbar-navigation > button')].map((button) => button.id);
-  assert.deepEqual(order.slice(0, 2), ['toolbar-back', 'toolbar-forward']);
+  assert.deepEqual(order.slice(0, 3), ['rail-expand-toggle', 'toolbar-back', 'toolbar-forward']);
   const destinations = [...document.querySelectorAll('.icon-rail .icon-nav-item')].map((item) => item.dataset.view);
-  assert.deepEqual(destinations.slice(0, 5), ['search', 'feed', 'notifications', 'messages', 'community']);
-  const app = readFileSync(new URL('./app.js', import.meta.url), 'utf8');
-  assert.doesNotMatch(app, /rail-expand-toggle|rail-expanded/);
+  assert.deepEqual(destinations, ['feed', 'notifications', 'messages', 'articles', 'videos', 'music', 'games', 'research', 'market', 'browser', 'ai', 'profile', 'settings']);
 });
 
-test('the nav is 275 at 1280 and above and an 88 icon rail below; one grid definition owns the shell', () => {
-  const frame = readFileSync(new URL('./desktop-frame.css', import.meta.url), 'utf8');
-  assert.ok(frame.includes('--nav-w: var(--ds-nav-w-rail);'));
-  assert.ok(frame.includes('@media (min-width: 1280px) {\n  #hub-shell.app-shell:not([data-template="browser"]) { --nav-w: var(--ds-nav-w); }'.replaceAll('\n', frame.includes('\r\n') ? '\r\n' : '\n')));
-  assert.ok(frame.includes('grid-template-columns: var(--nav-w) var(--spacer) var(--ctx-col) minmax(0, var(--main-w)) var(--spacer) var(--rail-col);'));
-  const tokens = readFileSync(new URL('./tokens.css', import.meta.url), 'utf8');
-  assert.match(tokens, /--ds-nav-w: 275px;/);
-  assert.match(tokens, /--ds-nav-w-rail: 88px;/);
-  // どの CSS も .app-shell と、その子（左ナビ・内側の列・本文・右の列・つまみ）の格子の位置を決めない。決めるのは desktop-frame.css だけ。
-  const shellSubject = /^(?:\.app-shell|\.sidebar|\.workspace-main|\.icon-rail|\.rail|#sidebar-resizer|#rail-resizer|\.app-toolbar)(?:[:.#\[].*)?$/;
-  for (const file of readdirSync(new URL('./', import.meta.url)).filter((name) => name.endsWith('.css') && name !== 'desktop-frame.css')) {
+test('the menu cell follows the rail width so it sits above the rail icons', () => {
+  const css = readFileSync(new URL('./desktop-shell.css', import.meta.url), 'utf8');
+  const rule = css.match(/#hub-shell \.app-toolbar #rail-expand-toggle \{([^}]*)\}/)[1];
+  assert.match(rule, /width:\s*var\(--rail-w\)/);
+  assert.match(rule, /padding:\s*0 0 0 18px/);
+  assert.match(css, /#hub-shell \{\s*--rail-w: 56px;/);
+  assert.match(css, /#hub-shell\.rail-expanded \{ --rail-w: 208px; \}/);
+});
+
+test('the menu button toggles the rail width class and its state', () => {
+  const app = readFileSync(new URL('./app.js', import.meta.url), 'utf8').replaceAll('\r\n', '\n');
+  const start = app.indexOf('toggle = document.querySelector("#rail-expand-toggle");');
+  assert.ok(start > 0);
+  const open = app.lastIndexOf('\n{\n', start) + 1;
+  const end = app.indexOf('\n}\n', start);
+  const block = app.slice(open, end + 2).replace('queueMicrotask(() => { try { applyColumnWidths(); } catch { /* 起動前の呼び出しは何もしない */ } });', '');
+  const dom = new JSDOM(html, {runScripts: 'outside-only', url: 'http://localhost/'});
+  dom.window.eval(block);
+  const shell = dom.window.document.querySelector('.app-shell');
+  const button = dom.window.document.querySelector('#rail-expand-toggle');
+  assert.equal(shell.classList.contains('rail-expanded'), false);
+  button.click();
+  assert.equal(shell.classList.contains('rail-expanded'), true);
+  assert.equal(button.getAttribute('aria-expanded'), 'true');
+  button.click();
+  assert.equal(shell.classList.contains('rail-expanded'), false);
+  assert.equal(button.getAttribute('aria-expanded'), 'false');
+});
+
+// 外郭の格子は元の構造：[左の記号の帯 56/208] [内側の列] [本文] [右の帯]。どの画面でも左の帯と内側の列は同じ位置に立つ。
+test('the shell keeps the original grid: rail first, then the context column, then main, then the right rail', () => {
+  const styles = readFileSync(new URL('./styles.css', import.meta.url), 'utf8');
+  assert.ok(!existsSync(new URL('./desktop-frame.css', import.meta.url)), 'the 275/88 frame is gone');
+  assert.doesNotMatch(html, /desktop-frame\.css/);
+  // 既定（内側の列あり・右の帯は細い）。先頭の列は必ず var(--rail-w)。
+  assert.ok(styles.includes('.app-shell:not(.browser-active):not(.sidebar-collapsed){grid-template-columns:var(--rail-w) var(--desktop-sidebar-width,clamp(210px,13.5vw,250px)) minmax(0,1fr) 48px}'));
+  assert.ok(styles.includes('.app-shell:not(.browser-active):not(.sidebar-collapsed).rail-open{grid-template-columns:var(--rail-w) var(--desktop-sidebar-width,clamp(210px,13.5vw,250px)) minmax(0,1fr) var(--desktop-rail-width,300px)}'));
+  assert.ok(styles.includes('.app-shell:not(.browser-active).sidebar-collapsed{grid-template-columns:var(--rail-w) minmax(0,1fr) 48px}'));
+  const placement = (name) => styles.includes(name);
+  assert.ok(placement('.icon-rail{grid-column:1;grid-row:2;'));
+  assert.ok(placement('position:static;grid-column:2;grid-row:2;display:flex;width:auto;height:calc(100vh - var(--toolbar-height))'));
+  // 型（data-template）は本文の幅だけを変える。格子の列は決めない。
+  for (const file of readdirSync(new URL('./', import.meta.url)).filter((name) => name.endsWith('.css'))) {
     const css = readFileSync(new URL('./' + file, import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
     for (const [, selector, body] of css.matchAll(/([^{}@]+)\{([^{}]*)\}/g)) {
-      if (!/grid-template-(columns|rows)|grid-column|grid-row|grid-area/.test(body)) continue;
-      for (const part of selector.split(',')) {
-        const last = part.trim().split(/[\s>+~]+/).pop();
-        assert.doesNotMatch(last, shellSubject, `${file}: ${selector.trim().slice(0, 100)} places a shell column outside desktop-frame.css`);
-      }
+      if (/data-template/.test(selector)) assert.doesNotMatch(body, /grid-template|grid-column|grid-row|grid-area/, `${file}: ${selector.trim().slice(0, 80)}`);
     }
   }
+  // 左の記号の帯・内側の列・本文は、どの画面の規則でも幅を --rail-w と --desktop-sidebar-width からだけ得る（固定の 275 / 88 は無い）。
+  const all = readdirSync(new URL('./', import.meta.url)).filter((name) => name.endsWith('.css')).map((name) => readFileSync(new URL('./' + name, import.meta.url), 'utf8')).join('\n');
+  assert.doesNotMatch(all, /--nav-w\b|--ds-nav-w/);
 });

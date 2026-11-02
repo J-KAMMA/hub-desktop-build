@@ -3,10 +3,12 @@
 
 /* ===== 幅の変数 ===== */
 #hub-shell {
+  --rail-w: 56px;
   /* アドレスバーの幅。窓の中央に置き、左右の群に重ならない範囲へ収める。 */
   --omni-w: max(120px, min(clamp(360px, 46vw, 680px), 100vw - 572px));
   --window-controls-w: 138px;
 }
+#hub-shell.rail-expanded { --rail-w: 208px; }
 
 /* ===== 上の帯（高さ 44） ===== */
 #hub-shell .app-toolbar {
@@ -25,6 +27,22 @@ html[data-material="mica"] #hub-shell .app-toolbar { background: var(--material-
   border-radius: var(--radius-sm);
 }
 #hub-shell .app-toolbar .toolbar-button svg { width: 18px; height: 18px; }
+/* メニュー（左列の開閉）は上の帯の一番左で、左列の真上（2026-10-15、所有者指定）。
+   幅を --rail-w に揃え、記号を左列の記号と同じ位置（左から18px）に置く。広げ縮みに合わせて幅も動く。 */
+#hub-shell .app-toolbar #rail-expand-toggle {
+  position: relative;
+  flex: none;
+  width: var(--rail-w);
+  justify-content: flex-start;
+  padding: 0 0 0 18px;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
+  transition: width .16s ease;
+}
+#hub-shell .app-toolbar #rail-expand-toggle::before { content: ""; position: absolute; inset: -6px 0; }
+#hub-shell .app-toolbar #rail-expand-toggle:hover { background: var(--interactive); color: var(--text); }
+#hub-shell .app-toolbar #rail-expand-toggle:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
 #hub-shell .app-toolbar .toolbar-button:disabled { opacity: .4; }
 /* 重複する検索の押し手は出さない（アドレスバーが常にある）。 */
 #hub-shell .app-toolbar #toolbar-search { display: none; }
@@ -121,6 +139,123 @@ html[data-material="mica"] #hub-shell .app-toolbar { background: var(--material-
 #hub-shell #view-browser #browser-form { gap: var(--space-1); padding: 0 var(--space-1); }
 #hub-shell #view-browser #browser-form > #browser-scheme { width: 28px; height: 28px; }
 #hub-shell #view-browser #browser-form > #browser-fav { width: 28px; height: 28px; }
+
+/* ===== 左の記号の帯（56、メニューで 208。どの画面でも同じ位置） ===== */
+#hub-shell .icon-rail {
+  width: var(--rail-w);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  box-sizing: border-box;
+  padding: var(--space-2) 6px;
+  gap: 0;
+  overflow: hidden;
+  background: var(--material-bar-solid);
+}
+html[data-material="mica"] #hub-shell .icon-rail { background: var(--material-mica-tint); }
+#hub-shell .icon-rail :is(.icon-rail-main, .icon-rail-bottom) { display: flex; flex-direction: column; align-items: stretch; gap: 2px; width: 100%; }
+/* 上の群が余れば縮み、足りなければここだけが縦にスクロールする（下の群は常に見える）。 */
+#hub-shell .icon-rail .icon-rail-main { flex: 1 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; scrollbar-width: none; }
+#hub-shell .icon-rail .icon-rail-main::-webkit-scrollbar { display: none; }
+#hub-shell .icon-rail .icon-rail-bottom { flex: none; margin-top: var(--space-2); padding-top: var(--space-2); border-top: 0; }
+#hub-shell .icon-rail :is(.icon-button, .icon-nav-item):not([hidden]) {
+  position: relative;
+  display: flex;
+  flex: none;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-3);
+  width: 100%;
+  height: 36px;
+  min-height: 36px;
+  margin: 0;
+  padding: 0 var(--space-2);
+  box-sizing: border-box;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted);
+  font-size: 0;
+  line-height: 0;
+}
+#hub-shell .icon-rail :is(.icon-button, .icon-nav-item) svg { flex: 0 0 24px; width: 24px; height: 24px; stroke-width: 1.75; fill: none; }
+/* 広げたときだけ名前を出す（字は 15、現在地は 700）。畳んだときは記号だけ。 */
+#hub-shell.rail-expanded .icon-rail :is(.icon-button, .icon-nav-item)::after {
+  display: block;
+  order: 1;
+  content: attr(aria-label);
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--ds-type-body-size);
+  font-weight: var(--ds-weight-text);
+  line-height: var(--ds-type-body-leading);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+#hub-shell:not(.rail-expanded) .icon-rail :is(.icon-button, .icon-nav-item)::after { display: none; }
+#hub-shell .icon-rail :is(.icon-button, .icon-nav-item):hover { background: var(--interactive); color: var(--text); }
+#hub-shell .icon-rail :is(.icon-nav-item.on, #desktop-apps.current, #desktop-apps[aria-current="page"]) { background: var(--selected); color: var(--text); }
+#hub-shell.rail-expanded .icon-rail :is(.icon-nav-item.on, #desktop-apps.current)::after { font-weight: var(--ds-weight-strong); }
+#hub-shell.apps-active .icon-rail #desktop-apps { background: var(--interactive); color: var(--text); }
+#hub-shell .icon-rail :is(.icon-button, .icon-nav-item):focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+/* 黒金: 現在地の記号の線を金にする（塗らない）。 */
+html[data-palette="gold-ivory"] #hub-shell .icon-rail :is(.icon-nav-item.on, #desktop-apps.current) svg { color: var(--emphasis); }
+#hub-shell .icon-rail .navigation-group-start { margin-top: var(--space-2); }
+#hub-shell .icon-rail .icon-rail-main > .rail-bottom-start { margin-top: auto; }
+@media (max-height: 679px) {
+  #hub-shell .icon-rail :is(.icon-button, .icon-nav-item):not([hidden]) { height: 34px; min-height: 34px; }
+  #hub-shell .icon-rail :is(.icon-rail-main, .icon-rail-bottom) { gap: 0; }
+}
+
+/* 自分の顔（プロフィールの項目）。 */
+#hub-shell .icon-rail .rail-avatar { display: grid; flex: 0 0 24px; place-items: center; width: 24px; height: 24px; overflow: hidden; border-radius: 50%; background: var(--interactive); color: var(--text); font-size: var(--ds-type-meta-size); font-weight: var(--ds-weight-strong); line-height: 24px; }
+#hub-shell .icon-rail .rail-avatar.has-image { background: transparent; }
+#hub-shell .icon-rail .rail-avatar img { display: block; width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
+#hub-shell .icon-rail .icon-nav-item.on .rail-avatar { box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--emphasis); }
+
+/* 件数の札: 高さ 20・最小幅 20・丸・1px の線と字（黒金は金、白黒は --text）。塗らない。記号の右上に重ね、広げたときは右端へ。 */
+#hub-shell .nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: var(--ds-badge-count-min-w);
+  height: var(--ds-badge-h);
+  padding: 0 var(--ds-space-1);
+  border: 1px solid var(--ds-badge-count-line);
+  border-radius: var(--ds-radius-pill);
+  background: transparent;
+  color: var(--ds-badge-count-fg);
+  font-size: var(--ds-type-meta-size);
+  font-weight: var(--ds-weight-strong);
+  line-height: 1;
+}
+#hub-shell .nav-badge[hidden] { display: none; }
+#hub-shell .icon-rail .rail-badge { position: absolute; top: -2px; right: 0; margin: 0; background: var(--bg); }
+#hub-shell.rail-expanded .icon-rail .rail-badge { position: static; order: 2; margin-left: auto; background: transparent; }
+
+/* 左列の「投稿する」。広げたときは幅いっぱいにラベルつき、畳んだときはペンの記号だけ。白黒は --text の塗り、黒金は金の線と金の字（塗りなし）。 */
+#hub-shell .icon-rail #desktop-compose:not([hidden]) {
+  flex: none;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  height: 44px;
+  min-height: 44px;
+  margin-top: var(--space-2);
+  padding: 0;
+  border: 1px solid var(--ds-btn-primary-line);
+  border-radius: var(--radius-control);
+  background: var(--ds-btn-primary-bg);
+  color: var(--ds-btn-primary-fg);
+}
+#hub-shell.rail-expanded .icon-rail #desktop-compose:not([hidden]) { padding: 0 var(--space-3); }
+#hub-shell .icon-rail #desktop-compose svg { flex: 0 0 22px; width: 22px; height: 22px; stroke-width: 2; }
+#hub-shell.rail-expanded .icon-rail #desktop-compose::after { flex: 0 1 auto; order: 0; font-weight: var(--ds-weight-strong); }
+#hub-shell .icon-rail #desktop-compose:not([hidden]):hover { background: var(--ds-btn-primary-bg); color: var(--ds-btn-primary-fg); opacity: .88; }
+html[data-palette="gold-ivory"] #hub-shell .icon-rail #desktop-compose:not([hidden]):hover { background: var(--interactive); opacity: 1; }
+#hub-shell .icon-rail #desktop-compose:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 
 /* ===== 画面のサイドバーと右列の帯 ===== */
 #hub-shell .sidebar { background: var(--material-bar-solid); }
