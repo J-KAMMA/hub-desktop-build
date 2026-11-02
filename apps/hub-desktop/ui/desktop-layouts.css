@@ -6,7 +6,8 @@
    Values come from tokens.css (--ds-*). Colors are semantic tokens only; gold stays a line. */
 
 /* ===== Main column width per template (data-template, desktop-template.mjs) ===== */
-/* The column is centered in the space right of the context column. Messages and mail (split) sit against the list. */
+/* The column starts at the context column's right edge in every template (left-aligned, owner request 2026-11-02); --pane-gutter padding is the gap.
+   Leftover space goes to the right of the column, or to the right rail when it is open. The browser keeps its own layout. */
 #hub-shell.app-shell { --main-w: var(--ds-col-main); }
 #hub-shell.app-shell[data-template="wide"] { --main-w: var(--ds-col-wide); }
 #hub-shell.app-shell[data-template="reading"] { --main-w: var(--ds-col-reading); }
@@ -15,10 +16,9 @@
   #hub-shell.app-shell:not([data-template="browser"]) .view:not(#view-browser):not(#view-ai) {
     width: 100%;
     max-width: var(--main-w);
-    margin-inline: auto;
+    margin-inline: 0 auto;
     box-sizing: border-box;
   }
-  #hub-shell.app-shell[data-template="split"] .view:not(#view-browser):not(#view-ai) { margin-inline: 0 auto; }
 }
 
 /* ===== Messages and mail: the split template ===== */

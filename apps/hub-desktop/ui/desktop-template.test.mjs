@@ -26,3 +26,17 @@ test('the route map of DESIGN-SYSTEM section 5 holds for the desktop views', () 
   assert.equal(templateFor('detail', ''), 'stream');
   assert.equal(templateFor('unknown-view'), 'stream');
 });
+
+test('main column is left-aligned after the context column in every template (no auto left margin)', () => {
+  const css = read('desktop-layouts.css');
+  const m = css.match(/#hub-shell\.app-shell:not\(\[data-template="browser"\]\) \.view:not\(#view-browser\):not\(#view-ai\) \{([^}]*)\}/);
+  assert.ok(m, 'generic template width rule exists');
+  assert.match(m[1], /margin-inline:\s*0 auto;/);
+  assert.match(m[1], /max-width:\s*var\(--main-w\)/);
+  for (const tpl of ['stream', 'wide', 'reading', 'split', 'settings']) {
+    assert.ok(TEMPLATES.includes(tpl));
+    assert.doesNotMatch(css, new RegExp('data-template="' + tpl + '"[^{]*\\.view[^{]*\\{[^}]*margin-inline:\\s*auto'), tpl);
+  }
+  assert.match(read('components.css'), /#hub-shell \.view:not\(#view-browser\):not\(#view-ai\) \{ margin-inline: 0 auto; \}/);
+  assert.match(css, /--main-w: var\(--ds-col-wide\)/);
+});
