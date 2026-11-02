@@ -648,8 +648,7 @@
 #hub-shell #view-browser .browser-main-item[data-keys]::after { content: attr(data-keys); color: var(--muted); font-size: var(--type-caption); white-space: nowrap; }
 
 /* ===== 最初の画面（タイムライン）を引き締める。2026-10-12 =====
-   投稿欄の保存先・配信先は書いているときだけ出す。投稿は本文を主役に、操作の記号は詰めて控えめに。 */
-#hub-shell #composer:not(:focus-within):not(:has(textarea:not(:placeholder-shown))) :is(label:has(#composer-storage), details.detail-form) { display: none; }
+   投稿欄はフィードに置かず、投稿ダイアログの中だけに出す。投稿は本文を主役に、操作の記号は詰めて控えめに。 */
 #hub-shell #view-feed .view-head h2 { font-size: var(--type-title3); font-weight: var(--weight-regular); letter-spacing: -.01em; }
 #hub-shell #view-feed .hub-network-bar { margin: 0 0 var(--space-2); font-size: var(--type-caption); color: var(--muted); }
 #hub-shell #view-feed #feed-list .post { padding: var(--space-4) var(--space-3); border-radius: 0; transition: background-color .12s ease; }

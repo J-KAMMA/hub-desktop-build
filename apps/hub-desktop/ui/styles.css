@@ -705,7 +705,7 @@ button.rail-open:hover{background:var(--interactive-hover)}
   #view-browser{height:calc(100vh - var(--toolbar-height))}
   #view-ai #subscription-usage{margin-top:36px}
   #view-feed .view-head{margin-bottom:var(--space-2);padding:0 2px;border-bottom:1px solid var(--line)}
-  #view-feed .composer{margin:0 0 var(--space-2);padding:var(--space-4) var(--space-4);border-color:var(--line);border-radius:var(--radius-md);background:var(--content-surface)}
+  #compose-dialog .composer{margin:0 0 var(--space-2);padding:var(--space-4) var(--space-4);border-color:var(--line);border-radius:var(--radius-md);background:var(--content-surface)}
   #view-feed .login-callout{margin:var(--space-3) 0}
   #view-feed #feed-state{margin:var(--space-4) 0}
   #view-feed #feed-list{gap:0}
@@ -766,13 +766,13 @@ button.rail-open:hover{background:var(--interactive-hover)}
 #view-feed .view-head{min-height:56px;margin:0;padding:0 var(--space-4);border-bottom:1px solid var(--line)}
 #view-feed .view-head h2{font-size:var(--type-title3)}
 #view-feed #feed-refresh{min-height:32px;padding:var(--space-1) var(--space-3);border-radius:var(--radius-pill);font-size:var(--type-subhead)}
-#view-feed .composer{gap:var(--space-3);margin:0;padding:var(--space-4) var(--space-4);border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;box-shadow:none}
-#view-feed .composer:focus-within{border-color:var(--line)}
-#view-feed .composer-avatar{width:44px;height:44px}
-#view-feed .composer textarea{height:44px;padding:var(--space-2) 0;font-size:var(--type-headline);line-height:1.5}
-#view-feed .composer.open textarea{height:96px}
-#view-feed .composer-bar{flex-wrap:wrap;gap:var(--space-2)}
-#view-feed .composer-note{flex:1 1 100px}
+#compose-dialog .composer{gap:var(--space-3);margin:0;padding:var(--space-4) var(--space-4);border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;box-shadow:none}
+#compose-dialog .composer:focus-within{border-color:var(--line)}
+#compose-dialog .composer-avatar{width:44px;height:44px}
+#compose-dialog .composer textarea{height:44px;padding:var(--space-2) 0;font-size:var(--type-headline);line-height:1.5}
+#compose-dialog .composer.open textarea{height:96px}
+#compose-dialog .composer-bar{flex-wrap:wrap;gap:var(--space-2)}
+#compose-dialog .composer-note{flex:1 1 100px}
 #view-feed .login-callout{margin:var(--space-4) var(--space-4)}
 #view-feed #feed-state{margin:0;padding:var(--space-3) var(--space-4)}
 #view-feed #feed-state:empty{display:none}
@@ -810,7 +810,7 @@ button.rail-open:hover{background:var(--interactive-hover)}
 #view-feed #feed-list .post-action svg{width:19px;height:19px}
 #view-feed #feed-list .post-action-count{font-size:var(--type-caption)}
 @media(max-width:720px){#view-feed{border-inline:0}}
-@media(max-width:480px){#view-feed .view-head{padding-inline:var(--space-4)}#view-feed .composer{padding:var(--space-4) var(--space-4)}#view-feed #feed-list .post{grid-template-columns:40px minmax(0,1fr);gap:var(--space-2);padding:var(--space-4) var(--space-3) var(--space-3)}#view-feed #feed-list .post-avatar{width:40px;height:40px}#view-feed #feed-list .post-action{min-height:40px;padding:var(--space-1)}}
+@media(max-width:480px){#view-feed .view-head{padding-inline:var(--space-4)}#compose-dialog .composer{padding:var(--space-4) var(--space-4)}#view-feed #feed-list .post{grid-template-columns:40px minmax(0,1fr);gap:var(--space-2);padding:var(--space-4) var(--space-3) var(--space-3)}#view-feed #feed-list .post-avatar{width:40px;height:40px}#view-feed #feed-list .post-action{min-height:40px;padding:var(--space-1)}}
 
 /* Keep the contextual right column in the desktop grid. Only smaller windows use an overlay. */
 @media(min-width:861px) and (max-width:1179px){

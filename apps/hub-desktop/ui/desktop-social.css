@@ -313,7 +313,7 @@
 #hub-shell #view-feed.show-sources .source-summary:not(:empty),
 #hub-shell #view-feed.show-sources .hub-peer-status:not([hidden]) { display: block; }
 
-#hub-shell #view-feed .composer {
+#hub-shell #compose-dialog .composer {
   margin: 0;
   padding: var(--space-2) var(--space-4);
   border: 0;
@@ -322,8 +322,8 @@
   background: transparent;
   box-shadow: none;
 }
-#hub-shell #view-feed .composer-avatar { width: 40px; height: 40px; }
-#hub-shell #view-feed .composer textarea {
+#hub-shell #compose-dialog .composer-avatar { width: 40px; height: 40px; }
+#hub-shell #compose-dialog .composer textarea {
   height: 40px;
   min-height: 40px;
   padding: var(--space-2) 0;
@@ -333,11 +333,11 @@
   font-size: var(--type-body);
   line-height: var(--lh-body);
 }
-#hub-shell #view-feed .composer.open textarea { height: 96px; }
+#hub-shell #compose-dialog .composer.open textarea { height: 96px; }
 /* 残り文字数（ハブの上限500字と同じ数え方）。20字を切ると注意色、超えると危険色。 */
-#hub-shell #view-feed .composer-count { flex: none; margin: 0; font-variant-numeric: tabular-nums; }
-#hub-shell #view-feed .composer-count.composer-count--low { color: var(--warning-text); }
-#hub-shell #view-feed .composer-count.warning { color: var(--danger); }
+#hub-shell #compose-dialog .composer-count { flex: none; margin: 0; font-variant-numeric: tabular-nums; }
+#hub-shell #compose-dialog .composer-count.composer-count--low { color: var(--warning-text); }
+#hub-shell #compose-dialog .composer-count.warning { color: var(--danger); }
 
 #hub-shell #view-feed .research-feed-updates {
   margin: 0;

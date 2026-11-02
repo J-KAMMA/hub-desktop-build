@@ -293,7 +293,6 @@
 }
 
 /* ===== 静かな面（2026-10-24）：見出し・節のあいだの飾りの線を引かず、密な一覧の行の線だけ --line を薄めて残す ===== */
-#hub-shell #view-feed #composer { border-bottom: 0; }
 #hub-shell :is(.music-tabs, .hub-network-bar, .hub-search-filter-panel, .newtab-sections h2) { border-bottom: 0; }
 #hub-shell .view:is(#view-feed, #view-profile, #view-notifications, #view-search, #view-hubpedia) :is(.post, .social-stream-card, .result-card, .distributed-resource) {
   border-bottom-color: color-mix(in srgb, var(--line) 55%, transparent);

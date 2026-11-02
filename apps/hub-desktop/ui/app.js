@@ -10266,13 +10266,18 @@ function toggleAppDirectory() {
   if (appsOpen) sidebarContext.querySelector(".sidebar-app-search")?.focus();
 }
 for (const button of document.querySelectorAll("#desktop-apps, #toolbar-apps")) button.addEventListener("click", toggleAppDirectory);
-document.querySelector("#desktop-compose")?.addEventListener("click", async () => {
-  await navigateFrom({ dataset: { view: "feed", title: "フィード" }, childNodes: [] });
-  document.querySelector(".workspace-main")?.scrollTo({ top: 0 });
-  const composer = document.querySelector("#composer");
-  if (composer && !composer.hidden) document.querySelector("#composer-text")?.focus();
+// 投稿の入口はここだけ。フィードには入力欄を置かず、既存の投稿欄（#composer）を
+// このダイアログの中で開く（Hub投稿／自分のノードの切替・公開内容の確認・画像・予約を含む）。
+function openComposeDialog() {
+  const dialog = document.querySelector("#compose-dialog");
+  if (!dialog) return;
+  if (!dialog.open) dialog.showModal();
+  document.querySelector("#composer")?.classList.add("open");
+  const text = document.querySelector("#composer-text");
+  if (text && !text.disabled) text.focus();
   else document.querySelector('#desktop-account-callout [data-account="login"]')?.focus();
-});
+}
+document.querySelector("#desktop-compose")?.addEventListener("click", openComposeDialog);
 function closeLayoutOverlays() {
   saveRailChoice(false);
   setDesktopRailOpen(false);
@@ -11817,7 +11822,7 @@ const feedRecovery=createReadRecovery({retry:()=>loadFeed({automatic:true}),acti
 window.addEventListener('pagehide',()=>{feedLoadRevision++;feedRecovery.reset();},{once:true});
 window.addEventListener('hub-account-changed',()=>{feedTabLists.epoch=null;feedTabLists.items=[];feedVisibleKey='';feedSnapshot=null;feedLoadRevision++;feedRecovery.reset();feed.list.replaceChildren();if(currentView==='feed')void loadFeed();});
 async function loadFeed({automatic=false,observeStartup=false}={}) {
-  socialBar.hidden=true;renderFeedTabs();document.querySelector("#composer").hidden=socialMode==="mixed"&&!["all","post"].includes(socialFilter)||socialMode==="legacy"&&feedScope==="list";
+  socialBar.hidden=true;renderFeedTabs();
   mixedPublicationUpdates?.dispose();mixedPublicationUpdates=null;
  if(socialMode==="mixed")return loadMixedSocialFeed();
   if(feedScope==="list")return loadListFeed();
@@ -12192,7 +12197,7 @@ const composer = {
 };
 composer.text.onfocus = () => composer.form.classList.add("open");
 composer.text.onblur = () => {
-  if (!composer.text.value.trim()) composer.form.classList.remove("open");
+  if (!composer.text.value.trim() && !document.querySelector("#compose-dialog")?.open) composer.form.classList.remove("open");
 };
 // 残り文字数。ハブは前後の空白を落とした長さを500字で切る（HUB_SOCIAL_POST_MAX_CHARACTERS）ので、同じ数え方をする。
 const COMPOSER_MAX_CHARACTERS = 500;
@@ -12518,7 +12523,7 @@ feedComposer=createFeedComposer({captureScope:captureFeedComposerScope,scopeCurr
     if(info.clearDraft)clearHubFeedDraft();
     if(!feedComposerCurrent(info.source))return;
     const message=info.kind==='post'?'投稿しました':{scheduled:'予約しました',published:'予約した投稿は公開済みです。',cancelled:'この予約は取り消されています。草稿は保持しています。',failed:'この予約は失敗しています。草稿は保持しています。'}[info.outcome];
-    if(info.kind==='post'){feed.list.prepend(postCard(receipt.post));feed.state.classList.remove('warning');feed.state.textContent=message;}else composer.note.textContent=message;
+    if(info.kind==='post'){document.querySelector('#compose-dialog')?.close();feed.list.prepend(postCard(receipt.post));feed.state.classList.remove('warning');feed.state.textContent=message;}else composer.note.textContent=message;
     const revision=feedDraftRevision;setTimeout(()=>{if(!feedComposerCurrent(info.source)||revision!==feedDraftRevision)return;const target=info.kind==='post'?feed.state:composer.note;if(target.textContent===message)target.textContent='';},4000);repaintFeedComposer();
   }});
 const refreshFeedComposerAfterAction=()=>{if(currentView==='feed'&&nodePostComposer.mode.value==='hub')feedComposer.refresh();};
@@ -14887,7 +14892,7 @@ async function draftPostFromAiAnswer(answer){
   if(composer.text.value.trim()){showNotice('投稿欄に書きかけの内容があるため、上書きしませんでした。');composer.text.focus();return false;}
   composer.text.value=draft.text;
   composer.text.dispatchEvent(new Event('input',{bubbles:true}));
-  composer.form.classList.add('open');composer.text.focus();
+  openComposeDialog();
   composer.note.textContent=draft.truncated?'AIの最終回答が500文字を超えたため、先頭500文字までに切り詰めました。内容を確認して「ポスト」で投稿できます。':'AIの最終回答を下書きにしました。内容を確認して「ポスト」で投稿できます。';
   if(draft.truncated)showNotice(composer.note.textContent);
   return true;

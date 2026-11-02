@@ -128,7 +128,7 @@
 #hub-shell #node-public-posts:empty { display: none; }
 
 /* ---- 3. Composer: 40px avatar, 20px input, a quiet toolbar, one primary button ---- */
-#hub-shell #view-feed #composer {
+#hub-shell #compose-dialog #composer {
   gap: var(--ds-space-3);
   padding: var(--ds-space-3) var(--ds-page-inset);
   border: 0;
@@ -137,7 +137,7 @@
   background: transparent;
   box-shadow: none;
 }
-#hub-shell #view-feed #composer .composer-avatar {
+#hub-shell #compose-dialog #composer .composer-avatar {
   display: grid;
   flex: none;
   place-items: center;
@@ -152,15 +152,15 @@
   font-weight: var(--ds-weight-strong);
   line-height: 1;
 }
-#hub-shell #view-feed #composer .composer-avatar svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; }
-#hub-shell #view-feed #composer .composer-avatar.has-image { background: transparent; }
-#hub-shell #view-feed #composer .composer-avatar img { width: 100%; height: 100%; object-fit: cover; }
-#hub-shell #view-feed #composer textarea {
+#hub-shell #compose-dialog #composer .composer-avatar svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+#hub-shell #compose-dialog #composer .composer-avatar.has-image { background: transparent; }
+#hub-shell #compose-dialog #composer .composer-avatar img { width: 100%; height: 100%; object-fit: cover; }
+#hub-shell #compose-dialog #composer textarea {
   font-size: var(--ds-type-title-size);
   line-height: var(--ds-type-title-leading);
   font-weight: var(--ds-weight-text);
 }
-#hub-shell #view-feed #composer textarea::placeholder { color: var(--muted); }
+#hub-shell #compose-dialog #composer textarea::placeholder { color: var(--muted); }
 #hub-shell #composer .composer-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ds-space-2); }
 #hub-shell #composer .composer-bar > :is(button.ghost, .composer-image-add) {
   min-height: var(--ds-btn-h-compact);
@@ -357,3 +357,11 @@
   text-decoration-skip-ink: none;
   text-underline-offset: 17px;
 }
+
+/* ---- 投稿ダイアログ（フィードには入力欄を置かない） ---- */
+#compose-dialog .composer { padding: var(--space-3) 0 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+#compose-dialog .composer .composer-bar { display: flex; }
+#compose-dialog .composer textarea { height: 140px; min-height: 96px; resize: vertical; }
+#compose-dialog .login-callout { margin: var(--space-3) 0 0; }
+#compose-dialog { width: min(560px, calc(100% - 28px)); }
+#compose-dialog .dialog-shell { max-width: none; }
