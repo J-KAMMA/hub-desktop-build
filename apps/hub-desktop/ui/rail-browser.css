@@ -64,52 +64,13 @@
 #hub-shell .rb-stage { flex: 1 1 auto; min-height: 120px; background: var(--panel); }
 #hub-shell .rb-note { flex: none; margin: 0; padding: var(--space-3); color: var(--muted); font-size: var(--type-caption); line-height: 1.6; border-bottom: 1px solid var(--line); }
 #hub-shell .rb-note[hidden] { display: none; }
-/* 右列の操作列を上の行へ上げる（2026-10-18 所有者「右側の戻るとかが一番上に来る方がいい」）。
-   app.js の placeBrowserStrip が右列の左端と窓ボタンの左端を測り、html[data-rail-bar="top"] と --rail-bar-* を入れる。
-   要素は右列の中のまま（読み上げ順・Tab順は右列の先頭）で、見た目の位置だけ上の行へ重ねる。
-   ページ本体の #rail-browser-stage は右列のいちばん上から始まり、その矩形を Rust がそのまま使う。 */
-html[data-rail-bar="top"] #hub-shell.rail-open.rail-browser-view .rb-bar {
-  position: fixed;
-  z-index: 41;
-  top: var(--rail-bar-top, 0px);
-  left: var(--rail-bar-left, auto);
-  width: var(--rail-bar-width, auto);
-  height: var(--rail-bar-height, var(--titlebar-h));
-  min-height: 0;
-  padding: 0 0 0 var(--space-1);
-  border-bottom: 0;
-  background: transparent;
-}
-html[data-rail-bar="top"] #hub-shell.rail-open.rail-browser-view .rb-address { background: var(--interactive); border-color: var(--line); }
-html[data-rail-bar="top"] #hub-shell.rail-open.rail-browser-view .rb-address:focus { border-color: var(--focus-ring); background: var(--panel); }
-/* ブラウザ以外の表示も、右列が開いているときは上の行の右列の真上にその表示の操作を出す（2026-10-18 所有者:
-   「右列の上は、開いているときはいつもその列の操作に」）。.rail-activity-head（その表示の中の戻る・進む、表示名、
-   新規・広げる・更新・すべて既読）を .rb-bar と同じ位置へ重ねるので、右列の中の見出し行はなくなる。
-   位置は app.js の placeBrowserStrip が --rail-bar-* に入れる。要素は右列の中のまま（読み上げ順・Tab順は変えない）。 */
+/* 右列の操作（戻る・進む・再読み込み・更新）は右列自身の見出し行に置く（2026-11-02 所有者）。上の行へは上げない。
+   見出し行は右列が開いているときだけ見え、高さは中央の見出しと同じ --ds-header-h。 */
 #hub-shell .rail-history-nav { display: flex; flex: none; align-items: center; gap: 2px; }
-html[data-rail-bar="top"] #hub-shell.rail-open:not(.rail-browser-view) .rail-activity-head {
-  position: fixed;
-  z-index: 41;
-  top: var(--rail-bar-top, 0px);
-  left: var(--rail-bar-left, auto);
-  width: var(--rail-bar-width, auto);
-  height: var(--rail-bar-height, var(--titlebar-h));
-  min-height: 0;
-  box-sizing: border-box;
-  justify-content: flex-start;
-  gap: var(--space-1);
-  padding: 0 0 0 var(--space-1);
-  border-bottom: 0;
-  background: transparent;
-}
-html[data-rail-bar="top"] #hub-shell.rail-open:not(.rail-browser-view) .rail-activity-heading { flex: 1 1 auto; min-width: 0; }
-html[data-rail-bar="top"] #hub-shell.rail-open:not(.rail-browser-view) .rail-view-name { overflow: hidden; font-size: var(--type-subhead); white-space: nowrap; text-overflow: ellipsis; }
-html[data-rail-bar="top"] #hub-shell.rail-open:not(.rail-browser-view) .rail-activity-actions { flex: none; }
-html[data-rail-bar="top"][data-rail-bar-fit="compact"] #hub-shell.rail-open:not(.rail-browser-view) .rail-activity-heading { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-html[data-rail-bar="top"][data-rail-bar-fit="compact"] #hub-shell.rail-open:not(.rail-browser-view) .rail-history-nav { margin-right: auto; }
-html[data-rail-bar="top"][data-rail-bar-fit="compact"] #hub-shell.rail-open:not(.rail-browser-view) .rail-activity-actions { gap: 0; }
-html[data-rail-bar="top"][data-rail-bar-fit="compact"] #hub-shell.rail-open:not(.rail-browser-view) .rail-activity-actions button { padding-inline: var(--space-1); }
-
+#hub-shell .rail .rail-activity-head { min-height: var(--ds-header-h); box-sizing: border-box; padding: 0 var(--space-2); border-bottom: 1px solid var(--line); }
+#hub-shell .rail .rail-activity-heading { flex: 1 1 auto; min-width: 0; }
+#hub-shell .rail .rail-view-name { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+#hub-shell .rail .rail-activity-actions { display: flex; flex: none; align-items: center; gap: var(--space-1); }
 /* 右列ブラウザの操作（2026-10-29）：押せる大きさ 32、記号 20。 */
 #hub-shell .rb-button { width: var(--tap-compact); height: var(--tap-compact); min-width: var(--tap-compact); min-height: var(--tap-compact); }
 #hub-shell .rb-button svg { width: var(--tap-icon); height: var(--tap-icon); }

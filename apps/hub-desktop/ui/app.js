@@ -9641,28 +9641,12 @@ function placeBrowserStrip() {
     // 中央がブラウザのときは、上の行の左側を中央のブラウザの操作が使い、右列の操作列は右列の真上の自分の区画へ上げる
     // （どちらの状態でも右列の戻る・進む・歯車・中身が同じ位置になる。中央の操作は下の strip で右列の手前までに収める）。
     const centreBrowser = Boolean(shell?.classList.contains("browser-active"));
-    /*
-     * 右列が開いているときは、どの表示でも右列の操作を上の行の右列の真上へ上げる（2026-10-18 所有者:
-     * 「右列の上は、開いているときはいつもその列の操作に」）。ブラウザは .rb-bar（戻る・進む・再読込・ホーム・アドレス）、
-     * ほかの表示は .rail-activity-head（その表示の中の戻る・進む、表示名、新規・広げる・更新・すべて既読など）。
-     */
+    // 右列の戻る・進む・更新などは右列自身の見出し行に置く（2026-11-02 所有者）。上の行へは上げない。
     const railOpen = Boolean(shell?.classList.contains("rail-open"));
     const railNode = !railOpen ? null : shell.classList.contains("rail-browser-view") ? document.querySelector(".rail-view--browser:not([hidden])") : document.querySelector(".rail .rail-body:not([hidden])");
     const railBox = railNode?.getBoundingClientRect();
-    // 右列の操作列は、ブラウザは 220px、ほかの表示は 120px 取れるときだけ上げる（狭いと押せない）。
-    // ほかの表示で 260px に満たないときは表示名を隠し（読み上げには残す）、ボタンを詰める。右端の帯で今の表示は分かる。
-    const railRoom = railBox && railBox.width > 0 ? endLeft - railBox.left : 0;
-    const railBrowserShown = Boolean(shell?.classList.contains("rail-browser-view"));
-    const lift = railRoom >= (railBrowserShown ? 220 : 120);
-    if (lift && !railBrowserShown && railRoom < 260) root.dataset.railBarFit = "compact";
-    else if (root.dataset.railBarFit) delete root.dataset.railBarFit;
-    if (lift) {
-      root.dataset.railBar = "top";
-      root.style.setProperty("--rail-bar-left", Math.round(railBox.left) + "px");
-      root.style.setProperty("--rail-bar-width", Math.round(endLeft - 4 - railBox.left) + "px");
-      root.style.setProperty("--rail-bar-top", Math.round(bar.top) + "px");
-      root.style.setProperty("--rail-bar-height", Math.round(bar.height) + "px");
-    } else if (root.dataset.railBar) delete root.dataset.railBar;
+    for (const name of ["railBar", "railBarFit"]) if (root.dataset[name]) delete root.dataset[name];
+    for (const name of ["--rail-bar-left", "--rail-bar-width", "--rail-bar-top", "--rail-bar-height"]) root.style.removeProperty(name);
     const minLeft = Math.round((nav?.right ?? bar.left + 150) + 48);
     let width, left;
     if (centreBrowser) {
@@ -9686,11 +9670,6 @@ function placeBrowserStrip() {
   const start = header.querySelector(".toolbar-navigation")?.getBoundingClientRect();
   const ends = [...header.querySelectorAll("#toolbar-rail, .window-controls:not([hidden])")].map((node) => node.getBoundingClientRect()).filter((rect) => rect.width > 0);
   let right = ends.length ? Math.min(...ends.map((rect) => rect.left)) : bar.right - 150;
-  // 右列の操作列を上の行へ上げているときは、中央のブラウザの操作は右列の左端の手前（8px あけて）までに収める。
-  if (document.documentElement.dataset.railBar === "top") {
-    const railLeft = Number.parseFloat(document.documentElement.style.getPropertyValue("--rail-bar-left"));
-    if (Number.isFinite(railLeft)) right = Math.min(right, railLeft - 8 + 120);
-  }
   strip.style.setProperty("--browser-strip-top", `${Math.round(bar.top)}px`);
   strip.style.setProperty("--browser-strip-height", `${Math.round(bar.height)}px`);
   strip.style.setProperty("--browser-strip-left", `${Math.round((start?.right ?? bar.left + 160) + 8)}px`);

@@ -365,3 +365,54 @@
 #compose-dialog .login-callout { margin: var(--space-3) 0 0; }
 #compose-dialog { width: min(560px, calc(100% - 28px)); }
 #compose-dialog .dialog-shell { max-width: none; }
+
+/* ---- 1b. Tabbed views (2026-11-02, owner): no separate title row. The tab row is the sticky header, with the actions at its right.
+   The title stays in the DOM as the accessible label only. Views without tabs keep one compact title row of at most 53px. ---- */
+#hub-shell .view:not(#view-browser):not(#view-ai) > :is(.view-head, .page-header):not(:has(> .page-tabs:not(:empty))) {
+  flex-wrap: nowrap;
+  height: var(--ds-header-h);
+  max-height: var(--ds-header-h);
+  overflow: visible;
+}
+#hub-shell .view:not(#view-browser):not(#view-ai) > :is(.view-head, .page-header):has(> .page-tabs:not(:empty)) {
+  flex-wrap: nowrap;
+  gap: 0;
+  height: var(--ds-tabs-h);
+  min-height: var(--ds-tabs-h);
+  max-height: var(--ds-tabs-h);
+  padding: 0 var(--ds-page-inset) 0 0;
+  overflow: hidden;
+}
+#hub-shell .view:not(#view-browser):not(#view-ai) > :is(.view-head, .page-header):has(> .page-tabs:not(:empty)) > :is(h2, .page-title) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+#hub-shell .view:not(#view-browser):not(#view-ai) > :is(.view-head, .page-header):has(> .page-tabs:not(:empty)) > .page-tabs {
+  order: 1;
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+  border-top: 0;
+}
+#hub-shell .view:not(#view-browser):not(#view-ai) > :is(.view-head, .page-header):has(> .page-tabs:not(:empty)) > :is(.view-head-actions, .page-actions) {
+  order: 2;
+  margin: 0 0 0 var(--ds-space-3);
+}
+
+/* Selected row in the context column (ホーム etc.): the same neutral --interactive surface as the selected conversation row,
+   plus at most a 1px gold line on the left. No tinted fill, and the 2px inset bar is replaced by the 1px line. */
+#hub-shell #sidebar-context .sidebar-context-item:is(.on, [aria-current="true"], [aria-current="page"]),
+#hub-shell .sidebar :is(.nav-item.on, .nav-item[aria-current], .sidebar-context-item[aria-current="true"]) {
+  background: var(--interactive);
+  box-shadow: inset 1px 0 0 var(--emphasis);
+}
+#hub-shell #sidebar-context .sidebar-context-item:is(.on, [aria-current="true"], [aria-current="page"])::before { content: none; }
+
+/* The sticky header starts at the top of the column: no 24px of view padding above it. */
+#hub-shell .view:not(#view-browser):not(#view-ai):has(> :is(.view-head, .page-header):first-child) { padding-top: 0; }

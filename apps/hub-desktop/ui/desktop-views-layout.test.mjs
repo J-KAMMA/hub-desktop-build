@@ -108,3 +108,38 @@ test('a failed profile load shows the state panel and a secondary retry that rel
   assert.equal(calls, 2, 'retry reloads the profile');
   dom.window.close();
 });
+
+const viewsCss = readFileSync(new URL('./desktop-views.css', import.meta.url), 'utf8');
+const block = (selectorStart) => {
+  const start = viewsCss.indexOf(selectorStart);
+  assert.ok(start >= 0, selectorStart);
+  return viewsCss.slice(start, viewsCss.indexOf('}', start));
+};
+
+test('tabbed views have no title row: the tab row is the header, the title is visually hidden and kept as the label', () => {
+  const head = '#hub-shell .view:not(#view-browser):not(#view-ai) > :is(.view-head, .page-header):has(> .page-tabs:not(:empty))';
+  // The header is the tab row: one 53px row, tabs first, actions at its right.
+  assert.match(block(`${head} {`), /height:\s*var\(--ds-tabs-h\)/);
+  assert.match(block(`${head} > :is(h2, .page-title) {`), /clip-path:\s*inset\(50%\)/);
+  assert.match(block(`${head} > :is(h2, .page-title) {`), /position:\s*absolute/);
+  assert.match(block(`${head} > .page-tabs {`), /order:\s*1/);
+  assert.match(block(`${head} > :is(.view-head-actions, .page-actions) {`), /order:\s*2/);
+  // The title stays in the markup for the accessible name; the feed header carries both title and tabs and actions.
+  const feed = document.querySelector('#view-feed > .page-header');
+  assert.equal(feed.querySelector(':scope > .page-title').textContent, 'タイムライン');
+  assert.ok(feed.querySelector(':scope > .page-actions #feed-refresh'));
+  assert.ok(feed.querySelector(':scope > #feed-tabs.page-tabs'));
+  // Views without tabs keep one compact title row of at most the header height.
+  const plain = block('#hub-shell .view:not(#view-browser):not(#view-ai) > :is(.view-head, .page-header):not(:has(> .page-tabs:not(:empty))) {');
+  assert.match(plain, /max-height:\s*var\(--ds-header-h\)/);
+  // No 24px of view padding above the sticky header.
+  assert.match(viewsCss, /:has\(> :is\(\.view-head, \.page-header\):first-child\) \{ padding-top: 0; \}/);
+});
+
+test('the selected context row is neutral with at most a 1px gold line, no gold fill', () => {
+  const rule = block('#hub-shell #sidebar-context .sidebar-context-item:is(.on, [aria-current="true"], [aria-current="page"]),');
+  assert.match(rule, /background:\s*var\(--interactive\)/);
+  assert.doesNotMatch(rule, /--selected|--champagne|--emphasis-soft|#[0-9a-f]{3,8}\b/i);
+  assert.match(rule, /box-shadow:\s*inset 1px 0 0 var\(--emphasis\)/);
+  assert.match(viewsCss, /\.sidebar-context-item:is\(\.on, \[aria-current="true"\], \[aria-current="page"\]\)::before \{ content: none; \}/);
+});

@@ -287,16 +287,22 @@ test('the controller only sends URLs and frames to native code', () => {
   assert.ok(!/__TAURI__|eval\(|innerHTML|insertAdjacentHTML/u.test(source));
 });
 
-test('the rail toolbar lifts into the title bar in both states: Hub view and centre browser', () => {
+test('the rail toolbar stays in the right rail header, never lifted into the title bar', () => {
   const app = readFileSync(new URL('./app.js', import.meta.url), 'utf8');
   const fn = app.slice(app.indexOf('function placeBrowserStrip()'), app.indexOf('window.addEventListener("resize", placeBrowserStrip)'));
-  // The lift must not depend on the centre being a browser.
-  assert.match(fn, /const railOpen = Boolean\(shell\?\.classList\.contains\("rail-open"\)\);/u);
-  assert.doesNotMatch(fn, /railOpen = !centreBrowser/u);
-  // The centre browser strip stops before the lifted rail column instead of overlapping it.
-  assert.match(fn, /dataset\.railBar === "top"[\s\S]*--rail-bar-left[\s\S]*right = Math\.min\(right, railLeft - 8 \+ 120\)/u);
-  // The CSS lift is keyed on the rail state only, never on browser-active.
+  // 2026-11-02 owner: nothing sets the lift any more, it only clears leftovers.
+  assert.doesNotMatch(fn, /dataset\.railBar = "top"/u);
+  assert.doesNotMatch(fn, /setProperty\("--rail-bar-/u);
   const css = readFileSync(new URL('./rail-browser.css', import.meta.url), 'utf8');
-  assert.match(css, /html\[data-rail-bar="top"\] #hub-shell\.rail-open\.rail-browser-view \.rb-bar \{/u);
+  assert.doesNotMatch(css, /data-rail-bar="top"/u);
   assert.doesNotMatch(css, /browser-active/u);
+  // The buttons live inside the rail, and the toolbar holds none of them.
+  const html = readFileSync(new URL('./index.html', import.meta.url), 'utf8');
+  const { document } = new JSDOM(html).window;
+  const toolbar = document.querySelector('.app-toolbar');
+  const rail = document.querySelector('aside.rail');
+  for (const id of ['rail-back', 'rail-forward', 'rail-refresh', 'rb-back', 'rb-forward', 'rb-reload']) {
+    assert.ok(rail.querySelector(`#${id}`), `${id} is in the rail`);
+    assert.equal(toolbar.querySelector(`#${id}`), null, `${id} is not in the toolbar`);
+  }
 });
