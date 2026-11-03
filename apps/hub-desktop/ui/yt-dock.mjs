@@ -3,6 +3,10 @@
 // 小窓は見出しをつかんで動かせる。ブラウザのタブ（ネイティブの子webview）の上でも見えるよう、
 // 小窓の矩形を browser_mini_overlay で伝えてページをその分だけ切り抜く。
 import { createYouTubePlayer } from './youtube-embed.mjs';
+import { unplayable, isUnplayableCode } from './yt-unplayable.mjs';
+
+export const UNPLAYABLE_NOTE = 'この曲はアプリ内で再生できないため一覧から外しました';
+const NOTE_MS = 4000;
 
 // 既定の置き場は本文の右下（右列を開いていれば右列の左）。16:9 で 356×200（再生中の埋め込みは 200×200 以上の見える大きさを保つ規則）、頭の段は 40。
 // 利用者が動かした位置だけを覚える（v2: 既定を変えたので、旧い v1 の位置は引き継がない）。
@@ -16,7 +20,8 @@ function writePosition(storage, value) { try { storage?.setItem(KEY, JSON.string
 
 const YT_ORIGIN = 'https://www.youtube-nocookie.com';
 
-export function createYouTubeDock({ document, invoke = async () => {}, stage = () => null, storage = null, owner = null } = {}) {
+export function createYouTubeDock({ document, invoke = async () => {}, stage = () => null, storage = null, owner = null, store = null } = {}) {
+  const unplayableStore = () => store ?? unplayable();
   const window = document.defaultView;
   const host = document.createElement('div');
   host.className = 'yt-dock'; host.hidden = true;
@@ -46,10 +51,31 @@ export function createYouTubeDock({ document, invoke = async () => {}, stage = (
     if (!win || !key) return;
     try { win.postMessage(JSON.stringify({ event: 'listening', id: key }), YT_ORIGIN); } catch { /* 状態が取れないだけ */ }
   };
+  // 埋め込みが再生を拒んだ。覚えて、一覧から外し、枠を止める。単独の再生なら短い注意を残し、列の再生なら黙って次へ進める。
+  let noteTimer = null;
+  function fail(id) {
+    const quiet = current?.quiet === true, onUnplayable = current?.onUnplayable;
+    unplayableStore().add(id);
+    if (quiet) {
+      stop();
+      try { onUnplayable?.(id); } catch { /* 次へ進められなくても止まるだけ */ }
+      return;
+    }
+    body.querySelector('iframe')?.setAttribute('src', 'about:blank');
+    const line = document.createElement('p'); line.className = 'yt-dock-note meta'; line.setAttribute('role', 'status'); line.textContent = UNPLAYABLE_NOTE;
+    body.replaceChildren(line);
+    current.playingNow = false;
+    window.clearTimeout(noteTimer);
+    noteTimer = window.setTimeout(() => { if (current?.failed) stop(); }, NOTE_MS);
+    current.failed = true;
+    try { onUnplayable?.(id); } catch { /* 通知の失敗で止めない */ }
+    notify();
+  }
   const onMessage = event => {
     if (!current || event.origin !== YT_ORIGIN || !event.source || event.source !== frameWindow()) return;
     let data = event.data;
     if (typeof data === 'string') { try { data = JSON.parse(data); } catch { return; } }
+    if (data && data.event === 'onError' && isUnplayableCode(data.info)) { fail(current.id); return; }
     if (!data || (data.event !== 'infoDelivery' && data.event !== 'onStateChange')) return;
     const code = data.event === 'onStateChange' ? data.info : data.info?.playerState;
     if (!Number.isInteger(code)) return;
@@ -148,6 +174,7 @@ export function createYouTubeDock({ document, invoke = async () => {}, stage = (
   function stop() {
     if (!current) return false;
     body.querySelector('iframe')?.setAttribute('src', 'about:blank');
+    window.clearTimeout(noteTimer);
     body.replaceChildren(); current = null; mini = false; attachSlot(null);
     layout(); notify(); return true;
   }
@@ -157,16 +184,18 @@ export function createYouTubeDock({ document, invoke = async () => {}, stage = (
   return {
     element: host,
     /** key が同じものが再生中なら iframe はそのままで、置き場だけ付け替える（小窓から戻ったとき）。 */
-    play({ key, id, title: name = 'YouTube', subtitle: sub = '', slot: target, onOpen = null, autoplay = true }) {
+    play({ key, id, title: name = 'YouTube', subtitle: sub = '', slot: target, onOpen = null, autoplay = true, quiet = false, onUnplayable = null, muted = false, loop = false }) {
+      // 再生できないと分かっている動画は枠を作らない。列の再生なら黙って次へ、単独なら断る。
+      if (unplayableStore().has(id)) { try { onUnplayable?.(id); } catch { /* 無視 */ } return false; }
       if (current?.key !== key) {
-        const player = createYouTubePlayer(document, { id, title: name, autoplay });
+        const player = createYouTubePlayer(document, { id, title: name, autoplay, mute: muted, loop });
         if (!player) return false;
         body.querySelector('iframe')?.setAttribute('src', 'about:blank');
         body.replaceChildren(player);
         current = { key, id, playingNow: false };
         player.querySelector('iframe')?.addEventListener('load', listen);
       }
-      current.onOpen = onOpen;
+      current.onOpen = onOpen; current.quiet = quiet; current.onUnplayable = onUnplayable;
       title.textContent = name; subtitle.textContent = sub;
       mini = false; attachSlot(target); layout(); notify(); return true;
     },
@@ -179,6 +208,9 @@ export function createYouTubeDock({ document, invoke = async () => {}, stage = (
     },
     stop,
     pause,
+    /** 埋め込みの音を切り替える（enablejsapi の postMessage）。消すときは再生も続ける。 */
+    setMuted(on) { command(on ? 'mute' : 'unMute'); if (on) command('playVideo'); },
+    resume() { command('playVideo'); },
     layout,
     isPlaying: key => current !== null && current.key === key,
     state,

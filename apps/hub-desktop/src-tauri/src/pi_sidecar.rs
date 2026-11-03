@@ -433,6 +433,29 @@ async fn run_operator_tool(
     ))
 }
 
+/// `hub_web_search`: exists only with the run's `allowHttp` (the same egress
+/// switch as `hub_http`), and every call parks on an individual decision that
+/// shows the query and the engines. Fixed engines and hosts only; see
+/// `web_search.rs`. A missing approver answers `approval_required`.
+async fn run_web_search_tool(
+    args: Value,
+    caps: HubToolCaps,
+    approver: Option<PiApprover>,
+) -> Result<ToolAnswer, String> {
+    if !caps.http {
+        return Err("http_not_permitted".into());
+    }
+    let key = crate::web_search::brave_key();
+    let request = crate::web_search::SearchRequest::parse(&args, key.is_some())?;
+    let approve = approver.map(|approver| {
+        move |summary: String, detail: Value| async move {
+            approver(PiApprovalRequest { tool: "hub_web_search".to_owned(), summary, detail }).await.approved
+        }
+    });
+    let result = crate::web_search::approved_search(request, approve, key, crate::web_search::network_fetcher()).await?;
+    Ok(ToolAnswer::new(json!([{ "type": "text", "text": result.to_string() }]), result))
+}
+
 // The transport succeeding does not mean the command/test passed. Keep the
 // real diagnostics in Pi's isError result so its own loop can act on them.
 fn execution_result(error: &str, result: Value) -> Result<Value, String> {
@@ -522,6 +545,9 @@ async fn run_agent_tool(
 ) -> Result<ToolAnswer, String> {
     if matches!(name, "hub_exec" | "hub_http") {
         return run_operator_tool(name, args, workspace, caps, approver).await;
+    }
+    if name == "hub_web_search" {
+        return run_web_search_tool(args, caps, approver).await;
     }
     if name == "hub_pay" {
         return run_pay_tool(args, approver).await;
@@ -853,6 +879,7 @@ fn tool_call_detail(name: &str, args: &Value) -> Option<String> {
             (Some(method), Some(url)) => Some(format!("{method} {url}")),
             (method, url) => url.or(method).map(str::to_owned),
         },
+        "hub_web_search" => text("query").map(str::to_owned),
         "hub_pay" => text("note").or_else(|| text("productId")).map(str::to_owned),
         _ => None,
     }?;
@@ -3645,6 +3672,43 @@ rl.on('line', (line) => {
             "http_not_permitted"
         );
         assert!(seen.lock().unwrap().is_empty());
+    }
+
+    /// hub_web_search follows the hub_http switch: off without allowHttp, a
+    /// missing approver fails closed, denial shows query and engines and never
+    /// reaches the network. (No approval is granted here, so no search runs.)
+    #[tokio::test]
+    async fn web_search_tool_needs_allow_http_and_an_individual_approval() {
+        let (_guard, root) = seeded_workspace();
+        let (approver, seen) = recording_approver(true);
+        let off = hub_executor(root.clone(), true, HubToolCaps::default(), Some(approver));
+        assert_eq!(
+            off.execute("hub_web_search".into(), json!({"query": "rust"})).await.unwrap_err(),
+            "http_not_permitted"
+        );
+        assert!(seen.lock().unwrap().is_empty());
+
+        let caps = HubToolCaps { http: true, ..HubToolCaps::default() };
+        let none = hub_executor(root.clone(), true, caps, None);
+        assert_eq!(
+            none.execute("hub_web_search".into(), json!({"query": "rust"})).await.unwrap_err(),
+            "approval_required"
+        );
+        assert_eq!(
+            none.execute("hub_web_search".into(), json!({"query": ""})).await.unwrap_err(),
+            "query_invalid"
+        );
+
+        let (deny, seen) = recording_approver(false);
+        let denied = hub_executor(root, true, caps, Some(deny));
+        assert_eq!(
+            denied.execute("hub_web_search".into(), json!({"query": "rust", "engines": ["duckduckgo"]})).await.unwrap_err(),
+            "approval_denied"
+        );
+        let seen = seen.lock().unwrap();
+        assert_eq!(seen.len(), 1);
+        assert_eq!(seen[0].tool, "hub_web_search");
+        assert!(seen[0].summary.contains("rust") && seen[0].summary.contains("wikipedia_ja") && !seen[0].summary.contains("duckduckgo"));
     }
 
     /// allow_write is a file grant only: an enabled hub_exec still parks on

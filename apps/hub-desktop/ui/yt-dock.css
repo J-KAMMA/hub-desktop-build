@@ -20,3 +20,5 @@
 .yt-dock-head button:hover { background: var(--interactive-hover); color: var(--text); }
 .yt-dock-close { width: 32px; padding: 0; font-size: var(--type-headline); line-height: 1; }
 body.has-mini-dock .workspace-main::after { content: ""; display: block; height: var(--mini-dock-reserve, 0); pointer-events: none; }
+
+.yt-dock-note { display: grid; place-items: center; height: 100%; margin: 0; padding: var(--space-3); color: var(--muted); font-size: var(--type-caption); text-align: center; background: var(--surface); }

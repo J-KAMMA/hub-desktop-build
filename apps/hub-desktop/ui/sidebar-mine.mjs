@@ -22,7 +22,7 @@ export const MINE_SECTIONS = {
   ],
   videos: [
     { key: 'videos.tags', title: 'フォロー中のタグ', account: true, tag: true, empty: { text: 'まだタグをフォローしていません', action: '動画を探す' } },
-    { key: 'videos.channels', title: '登録チャンネル', account: true, person: true, empty: { text: 'まだチャンネルを登録していません', action: '動画を探す' } },
+    { key: 'videos.channels', title: 'フォロー中', account: true, person: true, empty: { text: 'まだ誰もフォローしていません', action: '動画を探す' } },
     { key: 'videos.later', title: 'あとで見る', account: true, empty: { text: '保存した動画はありません', action: '動画を探す' } },
   ],
   music: [

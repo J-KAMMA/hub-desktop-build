@@ -8,6 +8,7 @@ import { initBrowserPanels } from './browser-panels.mjs';
 import { renderBrowserLibrary } from './browser-library.mjs';
 import { renderBrowserPrivacy } from './browser-privacy.mjs';
 import { initBrowserReader } from './browser-reader.mjs';
+import { getWebSearchEngine, setWebSearchEngine, DEFAULT_WEB_SEARCH_ENGINE } from './web-search.mjs';
 import { SEARCH_ENGINES, navigationTarget, addressSuggestions, browserShortcut, pageUrl, filterBrowserTabs, completeDotCom, selectionSearchUrl } from './browser-navigation.mjs';
 
 export function initBrowserWorkspace({ document, window, invoke, icon, enterBrowser, isActive, getView, onAiDraft, onHubSearch, getHubHistory, onHubHistory, onLocalGames = () => {}, metrics = { begin: () => () => {} } }) {
@@ -24,10 +25,10 @@ export function initBrowserWorkspace({ document, window, invoke, icon, enterBrow
   let activeTabIdentity = {};
   let nativeChrome = false, nativeChromeGeneration = 0, pendingNativeAddress = null;
   let probeProfile = 1, probeRequest = 0, refreshesInFlight = 0, selectionsInFlight = 0, fallbackCount = 0;
-  let tabs = [], favorites = [], history = [], engine = 'google', generation = 0, suggestionIndex = -1, candidates = [], menuKind = 'history', dragging = null;
+  let tabs = [], favorites = [], history = [], engine = DEFAULT_WEB_SEARCH_ENGINE, generation = 0, suggestionIndex = -1, candidates = [], menuKind = 'history', dragging = null;
   let collapsedGroups = new Set();
   try { const saved = JSON.parse(window.localStorage.getItem('hub.browser.collapsedGroups')); if (Array.isArray(saved)) collapsedGroups = new Set(saved.filter(name => typeof name === 'string' && name.length <= 160)); } catch { /* optional preference */ }
-  try { const saved = window.localStorage.getItem('hub.browser.searchEngine'); if (Object.hasOwn(SEARCH_ENGINES, saved)) engine = saved; } catch { /* optional preference */ }
+  engine = getWebSearchEngine(window.localStorage);
   let privacyPanel = null, reader = null;
   let privateNewPending=false,findReader=false,findRevision=0;
   let browserControlEpoch = 0, printPending = false, printCheckPending = false, controlsStale = true;
@@ -674,7 +675,7 @@ export function initBrowserWorkspace({ document, window, invoke, icon, enterBrow
       if(active())tools.append(browserControl('ページを印刷…','print',active()));
       const label = document.createElement('label'); label.textContent = 'Web検索の送信先 '; const select = document.createElement('select'); select.setAttribute('aria-label', 'Web検索の送信先');
       for (const [key, value] of Object.entries(SEARCH_ENGINES)) { const option = document.createElement('option'); option.value = key; option.textContent = value.label; select.append(option); }
-      select.value = engine; select.onchange = () => { engine = select.value; try { window.localStorage.setItem('hub.browser.searchEngine', engine); } catch { /* optional */ } updateProvider(); };
+      select.value = engine; select.onchange = () => { engine = select.value; setWebSearchEngine(window.localStorage, engine); updateProvider(); };
       label.append(select); tools.append(label); menu.append(tools);
       const note = document.createElement('p'); note.className = 'browser-menu-empty'; note.textContent = '候補はこのPCのタブ・履歴・お気に入りから探します。入力中の文字は外部へ送信しません。'; menu.append(note); return;
     }
@@ -773,7 +774,7 @@ export function initBrowserWorkspace({ document, window, invoke, icon, enterBrow
     section('検索');
     const engineLabel = document.createElement('label'); engineLabel.className = 'browser-settings-field'; engineLabel.textContent = 'アドレス欄で使う検索エンジン ';
     const select = document.createElement('select'); for (const [key, value] of Object.entries(SEARCH_ENGINES)) { const option = document.createElement('option'); option.value = key; option.textContent = value.label; select.append(option); }
-    select.value = engine; select.onchange = () => { engine = select.value; try { window.localStorage.setItem('hub.browser.searchEngine', engine); } catch { /* optional */ } updateProvider(); };
+    select.value = engine; select.onchange = () => { engine = select.value; setWebSearchEngine(window.localStorage, engine); updateProvider(); };
     engineLabel.append(select); panel.append(engineLabel);
     section('ホームと表示');
     check('ホームボタンを表示', homeSettings().show, value => { saveHome({ ...homeSettings(), show: value }); syncHome(); });
@@ -831,7 +832,7 @@ export function initBrowserWorkspace({ document, window, invoke, icon, enterBrow
   $('#browser-navigation').before(homeButton);
   function syncHome() { const value = homeSettings(); homeButton.hidden = !(value.show && value.url); }
   syncHome();
-  function updateProvider() { if (!Object.hasOwn(SEARCH_ENGINES, engine)) engine = 'google'; input.placeholder = `Webアドレス または ${SEARCH_ENGINES[engine].label}で検索`; input.setAttribute('aria-description', `検索を確定すると${SEARCH_ENGINES[engine].label}へ送信します。候補はこのPC内で探します。`); }
+  function updateProvider() { if (!Object.hasOwn(SEARCH_ENGINES, engine)) engine = DEFAULT_WEB_SEARCH_ENGINE; input.placeholder = `Webアドレス または ${SEARCH_ENGINES[engine].label}で検索`; input.setAttribute('aria-description', `検索を確定すると${SEARCH_ENGINES[engine].label}へ送信します。候補はこのPC内で探します。`); }
   const addressCandidates = button('アドレスを編集・候補を表示', async () => {
     cancelPendingFocus(); const turn = focusGeneration, id = active()?.id;
     await invoke('browser_focus_controls');

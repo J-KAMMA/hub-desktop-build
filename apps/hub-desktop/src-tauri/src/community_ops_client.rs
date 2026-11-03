@@ -78,17 +78,10 @@ fn request_bytes(
         "community_poll_create" => {
             let value = closed(
                 body,
-                &[
-                    "channelId",
-                    "question",
-                    "options",
-                    "closesInHours",
-                    "clientRequestId",
-                ],
+                &["question", "options", "closesInHours", "clientRequestId"],
             )
             .map_err(|_| INVALID)?;
-            if !value["channelId"].as_str().is_some_and(id)
-                || !value["clientRequestId"].as_str().is_some_and(uuid)
+            if !value["clientRequestId"].as_str().is_some_and(uuid)
                 || !value["closesInHours"]
                     .as_u64()
                     .is_some_and(|v| (1..=720).contains(&v))
@@ -116,17 +109,10 @@ fn request_bytes(
         "community_message_schedule" => {
             let value = closed(
                 body,
-                &[
-                    "channelId",
-                    "body",
-                    "kind",
-                    "scheduledAt",
-                    "clientRequestId",
-                ],
+                &["body", "kind", "scheduledAt", "clientRequestId"],
             )
             .map_err(|_| INVALID)?;
-            if !value["channelId"].as_str().is_some_and(id)
-                || !value["clientRequestId"].as_str().is_some_and(uuid)
+            if !value["clientRequestId"].as_str().is_some_and(uuid)
                 || !matches!(
                     value["kind"].as_str(),
                     Some("chat" | "guide" | "question" | "party")
@@ -170,7 +156,7 @@ fn ack(value: &Value, action: &str, path: &str, body: &Value, viewer: &str) -> R
         };
     }
     let message = value[field].as_object().ok_or(UNKNOWN)?;
-    let required = ["id", "channelId", "authorProfileId", "body", "createdAt"];
+    let required = ["id", "communityId", "authorProfileId", "body", "createdAt"];
     let optional = [
         "botId",
         "botName",
@@ -202,7 +188,6 @@ fn ack(value: &Value, action: &str, path: &str, body: &Value, viewer: &str) -> R
         "hub-community-message-v1",
         viewer,
         community,
-        body["channelId"].as_str().ok_or(UNKNOWN)?,
         nonce.to_ascii_lowercase()
     ]);
     let expected = format!(
@@ -211,7 +196,7 @@ fn ack(value: &Value, action: &str, path: &str, body: &Value, viewer: &str) -> R
     );
     if message.get("id").and_then(Value::as_str) != Some(expected.as_str())
         || message.get("authorProfileId").and_then(Value::as_str) != Some(viewer)
-        || message.get("channelId") != body.get("channelId")
+        || message.get("communityId").and_then(Value::as_str) != Some(community)
         || message.get("body").and_then(Value::as_str)
             != Some(text(&body["question"], 200).map_err(|_| UNKNOWN)?.as_str())
         || message.get("kind").and_then(Value::as_str) != Some("chat")
@@ -332,17 +317,16 @@ mod tests {
     const POLLS: &str = "/api/client/communities/c-1/polls";
     const NONCE: &str = "AAAAAAAA-BBBB-4CCC-8DDD-EEEEEEEEEEEE";
     fn poll() -> Value {
-        json!({"channelId":"ch-1","question":"  Ａ質問  ","options":["Yes","No"],"closesInHours":24,"clientRequestId":NONCE})
+        json!({"question":"  Ａ質問  ","options":["Yes","No"],"closesInHours":24,"clientRequestId":NONCE})
     }
     fn message() -> Value {
         let identity = json!([
             "hub-community-message-v1",
             "viewer-1",
             "c-1",
-            "ch-1",
             NONCE.to_ascii_lowercase()
         ]);
-        json!({"viewerId":"viewer-1","message":{"id":format!("cm-{:x}",Sha256::digest(serde_json::to_vec(&identity).unwrap())),"channelId":"ch-1","authorProfileId":"viewer-1","body":"A質問","kind":"chat","createdAt":"2026-10-07T00:00:00.000Z","images":[],"replyToMessageId":null}})
+        json!({"viewerId":"viewer-1","message":{"id":format!("cm-{:x}",Sha256::digest(serde_json::to_vec(&identity).unwrap())),"communityId":"c-1","authorProfileId":"viewer-1","body":"A質問","kind":"chat","createdAt":"2026-10-07T00:00:00.000Z","images":[],"replyToMessageId":null}})
     }
     #[test]
     fn fixed_action_paths_methods_and_closed_body_reject_unrelated_requests() {
@@ -417,7 +401,7 @@ mod tests {
     #[test]
     fn schedule_inclusive_utf16_kind_date_and_actual_json_escaping_bounds() {
         let path = "/api/client/communities/c-1/scheduled";
-        let mut value = json!({"channelId":"ch-1","body":"😀".repeat(1000),"kind":"chat","scheduledAt":"2026-10-08T00:00:00.000Z","clientRequestId":NONCE});
+        let mut value = json!({"body":"😀".repeat(1000),"kind":"chat","scheduledAt":"2026-10-08T00:00:00.000Z","clientRequestId":NONCE});
         assert!(request_bytes(
             "community_message_schedule",
             &reqwest::Method::POST,
@@ -474,7 +458,7 @@ mod tests {
         assert!(ack(&value, CREATE, POLLS, &poll(), "viewer-1").is_ok());
         for (key, value) in [
             ("authorProfileId", json!("other")),
-            ("channelId", json!("other")),
+            ("communityId", json!("other")),
             ("body", json!("different")),
             ("id", json!("cm-fake")),
             ("kind", json!("guide")),

@@ -67,7 +67,6 @@ html[data-motion="reduce"] *::after {
   transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), transform var(--dur-press) var(--ease-out);
 }
 :where(.ds-btn:hover:not(:disabled)) { background: var(--interactive-hover); }
-:where(.ds-btn:active:not(:disabled)) { transform: scale(.97); }
 :where(.ds-btn:disabled) { opacity: .45; cursor: default; }
 :where(.ds-btn.is-lg) { min-height: var(--control-h-lg); padding: 0 var(--space-4); }
 :where(.ds-btn.is-pill) { border-radius: var(--radius-pill); }

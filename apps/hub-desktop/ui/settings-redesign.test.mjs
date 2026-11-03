@@ -54,9 +54,9 @@ test('every control that existed before the redesign is still in the settings sc
   assert.deepEqual([...d.querySelectorAll('#settings-dm option')].map(o=>o.value),['mutuals','following','nobody']);
   assert.equal(d.querySelector('#settings-muted').maxLength,4000);
   // 外観
-  for(const [name,values] of [['theme',['dark','light','system']],['textSize',['normal','large','xlarge']],['density',['normal','roomy']]])
+  for(const [name,values] of [['textSize',['normal','large','xlarge']],['density',['normal','roomy']]])
     for(const value of values)one(`input[name="appearance-${name}"][value="${value}"]`);
-  one('.appearance-motion input');one('.appearance-transparency input');
+  for(const id of ['light','dark','noir','ivory','midnight','device'])one(`button[data-template-choice="${id}"]`);one('.appearance-crisp input');one('.appearance-motion input');one('.appearance-transparency input');
   assert.ok([...d.querySelectorAll('#settings-appearance button')].some(b=>b.textContent==='標準に戻す'));
   // この端末
   for(const key of ['receive','seed','relayOnly'])one(`[data-media-p2p="${key}"]`);

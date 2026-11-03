@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
 import {
   profileJoinedLabel, profileShareUrl, profileLinks, profilePeople, profileContent, profileTabs,
-  createProfileBody, renderProfileStats, renderProfileFacts, renderProfileActions, profileWorkPage, PROFILE_WORK_KINDS,
+  createProfileBody, renderProfileStats, renderProfileFacts, renderProfileActions, profileWorkPage, PROFILE_WORK_KINDS, PROFILE_TAB_ORDER,
 } from './profile-view.mjs';
 
 const doc = () => new JSDOM('<!doctype html><body></body>').window.document;
@@ -133,42 +133,52 @@ test('css uses tokens only and markup/app wiring is small', () => {
   assert.doesNotMatch(app, /wallets\b[^\n]*profile-view/);
 });
 
-test('work pages keep only drawable rows and path-safe cursors; no music kind', () => {
-  assert.deepEqual(PROFILE_WORK_KINDS.map((k) => k.key), ['articles', 'videos', 'code']);
-  const a = profileWorkPage('articles', { articles: [{ id: 'x', title: 'T', summary: 's' }, { id: 'g', title: 'G', locked: true, summary: '' }, { id: '', title: 'no' }, { id: 'y', title: ' ' }], nextCursor: 'abc_-1' });
+test('work pages keep only drawable rows and path-safe cursors; every kind has a row shape', () => {
+  assert.deepEqual(PROFILE_WORK_KINDS.map((k) => k.key), ['articles', 'videos', 'music', 'research', 'market', 'code']);
+  assert.deepEqual(PROFILE_TAB_ORDER.slice(0, 7), ['posts', 'replies', 'articles', 'videos', 'music', 'research', 'market']);
+  const a = profileWorkPage('articles', { items: [{ id: 'x', title: 'T', summary: 's' }, { id: 'g', title: 'G', locked: true, summary: '' }, { id: '', title: 'no' }, { id: 'y', title: ' ' }], nextCursor: 'abc_-1' });
   assert.deepEqual(a.items.map((i) => [i.id, i.meta]), [['x', 's'], ['g', '閲覧条件つき']]);
   assert.equal(a.nextCursor, 'abc_-1');
-  assert.equal(profileWorkPage('videos', { videos: [], nextCursor: 'a=b' }).nextCursor, null);
+  assert.equal(profileWorkPage('videos', { items: [], nextCursor: 'a=b' }).nextCursor, null);
   const c = profileWorkPage('code', { repositories: [{ id: 'r', owner: 'ada', name: 'lib.js', description: 'd' }, { owner: '../x', name: 'n' }, { owner: 'ada', name: 'a/b' }] });
   assert.deepEqual(c.items.map((i) => [i.owner, i.name]), [['ada', 'lib.js']]);
-  assert.deepEqual(profileWorkPage('music', { music: [{ id: 'm', title: 'M' }] }).items, []);
+  assert.deepEqual(profileWorkPage('music', { items: [{ id: 'm', title: 'M', artist: '歌手', services: [] }] }).items.map((i) => [i.id, i.meta]), [['m', '歌手']]);
+  assert.deepEqual(profileWorkPage('research', { items: [{ id: 'r', title: 'R', status: 'active' }] }).items.map((i) => i.meta), ['進行中']);
+  const m = profileWorkPage('market', { items: [{ id: 'e', source: 'listing', title: 'E', priceLabel: '¥1,000', providerLabel: '主催' }, { id: 'g', source: 'game', title: 'G', slug: 'g' }, { id: 'bad', source: 'game', title: 'no slug' }, { id: 'z', source: 'other', title: 'Z' }] });
+  assert.deepEqual(m.items.map((i) => [i.id, i.meta]), [['e', '¥1,000 · 主催'], ['g', '']]);
+  const n = profileWorkPage('market', { items: [{ id: 'p', source: 'product', title: 'P', priceLabel: '¥500' }, { id: 'c', source: 'classified', title: 'C', summary: 's', priceLabel: '3万円' }, { id: 'w', source: 'work', title: 'W', priceLabel: '時給1500円' }] });
+  assert.deepEqual(n.items.map((i) => [i.id, i.raw.source, i.meta]), [['p', 'product', '¥500'], ['c', 'classified', '3万円'], ['w', 'work', '時給1500円']]);
+  assert.deepEqual(profileWorkPage('articles', { articles: [{ id: 'old', title: 'old shape' }] }).items, []);
 });
 
-test('work tabs appear only when the list has content, in fixed order, with paging and error states', async () => {
+test('kind tabs come from kinds in the fixed order, load only when opened, and page with the server cursor', async () => {
   const d = doc();
   const calls = [];
   const opened = [];
   let failNext = false;
   const pages = {
-    profile_articles: { articles: [{ id: 'a1', title: 'Art' }], nextCursor: 'c1' },
-    profile_articles_page: { articles: [{ id: 'a2', title: 'Art2' }], nextCursor: null },
-    profile_videos: { videos: [] },
+    'profile_kind:ada:articles': { items: [{ id: 'a1', title: 'Art' }], nextCursor: 'c1' },
+    'profile_kind_page:ada:articles:c1': { items: [{ id: 'a2', title: 'Art2' }], nextCursor: null },
+    'profile_kind:ada:music': { items: [{ id: 'm1', title: 'Song', artist: 'A', services: [] }], nextCursor: null },
   };
-  const body = createProfileBody(d, full, { ...deps(d), openWork: (item) => opened.push([item.kind, item.id]),
+  const body = createProfileBody(d, { ...full, kinds: ['music', 'articles', 'bogus', 'code'] }, { ...deps(d), openWork: (item) => opened.push([item.kind, item.id]),
+    workRow: (item) => { const n = d.createElement('div'); n.className = 'custom-row'; n.textContent = item.title; n.onclick = () => opened.push([item.kind, item.id]); return n; },
     loadWorks: async (name, ids) => {
-      calls.push([name, ...ids]);
+      calls.push([name, ...ids].join(':'));
       if (name === 'profile_code') throw new Error('down');
-      if (name === 'profile_articles_page' && failNext) { failNext = false; throw new Error('x'); }
-      return pages[name];
+      if (name === 'profile_kind_page' && failNext) { failNext = false; throw new Error('x'); }
+      return pages[[name, ...ids].join(':')];
     } });
   await body.ready;
   const keys = [...body.root.querySelectorAll('.profile-tab')].map((b) => b.dataset.tab);
-  assert.deepEqual(keys, ['posts', 'media', 'threads', 'articles']);
-  assert.deepEqual(calls.map((c) => c.join(':')).sort(), ['profile_articles:ada', 'profile_code:ada', 'profile_videos:ada']);
+  assert.deepEqual(keys, ['posts', 'articles', 'music', 'media', 'threads'], 'unknown kinds and code without a repo do not appear');
+  assert.deepEqual(calls, ['profile_code:ada'], 'nothing but the code probe is read before a tab is opened');
   body.root.querySelector('[data-tab="articles"]').click();
+  await new Promise((r) => setTimeout(r, 0));
   const panel = body.root.querySelector('.profile-panel');
-  assert.equal(panel.querySelectorAll('.profile-row').length, 1);
-  panel.querySelector('.profile-row').click();
+  assert.deepEqual(calls.slice(1), ['profile_kind:ada:articles']);
+  assert.equal(panel.querySelectorAll('.custom-row').length, 1);
+  panel.querySelector('.custom-row').click();
   assert.deepEqual(opened, [['articles', 'a1']]);
   failNext = true;
   panel.querySelector('.profile-works-more').click();
@@ -176,8 +186,32 @@ test('work tabs appear only when the list has content, in fixed order, with pagi
   assert.ok(panel.querySelector('.profile-works-error'));
   panel.querySelector('.profile-works-more').click();
   await new Promise((r) => setTimeout(r, 0));
-  assert.equal(panel.querySelectorAll('.profile-row').length, 2);
+  assert.equal(panel.querySelectorAll('.custom-row').length, 2);
   assert.equal(panel.querySelector('.profile-works-more'), null);
-  assert.equal(panel.querySelector('.profile-works-error'), null);
-  assert.deepEqual(calls.at(-1), ['profile_articles_page', 'ada', 'c1']);
+  assert.equal(calls.at(-1), 'profile_kind_page:ada:articles:c1');
+  body.root.querySelector('[data-tab="music"]').click();
+  await new Promise((r) => setTimeout(r, 0));
+  assert.equal(calls.at(-1), 'profile_kind:ada:music');
+  body.root.querySelector('[data-tab="articles"]').click();
+  assert.equal(calls.filter((c) => c === 'profile_kind:ada:articles').length, 1, 'a tab already read is not read again');
+});
+
+test("own profile always has all five kind tabs; an empty one offers the create flow, another person's has none", async () => {
+  const d = doc();
+  const created = [];
+  const own = createProfileBody(d, { ...full, isCurrentUser: true }, { ...deps(d), loadWorks: async (name) => (name === 'profile_code' ? { repositories: [] } : { items: [] }), createWork: (kind) => created.push(kind) });
+  await own.ready;
+  assert.deepEqual([...own.root.querySelectorAll('.profile-tab')].map((b) => b.dataset.tab), ['posts', 'articles', 'videos', 'music', 'research', 'market', 'media', 'threads']);
+  own.root.querySelector('[data-tab="research"]').click();
+  await new Promise((r) => setTimeout(r, 0));
+  const panel = own.root.querySelector('.profile-panel');
+  assert.match(panel.textContent, /まだ研究がありません/);
+  panel.querySelector('.profile-works-create').click();
+  assert.deepEqual(created, ['research']);
+  const other = createProfileBody(d, { ...full, kinds: [] }, { ...deps(d), loadWorks: async () => ({ items: [] }) });
+  assert.deepEqual([...other.root.querySelectorAll('.profile-tab')].map((b) => b.dataset.tab), ['posts', 'media', 'threads']);
+  const emptyOther = createProfileBody(d, { ...full, kinds: ['market'] }, { ...deps(d), loadWorks: async () => ({ items: [] }) });
+  emptyOther.root.querySelector('[data-tab="market"]').click();
+  await new Promise((r) => setTimeout(r, 0));
+  assert.equal(emptyOther.root.querySelector('.profile-works-create'), null, 'no create entry on someone else\'s profile');
 });

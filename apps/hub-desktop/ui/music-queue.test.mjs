@@ -38,7 +38,8 @@ function fixture(options={}){
   const context={musicQueue,musicAudio:audio,musicPlayer:{tracks:[],queue:[],currentId:null,currentTrack:null,currentIndex:-1,artUrl:null,request:0,sourceRequest:0,directUrl:null},
     hubTrackAudio:{resolve:async({directUrl})=>directUrl,release(){}},
     researchAccountGeneration:0,hubOrigin:options.origin===undefined?'https://hub.jkamma.com':options.origin,musicQueueView:null,
-    document:{querySelector:node},URL,Blob,syncMusicPlayerBounds(){},renderMusicTracks(){},renderRailNowPlaying(){},friendlyError:error=>error.message,
+    document:{querySelector:node,addEventListener(){}},URL,Blob,syncMusicPlayerBounds(){},renderMusicTracks(){},renderRailNowPlaying(){},friendlyError:error=>error.message,
+    createProfileAttribution:()=>({}),commerceProofFetcher:()=>null,musicProofFetcher:()=>null,
     invoke:async(name,args)=>{calls.push({name,args});return options.invoke?.(name,args);}};
   vm.runInNewContext(functions,context);
   return {context,audio,calls,plays,status:()=>node('#music-playback-state').textContent,node,

@@ -137,3 +137,14 @@ test('duplicate folder names get their parent folder beside the name; unique nam
   assert.deepEqual([...f.root.querySelectorAll('.piw-history-project-parent')].map(n => n.textContent), ['one', 'two']);
   assert.deepEqual([...f.root.querySelectorAll('.piw-history-project-name')].map(n => n.textContent), ['workspace', 'workspace', 'solo']); f.dom.window.close();
 });
+
+test('groupBy date lists 今日 / 過去7日 / それ以前 in that order, whatever the folder, and keeps the folder in the tooltip (2026-11-03)', () => {
+  const now = new Date(2026, 10, 3, 12, 0, 0), at = (daysAgo, hour = 9) => new Date(2026, 10, 3 - daysAgo, hour).getTime();
+  const f = render([entry('old', '/a', { startedAtMs: at(30) }), entry('week', '/b', { startedAtMs: at(3) }), entry('today', '/c/proj', { startedAtMs: at(0) }), entry('nodate', '/a', { startedAtMs: undefined })], { groupBy: 'date', now });
+  assert.deepEqual(f.groups.map(g => g.dataset.workspaceKey), ['date:today', 'date:week', 'date:older']);
+  assert.deepEqual(f.groups.map(g => g.querySelector('.piw-history-project-name').textContent), ['今日', '過去7日', 'それ以前']);
+  assert.equal(f.groups[0].open, true); assert.equal(f.groups[1].open, true);
+  assert.equal(f.groups[2].querySelectorAll('.piw-history-item').length, 2);
+  assert.match(f.groups[0].querySelector('.piw-history-item').title, /proj/);
+  f.dom.window.close();
+});

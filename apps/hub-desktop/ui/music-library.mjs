@@ -41,6 +41,7 @@ export function attachMusicFavorite({document,host,workId,invoke,isCurrent=()=>t
   paint();const ready=ids===null?(root.isConnected?reload():Promise.resolve().then(()=>reload())):Promise.resolve();return {ready,reload,destroy:()=>{disposed=true;generation++;root.remove();}};
 }
 
+import { musicMenuButton } from './music-track-menu.mjs';
 export function renderMusicLibrary({document,host,invoke,onOpen,onPlay,onQueue,isCurrent=()=>true,embedded=false,renderCover}){
   const root=document.createElement('section');root.className=embedded?'':'card';root.setAttribute('aria-label','音楽のお気に入り');host.append(root);
   if(!embedded){const title=document.createElement('h3');title.textContent='音楽のお気に入り';root.append(title);}
@@ -62,12 +63,12 @@ export function renderMusicLibrary({document,host,invoke,onOpen,onPlay,onQueue,i
       else row.append(text(document,'現在、この作品の公開情報を取得できません。非公開化・削除などで利用できない場合があります。'));
       const actions=document.createElement('div');actions.className='actions';
       if(work){
-        const action=button(document,publicTrack(id)?'再生':'詳細・提供元を開く',async()=>{
+        const action=button(document,'再生',async()=>{
           if(!current()||pending||!list.contains(row))return;
           try{if(publicTrack(id)){if(await onPlay(work,works.filter(item=>publicTrack(item.id)))===false)throw Error('music_play_unconfirmed');}else await onOpen(work);}
           catch{if(current()&&list.contains(row))status.textContent='作品を開けませんでした。もう一度操作してください。';}
         });if(publicTrack(id)&&onQueue){const next=button(document,'次に再生',()=>{if(current()&&!pending&&list.contains(row)&&onQueue(work)===false)status.textContent='再生待ちに追加できませんでした。';});next.disabled=pending;next.setAttribute('aria-label',work.title+'を次に再生');actions.append(next);}
-        action.disabled=pending;action.setAttribute('aria-label',`${work.title}を${publicTrack(id)?'再生':'開く'}`);actions.append(action);
+        action.disabled=pending;action.setAttribute('aria-label',`${work.title}を再生`);actions.append(action);actions.append(musicMenuButton(document,work));
       }
       const remove=button(document,'お気に入りを解除',()=>list.contains(row)?removeFavorite(id):undefined);remove.disabled=pending;remove.setAttribute('aria-label',`${work?.title||id}のお気に入りを解除`);actions.append(remove);row.append(actions);list.append(row);
     }

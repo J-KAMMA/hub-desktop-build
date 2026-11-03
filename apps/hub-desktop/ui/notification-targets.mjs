@@ -66,14 +66,14 @@ export function hubPathTarget(path) {
     if (replies !== undefined && !['1', 'recommended', 'latest', 'oldest'].includes(replies)) return null;
     return detail('post', [targetId], '投稿', replies ? { showReplies: true, ...(replies !== '1' ? { replyOrder: replies } : {}) } : {});
   }
-  if (route === 'community' && parts.length <= 2 && only(['community', 'channel', 'message', 'section'])) {
+  if (route === 'community' && parts.length <= 2 && only(['community', 'post', 'section'])) {
     if (parts.length === 2 && q.has('community')) return null;
-    const community = targetId ?? q.get('community'), channel = q.get('channel'), message = q.get('message'), section = q.get('section');
+    const community = targetId ?? q.get('community'), post = q.get('post'), section = q.get('section');
     if (community === undefined) return bare ? view('community') : null;
-    if (!id(community) || (channel !== undefined && !id(channel)) || (message !== undefined && (!channel || !messageId(message)))) return null;
-    if (section !== undefined && (!['members', 'guides', 'governance', 'tokens', 'settings'].includes(section) || channel || message)) return null;
-    if (fragment && (!message || fragment !== message)) return null;
-    return channel ? detail('channel_messages', [community, channel], 'チャンネル', message ? { messageId: message } : {}) : detail('community', [community], 'コミュニティ', section ? { section } : {});
+    if (!id(community) || (post !== undefined && !messageId(post))) return null;
+    if (section !== undefined && (!['members', 'guides', 'governance', 'tokens', 'settings'].includes(section) || post)) return null;
+    if (fragment && (!post || fragment !== post)) return null;
+    return detail('community', [community], 'コミュニティ', post ? { messageId: post } : section ? { section } : {});
   }
   if (route === 'research' && parts.length === 2 && project(targetId)) {
     if (fragment === 'git' && only(['gitProposal', 'commit', 'base'])) {
@@ -115,7 +115,7 @@ export function notificationTarget(item, profiles = new Map(), threadPostDestina
     const result = hubPathTarget(path);
     return type === 'thread_post'
       ? result?.kind === 'detail' && result.name === 'thread' && result.state?.replyPostId === targetId ? result : null
-      : result?.kind === 'detail' && result.name === 'channel_messages' && result.state?.messageId === targetId ? result : null;
+      : result?.kind === 'detail' && result.name === 'community' && result.state?.messageId === targetId ? result : null;
   }
   if (type === 'message_conversation') return { kind: 'conversation', id: targetId };
   if (type === 'thread') return detail('thread', [targetId], 'スレッド');

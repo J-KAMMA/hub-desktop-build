@@ -97,14 +97,27 @@
 #hub-shell .profile-connections-head h3 { margin: 0; font-size: var(--type-title3); font-weight: var(--weight-bold); }
 #hub-shell .profile-connections-more { margin: var(--space-3) var(--space-4); }
 #hub-shell .profile-works-error { margin: var(--space-3) var(--space-4); color: var(--muted); }
-#hub-shell .profile-works-more { margin: var(--space-3) var(--space-4); }
+#hub-shell .profile-works-more, #hub-shell .profile-works-create, #hub-shell .profile-works-retry { margin: var(--space-3) var(--space-4); }
+#hub-shell .profile-works-loading { margin: var(--space-4); }
 
 
 /* 本文は共通の一覧幅に置く。左の列が節を持つときは、本文のタブを重ねて出さない。 */
 #hub-shell #view-profile { width: 100%; max-width: none; }
-@media (min-width: 861px) {
-  .app-shell:not(.sidebar-collapsed) #view-profile .profile-tabs { display: none; }
-  .app-shell:not(.sidebar-collapsed) #view-profile .profile-panel { margin-top: var(--space-2); }
-}
 #hub-shell #view-profile .profile-card { width: 100%; }
 #hub-shell #view-profile .layout-list { padding-inline: var(--space-6); }
+
+/* 種類が増えても札は折り返さず、収まらなければ横に流す（flex-shrink で潰して文字が割れないように）。 */
+#hub-shell .profile-body > .profile-tabs > .profile-tab { flex: 1 0 auto; min-width: max-content; white-space: nowrap; }
+
+/* 種類別のタブの行は、各画面と同じ catalogCard を、箱でなく区切り線の行として並べる。 */
+#hub-shell .profile-body > .profile-panel > .result-card {
+  position: relative;
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+#hub-shell .profile-body > .profile-panel > .result-card.is-link:hover { background: var(--content-surface-hover); }

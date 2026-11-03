@@ -159,6 +159,7 @@ function notificationFixture(extra = {}) {
   const { dom, ctx } = sandbox({
     friendlyError: (error) => error.message,
     icon: (name) => `<svg data-icon="${name}"></svg>`,
+    renderSidebarContext: () => {}, // 通知を描いたあと、列の件数を更新する呼び出し
     ...extra,
   });
   const document = dom.window.document;

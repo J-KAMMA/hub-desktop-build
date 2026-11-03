@@ -1,4 +1,4 @@
-//! Fixed managed notification/channel requests. Scope is a precondition, not authentication.
+//! Fixed managed notification/community-post requests. Scope is a precondition, not authentication.
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 use std::{collections::HashSet, time::Duration};
@@ -269,15 +269,14 @@ fn nullable_message(value: Option<&Value>) -> bool {
 fn whitespace(c: char) -> bool {
     matches!(c,'\u{0009}'..='\u{000d}'|'\u{0020}'|'\u{00a0}'|'\u{1680}'|'\u{2000}'..='\u{200a}'|'\u{2028}'|'\u{2029}'|'\u{202f}'|'\u{205f}'|'\u{3000}'|'\u{feff}')
 }
-fn channel_path(path: &str) -> Option<&str> {
+/// `/api/client/communities/{id}/posts` の `{id}`。コミュニティは1本のストリームで、チャンネルは無い。
+fn post_path(path: &str) -> Option<&str> {
     let parts = path.split('/').collect::<Vec<_>>();
-    (parts.len() == 8
+    (parts.len() == 6
         && parts[..4] == ["", "api", "client", "communities"]
         && identity(parts[4], 80)
-        && parts[5] == "channels"
-        && identity(parts[6], 80)
-        && parts[7] == "messages")
-        .then(|| parts[6])
+        && parts[5] == "posts")
+        .then(|| parts[4])
 }
 fn request_bytes(action: &str, path: &str, body: &Value) -> Result<Vec<u8>, String> {
     match action {
@@ -293,8 +292,8 @@ fn request_bytes(action: &str, path: &str, body: &Value) -> Result<Vec<u8>, Stri
                 return Err(INVALID.into());
             }
         }
-        "channel_message" => {
-            if channel_path(path).is_none() {
+        "community_post" => {
+            if post_path(path).is_none() {
                 return Err(INVALID.into());
             }
             let v = closed(
@@ -341,7 +340,7 @@ fn validate_ack(
     body: &Value,
     viewer: &str,
 ) -> Result<(), String> {
-    if action != "channel_message" {
+    if action != "community_post" {
         let v = closed(value, &["viewerId", "unreadCount"], &[])?;
         if v["viewerId"].as_str() != Some(viewer) {
             return Err(CONFLICT.into());
@@ -355,7 +354,7 @@ fn validate_ack(
     let v = closed(value, &["message"], &[])?;
     let message = closed(
         &v["message"],
-        &["id", "channelId", "authorProfileId", "body", "createdAt"],
+        &["id", "communityId", "authorProfileId", "body", "createdAt"],
         &[
             "botId",
             "botName",
@@ -374,7 +373,7 @@ fn validate_ack(
         .unwrap_or("chat");
     let desired_kind = body.get("kind").and_then(Value::as_str).unwrap_or("chat");
     let parts = path.split('/').collect::<Vec<_>>();
-    if parts.len() != 8 {
+    if parts.len() != 6 {
         return Err(UNKNOWN.into());
     }
     if let Some(request_id) = body.get("clientRequestId").and_then(Value::as_str) {
@@ -382,7 +381,6 @@ fn validate_ack(
             "hub-community-message-v1",
             viewer,
             parts[4],
-            parts[6],
             request_id.to_ascii_lowercase()
         ]);
         let expected = format!(
@@ -395,7 +393,7 @@ fn validate_ack(
     }
     if !valid_id(&message["id"])
         || message["authorProfileId"].as_str() != Some(viewer)
-        || message["channelId"].as_str() != channel_path(path)
+        || message["communityId"].as_str() != post_path(path)
         || message["body"].as_str() != body["body"].as_str().map(|v| v.trim_matches(whitespace))
         || !timestamp(&message["createdAt"])
         || actual_kind != desired_kind
@@ -464,7 +462,7 @@ fn append(bytes: &mut Vec<u8>, chunk: &[u8]) -> Result<(), String> {
 }
 fn channel_error(error: String, channel: bool) -> String {
     if channel {
-        error.replacen("notification_", "channel_message_", 1)
+        error.replacen("notification_", "community_post_", 1)
     } else {
         error
     }
@@ -479,7 +477,7 @@ fn status_error(status: u16, channel: bool, body: Option<&Value>) -> String {
                 .filter(|v| closed(v, &["error"], &[]).is_ok())
                 .and_then(|v| v.get("error"))
                 .and_then(Value::as_str)
-                == Some("channel_message_scope_changed"))
+                == Some("post_scope_changed"))
     {
         return channel_error(CONFLICT.into(), channel);
     }
@@ -584,7 +582,7 @@ pub(super) async fn send(
     body: &Value,
     options: &Value,
 ) -> Result<Value, String> {
-    let channel = action == "channel_message";
+    let channel = action == "community_post";
     async {
         let scope = Scope::from_options(options)?;
         let bytes = request_bytes(action, path, body)?;
@@ -620,10 +618,10 @@ pub(super) async fn send(
 mod tests {
     use super::*;
     use serde_json::json;
-    const PATH: &str = "/api/client/communities/community/channels/channel/messages";
+    const PATH: &str = "/api/client/communities/community/posts";
     const UUID: &str = "00000000-0000-4000-8000-000000000001";
     // Independent Node SHA256(JSON.stringify(primary API identity tuple)).
-    const MESSAGE: &str = "cm-32913d1c7219b13e576cda65d68075f721737754134dbf5fe3a26b010d6f4a0d";
+    const MESSAGE: &str = "cm-81f94a10755fe6d3df8b2497633ec524221a60c91d1130ff8de3e0907431bca5";
     fn options() -> Value {
         json!({"expectedDeviceId":"device","expectedOrigin":"https://hub.example","expectedViewerId":"viewer"})
     }
@@ -637,7 +635,7 @@ mod tests {
         json!({"body":" original 日本語 ","replyToMessageId":null,"kind":"chat","imageIds":[],"clientRequestId":UUID})
     }
     fn ack() -> Value {
-        json!({"message":{"id":MESSAGE,"channelId":"channel","authorProfileId":"viewer","body":"original 日本語","createdAt":"2026-10-07T00:00:00Z","replyToMessageId":null,"kind":"chat","botId":null,"botName":null,"editedAt":null,"pinnedAt":null,"pinnedByProfileId":null,"workflowStatus":"open","images":[]}})
+        json!({"message":{"id":MESSAGE,"communityId":"community","authorProfileId":"viewer","body":"original 日本語","createdAt":"2026-10-07T00:00:00Z","replyToMessageId":null,"kind":"chat","botId":null,"botName":null,"editedAt":null,"pinnedAt":null,"pinnedByProfileId":null,"workflowStatus":"open","images":[]}})
     }
 
     #[test]
@@ -788,7 +786,7 @@ mod tests {
         assert!(validate_notifications(&value, None).is_err());
         let mut value = snapshot(0);
         value["communityMessageDestinations"] = json!({});
-        value["communityMessageDestinations"].as_object_mut().unwrap().insert(format!("scheduled:{UUID}"),json!(format!("/community?community=c&channel=ch&message=scheduled%3A{UUID}#scheduled%3A{UUID}")));
+        value["communityMessageDestinations"].as_object_mut().unwrap().insert(format!("scheduled:{UUID}"),json!(format!("/community?community=c&post=scheduled%3A{UUID}#scheduled%3A{UUID}")));
         assert!(validate_notifications(&value, None).is_ok());
         value["communityMessageDestinations"] = json!({"unknown:message":"/community"});
         assert!(validate_notifications(&value, None).is_err());
@@ -845,25 +843,26 @@ mod tests {
     fn channel_request_uses_utf16_bound_and_never_truncates_or_adds_authority() {
         let mut value = body();
         value["body"] = json!("😀".repeat(1000));
-        assert!(request_bytes("channel_message", PATH, &value).is_ok());
+        assert!(request_bytes("community_post", PATH, &value).is_ok());
         value["body"] = json!(format!("{}a", "😀".repeat(1000)));
-        assert!(request_bytes("channel_message", PATH, &value).is_err());
+        assert!(request_bytes("community_post", PATH, &value).is_err());
         value["body"] = json!("a".repeat(2001));
-        assert!(request_bytes("channel_message", PATH, &value).is_err());
+        assert!(request_bytes("community_post", PATH, &value).is_err());
         let mut value = body();
         value["expectedViewerId"] = json!("another");
-        assert!(request_bytes("channel_message", PATH, &value).is_err());
+        assert!(request_bytes("community_post", PATH, &value).is_err());
         for path in [
-            "/api/client/communities/c/channels/ch/messages/extra",
-            "/api/client/communities/%2e%2e/channels/ch/messages",
-            "/api/client/communities/c/channels/ch/messages?x=y",
+            "/api/client/communities/c/posts/extra",
+            "/api/client/communities/%2e%2e/posts",
+            "/api/client/communities/c/posts?x=y",
+            "/api/client/communities/c/channels/ch/messages",
         ] {
-            assert!(request_bytes("channel_message", path, &body()).is_err());
+            assert!(request_bytes("community_post", path, &body()).is_err());
         }
         let mut value = body();
         value["body"] = json!("\0".repeat(2000));
         assert!(
-            request_bytes("channel_message", PATH, &value)
+            request_bytes("community_post", PATH, &value)
                 .unwrap()
                 .len()
                 < MAX_REQUEST
@@ -874,7 +873,7 @@ mod tests {
     fn images_scheduled_reply_and_request_id_are_closed_bounded_and_unique() {
         let mut value = body();
         value["replyToMessageId"] = json!(format!("scheduled:{UUID}"));
-        assert!(request_bytes("channel_message", PATH, &value).is_ok());
+        assert!(request_bytes("community_post", PATH, &value).is_ok());
         for invalid in [
             format!("unknown:{UUID}"),
             format!("scheduled:{UUID}\n"),
@@ -884,17 +883,17 @@ mod tests {
         }
         let mut value = body();
         value["imageIds"] = json!([UUID, UUID]);
-        assert!(request_bytes("channel_message", PATH, &value).is_err());
+        assert!(request_bytes("community_post", PATH, &value).is_err());
         value["imageIds"] = json!([UUID, "bad"]);
-        assert!(request_bytes("channel_message", PATH, &value).is_err());
+        assert!(request_bytes("community_post", PATH, &value).is_err());
         value["imageIds"] = json!([UUID]);
         value["body"] = json!("");
-        assert!(request_bytes("channel_message", PATH, &value).is_ok());
+        assert!(request_bytes("community_post", PATH, &value).is_ok());
         value["imageIds"] = json!([]);
-        assert!(request_bytes("channel_message", PATH, &value).is_err());
+        assert!(request_bytes("community_post", PATH, &value).is_err());
         let mut value = body();
         value["clientRequestId"] = json!("00000000-0000-4000-8000-00000000000x");
-        assert!(request_bytes("channel_message", PATH, &value).is_err());
+        assert!(request_bytes("community_post", PATH, &value).is_err());
     }
 
     #[test]
@@ -925,25 +924,25 @@ mod tests {
 
     #[test]
     fn channel_receipt_is_bound_to_actual_request_and_independent_primary_identity_hash() {
-        assert!(validate_ack(&ack(), "channel_message", PATH, &body(), "viewer").is_ok());
+        assert!(validate_ack(&ack(), "community_post", PATH, &body(), "viewer").is_ok());
         for (key, invalid) in [
             ("id", json!("wrong-request")),
             ("authorProfileId", json!("another")),
-            ("channelId", json!("another")),
+            ("communityId", json!("another")),
             ("body", json!("different")),
             ("kind", json!(null)),
             ("replyToMessageId", json!("unexpected")),
         ] {
             let mut value = ack();
             value["message"][key] = invalid;
-            assert!(validate_ack(&value, "channel_message", PATH, &body(), "viewer").is_err());
+            assert!(validate_ack(&value, "community_post", PATH, &body(), "viewer").is_err());
         }
         let mut value = ack();
         value["extra"] = json!("not allowed");
-        assert!(validate_ack(&value, "channel_message", PATH, &body(), "viewer").is_err());
+        assert!(validate_ack(&value, "community_post", PATH, &body(), "viewer").is_err());
         let mut value = ack();
         value["message"]["sourceBody"] = json!("not allowed");
-        assert!(validate_ack(&value, "channel_message", PATH, &body(), "viewer").is_err());
+        assert!(validate_ack(&value, "community_post", PATH, &body(), "viewer").is_err());
     }
 
     #[test]
@@ -952,22 +951,22 @@ mod tests {
         request["imageIds"] = json!([UUID]);
         let mut value = ack();
         value["message"]["images"] = json!([{"id":UUID,"url":format!("/api/media/images/{UUID}?variant=thumbnail"),"fullUrl":format!("/api/media/images/{UUID}?variant=full"),"width":1600,"height":1,"altText":"<script>literal</script>"}]);
-        assert!(validate_ack(&value, "channel_message", PATH, &request, "viewer").is_ok());
+        assert!(validate_ack(&value, "community_post", PATH, &request, "viewer").is_ok());
         let mut changed = value.clone();
         changed["message"]["images"][0]["url"] = json!("https://external.example/image");
-        assert!(validate_ack(&changed, "channel_message", PATH, &request, "viewer").is_err());
+        assert!(validate_ack(&changed, "community_post", PATH, &request, "viewer").is_err());
         let mut changed = value.clone();
         changed["message"]["images"][0]["width"] = json!(1601);
-        assert!(validate_ack(&changed, "channel_message", PATH, &request, "viewer").is_err());
+        assert!(validate_ack(&changed, "community_post", PATH, &request, "viewer").is_err());
         let mut changed = value.clone();
         changed["message"]["images"] = json!([]);
-        assert!(validate_ack(&changed, "channel_message", PATH, &request, "viewer").is_err());
+        assert!(validate_ack(&changed, "community_post", PATH, &request, "viewer").is_err());
         let mut changed = value.clone();
         changed["message"]["images"]
             .as_array_mut()
             .unwrap()
             .push(value["message"]["images"][0].clone());
-        assert!(validate_ack(&changed, "channel_message", PATH, &request, "viewer").is_err());
+        assert!(validate_ack(&changed, "community_post", PATH, &request, "viewer").is_err());
     }
 
     #[test]
@@ -985,28 +984,28 @@ mod tests {
     #[test]
     fn channel_http_failures_never_claim_no_effect_without_closed_scope_receipt() {
         for status in [400, 403, 404, 413, 429, 500, 503, 302, 307] {
-            assert_eq!(status_error(status, true, None), "channel_message_unknown");
+            assert_eq!(status_error(status, true, None), "community_post_unknown");
         }
         assert_eq!(status_error(401, true, None), "desktop_not_connected");
         assert_eq!(
             status_error(
                 409,
                 true,
-                Some(&json!({"error":"channel_message_scope_changed"}))
+                Some(&json!({"error":"post_scope_changed"}))
             ),
-            "channel_message_scope_conflict"
+            "community_post_scope_conflict"
         );
         for value in [
             json!({"error":"other"}),
-            json!({"error":"channel_message_scope_changed","extra":true}),
+            json!({"error":"post_scope_changed","extra":true}),
             json!(null),
         ] {
             assert_eq!(
                 status_error(409, true, Some(&value)),
-                "channel_message_unknown"
+                "community_post_unknown"
             );
         }
-        assert_eq!(status_error(409, true, None), "channel_message_unknown");
+        assert_eq!(status_error(409, true, None), "community_post_unknown");
         for status in [400, 403, 404, 413, 429] {
             assert_eq!(
                 status_error(status, false, None),
@@ -1016,7 +1015,7 @@ mod tests {
         assert_eq!(status_error(409, false, None), CONFLICT);
         assert_eq!(
             channel_error(INVALID.into(), true),
-            "channel_message_rejected:400"
+            "community_post_rejected:400"
         );
     }
 }

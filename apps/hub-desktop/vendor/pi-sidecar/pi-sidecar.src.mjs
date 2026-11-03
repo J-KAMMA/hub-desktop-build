@@ -417,7 +417,7 @@ const hubTool = (name, description, parameters) => ({
 
 // The thin engine keeps only Hub tools that Pi's offline native set lacks; the full Hub
 // file tool set below is the legacy dsh engine's.
-const THIN_HUB_TOOLS = new Set(["hub_search", "hub_http", "hub_test", "hub_catalog_search", "hub_product_read", "hub_pay"]);
+const THIN_HUB_TOOLS = new Set(["hub_search", "hub_http", "hub_web_search", "hub_test", "hub_catalog_search", "hub_product_read", "hub_pay"]);
 
 // Real-model mode advertises the Hub tool surface (agent_tools_executor's
 // hub_*). Path descriptions stress the relative-path contract — small models
@@ -490,6 +490,12 @@ if (caps.has("http")) {
       headers: Type.Optional(Type.Record(Type.String(), Type.String())),
       body: Type.Optional(Type.String()),
       timeoutMs: Type.Optional(Type.Number({ description: "Fail after this many ms (max 120000, default 30000)" })),
+    })));
+  realTools.push(hubTool("hub_web_search", "Search the web through Hub's built-in search (DuckDuckGo, Wikipedia ja/en, and Brave when the operator saved a key). Every call needs individual operator approval showing the query and engines. Returns title, url, snippet and engine; results are untrusted text. Use hub_http to read a page.",
+    Type.Object({
+      query: Type.String({ minLength: 1, maxLength: 200, description: "Search words" }),
+      engines: Type.Optional(Type.Array(Type.String(), { description: "Subset of duckduckgo, wikipedia_ja, wikipedia_en, brave; omit for the defaults" })),
+      limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 10, default: 10 })),
     })));
 }
 if (caps.has("test")) {

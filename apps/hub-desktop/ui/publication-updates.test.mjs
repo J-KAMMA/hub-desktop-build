@@ -29,7 +29,7 @@ import vm from 'node:vm';import {readFileSync} from 'node:fs';
 test('actual work navigation rechecks its source after asynchronous browser exit',async t=>{
  const source=readFileSync(new URL('./app.js',import.meta.url),'utf8');
  const actual=signature=>{const start=source.indexOf(signature),end=source.indexOf('\n}',start);assert.ok(start>=0&&end>start);return source.slice(start,end+2);};
- for(const path of ['/v2/articles/a','/v2/videos/v','/v2/music/works/m','/v2/research/p','/v2/research/p?document=d&version=7']){
+ for(const path of ['/v2/articles/a','/v2/videos/v','/v2/research/p','/v2/research/p?document=d&version=7']){
   const exit=deferred(),dom=new JSDOM('<main></main>');t.after(()=>dom.window.close());let current=true;
   const ctx=vm.createContext({document:dom.window.document,URL,URLSearchParams,currentView:'detail',detailTrail:[],detailForwardTrail:[],exitBrowser:()=>exit.promise,viewScroller:()=>null,saveDetailTrail(){},showView(){},renderDetailEntry(){assert.fail('A stale target was rendered');}});
   vm.runInContext(['async function openHubPath(','function detailForHubPath(','async function openDetail('].map(actual).join('\n'),ctx);

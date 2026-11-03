@@ -11,7 +11,7 @@
   transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), transform var(--dur-press) var(--ease-out);
 }
 #hub-shell.browser-active #view-browser :is(.browser-strip > button, #browser-protection):hover:not(:disabled) { background: var(--interactive); color: var(--text); }
-#hub-shell.browser-active #view-browser :is(.browser-strip > button, #browser-protection):active:not(:disabled) { background: var(--interactive-hover); transform: scale(.97); }
+#hub-shell.browser-active #view-browser :is(.browser-strip > button, #browser-protection):active:not(:disabled) { background: var(--interactive-hover); }
 #hub-shell.browser-active #view-browser :is(.browser-strip > button, #browser-protection):focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
 #hub-shell.browser-active #view-browser :is(.browser-strip > button, #browser-protection)[aria-expanded="true"] { background: var(--interactive); color: var(--text); }
 #hub-shell.browser-active #view-browser :is(.browser-strip > button, #browser-protection) svg { width: 18px; height: 18px; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }

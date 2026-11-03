@@ -496,7 +496,7 @@
   letter-spacing: 0;
 }
 #hub-shell :is(.btn-primary, .approve):not(#_) { border-color: var(--ds-btn-primary-line); background: var(--ds-btn-primary-bg); color: var(--ds-btn-primary-fg); }
-html[data-palette="gold-ivory"] #hub-shell :is(.btn-primary, .approve):not(#_) { background: transparent; }
+html:is([data-template="noir"], [data-template="ivory"]) #hub-shell :is(.btn-primary, .approve):not(#_) { background: transparent; }
 #hub-shell :is(.btn-secondary, .deny, .head-action):not(#_) { border-color: var(--divider); background: transparent; color: var(--text); }
 #hub-shell :is(.btn-secondary, .deny, .head-action):not(#_):hover:not(:disabled) { background: var(--interactive); }
 #hub-shell :is(.btn-ghost, button.ghost):not(#_) { border-color: transparent; background: transparent; color: var(--muted); }
@@ -533,3 +533,176 @@ html[data-palette="gold-ivory"] #hub-shell :is(.btn-primary, .approve):not(#_) {
   color: var(--ds-btn-primary-line);
 }
 #hub-shell .icon-rail #desktop-compose:not([hidden]):not(#_):hover { background: var(--interactive); opacity: 1; }
+
+/* ===== Tree lines in the context column (2026-11-02, owner: 内側左列にツリー構造の線) =====
+   Each row hangs off a 1px vertical guide with a short elbow, like a file tree. The guide sits in an
+   18px gutter left of the row, so the selected surface and its 1px gold line start after it. Elbows are curved (owner: もっと曲線がいい); the last row of a group ends in its elbow. */
+#hub-shell #sidebar-context .sidebar-context-item:not(#_) {
+  position: relative;
+  overflow: visible;
+  width: calc(100% - 26px);
+  margin-left: 26px;
+}
+#hub-shell #sidebar-context .sidebar-context-item:not(#_)::before,
+#hub-shell #sidebar-context .sidebar-context-item:not(#_):is(.on, [aria-current="true"], [aria-current="page"])::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  left: -10px;
+  border-left: 1px solid var(--line-strong);
+  pointer-events: none;
+}
+#hub-shell #sidebar-context .sidebar-context-item:not(#_)::after {
+  content: "";
+  position: absolute;
+  top: -1px;
+  height: calc(50% + 1px);
+  left: -10px;
+  width: 8px;
+  border-left: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-strong);
+  border-bottom-left-radius: 8px;
+  pointer-events: none;
+}
+/* The last row of a group ends in the curved elbow alone: no straight guide runs past it. */
+#hub-shell #sidebar-context .sidebar-context-item:not(#_):is(:last-child, :has(+ :not(.sidebar-context-item)))::before { content: none; }
+
+/* The guide drops from the heading: it sits 4px in from the heading text and the first row of a group
+   reaches up to the heading, so the tree hangs from its label instead of floating beside it. */
+#hub-shell #sidebar-context :is(.nav-group, .sidebar-context-title) + .sidebar-context-item:not(#_)::before,
+#hub-shell #sidebar-context .sidebar-context-item:not(#_):first-child::before { top: -8px; }
+#hub-shell #sidebar-context :is(.nav-group, .sidebar-context-title) + .sidebar-context-item:not(#_)::after,
+#hub-shell #sidebar-context .sidebar-context-item:not(#_):first-child::after { top: -8px; height: calc(50% + 8px); }
+
+/* ===== The feed column is a tree of three roots (2026-11-02, owner-approved) =====
+   フィード / スレッド / コミュニティ are root rows with no lines. Their children hang from the root on a guide that
+   starts 4px in from the root's label text (12px padding + 18px icon + 12px gap = 42px, so the guide sits at 46px)
+   and drops from just under the label. The first and last children are marked in JS (is-tree-first / is-tree-last)
+   because rows arrive asynchronously; the last child ends in the curved elbow alone. */
+#hub-shell #sidebar-context .sidebar-tree { display: flex; flex-direction: column; width: 100%; gap: 1px; }
+#hub-shell #sidebar-context .sidebar-tree + .sidebar-tree { margin-top: var(--space-2); }
+#hub-shell #sidebar-context .sidebar-tree-root:not(#_) { width: 100%; margin-left: 0; }
+#hub-shell #sidebar-context .sidebar-tree-root:not(#_)::before,
+#hub-shell #sidebar-context .sidebar-tree-root:not(#_)::after { content: none; }
+#hub-shell #sidebar-context .sidebar-tree-children { display: flex; flex-direction: column; gap: 1px; box-sizing: border-box; width: 100%; padding-left: 30px; }
+#hub-shell #sidebar-context .sidebar-tree-children .nav-communities:not([hidden]) { display: contents; }
+#hub-shell #sidebar-context .sidebar-tree-children .nav-community-all { display: none; }
+#hub-shell #sidebar-context .sidebar-tree .sidebar-tree-children :is(.sidebar-context-item, .sidebar-tree-sub, .sidebar-tree-note):not(#_) {
+  position: relative;
+  box-sizing: border-box;
+  width: calc(100% - 22px);
+  margin-left: 22px;
+}
+#hub-shell #sidebar-context .sidebar-tree .sidebar-tree-children :is(.sidebar-context-item):not(#_) { padding-left: 6px; padding-right: 6px; }
+#hub-shell #sidebar-context .sidebar-tree-sub,
+#hub-shell #sidebar-context .sidebar-tree-note {
+  margin-top: 0;
+  margin-bottom: 0;
+  padding: 0 6px;
+  color: var(--muted);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-regular);
+  line-height: 28px;
+}
+#hub-shell #sidebar-context .sidebar-tree-note { font-size: var(--type-caption); line-height: 1.5; padding-top: 4px; padding-bottom: 4px; }
+/* Guides: every child except the last carries the straight guide; every child carries a curved elbow. */
+#hub-shell #sidebar-context .sidebar-tree .sidebar-tree-children :is(.sidebar-context-item, .sidebar-tree-sub, .sidebar-tree-note):not(#_)::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  left: -6px;
+  border-left: 1px solid var(--line-strong);
+  pointer-events: none;
+}
+#hub-shell #sidebar-context .sidebar-tree .sidebar-tree-children :is(.sidebar-context-item, .sidebar-tree-sub, .sidebar-tree-note):not(#_)::after {
+  content: "";
+  position: absolute;
+  top: -1px;
+  height: calc(50% + 1px);
+  left: -6px;
+  width: 6px;
+  border-left: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-strong);
+  border-bottom-left-radius: 8px;
+  pointer-events: none;
+}
+#hub-shell #sidebar-context .sidebar-tree .sidebar-tree-children .is-tree-last:not(#_)::before { content: none; }
+#hub-shell #sidebar-context .sidebar-tree .sidebar-tree-children .is-tree-first:not(#_)::before { top: -8px; }
+#hub-shell #sidebar-context .sidebar-tree .sidebar-tree-children .is-tree-first:not(#_)::after { top: -8px; height: calc(50% + 8px); }
+
+/* ===== Flat buttons (2026-11-02, owner-approved) =====
+   No elevation, bevel, gradient or press movement on any button. Primary and secondary are a line only (outline or 1px
+   hairline), ghost and icon buttons have no border, and hover is the flat neutral --interactive surface.
+   Focus rings (outline on :focus-visible) are untouched. Written once here; the sources carry no button shadow either
+   (pinned by flat-buttons.test.mjs). */
+#hub-shell :is(button, [role="button"], .btn, .btn-primary, .btn-secondary, .btn-ghost, .btn-icon, .approve, .deny, .head-action, .ghost):not(#_):not(#_):not(#_) {
+  box-shadow: none;
+  text-shadow: none;
+}
+#hub-shell :is(button, [role="button"], .btn, .approve, .deny, .head-action, .ghost):not(#_):not(#_):not(#_):is(:hover, :active, :focus-visible):not(.video-play) {
+  box-shadow: none;
+}
+/* primary: outline pill (gold line in 黒金, text-colour line in 白黒), never filled */
+#hub-shell :is(.btn-primary, .approve):not(#_):not(#_):not(#_) {
+  border: 1px solid var(--ds-btn-primary-line);
+  background: transparent;
+  color: var(--ds-btn-primary-fg);
+}
+#hub-shell :is(.btn-primary, .approve):not(#_):not(#_):not(#_):hover:not(:disabled) { background: var(--interactive); color: var(--ds-btn-primary-fg); opacity: 1; }
+#hub-shell :is(.btn-primary, .approve):not(#_):not(#_):not(#_):active:not(:disabled) { background: var(--interactive-hover); opacity: 1; }
+/* secondary: 1px hairline, never a filled surface */
+#hub-shell :is(.btn-secondary, .deny, .head-action):not(#_):not(#_):not(#_) { border: 1px solid var(--divider); background: transparent; color: var(--text); }
+#hub-shell :is(.btn-secondary, .deny, .head-action):not(#_):not(#_):not(#_):hover:not(:disabled) { background: var(--interactive); }
+/* ghost and icon: no border, hover is the flat surface */
+#hub-shell :is(.btn-ghost, button.ghost, .btn-icon):not(#_):not(#_):not(#_) { border: 0; background: transparent; }
+#hub-shell :is(.btn-ghost, button.ghost, .btn-icon):not(#_):not(#_):not(#_):hover:not(:disabled) { background: var(--interactive); }
+
+/* ===== The inbox column is a tree of two roots (2026-11-02, owner-approved) =====
+   メール / 連絡先 replace the DM・メール・連絡先 switch and the 会話 heading. The column keeps the same tree whether the body shows
+   messages or mail. The DM list stays in the page only as the data source for the contact rows and is hidden; the mail list and
+   folders live in the body as in the separate mail view. */
+#hub-shell.sidebar-inbox-tree .sidebar > .brand { display: none; }
+#hub-shell.sidebar-inbox-tree.sidebar-holds-messages #view-messages .messages-side { display: none; }
+#hub-shell.sidebar-inbox-tree #view-mail #mail-folders { display: flex; }
+#hub-shell #sidebar-context .sidebar-tree-children .sidebar-contact-row:not(#_) { gap: var(--space-2); }
+
+/* ===== リストの画面（2026-11-02）：区切り線の行。枠つきのカードは使わない ===== */
+#hub-shell #lists-results.list-rows-host { display: block; width: 100%; }
+#hub-shell .list-rows { display: flex; flex-direction: column; width: 100%; border-top: 1px solid var(--divider); }
+#hub-shell .list-rows .list-row:not(#_) {
+  display: grid;
+  gap: 2px;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: var(--space-3) var(--space-2);
+  border: 0;
+  border-bottom: 1px solid var(--divider);
+  border-radius: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+#hub-shell .list-rows button.list-row:not(#_):hover { background: var(--interactive); }
+#hub-shell .list-rows button.list-row:not(#_):focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+#hub-shell .list-row-head { display: flex; align-items: baseline; gap: var(--space-3); min-width: 0; }
+#hub-shell .list-row-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: var(--ds-weight-strong); }
+#hub-shell .list-row-count { flex: none; color: var(--muted); font-size: var(--type-caption); }
+#hub-shell .list-row-description { overflow: hidden; color: var(--muted); font-size: var(--type-caption); text-overflow: ellipsis; white-space: nowrap; }
+#hub-shell .list-row-skeleton { min-height: 52px; align-content: center; }
+#hub-shell .list-row-skeleton .skeleton-block { height: 12px; }
+#hub-shell .list-rows-error { display: flex; align-items: center; gap: var(--space-2); margin: var(--space-3) 0; color: var(--muted); font-size: var(--type-caption); }
+#hub-shell .lists-empty { margin-top: var(--space-6); }
+
+/* コミュニティの投稿ストリーム：固定の印と ⋯ メニュー、種類のチップ。 */
+.community-post .pin-marker { border: 1px solid var(--emphasis); border-radius: var(--ds-radius-badge); padding: 0 var(--ds-space-2); color: var(--emphasis); font-size: var(--ds-type-meta-size); }
+.community-post .post-menu { position: relative; margin-left: auto; }
+.community-post .post-menu > summary { cursor: pointer; list-style: none; padding: 0 var(--ds-space-3); color: var(--muted); }
+.community-post .post-menu > summary::-webkit-details-marker { display: none; }
+.community-post .post-menu[open] { display: flex; flex-wrap: wrap; gap: var(--ds-space-2); }
+.community-kind-chips, .community-sections { display: flex; flex-wrap: wrap; gap: var(--ds-space-2); margin: var(--ds-space-3) 0; }
+.community-points-list { margin: 0; padding-left: var(--ds-space-5); }

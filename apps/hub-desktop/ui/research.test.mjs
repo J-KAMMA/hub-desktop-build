@@ -151,24 +151,28 @@ test('registered and searched related links retain safe native destinations and 
   dom.window.close();
 });
 
-test('the project sidebar rebuilds its outline from the loaded content and focuses the selected section', async () => {
+test('the project sidebar is the research tree: プロジェクト / 探す, a project row opens that project and the column is not rebuilt', async () => {
   const {readFileSync} = await import('node:fs');
   const {nativeSidebarId} = await import('./native-sidebar.mjs');
+  const {researchTreeModel, renderResearchTree} = await import('./research-tree.mjs');
   const source = readFileSync(new URL('./app.js', import.meta.url), 'utf8');
   const start = source.indexOf('function renderSidebarContext(view) {');
-  const end = source.indexOf('\nfunction showView(', start);
+  const end = source.indexOf(String.fromCharCode(10) + 'function showView(', start);
   assert.ok(start >= 0 && end > start);
-  const renderSidebar = new Function('document', 'state', 'nativeSidebarId', `
+  const opened = [];
+  const renderSidebar = new Function('document', 'state', 'nativeSidebarId', 'opened', 'researchTreeModel', 'renderResearchTree', `
     const {messagesSide, messagesLayout, mailListCol, mailLayoutNode, sidebarContext, researchWorkspace} = state;
     const appendSidebarMine = () => {};
+    let sidebarContextOwner = null, feedTreeNav = false, sidebarFeedTreeOwned = false; const FEED_TREE_VIEWS = new Set(), FEED_TREE_DETAILS = new Set();
+    const MUSIC_TREE_DETAILS = new Set();
+    const openDetail = (name, ids) => opened.push([name, ...ids]);
     const nativeSidebar = null, homeAccountEpoch = 0;
     const appsOpen = false, videoWatchIndex = -1, detailReturn = {view:"feed"}, currentView = "detail";
     const matchMedia = () => ({matches: true});
     let sidebarCollapsedForEmpty = false, sidebarEmptyView = false, sidebarCollapsedForRail = false;
-    // フォロー中の読み込みはこの画面では使わない（研究の列は自分の節だけ）。
     const createSidebarRemote = () => ({ state: () => ({ items: [] }), tags: () => [], load() {}, more() {} });
     const invoke = () => { throw new Error('unexpected'); }, desktopAccount = { state: 'anonymous' };
-    const detailTrail = [{name:'research_project', ids:['project']}];
+    const detailTrail = [{name:'research_project', ids:['p2']}];
     const DETAIL_PARENT_VIEW = {research_project:'research'};
     const DETAIL_SIDEBAR_FAMILY = {research_project:'research'};
     const readingDirectory = new Map();
@@ -179,19 +183,19 @@ test('the project sidebar rebuilds its outline from the loaded content and focus
   const document = dom.window.document;
   const state = {
     messagesSide: document.querySelector('#messages-side'), messagesLayout: document.querySelector('#messages-layout'), mailListCol: document.createElement('div'), mailLayoutNode: document.createElement('div'),
-    sidebarContext: document.querySelector('#sidebar-context'), researchWorkspace: {projects:()=>[]},
+    sidebarContext: document.querySelector('#sidebar-context'), researchWorkspace: {projects:()=>[{id:'p1',title:'第一の研究'},{id:'p2',title:'第二の研究'}]},
   };
-  renderSidebar(document, state, nativeSidebarId);
-  assert.equal([...state.sidebarContext.querySelectorAll('button')].some(node=>node.textContent==='文書・コード'),false);
-  renderResearchProject(document.querySelector('main'),{project:{id:'project'},workspace:{documents:[],links:[]}});
-  renderSidebar(document, state, nativeSidebarId);
-  // 列はこのプロジェクトの節だけを持つ（プロジェクトと資料の行き先は「すべての機能」にある。2026-10-15）。
-  const outline = [...state.sidebarContext.querySelectorAll('button')];
-  assert.deepEqual(outline.map(node=>node.textContent),['概要','文書・コード','資料・作品・議論','研究成果','主張と根拠']);
-  const target = document.querySelector('[data-research-section="研究成果"]');
-  let scrolled = false; target.scrollIntoView = () => {scrolled=true;};
-  outline.find(node=>node.textContent==='研究成果').click();
-  assert.equal(scrolled,true);assert.equal(document.activeElement,target);
+  renderSidebar(document, state, nativeSidebarId, opened, researchTreeModel, renderResearchTree);
+  const column = state.sidebarContext;
+  assert.deepEqual([...column.querySelectorAll('.sidebar-tree-root')].map(node=>node.textContent),['プロジェクト','探す']);
+  const rows = [...column.querySelectorAll('.sidebar-tree-children .sidebar-context-item')];
+  assert.deepEqual(rows.map(node=>node.textContent),['第一の研究','第二の研究']);
+  assert.equal(rows[1].classList.contains('on'),true,'the open project is the current row');
+  assert.equal(rows[0].classList.contains('on'),false);
+  const first = column.firstElementChild;
+  rows[0].click();
+  assert.deepEqual(opened.at(-1),['research_project','p1']);
+  assert.equal(column.firstElementChild,first,'the column is not rebuilt');
   dom.window.close();
 });
 

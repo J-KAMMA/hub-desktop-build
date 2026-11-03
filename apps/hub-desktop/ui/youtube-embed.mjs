@@ -22,17 +22,19 @@ export function youtubeVideoId(value) {
 }
 
 /** 埋め込み用の URL。動画IDが正しくなければ null。 */
-export function youtubeEmbedUrl(id, { autoplay = false, start = 0 } = {}) {
+export function youtubeEmbedUrl(id, { autoplay = false, start = 0, mute = false, loop = false } = {}) {
   if (typeof id !== 'string' || !ID.test(id)) return null;
   const params = new URLSearchParams({ rel: '0', modestbranding: '1', playsinline: '1', enablejsapi: '1' });
   if (autoplay) params.set('autoplay', '1');
+  if (mute) params.set('mute', '1');
+  if (loop) { params.set('loop', '1'); params.set('playlist', id); }
   if (Number.isSafeInteger(start) && start > 0) params.set('start', String(start));
   return `https://www.youtube-nocookie.com/embed/${id}?${params}`;
 }
 
 /** 16:9 の枠に入った埋め込みプレーヤー。動画IDが正しくなければ null を返す。 */
-export function createYouTubePlayer(document, { id, title = 'YouTube動画', autoplay = false } = {}) {
-  const src = youtubeEmbedUrl(id, { autoplay });
+export function createYouTubePlayer(document, { id, title = 'YouTube動画', autoplay = false, mute = false, loop = false } = {}) {
+  const src = youtubeEmbedUrl(id, { autoplay, mute, loop });
   if (!src) return null;
   const frame = document.createElement('div');
   frame.className = 'yt-player';

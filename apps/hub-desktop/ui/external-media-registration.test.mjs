@@ -1,10 +1,7 @@
-import { musicDownloadAllowed, musicDownloadPageUrl } from './content-download.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
-import { createMusicYoutubeSession } from './music-youtube.mjs';
-import { renderMusicWorkHeader } from './music-work-detail.mjs';
 import {
   createExternalMediaRegistration,
   createExternalMusicReport,
@@ -765,57 +762,27 @@ test('actual app adds one small entry per existing view, uses typed catalog chec
   assert.deepEqual(api.state.video, {});
   assert.deepEqual(api.state.music, {});
 });
-test('actual music detail reports only Hub community external work, keeps provider/playback and entry editor state lifecycle', async (t) => {
-  const source = readFileSync(new URL('./app.js', import.meta.url), 'utf8'),
+test('the rail work page reports only Hub community external work: the ⋯ menu item is disabled for every other work and the form keeps its draft per work', async (t) => {
+  const source = readFileSync(new URL('./app.js', import.meta.url), 'utf8').replaceAll('\r\n', '\n'),
     dom = new JSDOM('<main></main>'),
     document = dom.window.document;
-  const body = source.slice(source.indexOf('function renderMusicDetail('), source.indexOf('// --- プロフィール詳細'));
-  const render = new Function(
-    'document',
-    'createExternalMusicReport',
-    'researchEditorOptions',
-    'actionButton',
-    'hubAsset',
-    'musicYoutube',
-    'renderMusicWorkHeader',
-    'enterBrowser',
-    'musicDownloadAllowed',
-    'musicDownloadPageUrl',
-    "const desktopAccount={state:'registered'},researchAccountGeneration=1,detailRenderRevision=1,hubOrigin=null;" +
-      body +
-      'return renderMusicDetail;',
-  )(
-    document,
-    createExternalMusicReport,
-    () => ({
-      invoke: async () => {
-        throw Error('unused');
-      },
-      isCurrent: () => true,
-    }),
-    () => document.createElement('button'),
-    () => {},
-    createMusicYoutubeSession({ document, bar: document.createElement('div'), hubAsset: () => {} }),
-    renderMusicWorkHeader,
-    () => {},
-    musicDownloadAllowed,
-    musicDownloadPageUrl,
-  );
   t.after(() => dom.window.close());
-  const target = document.querySelector('main'),
-    entry = { ids: [uuid], editorState: { retained: 'draft' } };
-  const controller = render(target, music(), entry);
-  await controller.ready;
-  assert.ok(controller.dispose);
-  assert.match(target.textContent, /作品を報告/);
-  // YouTube はアプリ内の再生ボタンになる（提供元リンクには並べない）。
-  assert.equal(target.querySelector('.mw-play').disabled, false);
-  assert.equal(entry.editorState.retained, 'draft');
-  assert.ok(entry.editorState.externalMusicReport);
-  controller.dispose();
-  for (const record of [music({ source: 'sample' }), music({ id: 'music:' + uuid }), music({ id: 'other-id' })]) {
-    const next = render(target, record, entry);
-    assert.equal(next, undefined);
-    assert.equal(target.querySelector('[data-media-action="report"]'), null);
-  }
+  const line = source.slice(source.indexOf('const reportableMusicWork = '), source.indexOf('\n', source.indexOf('const reportableMusicWork = ')));
+  const reportable = new Function(line + '; return reportableMusicWork;')();
+  assert.equal(reportable(music()), true);
+  for (const record of [music({ source: 'sample' }), music({ id: 'music:' + uuid }), music({ id: 'sample-1' }), null, {}]) assert.equal(reportable(record), false);
+  // 右列の作品ページに出す報告の形（折りたたみ・作品ごとの下書き）を実コードのまま確かめる。
+  const wiring = source.slice(source.indexOf('      report: ({ host, work, isCurrent, open }) => {'), source.indexOf('      download: (work)'));
+  const run = new Function('document', 'createExternalMusicReport', 'reportableMusicWork', 'accountOptions', 'desktopAccount', 'researchAccountGeneration', 'railMusicReportDrafts',
+    'const deps={' + wiring.replace(/,\s*$/, '') + '}; return deps.report;');
+  const drafts = new Map();
+  const report = run(document, createExternalMusicReport, reportable, () => ({ generation: 1, invoke: async () => { throw Error('unused'); } }), { state: 'registered' }, 1, drafts);
+  const host = document.querySelector('main');
+  const handle = report({ host, work: music(), isCurrent: () => true, open: true });
+  await handle.ready;
+  assert.equal(host.querySelector('details').open, true);
+  assert.match(host.textContent, /作品を報告/);
+  assert.ok(drafts.get(uuid), 'the draft state belongs to the work');
+  handle.destroy();
+  assert.equal(report({ host, work: music({ id: 'music:' + uuid }), isCurrent: () => true, open: false }), null);
 });

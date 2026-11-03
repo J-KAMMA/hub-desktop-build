@@ -82,7 +82,7 @@ function fixture(t, connected = true) {
       view(view){const previousView=currentView;${exitHook}currentView=view;},
       blank(){activeConversationId=null;renderThread();},
       state:()=>document.querySelector('#thread-state').textContent};`;
-  const parameters = { document: f.document, window: f.window, Event: f.window.Event, URL: URLFixture, Blob, TextEncoder, crypto: webcrypto,
+  const parameters = { renderSidebarContext: () => {}, document: f.document, window: f.window, Event: f.window.Event, URL: URLFixture, Blob, TextEncoder, crypto: webcrypto,
     createDmController, createState, icon: () => '', invoke, articleEditorScope: async () => f.scope, processComposerImage: file => f.process(file), actionButton, emptyState, statePanel,
     connectState: detail => emptyState('account', 'Hubへの接続', detail),
     paintAvatar: () => {}, relTime: () => 'synthetic date', navigateFrom: () => {},

@@ -8,6 +8,8 @@ import { createMediaSearch } from "./media-search.mjs";
 import { projectCreation, projectWorkspace, documentWorkspace } from "./research-workspace.mjs";
 import { bindSearchInput, matchesSearch } from "./search-input.mjs";
 import { hubCatalogResearchQuery } from './hub-network.mjs';
+import { projectRows, researchEmptyState, researchSkeleton } from './research-rows.mjs';
+import { decorateProjectPage } from './research-project-page.mjs';
 export const researchGroups = [
   { id: "all", label: "すべて", types: [] },
   { id: "code", label: "コード", types: ["software", "model", "notebook"] },
@@ -57,12 +59,9 @@ function element(document, tag, text, className) {
   if (className) node.className = className;
   return node;
 }
+// .state-panel：静かな空の状態（記号の円なし）は research-rows.mjs が作る。
 function emptyPanel(document, title, body) {
-  const panel = element(document, "div", null, "state-panel");
-  panel.setAttribute("role", "status");
-  panel.append(element(document, "p", title, "state-title"));
-  if (body) panel.append(element(document, "p", body, "state-body"));
-  return panel;
+  return researchEmptyState(document, { title, body }); // .state-panel
 }
 export function initResearch({ document, invoke, openProject, changed, friendlyError, openWeb, openGitHub, network }) {
   const target = document.querySelector("#research-results");
@@ -80,16 +79,12 @@ export function initResearch({ document, invoke, openProject, changed, friendlyE
   const more = element(document, "button", "続きを表示", "deny"); more.type = "button"; more.hidden = true; target.after(more);
   const render = () => {
     const found = projects;
-    target.replaceChildren(...found.map((project) => {
-      const card = element(document, "button", null, "research-project-card");
-      card.type = "button";
-      card.append(element(document, "span", `${label(project.visibility)} · ${label(project.status)}`, "meta"), element(document, "h3", project.title), element(document, "p", project.description || "説明はまだありません。"), element(document, "span", `${project.objectCount} 成果${project.defaultLicense ? ` · ${project.defaultLicense}` : ""}`, "meta"));
-      const owner=revision;card.onclick = () => {if(owner===revision && card.isConnected)return openProject(project);};
-      return card;
-    }));
+    const owner = revision;
+    target.replaceChildren(...projectRows(document, found, project => { if (owner === revision && target.isConnected) return openProject(project); }));
     const remoteFound=remote;
     if(network)target.append(...remoteFound.map(item=>network.card(item)));
     if (!found.length && !remoteFound.length && !currentPage?.loading && !currentPage?.error) target.append(emptyPanel(document, currentPage?.query ? "検索に一致するプロジェクトはありません。" : "表示できるプロジェクトはまだありません。", currentPage?.query ? "別の検索語で試してください。" : "プロジェクトを作成すると、ここに並びます。"));
+    if (currentPage?.loading && !found.length && !remoteFound.length) target.append(researchSkeleton(document, 4));
     state.textContent = `${found.length+remoteFound.length}件`;
   };
   const controller = createMediaSearch({
@@ -252,6 +247,7 @@ export function renderResearchProject(target, data, openDocument, openLink, open
   const pdfs=options.invoke?researchPdfs(root,{projectId:project.id},{...options,state:filterState.pdfs??={}}):null;
   const publicExport=project.visibility==='public'&&project.status!=='withdrawn'?researchPublicExport(root,{projectId:project.id},options):null;
   const controls=[editor,fork,pdfs,publicExport].filter(Boolean);
+  decorateProjectPage(root,data,filterState.page??={});
   if(!controls.length)return null;
   return {...(fork??editor??pdfs??publicExport),dispose(){controls.forEach(control=>control.dispose?.());},invalidate(){controls.forEach(control=>control.invalidate?.());}};
 }

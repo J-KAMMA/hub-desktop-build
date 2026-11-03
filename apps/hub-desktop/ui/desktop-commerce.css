@@ -381,7 +381,7 @@
 }
 #hub-shell #view-wallet :is(.wallet-actions button, .wallet-action-panel button, .wallet-section > button):hover:not(:disabled) { background: var(--interactive-hover); }
 #hub-shell #view-wallet :is(.wallet-actions button, .wallet-action-panel button, .wallet-section > button):disabled { opacity: .45; }
-#hub-shell #view-wallet .wallet-actions button[aria-expanded="true"] { background: var(--surface-raised); box-shadow: inset 0 0 0 1px var(--line-strong); }
+#hub-shell #view-wallet .wallet-actions button[aria-expanded="true"] { background: var(--surface-raised); border: 1px solid var(--line-strong); }
 #hub-shell #view-wallet .wallet-action-panel {
   padding: var(--space-4);
   border: 0;

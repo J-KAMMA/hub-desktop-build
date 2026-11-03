@@ -15,7 +15,7 @@ test('wallet account-change hook invalidates the old response, clears history an
 });
 test('listing search results keep their own route and product results are no longer a group',()=>{
  const {window}=new JSDOM('<main/>'),{document}=window,opened=[];
- const render=new Function('document','resultCard','textValue','openDetail','GROUP_LABELS','searchPost','openHubPath','playMusicTrack',slice('function searchResultCard(', 'function renderPublicResults(')+';return searchResultCard;')(document,()=>document.createElement('article'),r=>r.title,(...args)=>opened.push(args),{},()=>{},()=>{},()=>{});
+ const render=new Function('document','resultCard','textValue','openDetail','GROUP_LABELS','searchPost','openHubPath','playMusicTrack','playMusicWork','openStoreGame',slice('function searchResultOpener(', 'function renderPublicResults(')+';return searchResultCard;')(document,()=>document.createElement('article'),r=>r.title,(...args)=>opened.push(args),{},()=>{},()=>{},()=>{},()=>{},()=>{});
  render('listings',{id:'listing_1',title:'出品'}).click();render('products',{id:'product_1',title:'商品'}).click();
  assert.deepEqual(opened.map(([name,ids])=>[name,ids]),[['listing',['listing_1']]]);
 });
@@ -27,7 +27,7 @@ test('video notification paths open native detail and reject newline, extra segm
 test('real video detail unwraps API data and mounts comments beside provider playback',async()=>{
  const {document}=new JSDOM('<main/>').window,target=document.querySelector('main'),calls=[],opened=[];
  const globals={document,mountVideoPosts:o=>createVideoPosts(document,o),relTime:()=>'',hubAsset:()=>{},enterBrowser:url=>opened.push(url),researchEditorOptions:()=>({isCurrent:()=>true,invoke:async(name,args)=>{calls.push([name,args]);return {posts:[],nextCursor:null};}}),detailRenderRevision:1,videoCommentsController:null,createVideoPosts,postCard:()=>document.createElement('article'),openDetail:()=>{}};
- const render=new Function(...Object.keys(globals),slice('function renderVideoDetail(', 'function renderMusicDetail(')+';return {render:renderVideoDetail,controller:()=>videoCommentsController};')(...Object.values(globals));
+ const render=new Function(...Object.keys(globals),slice('function renderVideoDetail(', '// --- プロフィール詳細')+';return {render:renderVideoDetail,controller:()=>videoCommentsController};')(...Object.values(globals));
  const entry={ids:['video_1']};render.render(target,{video:{title:'API動画',sourceUrl:'https://example.org/watch'}},entry);await render.controller().ready;
  assert.equal(target.querySelector('h3').textContent,'API動画');assert.ok(target.textContent.includes('ポスト'));assert.deepEqual(calls,[['hub_detail',{name:'video_posts',ids:['video_1']}]]);
  [...target.querySelectorAll('button')].find(b=>b.textContent==='提供元で再生').click();assert.deepEqual(opened,['https://example.org/watch']);assert.ok(entry.videoCommentDraft);render.controller().destroy();

@@ -32,10 +32,10 @@ test('re-sync runs after every theme or mode change, in order, and not for unrel
   const f = fixture({ 'data-theme': 'dark', 'data-theme-mode': 'dark' }); await f.settle();
   f.root.setAttribute('data-density', 'roomy'); await f.settle();
   assert.equal(f.events.length, 1);
-  applyAppearance(f.root, { theme: 'light' }, true); await f.settle();
-  applyAppearance(f.root, { theme: 'system' }, true); await f.settle();   // OS dark
-  applyAppearance(f.root, { theme: 'system' }, false); await f.settle();  // OS flips to light
-  applyAppearance(f.root, { theme: 'dark' }, false); await f.settle();
+  applyAppearance(f.root, { template: 'light' }, true); await f.settle();
+  applyAppearance(f.root, { template: 'device' }, true); await f.settle();   // OS dark
+  applyAppearance(f.root, { template: 'device' }, false); await f.settle();  // OS flips to light
+  applyAppearance(f.root, { template: 'dark' }, false); await f.settle();
   assert.deepEqual(f.events.map((e) => `${e[2].mode}:${e[2].dark}`), ['dark:true', 'light:false', 'system:true', 'system:false', 'dark:true']);
 });
 

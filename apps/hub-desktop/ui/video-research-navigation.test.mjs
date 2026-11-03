@@ -19,10 +19,10 @@ const tick=()=>new Promise(setImmediate),deferred=()=>{let resolve;const promise
 function fixture(t){
  const dom=new JSDOM('<main></main><p id="status"></p>'),document=dom.window.document,calls=[],controllers=[];
  const f={dom,document,calls,controllers,pending:null,viewer:'viewer-a'};
- const ctx=vm.createContext({document,createVideoPosts,mountVideoPosts:o=>createVideoPosts(document,o),postCard:()=>document.createElement('article'),videoCommentsController:null,researchDetailController:null,communityChannelPolicyController:null,
+ const ctx=vm.createContext({document,createVideoPosts,mountVideoPosts:o=>createVideoPosts(document,o),postCard:()=>document.createElement('article'),videoCommentsController:null,researchDetailController:null,communityDetailController:null,
   detailRenderRevision:0,researchAccountGeneration:0,homeAccountEpoch:{},currentView:'detail',detailTrail:[],detailForwardTrail:[],detailReturn:{view:'feed',title:'Feed'},desktopAccount:{state:'registered',deviceId:'device-a'},
   toolbarTrail:[{view:'feed',title:'Feed'},{view:'detail',title:'Video'}],toolbarTrailIndex:1,
-  releaseResearchDetail(){},releaseCommunityChannelPolicy(){},paintDetailHead(){},detailState:()=>document.querySelector('#status'),detailContent:()=>document.querySelector('main'),skeletonResult:()=>document.createElement('div'),
+  releaseResearchDetail(){},releaseCommunityDetail(){},paintDetailHead(){},detailState:()=>document.querySelector('#status'),detailContent:()=>document.querySelector('main'),skeletonResult:()=>document.createElement('div'),
   communityGovernanceRequest:()=>null,communityAppealReviewRequest:()=>null,communityReportReviewRequest:()=>null,communityMembershipReviewRequest:()=>null,communityGuideRequest:entry=>({name:entry.name,ids:entry.ids}),
   attachContentSave(){},attachContentShare(){},attachDetailAiHandoff(){},offerPublicContentShare(){},appendPlaylistEntry(){},readingDirectory:new Set(),DETAIL_PARENT_VIEW:{research_project:'research'},renderSidebarContext(){},relTime:()=> 'now',
   articleBodyNodes:body=>{const p=document.createElement('p');p.textContent=body;return[p];},articleReadingMinutes,articleReadingLabel,openLicenseLabel,openHubPath(){},

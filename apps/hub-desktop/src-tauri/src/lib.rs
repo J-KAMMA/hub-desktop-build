@@ -27,6 +27,7 @@ async fn browser_reader_close(app: tauri::AppHandle, webview: tauri::Webview, co
     browser_window::reading::close(app, webview, context_token).await
 }
 mod agent_exec;
+mod web_search;
 mod agent_native;
 mod agent_market;
 mod agent_tools;
@@ -82,6 +83,7 @@ mod byok;
 mod local_ai;
 mod local_cli;
 mod mail_client;
+mod music_attribution;
 mod node_identity;
 mod node_log;
 mod node_store;
@@ -3094,7 +3096,7 @@ async fn hub_client_action(
     options: Option<serde_json::Value>,
 ) -> Result<serde_json::Value, String> {
     let base = hub_window::hub_url(std::env::var("HUB_APP_URL").ok().as_deref());
-    if matches!(action.as_str(), "create_article" | "thread_post_relationship" | "tip_settings" | "cancel_event_listing" | "read_notification" | "read_all_notifications" | "channel_message" | "read_conversation" | "send_message") { if window.label() != "main" { return Err("article_publication_rejected".into()); } native_pi(&window).map_err(|_| "article_publication_rejected")?; }
+    if matches!(action.as_str(), "create_article" | "thread_post_relationship" | "tip_settings" | "cancel_event_listing" | "read_notification" | "read_all_notifications" | "community_post" | "read_conversation" | "send_message") { if window.label() != "main" { return Err("article_publication_rejected".into()); } native_pi(&window).map_err(|_| "article_publication_rejected")?; }
     if action=="create_post" && options.as_ref().is_some_and(|value|["expectedDeviceId","expectedOrigin","expectedViewerId"].iter().any(|key|value.get(key).is_some())) {
         if window.label()!="main" { return Err("feed_operation_scope_conflict".into()); }
         native_pi(&window).map_err(|_|"feed_operation_scope_conflict")?;
@@ -3697,6 +3699,13 @@ async fn commerce_seller_products(
     commerce::seller_products(before.as_deref()).await
 }
 #[tauri::command]
+async fn commerce_seller_attribution_proof(
+    product_id: String,
+    challenge: String,
+) -> Result<serde_json::Value, String> {
+    commerce::seller_attribution_proof(&product_id, &challenge).await
+}
+#[tauri::command]
 async fn commerce_seller_product_save(
     params: serde_json::Value,
 ) -> Result<serde_json::Value, String> {
@@ -4007,6 +4016,22 @@ async fn music_artwork(track_id: String) -> Result<tauri::ipc::Response, String>
     Ok(tauri::ipc::Response::new(
         music_player::artwork(&base, &track_id).await?,
     ))
+}
+/// 自分の Music トラックのうち、プロフィールに表示できる候補のID（{ids}）。管理用 assertion は Rust の中だけで使う。
+/// 失敗語は {error} コード——music_link_required は「Web版で Music を有効化」の合図。
+#[tauri::command]
+async fn music_own_attribution_candidates() -> Result<serde_json::Value, String> {
+    let base = hub_window::hub_url(std::env::var("HUB_APP_URL").ok().as_deref());
+    music_attribution::own_eligible_ids(&base).await
+}
+/// プロフィールに表示する証明を Music から直接取る（Hub は中継しない）。トラックID（UUID）と Hub の問いかけだけを受ける。
+#[tauri::command]
+async fn music_attribution_proof(
+    track_id: String,
+    challenge: String,
+) -> Result<serde_json::Value, String> {
+    let base = hub_window::hub_url(std::env::var("HUB_APP_URL").ok().as_deref());
+    music_attribution::attribution_proof(&base, &track_id, &challenge).await
 }
 /// Mail面: このアカウントのメールボックス（無ければ null）。
 /// 失敗語は mail_client が拾う {error} コード——mail_link_required は
@@ -4554,6 +4579,10 @@ pub fn run() {
             byok::byok_test,
             byok::byok_models,
             byok::byok_chat_start,
+            web_search::web_search_chat,
+            web_search::web_search_brave_status,
+            web_search::web_search_brave_set,
+            web_search::web_search_brave_clear,
             byok::byok_chat_cancel,
             byok::byok_remote_set,
             byok::byok_remote_session,
@@ -4677,6 +4706,7 @@ pub fn run() {
             commerce_seller_complete,
             commerce_seller_products,
             commerce_seller_product_save,
+            commerce_seller_attribution_proof,
             commerce_seller_mark_delivered,
             commerce_seller_orders,
             commerce_seller_orders_csv,
@@ -4729,6 +4759,8 @@ pub fn run() {
             portable_identity::portable_identity_sign_registration,
             portable_identity::portable_identity_sign_move,
             music_artwork,
+            music_own_attribution_candidates,
+            music_attribution_proof,
             mail_mailbox,
             mail_mailbox_create,
             mail_messages,

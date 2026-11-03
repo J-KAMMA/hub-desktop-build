@@ -1,0 +1,185 @@
+/* マーケットの画面（2026-11-03）：一覧・商品ページ・カート・購入済み・注文。BOOTH と Etsy の配置と流れだけを写し、見た目は黒金/白黒の意味トークンだけ。
+   金（--emphasis）は線と字だけ、面にはしない。ボタンは平ら。一覧は線で区切る行、商品の格子だけ札（絵が半径を持ち、札に枠も面も無い）。
+   生の色は書かない。5つの型（Light・Dark・Noir・Ivory・Midnight）は --emphasis / --line-strong / --interactive が切り替える。
+   他のレーンの面と衝突しないよう、class はすべて mk- で始め、#hub-shell の中だけに効かせる。 */
+
+/* 数字は等幅 */
+#hub-shell .mk-num, #hub-shell #cart-totals { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+
+/* ---- ボタン（平ら）：副は線、主は金の線、ghost は字だけ ---- */
+#hub-shell .mk-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--ds-space-2); height: var(--ds-btn-h); min-width: 0; padding: 0 var(--ds-btn-px); border: 1px solid var(--line-strong); border-radius: var(--radius-pill); background: transparent; color: var(--text); font: inherit; font-size: var(--ds-type-body-size); font-weight: var(--ds-weight-strong); white-space: nowrap; cursor: pointer; transition: background-color var(--dur-fast) var(--ease-out); }
+#hub-shell .mk-btn:hover:not(:disabled) { background: var(--interactive-hover); }
+#hub-shell .mk-btn:active:not(:disabled) { background: var(--selected); }
+#hub-shell .mk-btn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+#hub-shell .mk-btn:disabled { opacity: .5; cursor: default; }
+#hub-shell .mk-btn-primary { border-color: var(--emphasis); color: var(--emphasis); }
+#hub-shell .mk-btn-compact { height: var(--ds-btn-h-compact); padding: 0 var(--ds-space-3); }
+#hub-shell .mk-link { padding: 0; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+#hub-shell .mk-link:hover:not(:disabled) { color: var(--text); }
+#hub-shell .mk-link:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: var(--radius-xs); }
+#hub-shell .mk-link:disabled { opacity: .5; cursor: default; }
+
+/* ---- 一覧：検索・並べ替え・チップ ---- */
+#hub-shell .mk-browse { display: grid; gap: 0; padding-bottom: var(--ds-space-6); }
+#hub-shell .mk-bar { display: flex; align-items: center; gap: var(--ds-space-3); padding: var(--ds-space-3) var(--ds-page-inset) 0; }
+#hub-shell .mk-search { flex: 1 1 auto; min-width: 0; }
+#hub-shell .mk-search input { box-sizing: border-box; width: 100%; height: var(--ds-search-h); padding: 0 var(--ds-space-4); border: 0; border-radius: var(--radius-pill); background: var(--interactive); color: var(--text); font: inherit; font-size: var(--ds-type-body-size); }
+#hub-shell .mk-search input::placeholder { color: var(--muted); }
+#hub-shell .mk-search input:focus-visible { outline: 2px solid var(--emphasis); outline-offset: 0; }
+#hub-shell .mk-sort { display: inline-flex; align-items: center; gap: var(--ds-space-2); flex: none; }
+#hub-shell .mk-sort[hidden] { display: none; }
+#hub-shell .mk-sort-label { color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); }
+#hub-shell .mk-sort select { height: var(--ds-btn-h-compact); padding: 0 var(--ds-space-3); border: 1px solid var(--line-strong); border-radius: var(--radius-pill); background: transparent; color: var(--text); font: inherit; font-size: var(--ds-type-body-size); }
+#hub-shell .mk-sort select:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+#hub-shell .mk-sort select option { background: var(--bg); color: var(--text); }
+
+/* チップは1種類：32の丸、押した1つは金の線と太字 */
+#hub-shell .mk-chips { display: flex; gap: var(--ds-chip-gap); padding: var(--ds-space-3) var(--ds-page-inset); overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--divider); }
+#hub-shell .mk-chips::-webkit-scrollbar { display: none; }
+#hub-shell .mk-chip { flex: none; box-sizing: border-box; height: var(--ds-chip-h); padding: 0 var(--ds-chip-px); border: 1px solid transparent; border-radius: var(--radius-pill); background: var(--interactive); color: var(--text); font: inherit; font-size: var(--ds-type-body-size); font-weight: var(--ds-weight-text); white-space: nowrap; cursor: pointer; }
+#hub-shell .mk-chip:hover { background: var(--interactive-hover); }
+#hub-shell .mk-chip.on { background: transparent; border-color: var(--emphasis); font-weight: var(--ds-weight-strong); }
+#hub-shell .mk-chip:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+#hub-shell .mk-count { margin: 0; padding: var(--ds-space-3) var(--ds-page-inset) 0; min-height: var(--ds-type-meta-leading); color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); font-variant-numeric: tabular-nums; }
+#hub-shell .mk-count:empty { display: none; }
+#hub-shell .mk-body { padding-top: var(--ds-space-3); }
+#hub-shell .mk-body[data-games] { padding-top: 0; }
+#hub-shell .mk-note { margin: 0; padding: var(--ds-space-2) 0 0; color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); }
+#hub-shell .mk-body > .mk-note, #hub-shell .mk-more { padding-inline: var(--ds-page-inset); }
+#hub-shell .mk-more { display: flex; justify-content: center; padding-block: var(--ds-space-5) 0; }
+
+/* ---- 格子と札：絵が半径を持つ。札に枠・影・面は無い ---- */
+#hub-shell .mk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: var(--ds-grid-gap-y) var(--ds-grid-gap-x); padding: var(--ds-space-3) var(--ds-page-inset) 0; align-items: start; }
+#hub-shell .mk-tile { display: grid; align-content: start; gap: var(--ds-space-2); min-width: 0; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+#hub-shell .mk-tile:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 4px; border-radius: var(--radius-md); }
+#hub-shell .mk-tile:hover .mk-media { box-shadow: 0 0 0 1px var(--line-strong); }
+#hub-shell .mk-tile-body { display: grid; gap: var(--ds-space-1); min-width: 0; }
+#hub-shell .mk-tile-title { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; min-height: calc(var(--ds-type-body-leading) * 2); font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); font-weight: var(--ds-weight-strong); overflow-wrap: anywhere; }
+#hub-shell .mk-tile-price { display: flex; align-items: baseline; gap: var(--ds-space-1); min-width: 0; font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); font-weight: var(--ds-weight-strong); }
+#hub-shell .mk-tile-tax { color: var(--muted); font-size: var(--ds-type-meta-size); font-weight: var(--ds-weight-text); }
+#hub-shell .mk-tile-seller { overflow: hidden; color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); text-overflow: ellipsis; white-space: nowrap; }
+
+/* 絵：正方形。画像が無い・読めないときは頭字 */
+#hub-shell .mk-media { position: relative; display: grid; place-items: center; aspect-ratio: 1 / 1; width: 100%; overflow: hidden; border-radius: var(--radius-md); background: var(--interactive); color: var(--muted); }
+#hub-shell .mk-media-letter { font-size: var(--ds-type-title-size); line-height: var(--ds-type-title-leading); font-weight: var(--ds-weight-heavy); }
+#hub-shell .mk-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+#hub-shell .mk-media::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px var(--media-outline); pointer-events: none; }
+
+/* 骨組み：完成形の札と同じ寸法（正方形・題2行・価格・販売者） */
+#hub-shell .mk-skeleton { pointer-events: none; }
+#hub-shell .mk-skel { background: linear-gradient(90deg, var(--interactive) 0%, var(--interactive-hover) 50%, var(--interactive) 100%); background-size: 200% 100%; animation: ds-shimmer 1.4s var(--ease-in-out) 6; }
+#hub-shell .mk-skel-line { display: block; width: 92%; height: 14px; border-radius: var(--radius-xs); }
+#hub-shell .mk-skel-line.is-short { width: 58%; }
+#hub-shell .mk-skel-line.is-price { width: 40%; }
+#hub-shell .mk-skel-line.is-seller { width: 50%; height: 12px; }
+#hub-shell .mk-skeleton .mk-tile-body { gap: var(--ds-space-2); padding-top: 3px; }
+
+/* ---- 空・エラー：16の余白、題20/800、本文15の淡色（最大360）、副ボタンは1つまで ---- */
+#hub-shell .mk-empty { display: grid; justify-items: start; gap: var(--ds-space-2); padding: var(--ds-space-4); }
+#hub-shell .mk-empty-title { margin: 0; font-size: var(--ds-type-title-size); line-height: var(--ds-type-title-leading); font-weight: var(--ds-weight-heavy); }
+#hub-shell .mk-empty-body { max-width: 360px; margin: 0; color: var(--muted); font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); }
+#hub-shell .mk-empty .mk-btn { margin-top: var(--ds-space-2); }
+
+/* ---- 印（種別の札） ---- */
+#hub-shell .mk-badge { display: inline-flex; align-items: center; height: var(--ds-badge-h); padding: 0 var(--ds-badge-status-px); border-radius: var(--radius-xs); box-shadow: inset 0 0 0 1px var(--line-strong); color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-badge-h); white-space: nowrap; }
+
+/* ---- 商品ページ ---- */
+#hub-shell .mk-product { display: grid; gap: var(--ds-space-6); padding: var(--ds-space-4) var(--ds-page-inset) var(--ds-space-8); }
+#hub-shell .mk-product-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--ds-space-6); align-items: start; }
+#hub-shell .mk-gallery { display: grid; gap: var(--ds-space-3); min-width: 0; }
+#hub-shell .mk-gallery-main { border-radius: var(--radius-md); }
+#hub-shell .mk-thumbs { display: flex; gap: var(--ds-space-2); overflow-x: auto; scrollbar-width: none; }
+#hub-shell .mk-thumb { flex: none; box-sizing: content-box; width: 64px; padding: 0; border: 1px solid transparent; border-radius: calc(var(--radius-sm) + 1px); background: transparent; cursor: pointer; opacity: .7; }
+#hub-shell .mk-thumb .mk-media { border-radius: var(--radius-sm); }
+#hub-shell .mk-thumb:hover { opacity: 1; }
+#hub-shell .mk-thumb[aria-pressed="true"] { opacity: 1; border-color: var(--emphasis); }
+#hub-shell .mk-thumb:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+#hub-shell .mk-info { display: grid; gap: var(--ds-space-4); min-width: 0; align-content: start; }
+#hub-shell .mk-info-head { display: flex; align-items: center; gap: var(--ds-space-2); min-width: 0; }
+#hub-shell .mk-info-seller { overflow: hidden; color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); text-overflow: ellipsis; white-space: nowrap; }
+#hub-shell .mk-title { margin: 0; font-size: var(--ds-type-name-size); line-height: var(--ds-type-name-leading); font-weight: var(--ds-weight-heavy); overflow-wrap: anywhere; }
+
+/* 買う箱：枠のカードではなく、上下の細い線で区切る */
+#hub-shell .mk-buy { display: grid; gap: var(--ds-space-3); padding: var(--ds-space-4) 0; border-block: 1px solid var(--divider); }
+#hub-shell .mk-price { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--ds-space-1) var(--ds-space-3); margin: 0; }
+#hub-shell .mk-price-main { font-size: var(--ds-type-name-size); line-height: var(--ds-type-name-leading); font-weight: var(--ds-weight-heavy); }
+#hub-shell .mk-price-sub { color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); }
+#hub-shell .mk-buy-qty { display: flex; align-items: center; justify-content: space-between; gap: var(--ds-space-3); }
+#hub-shell .mk-buy-qty-label { color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); }
+#hub-shell .mk-buy-actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--ds-space-2); }
+#hub-shell .mk-buy-actions:has(> :only-child) { grid-template-columns: minmax(0, 1fr); }
+#hub-shell .mk-buy-actions .mk-btn { height: var(--ds-input-h); }
+#hub-shell .mk-buy .mk-link { justify-self: start; }
+
+/* 数量 */
+#hub-shell .mk-stepper { display: inline-flex; align-items: center; gap: 0; height: var(--ds-btn-h); border: 1px solid var(--line-strong); border-radius: var(--radius-pill); }
+#hub-shell .mk-stepper.is-compact { height: var(--ds-btn-h-compact); }
+#hub-shell .mk-step { width: var(--ds-btn-h-compact); height: 100%; padding: 0; border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--text); font: inherit; font-size: var(--ds-type-body-size); cursor: pointer; }
+#hub-shell .mk-step:hover:not(:disabled) { background: var(--interactive-hover); }
+#hub-shell .mk-step:disabled { color: var(--muted); opacity: .5; cursor: default; }
+#hub-shell .mk-step:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
+#hub-shell .mk-step-value { min-width: 28px; text-align: center; font-size: var(--ds-type-body-size); font-weight: var(--ds-weight-strong); }
+
+/* 事実の行：小さな見出しと値、線で区切る */
+#hub-shell .mk-facts { margin: 0; }
+#hub-shell .mk-fact { display: flex; gap: var(--ds-space-4); padding: var(--ds-space-3) 0; border-bottom: 1px solid var(--divider); font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); }
+#hub-shell .mk-fact-label { flex: none; width: 120px; margin: 0; color: var(--muted); }
+#hub-shell .mk-fact-value { min-width: 0; margin: 0; overflow-wrap: anywhere; }
+#hub-shell .mk-section-title { margin: 0; font-size: var(--ds-type-title-size); line-height: var(--ds-type-title-leading); font-weight: var(--ds-weight-heavy); }
+#hub-shell .mk-about, #hub-shell .mk-related { display: grid; gap: var(--ds-space-3); padding-top: var(--ds-space-4); border-top: 1px solid var(--divider); }
+#hub-shell .mk-description { max-width: var(--ds-reading-measure); margin: 0; font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); white-space: pre-wrap; overflow-wrap: anywhere; }
+#hub-shell .mk-grid-related { padding-inline: 0; padding-top: 0; }
+
+/* 販売者：行の形 */
+#hub-shell .mk-seller { display: flex; align-items: center; gap: var(--ds-space-3); padding: var(--ds-space-4) 0; border-block: 1px solid var(--divider); }
+#hub-shell .mk-seller-avatar { flex: none; width: 48px; border-radius: 50%; }
+#hub-shell .mk-seller-text { display: grid; flex: 1 1 auto; min-width: 0; }
+#hub-shell .mk-seller-name { overflow: hidden; font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); font-weight: var(--ds-weight-strong); text-overflow: ellipsis; white-space: nowrap; }
+#hub-shell .mk-seller-note { color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); }
+#hub-shell .mk-seller-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--ds-space-2); }
+
+/* ---- 行：カート・購入済み・注文。区切り線だけ、サムネイルは正方形 ---- */
+#hub-shell .mk-rows { margin: 0; padding: 0; list-style: none; }
+#hub-shell .mk-row { display: grid; gap: var(--ds-space-3); padding: var(--ds-space-3) var(--ds-page-inset); border-bottom: 1px solid var(--divider); }
+#hub-shell .mk-row:hover { background: var(--interactive); }
+#hub-shell .mk-row-main { display: flex; align-items: flex-start; gap: var(--ds-space-3); min-width: 0; }
+#hub-shell .mk-row-thumb { flex: none; width: 64px; border-radius: var(--radius-sm); }
+#hub-shell .mk-row-text { display: grid; flex: 1 1 auto; gap: var(--ds-space-1); min-width: 0; }
+#hub-shell .mk-row-title, #hub-shell .mk-row-title-plain { padding: 0; border: 0; background: transparent; color: var(--text); font: inherit; font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); font-weight: var(--ds-weight-strong); text-align: left; overflow-wrap: anywhere; }
+#hub-shell .mk-row-title { cursor: pointer; }
+#hub-shell .mk-row-title:hover { text-decoration: underline; text-underline-offset: 3px; }
+#hub-shell .mk-row-title:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: var(--radius-xs); }
+#hub-shell .mk-row-meta { color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); overflow-wrap: anywhere; }
+#hub-shell .mk-row-status { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ds-space-2); }
+#hub-shell .mk-row-side { display: grid; flex: none; justify-items: end; align-content: start; gap: var(--ds-space-2); }
+#hub-shell .mk-row-price { font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); font-weight: var(--ds-weight-strong); }
+#hub-shell .mk-row-extra { margin-left: calc(64px + var(--ds-space-3)); }
+#hub-shell .mk-web-row { display: flex; align-items: center; justify-content: space-between; gap: var(--ds-space-4); }
+#hub-shell .mk-orders .mk-chips { padding-block: var(--ds-space-3); }
+
+/* 合計と購入手続き */
+#hub-shell .mk-totals { display: grid; margin: 0; padding: 0 var(--ds-page-inset); }
+#hub-shell .mk-total { display: flex; justify-content: space-between; gap: var(--ds-space-4); padding: var(--ds-space-3) 0; border-bottom: 1px solid var(--divider); font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); }
+#hub-shell .mk-total dt { margin: 0; color: var(--muted); }
+#hub-shell .mk-total dd { margin: 0; }
+#hub-shell .mk-total.is-grand { font-weight: var(--ds-weight-heavy); }
+#hub-shell .mk-total.is-grand dt { color: var(--text); }
+#hub-shell .mk-cart-cta { display: flex; justify-content: flex-end; padding: var(--ds-space-4) var(--ds-page-inset) 0; }
+#hub-shell .mk-cart-cta .mk-btn { height: var(--ds-input-h); min-width: 200px; }
+#hub-shell .mk-rows ~ .mk-note, #hub-shell .mk-totals ~ .mk-note { padding-inline: var(--ds-page-inset); }
+
+/* ---- 内側左列の木：カートの点数（金の線と字の小さな丸。面にしない） ---- */
+#hub-shell #sidebar-context .sidebar-tree-count { margin-left: auto; min-width: var(--ds-badge-count-min-w); height: var(--ds-badge-h); padding: 0 6px; border-radius: var(--radius-pill); box-shadow: inset 0 0 0 1px var(--emphasis); color: var(--emphasis); font-size: var(--ds-type-meta-size); line-height: var(--ds-badge-h); font-weight: var(--ds-weight-strong); font-variant-numeric: tabular-nums; text-align: center; }
+#hub-shell #sidebar-context .sidebar-tree-count[hidden] { display: none; }
+
+@media (max-width: 760px) {
+  #hub-shell .mk-product-top { grid-template-columns: minmax(0, 1fr); }
+  #hub-shell .mk-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  #hub-shell .mk-row-main { flex-wrap: wrap; }
+  #hub-shell .mk-seller { flex-wrap: wrap; }
+}
+
+/* 在庫あり・送料無料：同じチップ。種別のチップとは細い線で区切る */
+#hub-shell .mk-toggles { display: flex; flex: none; gap: var(--ds-chip-gap); margin-left: var(--ds-space-2); padding-left: var(--ds-space-3); border-left: 1px solid var(--divider); }
+#hub-shell .mk-toggles[hidden] { display: none; }
+#hub-shell .mk-row-shipping { color: var(--muted); }

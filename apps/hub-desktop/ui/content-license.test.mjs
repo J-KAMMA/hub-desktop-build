@@ -27,38 +27,4 @@ test('deed links point at creativecommons.org over https and exist for every ope
   assert.equal(licenseDeedUrl('arr'), null);
   assert.equal(licenseDeedUrl('mit'), null);
 });
-
-// 表示：Hubの公開曲の詳細にだけ、CCのときに限りライセンスの行と公式の頁への入口を出す。
-import { createRequire } from 'node:module';
-import { createMusicYoutubeSession } from './music-youtube.mjs';
-import { renderMusicWorkHeader } from './music-work-detail.mjs';
-const { JSDOM } = createRequire(new URL('../../../package.json', import.meta.url))('jsdom');
-
-function header(work, local) {
-  const dom = new JSDOM('<main></main>');
-  const { document } = dom.window;
-  const opened = [];
-  const session = createMusicYoutubeSession({ document, bar: document.createElement('div'), hubAsset: () => {} });
-  const result = renderMusicWorkHeader({ document, work, session, hubAsset: () => {}, openExternal: url => opened.push(url), local });
-  return { root: result.root, opened, close: () => { result.destroy?.(); dom.window.close(); } };
-}
-const track = { id: 'a1111111-1111-4111-8111-111111111111', title: '曲', artist: '歌い手' };
-const local = { play() {}, next() {} };
-
-test('a Hub-published CC track shows the license line and opens the deed', () => {
-  const view = header({ ...track, license: 'cc-by-sa-4.0' }, local);
-  const line = view.root.querySelector('.mw-license');
-  assert.ok(line);
-  assert.match(line.textContent, /ライセンス：CC BY-SA 4\.0/);
-  line.querySelector('button').click();
-  assert.deepEqual(view.opened, ['https://creativecommons.org/licenses/by-sa/4.0/deed.ja']);
-  view.close();
-});
-
-test('all rights reserved, unknown values and external works show no license line', () => {
-  for (const [work, hub] of [[{ ...track, license: 'arr' }, local], [{ ...track, license: 'gpl' }, local], [{ ...track }, local], [{ ...track, license: 'cc0-1.0' }, null]]) {
-    const view = header(work, hub);
-    assert.equal(view.root.querySelector('.mw-license'), null, JSON.stringify(work));
-    view.close();
-  }
-});
+// 表示（ライセンスの行と公式の頁への入口）は右列の作品ページ。rail-music.test.mjs で確かめる。

@@ -102,7 +102,7 @@
     font-weight: var(--weight-regular);
   }
   #hub-shell #sidebar-context .sidebar-switch > button:hover { color: var(--text); }
-  #hub-shell #sidebar-context .sidebar-switch > button[aria-pressed="true"] { background: var(--surface-raised); color: var(--text); box-shadow: var(--elevation-1); }
+  #hub-shell #sidebar-context .sidebar-switch > button[aria-pressed="true"] { background: var(--surface-raised); color: var(--text); }
   #hub-shell #sidebar-context .sidebar-switch > button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
 }
 
@@ -321,3 +321,6 @@
 #hub-shell #sidebar-context .nav-community[aria-current="true"] .nav-community-face { border-color: var(--emphasis); color: var(--text); }
 #hub-shell #sidebar-context .nav-community-all { color: var(--muted); }
 #hub-shell #sidebar-context .nav-community .nav-badge { margin-left: auto; }
+/* 開いているコミュニティの下の 投稿 / メンバー / 設定。 */
+#hub-shell #sidebar-context .nav-community-sub { display: flex; align-items: center; padding-left: calc(var(--ds-space-3) + 20px + var(--ds-space-3)); color: var(--muted); }
+#hub-shell #sidebar-context .nav-community-sub[aria-current="page"] { color: var(--text); }

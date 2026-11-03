@@ -40,15 +40,31 @@ function when(started, now) {
 }
 const VISIBLE_ROWS = 5;
 
-export function renderPiWorkHistory({ document, entries, query = '', selectedId = null, busy = false, onSelect, onDelete = null, openGroups = new Map(), now = new Date() }) {
+// groupBy: 'date' は会話の一覧の型（今日 / 過去7日 / それ以前）。既定の 'folder' は作業フォルダごと。
+const DATE_GROUPS = [['today', '今日'], ['week', '過去7日'], ['older', 'それ以前']];
+function dateBucket(started, now) {
+  if (!started) return 'older';
+  const day = (value) => new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime();
+  const days = Math.round((day(now) - day(started)) / 864e5);
+  return days <= 0 ? 'today' : days <= 7 ? 'week' : 'older';
+}
+export function renderPiWorkHistory({ document, entries, query = '', selectedId = null, busy = false, onSelect, onDelete = null, openGroups = new Map(), now = new Date(), groupBy = 'folder' }) {
   const all = (Array.isArray(entries) ? entries : []).filter((entry) => object(entry) && ['hub', 'cli'].includes(entry.kind) && object(entry.run) && text(entry.run.id).trim().length > 0);
   const search = text(query).trim().toLocaleLowerCase();
   const groups = new Map();
   for (const [index, entry] of all.entries()) {
     const run = entry.run, place = workspace(run.workspace), state = status(entry);
     if (search && ![run.prompt, run.workspace, run.model, run.agent, run.status, state.label].some((value) => text(value).toLocaleLowerCase().includes(search))) continue;
-    if (!groups.has(place.key)) groups.set(place.key, { ...place, rows: [] });
-    groups.get(place.key).rows.push({ entry, state, index, started: date(run.startedAtMs) });
+    const started = date(run.startedAtMs);
+    const bucket = groupBy === 'date' ? dateBucket(started, now) : null;
+    const target = bucket ? { key: `date:${bucket}`, path: DATE_GROUPS.find(([key]) => key === bucket)[1], name: DATE_GROUPS.find(([key]) => key === bucket)[1], order: DATE_GROUPS.findIndex(([key]) => key === bucket) } : place;
+    if (!groups.has(target.key)) groups.set(target.key, { ...target, rows: [] });
+    groups.get(target.key).rows.push({ entry, state, index, started, folder: place.path });
+  }
+  if (groupBy === 'date') {
+    const ordered = [...groups.entries()].sort((a, b) => a[1].order - b[1].order);
+    groups.clear();
+    for (const [key, value] of ordered) groups.set(key, value);
   }
   const nodes = [];
   // 同じ名前のフォルダが複数あるときは、親フォルダ名を添えて見分けられるようにする。
@@ -61,7 +77,7 @@ export function renderPiWorkHistory({ document, entries, query = '', selectedId 
     details.dataset.workspaceKey = group.key;
     const selected = selectedId !== null && group.rows.some(({ entry }) => entry.kind === 'hub' && entry.run.id === selectedId);
     const attention = group.rows.some(({ state }) => state.priority < 2);
-    details.open = Boolean(search) || (openGroups.has(group.key) ? Boolean(openGroups.get(group.key)) : selected || attention || nodes.length === 0);
+    details.open = Boolean(search) || (openGroups.has(group.key) ? Boolean(openGroups.get(group.key)) : selected || attention || nodes.length === 0 || (groupBy === 'date' && group.key !== 'date:older'));
     const heading = document.createElement('summary');
     heading.className = 'piw-history-project-head'; heading.title = group.path;
     const name = document.createElement('span');
@@ -81,12 +97,12 @@ export function renderPiWorkHistory({ document, entries, query = '', selectedId 
     const moreKey = `more:${group.key}`;
     const forced = Boolean(search) || ordered.slice(VISIBLE_ROWS).some(({ entry }) => entry.kind === 'hub' && entry.run.id === selectedId);
     const rows = [];
-    for (const { entry, state, started } of ordered) {
+    for (const { entry, state, started, folder } of ordered) {
       const run = entry.run, button = document.createElement('button');
       button.type = 'button'; button.className = 'piw-history-item'; button.disabled = Boolean(busy);
       button.dataset.kind = entry.kind; button.dataset.runId = text(run.id);
       const prompt = text(run.prompt).trim().replace(/\s+/g, ' ') || '無題の実行';
-      button.title = [text(run.prompt) || '無題の実行', state.label, started ? started.toLocaleString('ja-JP', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '日時不明', text(run.model)].filter(Boolean).join('\n');
+      button.title = [text(run.prompt) || '無題の実行', groupBy === 'date' ? folder : '', state.label, started ? started.toLocaleString('ja-JP', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '日時不明', text(run.model)].filter(Boolean).join('\n');
       if (entry.kind === 'hub' && selectedId !== null && run.id === selectedId) button.setAttribute('aria-current', 'true');
       const dot = document.createElement('span');
       dot.className = 'piw-history-dot'; dot.dataset.tone = tone(entry); dot.setAttribute('aria-hidden', 'true');

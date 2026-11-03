@@ -5,7 +5,7 @@ export function renderPiApproval({document,run,action,busy=false,onDecide,positi
   const runId=run.id,actionId=action.id,missing=missingFilePreview(action);
   const node=(tag,text,className='')=>{const value=document.createElement(tag);value.className=className;if(text!=null)value.textContent=text;return value;};
   const root=node('div',null,'piw-approval'),text=node('div',null,'piw-approval-text'),body=node('div',null,'piw-approval-body'),strip=node('div',null,'piw-approval-strip');
-  if(['hub_exec','hub_http'].includes(action.tool))root.dataset.kind='command';
+  if(['hub_exec','hub_http','hub_web_search'].includes(action.tool))root.dataset.kind='command';
   strip.append(node('span',`● 承認が必要です · ${action.tool??'tool'}`,'piw-approval-label'));
   if(position&&position.total>1) {
     const nav=node('span',null,'piw-approval-nav');nav.append(node('span',`承認待ち ${position.index+1}/${position.total}`,'piw-approval-count'));

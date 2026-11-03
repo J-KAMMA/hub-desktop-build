@@ -112,3 +112,20 @@ test('joined communities live in the community view context column, not in the l
   renderNavCommunities(dom.window.document, host, joinedCommunities(data(2)), {});
   assert.ok([...host.querySelectorAll('.nav-community')].every((button) => button.classList.contains('sidebar-context-item')), 'rows reuse the context-column row style');
 });
+
+test('the open community shows 投稿 / メンバー / 設定 under its row, with no channel rows', () => {
+  const dom = new JSDOM('<div id="host"></div>');
+  const host = dom.window.document.querySelector('#host');
+  const picked = [];
+  const subs = [{ key: 'posts', label: '投稿', selected: true }, { key: 'members', label: 'メンバー', selected: false }, { key: 'settings', label: '設定', selected: false }];
+  renderNavCommunities(dom.window.document, host, joinedCommunities(data(3)), { current: 'c1', subs, onSub: (key, row) => picked.push([key, row.id]) });
+  const labels = [...host.querySelectorAll('button')].map((button) => button.textContent);
+  assert.deepEqual(labels.slice(0, 2), ['名名前0', '名名前1']);
+  assert.deepEqual(labels.slice(2, 5), ['投稿', 'メンバー', '設定']);
+  assert.equal(host.querySelector('.nav-community-sub[data-section="posts"]').getAttribute('aria-current'), 'page');
+  assert.equal(labels.some((label) => label.includes('チャンネル')), false);
+  host.querySelector('[data-section="members"]').click();
+  assert.deepEqual(picked, [['members', 'c1']]);
+  renderNavCommunities(dom.window.document, host, joinedCommunities(data(3)), { current: 'c9', subs });
+  assert.equal(host.querySelectorAll('.nav-community-sub').length, 0);
+});

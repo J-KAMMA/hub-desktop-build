@@ -22,7 +22,8 @@ test('profile uses the shared page header and list width, and its sections are r
   assert.ok(list, 'profile content sits in .layout-list');
   for (const id of ['profile-avatar', 'profile-state', 'profile-posts']) assert.ok(list.contains(document.getElementById(id)), id);
   assert.match(app, /statePanel\("alert", "読み込めませんでした", friendlyError\(error\), loadProfile\)/);
-  assert.match(profileCss, /#view-profile \.profile-tabs\s*\{\s*display:\s*none/);
+  // 本文の札は X のプロフィールと同じく本文の上に出す（列の木と同じ項目を押す）。隠す規則は置かない。
+  assert.doesNotMatch(profileCss, /#view-profile \.profile-tabs\s*\{\s*display:\s*none/);
 });
 
 test('profile sections become real sidebar rows and follow the selected tab', async () => {
@@ -31,11 +32,12 @@ test('profile sections become real sidebar rows and follow the selected tab', as
   await settle();
   f.show('profile');
   const labels = [...f.document.querySelectorAll('#sidebar-context .sidebar-item-label')].map((node) => node.textContent);
-  assert.deepEqual(labels, ['投稿', 'メディア', 'スレッド']);
-  const rows = f.items();
+  // 根「プロフィール」の下に、返った種類だけが並ぶ。
+  assert.deepEqual(labels, ['プロフィール', '投稿', 'メディア', 'スレッド']);
+  const rows = f.items().slice(1);
   assert.equal(rows[0].getAttribute('aria-current'), 'true', 'the first section starts selected');
   rows[1].click();
-  const after = f.items();
+  const after = f.items().slice(1);
   assert.equal(after[1].getAttribute('aria-current'), 'true', 'the pressed section becomes selected');
   assert.equal(after[0].hasAttribute('aria-current'), false);
   f.dom.window.close();
@@ -127,7 +129,8 @@ test('tabbed views have no title row: the tab row is the header, the title is vi
   // The title stays in the markup for the accessible name; the feed header carries both title and tabs and actions.
   const feed = document.querySelector('#view-feed > .page-header');
   assert.equal(feed.querySelector(':scope > .page-title').textContent, 'タイムライン');
-  assert.ok(feed.querySelector(':scope > .page-actions #feed-refresh'));
+  assert.ok(feed.querySelector(':scope > .page-actions #feed-sources-toggle'));
+  assert.equal(feed.querySelector('#feed-refresh'), null);
   assert.ok(feed.querySelector(':scope > #feed-tabs.page-tabs'));
   // Views without tabs keep one compact title row of at most the header height.
   const plain = block('#hub-shell .view:not(#view-browser):not(#view-ai) > :is(.view-head, .page-header):not(:has(> .page-tabs:not(:empty))) {');

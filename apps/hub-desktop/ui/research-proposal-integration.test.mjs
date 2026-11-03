@@ -20,7 +20,7 @@ const button = (root, label) => [...root.querySelectorAll('button')].find(item =
 const plain = value => JSON.parse(JSON.stringify(value));
 function context(dom, entry, invoke) {
   const opened = [], discussionReads = [], target = dom.window.document.querySelector('main'), status = dom.window.document.querySelector('#status');
-  const ctx = vm.createContext({sidebarContext:dom.window.document.createElement('nav'),offerPublicContentShare:()=>false,attachDetailAiHandoff(){},videoCommentsController: null, researchAccountGeneration: 1, researchDetailController: null, communityChannelPolicyController: null, communityInviteController: null, detailRenderRevision: 0, currentView: 'detail', detailTrail: [entry], detailForwardTrail: [], toolbarTrail: [], window: dom.window,
+  const ctx = vm.createContext({sidebarContext:dom.window.document.createElement('nav'),offerPublicContentShare:()=>false,attachDetailAiHandoff(){},videoCommentsController: null, researchAccountGeneration: 1, researchDetailController: null, communityDetailController: null, communityInviteController: null, detailRenderRevision: 0, currentView: 'detail', detailTrail: [entry], detailForwardTrail: [], toolbarTrail: [], window: dom.window,
     invoke: (name, args) => {if (name === 'hub_detail' && args.name === 'research_proposal_discussions') {discussionReads.push(plain(args));return Promise.resolve({proposalId, canManage: true, links: [{linkId: proposalId, threadId: 'public_thread', linked: true, available: true, title: '公開の議論', href: '/v2/threads/public_thread'}]});} return invoke(name, args);}, friendlyError: String, openDetail: (...args) => {opened.push(args);}, connectDesktopAccount: () => {}, paintDetailHead() {}, detailState: () => status, detailContent: () => target, skeletonResult: () => dom.window.document.createElement('div'),
     communityAppealReviewRequest: () => null, communityReportReviewRequest: () => null, communityMembershipReviewRequest: () => null, communityGuideRequest: value => ({name: value.name, ids: value.ids}), readingDirectory: new Set(), DETAIL_PARENT_VIEW: {research_proposal: 'research'}, renderSidebarContext() {}, DETAIL_RENDERERS: {}});
   vm.runInContext(fn('function syncCommunityInvite(reset=false){'), ctx);
@@ -28,7 +28,7 @@ function context(dom, entry, invoke) {
   const render = new Function('researchProposalReview', 'researchEditorOptions', `return (${rendererLine.trim().replace(/^research_proposal:/, '').replace(/,$/, '')});`)(researchProposalReview, ctx.researchEditorOptions);
   ctx.DETAIL_RENDERERS.research_proposal = render;
   vm.runInContext(fn('function releaseResearchDetail(invalidate=false) {'), ctx);
-  vm.runInContext(fn('function releaseCommunityChannelPolicy(invalidate=false){'), ctx);
+  vm.runInContext(fn('function releaseCommunityDetail(invalidate=false){'), ctx);
   vm.runInContext(fn('async function renderDetailEntry(entry) {'), ctx);
   return {ctx, opened, target, render, discussionReads};
 }

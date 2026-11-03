@@ -363,7 +363,7 @@ test('history, favorites, find, pin, AI handoff and native panel tools remain av
 
 
 test('persisted inherited engine names retain Google fallback and a submitted search has a valid explicit target',async t=>{
- for(const savedEngine of ['__proto__','constructor','toString']){const f=await fixture(t,{savedEngine});assert.match(f.el('browser-url').placeholder,/Google/);openTools(f);const picker=f.document.querySelector('#browser-menu select');picker.value=savedEngine;picker.dispatchEvent(new f.dom.window.Event('change'));assert.match(f.el('browser-url').placeholder,/Google/);f.type('browser-url','Japanese search');await f.el('browser-form').onsubmit({preventDefault:()=>{}});assert.deepEqual(f.calls.find(call=>call.name==='browser_navigate_from_address').args,{id:1,url:'https://www.google.com/search?q=Japanese%20search'});assert.equal(f.el('browser-url').placeholder.includes('undefined'),false);}
+ for(const savedEngine of ['__proto__','constructor','toString']){const f=await fixture(t,{savedEngine});assert.match(f.el('browser-url').placeholder,/DuckDuckGo/);openTools(f);const picker=f.document.querySelector('#browser-menu select');picker.value=savedEngine;picker.dispatchEvent(new f.dom.window.Event('change'));assert.match(f.el('browser-url').placeholder,/DuckDuckGo/);f.type('browser-url','Japanese search');await f.el('browser-form').onsubmit({preventDefault:()=>{}});assert.deepEqual(f.calls.find(call=>call.name==='browser_navigate_from_address').args,{id:1,url:'https://duckduckgo.com/?q=Japanese%20search'});assert.equal(f.el('browser-url').placeholder.includes('undefined'),false);}
 });
 
 
@@ -551,7 +551,7 @@ test('Native typed suggestions stay local, preserve draft across refresh and sel
  const f=await fixture(t);f.events['browser-native-chrome']({payload:{enabled:true}});
  f.events['browser-native-address-edit']({payload:{tabId:1,value:'日本語の検索'}});assert.equal(f.calls.length,0);assert.equal(f.el('browser-suggestions').hidden,false);await f.workspace.refresh();assert.equal(f.el('browser-url').value,'日本語の検索');
  f.events['browser-native-address-key']({payload:{tabId:1,key:'ArrowDown'}});assert.equal(f.el('browser-url').getAttribute('aria-activedescendant'),'browser-suggestion-0');
- f.events['browser-native-address-submit']({payload:{tabId:1,value:'日本語の検索'}});await tick();assert.equal(f.calls.find(c=>c.name==='browser_navigate_from_address').args.url,'https://www.google.com/search?q='+encodeURIComponent('日本語の検索'));assert.equal(f.el('browser-form').hidden,false);
+ f.events['browser-native-address-submit']({payload:{tabId:1,value:'日本語の検索'}});await tick();assert.equal(f.calls.find(c=>c.name==='browser_navigate_from_address').args.url,'https://duckduckgo.com/?q='+encodeURIComponent('日本語の検索'));assert.equal(f.el('browser-form').hidden,false);
 });
 test('Native suggestion messages reject stale tabs, malformed strings and wrong views without changing input',async t=>{
  const f=await fixture(t);f.events['browser-native-chrome']({payload:{enabled:true}});const value=f.el('browser-url').value;

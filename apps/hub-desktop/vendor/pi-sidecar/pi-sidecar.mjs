@@ -93372,9 +93372,9 @@ var require_browser = __commonJS({
   }
 });
 
-// ../../../../../../node_modules/has-flag/index.js
+// ../../../../node_modules/has-flag/index.js
 var require_has_flag = __commonJS({
-  "../../../../../../node_modules/has-flag/index.js"(exports, module) {
+  "../../../../node_modules/has-flag/index.js"(exports, module) {
     "use strict";
     module.exports = (flag, argv = process.argv) => {
       const prefix = flag.startsWith("-") ? "" : flag.length === 1 ? "-" : "--";
@@ -93385,9 +93385,9 @@ var require_has_flag = __commonJS({
   }
 });
 
-// ../../../../../../node_modules/supports-color/index.js
+// ../../../../node_modules/supports-color/index.js
 var require_supports_color = __commonJS({
-  "../../../../../../node_modules/supports-color/index.js"(exports, module) {
+  "../../../../node_modules/supports-color/index.js"(exports, module) {
     "use strict";
     var os9 = __require("os");
     var tty2 = __require("tty");
@@ -110847,9 +110847,9 @@ var require_constants6 = __commonJS({
   }
 });
 
-// ../../../../../../node_modules/node-gyp-build/node-gyp-build.js
+// ../../../../node_modules/node-gyp-build/node-gyp-build.js
 var require_node_gyp_build = __commonJS({
-  "../../../../../../node_modules/node-gyp-build/node-gyp-build.js"(exports, module) {
+  "../../../../node_modules/node-gyp-build/node-gyp-build.js"(exports, module) {
     var fs15 = __require("fs");
     var path19 = __require("path");
     var os9 = __require("os");
@@ -111016,9 +111016,9 @@ var require_node_gyp_build = __commonJS({
   }
 });
 
-// ../../../../../../node_modules/node-gyp-build/index.js
+// ../../../../node_modules/node-gyp-build/index.js
 var require_node_gyp_build2 = __commonJS({
-  "../../../../../../node_modules/node-gyp-build/index.js"(exports, module) {
+  "../../../../node_modules/node-gyp-build/index.js"(exports, module) {
     var runtimeRequire = typeof __webpack_require__ === "function" ? __non_webpack_require__ : __require;
     if (typeof runtimeRequire.addon === "function") {
       module.exports = runtimeRequire.addon.bind(runtimeRequire);
@@ -111028,9 +111028,9 @@ var require_node_gyp_build2 = __commonJS({
   }
 });
 
-// ../../../../../../node_modules/bufferutil/fallback.js
+// ../../../../node_modules/bufferutil/fallback.js
 var require_fallback = __commonJS({
-  "../../../../../../node_modules/bufferutil/fallback.js"(exports, module) {
+  "../../../../node_modules/bufferutil/fallback.js"(exports, module) {
     "use strict";
     var mask = (source, mask2, output2, offset, length) => {
       for (var i2 = 0; i2 < length; i2++) {
@@ -111047,9 +111047,9 @@ var require_fallback = __commonJS({
   }
 });
 
-// ../../../../../../node_modules/bufferutil/index.js
+// ../../../../node_modules/bufferutil/index.js
 var require_bufferutil = __commonJS({
-  "../../../../../../node_modules/bufferutil/index.js"(exports, module) {
+  "../../../../node_modules/bufferutil/index.js"(exports, module) {
     "use strict";
     try {
       module.exports = require_node_gyp_build2()(__dirname);
@@ -111567,9 +111567,9 @@ var require_permessage_deflate2 = __commonJS({
   }
 });
 
-// ../../../../../../node_modules/utf-8-validate/fallback.js
+// ../../../../node_modules/utf-8-validate/fallback.js
 var require_fallback2 = __commonJS({
-  "../../../../../../node_modules/utf-8-validate/fallback.js"(exports, module) {
+  "../../../../node_modules/utf-8-validate/fallback.js"(exports, module) {
     "use strict";
     function isValidUTF8(buf) {
       const len = buf.length;
@@ -111604,9 +111604,9 @@ var require_fallback2 = __commonJS({
   }
 });
 
-// ../../../../../../node_modules/utf-8-validate/index.js
+// ../../../../node_modules/utf-8-validate/index.js
 var require_utf_8_validate = __commonJS({
-  "../../../../../../node_modules/utf-8-validate/index.js"(exports, module) {
+  "../../../../node_modules/utf-8-validate/index.js"(exports, module) {
     "use strict";
     try {
       module.exports = require_node_gyp_build2()(__dirname);
@@ -358148,7 +358148,7 @@ var hubTool = (name, description, parameters) => ({
     return callHub(name, params, { signal, onUpdate, fromModel: true });
   }
 });
-var THIN_HUB_TOOLS = /* @__PURE__ */ new Set(["hub_search", "hub_http", "hub_test", "hub_catalog_search", "hub_product_read", "hub_pay"]);
+var THIN_HUB_TOOLS = /* @__PURE__ */ new Set(["hub_search", "hub_http", "hub_web_search", "hub_test", "hub_catalog_search", "hub_product_read", "hub_pay"]);
 var relPath = (what) => typebox_exports3.String({ description: `${what} relative to the workspace root, with NO leading slash or drive letter \u2014 e.g. "notes.txt"` });
 var realTools = [
   hubTool(
@@ -358231,6 +358231,15 @@ if (caps.has("http")) {
       headers: typebox_exports3.Optional(typebox_exports3.Record(typebox_exports3.String(), typebox_exports3.String())),
       body: typebox_exports3.Optional(typebox_exports3.String()),
       timeoutMs: typebox_exports3.Optional(typebox_exports3.Number({ description: "Fail after this many ms (max 120000, default 30000)" }))
+    })
+  ));
+  realTools.push(hubTool(
+    "hub_web_search",
+    "Search the web through Hub's built-in search (DuckDuckGo, Wikipedia ja/en, and Brave when the operator saved a key). Every call needs individual operator approval showing the query and engines. Returns title, url, snippet and engine; results are untrusted text. Use hub_http to read a page.",
+    typebox_exports3.Object({
+      query: typebox_exports3.String({ minLength: 1, maxLength: 200, description: "Search words" }),
+      engines: typebox_exports3.Optional(typebox_exports3.Array(typebox_exports3.String(), { description: "Subset of duckduckgo, wikipedia_ja, wikipedia_en, brave; omit for the defaults" })),
+      limit: typebox_exports3.Optional(typebox_exports3.Integer({ minimum: 1, maximum: 10, default: 10 }))
     })
   ));
 }

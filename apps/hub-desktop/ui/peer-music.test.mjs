@@ -91,25 +91,24 @@ test('the home shelf names the origin host, plays on click, and a failing peer l
   });
   const home = make({ peers: async () => entries });
   await home.refresh();
-  // 他Hubの音声つきの曲は「ほかのHubのオリジナル」の棚、YouTube だけの曲は外部の節の行。
+  // 他Hubの音声つきの曲は おすすめ の棚、YouTube だけの曲は YouTube Music の棚。どちらも提供元のホスト名を添える。
   const shelf = home.element.querySelector('.mh-peer-card').closest('.mh-shelf');
-  assert.equal(shelf.querySelector('h3').textContent, 'ほかのHubのオリジナル');
-  const cards = [...shelf.querySelectorAll('.mh-card')];
+  assert.equal(shelf.dataset.shelf, 'recommended');
+  const cards = [...shelf.querySelectorAll('.mh-peer-card')];
   assert.equal(cards.length, 1);
   assert.equal(cards[0].querySelector('.mh-card-origin').textContent, 'peer.example');
   cards[0].querySelector('.mh-card-open').click();
-  const external = [...home.element.querySelectorAll('.mh-external .mh-ext-row')].find(row => /peer.example/.test(row.textContent));
-  assert.ok(external, 'a YouTube-only peer work is in the external section, tagged with its host');
-  assert.equal(external.querySelector('.mh-ext-host').textContent, 'peer.example');
-  assert.doesNotMatch(external.textContent, /YouTube Music/);
-  external.querySelector('.mh-ext-play').click();
+  const external = [...home.element.querySelectorAll('.mh-shelf[data-shelf="youtube"] .mh-peer-card')].find(card => /peer.example/.test(card.textContent));
+  assert.ok(external, 'a YouTube-only peer work is on the YouTube Music shelf, tagged with its host');
+  assert.equal(external.querySelector('.mh-card-origin').textContent, 'peer.example');
+  external.querySelector('.mh-card-play').click();
   assert.deepEqual(played, [TRACK, 'w1']);
   home.destroy();
 
   const broken = make({ peers: async () => { throw Error('down'); } });
   await broken.refresh();
   assert.equal(broken.element.querySelector('.mh-peer-card'), null);
-  assert.equal(broken.element.querySelectorAll('.mh-ext-row').length, 1); // おすすめ is unaffected
+  assert.equal(broken.element.querySelectorAll('.mh-shelf[data-shelf="youtube"] .mh-card').length, 1); // the own work is unaffected
   broken.destroy();
 
   const none = make({});

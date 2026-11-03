@@ -1,0 +1,193 @@
+/* 通知とプロフィール（2026-11-03）。参照レイアウトは X の通知とプロフィール（寸法だけ）。
+   色は tokens.css の役割名だけ。金は線だけ（未読の左の線・選択の下線）。面にしない。 */
+
+/* ---- 通知：1 イベント 1 行。左 40 に種類の記号、右に 顔の列 → 文（名前は太字・時刻は同じ行の薄い字）→ 元の投稿の頭 ---- */
+#hub-shell #view-notifications #notifications-list .post.notif.notif-x {
+  grid-template-columns: 40px minmax(0, 1fr);
+  column-gap: var(--ds-space-3);
+  align-items: start;
+  min-height: 0;
+  padding: var(--ds-space-3) var(--ds-page-inset);
+}
+#hub-shell #view-notifications #notifications-list .post.notif.notif-x .notif-kind {
+  place-items: start end;
+  width: 40px;
+  padding-top: 2px;
+}
+#hub-shell #view-notifications #notifications-list .post.notif.notif-x .notif-kind svg { width: 28px; height: 28px; }
+#hub-shell #view-notifications #notifications-list .post.notif.notif-x .post-content {
+  display: block;
+  min-width: 0;
+  padding-right: 0;
+}
+#hub-shell #view-notifications #notifications-list .post.notif.notif-x .notif-avatars {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-2);
+  margin: 0 0 var(--ds-space-2);
+}
+#hub-shell #view-notifications #notifications-list .post.notif.notif-x .notif-avatars .post-avatar {
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  border: 0;
+  font-size: var(--ds-type-meta-size);
+}
+#hub-shell #view-notifications #notifications-list .post.notif.notif-x .post-body {
+  margin: 0;
+  font-size: var(--ds-type-body-size);
+  line-height: var(--ds-type-body-leading);
+  overflow-wrap: anywhere;
+}
+#hub-shell #view-notifications #notifications-list .post.notif.notif-x .post-body strong { font-weight: var(--ds-weight-strong); }
+#hub-shell #view-notifications #notifications-list .post.notif.notif-x .when {
+  display: inline;
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--ds-type-meta-size);
+  line-height: var(--ds-type-meta-leading);
+  text-align: start;
+}
+#hub-shell #view-notifications #notifications-list .post.notif.notif-x .notif-excerpt {
+  margin: var(--ds-space-1) 0 0;
+  font-size: var(--ds-type-body-size);
+  line-height: var(--ds-type-body-leading);
+}
+/* 未読は左端の細い金の線（点は使わない） */
+#hub-shell #view-notifications #notifications-list .post.notif.notif-x.unread::before {
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  height: auto;
+  border-left: 2px solid var(--emphasis);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+/* 既読の押し手は行に乗ったときと焦点のときだけ。文と重ならない右上の角に置く */
+#hub-shell #view-notifications #notifications-list .post.notif.notif-x .notification-read {
+  top: var(--ds-space-1);
+  right: var(--ds-page-inset);
+  min-height: var(--ds-btn-h-compact);
+  padding: 0 var(--ds-space-3);
+  border: 0;
+  border-radius: var(--ds-radius-pill);
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--ds-type-meta-size);
+  font-weight: var(--ds-weight-strong);
+  opacity: 0;
+}
+#hub-shell #view-notifications #notifications-list .post.notif.notif-x:hover .notification-read,
+#hub-shell #view-notifications #notifications-list .post.notif.notif-x .notification-read:focus-visible {
+  opacity: 1;
+  background: var(--interactive);
+  color: var(--text);
+}
+
+/* ---- プロフィール：表紙（画像が無いときは細い帯）→ 顔が表紙へ重なる → 名前・@ハンドル・自己紹介・事実・件数 ---- */
+#hub-shell #view-profile .profile-cover:empty { aspect-ratio: auto; height: 96px; background: var(--interactive); }
+#hub-shell #view-profile .profile-top .profile-actions { margin-top: var(--ds-space-3); gap: var(--ds-space-2); }
+#hub-shell #view-profile .profile-top .profile-actions .ds-btn { min-height: var(--ds-btn-h); }
+#hub-shell #view-profile .profile-info { padding-top: var(--ds-space-1); }
+#hub-shell #view-profile .profile-stats { gap: var(--ds-space-4); }
+#hub-shell #view-profile .profile-stats .profile-stat[data-connections="following"] { order: -1; }
+#hub-shell #view-profile .profile-shortcuts { display: flex; flex-wrap: wrap; gap: var(--ds-space-1) var(--ds-space-4); margin: var(--ds-space-2) 0 0; }
+#hub-shell #view-profile .profile-shortcuts:empty { display: none; }
+#hub-shell #view-profile .profile-shortcuts .profile-shortcut {
+  min-height: var(--ds-btn-h-compact);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--ds-type-meta-size);
+  font-weight: var(--ds-weight-strong);
+}
+#hub-shell #view-profile .profile-shortcuts .profile-shortcut:hover { color: var(--text); text-decoration: underline; }
+
+/* ---- 設定：列の検索欄は枠なしの面。節の名前は列の幅に収まる短い語 ---- */
+#hub-shell #sidebar-context .settings-column-search {
+  border: 0;
+  background: var(--interactive);
+  color: var(--text);
+  font-size: var(--ds-type-meta-size);
+}
+#hub-shell #sidebar-context .settings-column-search:focus-visible { outline: 1px solid var(--emphasis); }
+#hub-shell #view-settings .account-card .setting-header .setting-label { font-size: var(--ds-type-body-size, 15px); }
+#hub-shell #view-settings .account-card-head { display: flex; align-items: center; gap: var(--ds-space-3); padding: var(--ds-space-2) 0; }
+#hub-shell #view-settings .account-card-head .account-action { margin-left: auto; }
+
+/* ---- ウォレット：口座の一覧。区画は箱でなく行（細い仕切り）。中身と手順は変えない ---- */
+#hub-shell #view-wallet #wallet-results { display: block; }
+#hub-shell #view-wallet :is(.wallet-device, .wallet-section, .wallet-tip-settings) {
+  padding: var(--ds-space-4);
+  border: 0;
+  border-bottom: 1px solid var(--divider);
+  border-radius: 0;
+  background: transparent;
+}
+#hub-shell #view-wallet .wallet-tip-settings { padding-inline: var(--ds-space-4); }
+#hub-shell #view-wallet .wallet-device-top { display: flex; align-items: center; justify-content: space-between; gap: var(--ds-space-3); }
+#hub-shell #view-wallet .wallet-list-row { padding-inline: 0; border-bottom: 1px solid var(--divider); }
+#hub-shell #view-wallet .wallet-list-row:last-of-type { border-bottom: 0; }
+#hub-shell #view-wallet .wallet-list-row { flex-wrap: wrap; row-gap: var(--ds-space-1); }
+#hub-shell #view-wallet .wallet-list-row strong { flex: 1 1 100%; font-size: var(--ds-type-meta-size); overflow-wrap: anywhere; }
+
+/* ---- Hubpedia：Wikipedia の読み方。一覧は仕切り線の行、記事は本文 70 字幅・目次の箱・番号つきの出典 ---- */
+#hub-shell #hubpedia-results.result-grid { display: block; }
+#hub-shell #hubpedia-results .result-card {
+  min-height: 0;
+  padding: var(--ds-space-3) var(--ds-space-4);
+  border: 0;
+  border-bottom: 1px solid var(--divider);
+  border-radius: 0;
+  background: transparent;
+}
+#hub-shell #hubpedia-results .result-card:hover { background: var(--interactive); }
+#hub-shell #hubpedia-results .result-card p:not(.meta) { -webkit-line-clamp: 2; }
+#hub-shell #view-detail .hubpedia-intro { max-width: 70ch; margin-inline: auto; }
+#hub-shell #view-detail .hubpedia-reading { max-width: 70ch; margin-inline: auto; border-top: 0; }
+#hub-shell #view-detail .hubpedia-reading .detail-h { scroll-margin-top: var(--ds-space-6); }
+#hub-shell #view-detail:has(.hubpedia-intro) > .view-head:not(#_) { padding-inline: 0; }
+#hub-shell .hubpedia-toc {
+  display: inline-block;
+  min-width: 16em;
+  max-width: 100%;
+  margin: var(--ds-space-4) 0 0;
+  padding: var(--ds-space-3) var(--ds-space-4);
+  border: 1px solid var(--divider);
+  background: transparent;
+}
+#hub-shell .hubpedia-toc-title { margin: 0 0 var(--ds-space-2); font-weight: var(--ds-weight-strong); text-align: center; }
+#hub-shell .hubpedia-toc ol { margin: 0; padding: 0; list-style: none; }
+#hub-shell .hubpedia-toc li[data-level="2"] { padding-left: var(--ds-space-4); }
+#hub-shell .hubpedia-toc li[data-level="3"] { padding-left: var(--ds-space-6); }
+#hub-shell .hubpedia-toc-link {
+  display: flex;
+  gap: var(--ds-space-2);
+  min-height: 0;
+  padding: var(--ds-space-1) 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+#hub-shell .hubpedia-toc-link:hover { text-decoration: underline; }
+#hub-shell .hubpedia-toc-number { color: var(--muted); }
+#hub-shell .hubpedia-sources { margin: 0; padding: 0; list-style: none; counter-reset: source; max-width: 70ch; margin-inline: auto; }
+#hub-shell .hubpedia-sources li { counter-increment: source; display: flex; flex-wrap: wrap; gap: 0 var(--ds-space-2); padding: var(--ds-space-2) 0; border-bottom: 1px solid var(--divider); }
+#hub-shell .hubpedia-sources li::before { content: counter(source) "."; color: var(--muted); min-width: 2ch; }
+#hub-shell .hubpedia-source-title { padding: 0; border: 0; background: transparent; color: var(--text); font: inherit; text-align: left; }
+#hub-shell button.hubpedia-source-title { cursor: pointer; text-decoration: underline; text-decoration-color: var(--divider); }
+#hub-shell #sidebar-context .sidebar-context-item[data-toc-level="2"] { padding-left: var(--ds-space-4); }
+#hub-shell #sidebar-context .sidebar-context-item[data-toc-level="3"] { padding-left: var(--ds-space-6); }
+#hub-shell #view-detail .hubpedia-intro { margin-bottom: var(--ds-space-2); }
+#hub-shell #sidebar-context .sidebar-tree-children .sidebar-context-item[data-toc-level="2"] { padding-left: calc(var(--ds-space-4) + 20px); }
+#hub-shell #sidebar-context .sidebar-tree-children .sidebar-context-item[data-toc-level="3"] { padding-left: calc(var(--ds-space-6) + 20px); }
+#hub-shell #view-detail .detail-section:has(> .hubpedia-sources) { max-width: 70ch; margin-inline: auto; }
+#hub-shell #view-detail .detail-section:has(> .hubpedia-sources) > .result-heading { padding: var(--ds-space-3) 0 var(--ds-space-1); font-size: var(--ds-type-title-size, 20px); }
+#hub-shell .hubpedia-sources { max-width: none; }

@@ -22,7 +22,7 @@ export function joinedCommunities(data, limit = NAV_COMMUNITY_LIMIT) {
   };
 }
 
-export function renderNavCommunities(document, host, model, { onOpen, onAll, current = "", asset } = {}) {
+export function renderNavCommunities(document, host, model, { onOpen, onAll, current = "", asset, subs = [], onSub } = {}) {
   host.replaceChildren();
   if (!model.rows.length) { host.hidden = true; return; }
   for (const row of model.rows) {
@@ -53,6 +53,19 @@ export function renderNavCommunities(document, host, model, { onOpen, onAll, cur
     }
     button.addEventListener("click", () => onOpen?.(row));
     host.append(button);
+    // 開いているコミュニティの下に 投稿 / メンバー / 設定。チャンネルは無い。
+    if (row.id === current) {
+      for (const sub of subs) {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.className = "nav-community-sub sidebar-context-item";
+        item.dataset.section = sub.key;
+        item.textContent = sub.label;
+        if (sub.selected) item.setAttribute("aria-current", "page");
+        item.addEventListener("click", () => onSub?.(sub.key, row));
+        host.append(item);
+      }
+    }
   }
   const all = document.createElement("button");
   all.type = "button";
@@ -63,13 +76,14 @@ export function renderNavCommunities(document, host, model, { onOpen, onAll, cur
   host.hidden = false;
 }
 
-export function createNavCommunities({ document, host, load, signedIn, onOpen, onAll, asset, now = () => Date.now() }) {
+export function createNavCommunities({ document, host, load, signedIn, onOpen, onAll, onSub, asset, now = () => Date.now() }) {
   let model = null;
   let at = 0;
   let loading = false;
   let current = "";
+  let subs = [];
   let epoch = 0;
-  const paint = () => renderNavCommunities(document, host, model ?? { rows: [] }, { onOpen, onAll, current, asset });
+  const paint = () => renderNavCommunities(document, host, model ?? { rows: [] }, { onOpen, onAll, current, asset, subs, onSub });
   return {
     async refresh({ force = false } = {}) {
       if (!signedIn()) { model = null; at = 0; paint(); return; }
@@ -90,7 +104,7 @@ export function createNavCommunities({ document, host, load, signedIn, onOpen, o
       }
       paint();
     },
-    setCurrent(id) { current = typeof id === "string" ? id : ""; if (model) paint(); },
-    clear() { epoch++; model = null; at = 0; current = ""; paint(); },
+    setCurrent(id, items = []) { current = typeof id === "string" ? id : ""; subs = current && Array.isArray(items) ? items : []; if (model) paint(); },
+    clear() { epoch++; model = null; at = 0; current = ""; subs = []; paint(); },
   };
 }

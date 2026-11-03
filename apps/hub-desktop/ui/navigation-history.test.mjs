@@ -18,7 +18,7 @@ function fixture(t){
   threadBoardKey:'',threadBoardTitle:'',rightRailAvailable:()=>false,railChoiceFor:()=>false,syncSidebarForRail(){},renderSidebarContext(){},railActivityReady:false,
   updateToolbarNavigation(){},viewScroller:()=>dom.window.document.querySelector('.workspace-main'),exitBrowser:async()=>{},
   CATALOGS:{threads:{},articles:{}},loadCatalog:async()=>{},renderDetailEntry:async()=>{},videoWatchIndex:-1,videoWatchHistory:[],videoSceneRevision:0,captureVideoScene(){},videoSearch:{invalidate(){}}});
- for(const code of [block('function syncCommunityInvite(reset=false){','\nfunction releaseCommunityChannelPolicy('),block('function showView(view, title','\nfunction textValue('),
+ for(const code of [block('function syncCommunityInvite(reset=false){','\nfunction releaseCommunityDetail('),block('function showView(view, title','\nfunction textValue('),
   block('function saveDetailTrail() {','\nfunction updateToolbarNavigation('),
   block('async function openDetail(name, ids, opts = {}) {','\nasync function detailBack()'),
   block('async function detailBack() {','\nasync function detailForward()')]) vm.runInContext(code,ctx);

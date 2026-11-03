@@ -177,7 +177,7 @@ test("an older detail response cannot replace the selected detail", async () => 
   const target = { replaceChildren(...children) { this.children = children; } };
   const state = { textContent: "", classList: { remove() {}, add() {} } };
   const create = new Function("deps", `
-    let researchDetailController=null,communityChannelPolicyController=null,communityInviteController=null;
+    let researchDetailController=null,communityDetailController=null,communityInviteController=null;
     ${source.slice(source.indexOf('function releaseResearchDetail('),start)}
     let detailRenderRevision = 0, researchAccountGeneration = 0;
     const detailTrail = [];
@@ -619,10 +619,10 @@ test("desktop keeps the icon rail, the contextual sidebar and the workspace in o
   assert.match(layouts, /\[data-template="reading"\] \{ --main-w: var\(--ds-col-reading\); \}/);
   assert.match(app, /shell\.dataset\.template = templateFor\(view, detailTrail\.at\(-1\)\?\.name\)/);
   assert.match(html, /id="sidebar-ai-new"/);
-  // 会話の一覧は内側左列に置き、上に DM・メール・連絡先の切り替えを置く（2026-10-15、旦那様「内側左列の使い方が下手すぎる」）。
-  // 列を畳むと一覧は本文の左へ戻る。
-  assert.match(app, /switchRow\("受信の種類", \[\["DM", "messages"\], \["メール", "mail"\], \["連絡先", "contacts"\]\]\)/);
-  assert.match(app, /if \(inColumn\) \{ if \(messagesSide\.parentElement !== sidebarContext\) sidebarContext\.append\(messagesSide\); \}/);
+  // 受信トレイの列は切り替え無しの木：根「メール」と根「連絡先」（2026-11-02）。会話の一覧は本文側に残る。
+  assert.doesNotMatch(app, /switchRow\("受信の種類"/);
+  assert.match(app, /tree\("メール", "mail"/);
+  assert.match(app, /tree\("連絡先", "contacts"/);
 });
 
 test("native tool windows do not duplicate the Web Hub shell", () => {
@@ -702,7 +702,7 @@ for(const name of ["community_guide","community_membership_request","community_m
   const target = {replaceChildren(...children){this.children=children;}};
   const state = {textContent:"",classList:{remove(){},add(){}}};
   const create = new Function("deps", `
-    let researchDetailController=null,communityChannelPolicyController=null,communityInviteController=null;
+    let researchDetailController=null,communityDetailController=null,communityInviteController=null;
     ${source.slice(source.indexOf('function releaseResearchDetail('),start)}
     let detailRenderRevision=0,researchAccountGeneration=0,currentView="detail";
     const detailTrail=[deps.entry],detailForwardTrail=[],toolbarTrail=[],readingDirectory=new Map(),DETAIL_PARENT_VIEW={},attachDetailAiHandoff=()=>{};
@@ -729,7 +729,7 @@ test("account changes clear thread knowledge drafts and refresh the thread viewe
   const dom=new JSDOM('<nav><button>Private sidebar</button></nav>'),sidebarContext=dom.window.document.querySelector('nav');
   const entry={name:"thread",knowledge:{proposal:"previous account draft"},replyDraft:"reply",data:{viewer:"owner"}},events={},reads=[];
   new Function("entry","window","renderDetailEntry","sidebarContext",
-    "let researchDetailController=null,communityChannelPolicyController=null,communityInviteController=null,researchAccountGeneration=0,detailRenderRevision=0,currentView='detail';const detailTrail=[entry],detailForwardTrail=[],toolbarTrail=[];"+source.slice(source.indexOf("function releaseResearchDetail("),source.indexOf("async function renderDetailEntry("))+source.slice(start,end)
+    "let researchDetailController=null,communityDetailController=null,communityInviteController=null,researchAccountGeneration=0,detailRenderRevision=0,currentView='detail';const detailTrail=[entry],detailForwardTrail=[],toolbarTrail=[];"+source.slice(source.indexOf("function releaseResearchDetail("),source.indexOf("async function renderDetailEntry("))+source.slice(start,end)
   )(entry,{addEventListener:(name,handler)=>{events[name]=handler;}},item=>reads.push(item),sidebarContext);
   events['hub-account-changed']();assert.equal(sidebarContext.childElementCount,0);assert.equal(entry.knowledge,undefined);assert.equal(entry.replyDraft,undefined);assert.equal(entry.data,undefined);assert.deepEqual(reads,[entry]);dom.window.close();
 });
@@ -815,30 +815,27 @@ for (const [name, shipping, amount, pending] of [
   const shop = {cart: Object.fromEntries(entries.map(({product, quantity}) => [product.id, quantity])),
     assertions: {}, zones: {}, assets: [{currency: 'JPYC', chainId: 137, chainName: 'Polygon'}], prepared: null};
   const calls = [];
-  const render = new Function('document', 'shop', 'entries', 'calls', `
+  const {renderCart: renderCartRows} = await import('./market-me.mjs');
+  const render = new Function('document', 'shop', 'entries', 'calls', 'renderCartRows', `
+    const hubAsset = () => {}, shopCartLocked = () => false, openDetail = () => {}, discardPrepared = async () => true, updateCartBadge = () => {}, shopSave = () => {}, confirmFulfillment = () => {}, showNotice = () => {};
     const checkoutBusy = false, checkoutRequests = [], checkoutAttempt = null, checkoutPendingError = '', checkoutFinishError = '', checkoutSelection = null;
     const refreshCheckoutPending = async () => calls.push('pending-read');
     const cartLines = () => entries, renderCartReview = () => {}, syncCartControls = () => {};
     const invoke = () => { throw Error('unexpected external operation'); };
     ${source.slice(start, end)}
     return renderCart;
-  `)(document, shop, entries, calls);
+  `)(document, shop, entries, calls, renderCartRows);
   await render();
   assert.deepEqual(calls, ['pending-read']);
-  const lines = [...document.querySelectorAll('#cart-lines > .card')];
+  const lines = [...document.querySelectorAll('#cart-lines .mk-row')];
   assert.equal(lines.length, entries.length);
   entries.forEach(({product, quantity}, index) => {
-    const price = lines[index].querySelector('p.meta').textContent;
+    const price = lines[index].querySelector('.mk-row-price').textContent;
     assert.match(lines[index].textContent, /販売者/);
     assert.match(lines[index].textContent, /販売条件・返品/);
-    if (product.shippingJpyc === null) {
-      assert.ok(price.includes(`${(product.priceJpyc * quantity).toLocaleString()} JPYC`));
-      assert.match(price, /送料は注文時に確認/);
-      assert.doesNotMatch(price, /送料込/);
-    } else {
-      assert.ok(price.includes(`${(product.priceJpyc * quantity + product.shippingJpyc).toLocaleString()} JPYC`));
-      assert.match(price, /送料込/);
-    }
+    // 行の金額は商品分だけ（送料は合計の欄で扱う）。送料込みとは言わない。
+    assert.equal(price, `${(product.priceJpyc * quantity).toLocaleString()} JPYC`);
+    assert.doesNotMatch(lines[index].textContent, /送料込/);
   });
   const total = document.querySelector('#cart-totals dl > div');
   assert.equal(total.querySelector('dt').textContent, pending ? '商品・確認済み送料（税込・目安）' : '商品・送料（税込・目安）');

@@ -1,6 +1,7 @@
 export const SEARCH_ENGINES = Object.freeze({
-  google: { label: 'Google', url: 'https://www.google.com/search?q=' },
   duckduckgo: { label: 'DuckDuckGo', url: 'https://duckduckgo.com/?q=' },
+  brave: { label: 'Brave', url: 'https://search.brave.com/search?q=' },
+  google: { label: 'Google', url: 'https://www.google.com/search?q=' },
   bing: { label: 'Bing', url: 'https://www.bing.com/search?q=' },
 });
 

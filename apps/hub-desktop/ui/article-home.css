@@ -1,0 +1,82 @@
+/* 記事のホーム：注目の1行 + 線で区切った行、空の状態（2026-11-02）。
+   色・字・余白は tokens.css のトークンだけ。金は線だけ（--emphasis は使わない）、ボタンは平ら、箱は作らない。
+   #articles-results は既存のグリッド（余白つき）なので、この節は全列に渡って並ぶ。 */
+#hub-shell #articles-results > :is(.ar-home, .ar-empty) { grid-column: 1 / -1; }
+#hub-shell .ar-home { display: block; margin: 0 calc(-1 * var(--ds-page-inset)); }
+
+/* 行：左に題・要約・メタ、右に 120×80 のサムネイル。行どうしは線で区切る（隙間は 0）。 */
+#hub-shell .ar-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  box-sizing: border-box;
+  padding: var(--space-4) var(--ds-page-inset);
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--text);
+}
+#hub-shell .ar-row.is-link { cursor: pointer; transition: background var(--dur-fast) var(--ease-out); }
+#hub-shell .ar-row.is-link:hover { background: var(--interactive-hover); }
+#hub-shell .ar-row.is-link:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+#hub-shell .ar-body { display: grid; flex: 1 1 auto; gap: var(--space-1); min-width: 0; }
+#hub-shell .ar-title {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: var(--text);
+  font-size: var(--type-body);
+  line-height: var(--lh-body);
+  font-weight: var(--weight-bold);
+  font-feature-settings: "palt";
+  overflow-wrap: anywhere;
+}
+#hub-shell .ar-summary {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: var(--muted);
+  font-size: var(--type-body);
+  line-height: var(--lh-body);
+  overflow-wrap: anywhere;
+}
+#hub-shell .ar-meta { margin: 0; overflow: hidden; color: var(--muted); font-size: var(--type-subhead); line-height: var(--lh-subhead); text-overflow: ellipsis; white-space: nowrap; }
+/* サムネイルが radius を持つ（8）。寸法は先に決まる。 */
+#hub-shell .ar-row > .ar-thumb { flex: none; width: 120px; height: 80px; aspect-ratio: auto; margin: 0; border-radius: var(--radius-sm); }
+#hub-shell .ar-row > .ar-thumb > .ds-cover { display: grid; place-items: center; position: absolute; inset: 0; font-size: var(--type-subhead); line-height: var(--lh-subhead); font-weight: var(--weight-bold); }
+
+/* 注目の行：題を大きく、サムネイルも大きく。下の線だけ強める。 */
+#hub-shell .ar-featured { align-items: center; padding-block: var(--space-5); border-bottom-color: var(--line-strong); }
+#hub-shell .ar-featured .ar-body { gap: var(--space-2); }
+#hub-shell .ar-featured .ar-title { -webkit-line-clamp: 3; font-size: var(--type-title1); line-height: var(--lh-title1); font-weight: var(--weight-heavy); }
+#hub-shell .ar-featured .ar-summary { -webkit-line-clamp: 3; }
+#hub-shell .ar-row.ar-featured > .ar-thumb { width: 240px; height: 160px; }
+
+/* 空の状態：題 20/800・本文 15 muted（最大 360）・副ボタンは 36px で1つまで。記号の円盤は置かない。 */
+#hub-shell .ar-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: var(--space-6) 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+#hub-shell .ar-empty-title { margin: 0; color: var(--text); font-size: var(--type-title2); line-height: var(--lh-title2); font-weight: var(--weight-heavy); }
+#hub-shell .ar-empty-body { max-width: 360px; margin: 0; color: var(--muted); font-size: var(--type-body); line-height: var(--lh-body); }
+#hub-shell .ar-empty-action { height: var(--ds-btn-h); min-height: 0; margin-top: var(--space-2); padding: 0 var(--space-4); }
+
+@media (max-width: 640px) {
+  #hub-shell .ar-row.ar-featured { flex-direction: column-reverse; align-items: stretch; }
+  #hub-shell .ar-row.ar-featured > .ar-thumb { width: 100%; height: auto; aspect-ratio: 3 / 2; }
+}

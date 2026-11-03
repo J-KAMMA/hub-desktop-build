@@ -2,6 +2,8 @@
 // 表紙、題、アーティスト、曲数、全曲再生、曲の一覧。Hub 公開曲はここからアプリ内で再生する。
 // 購入・決済の操作は置かない。データはデスクトップが既に読める音楽の目録（music_tracks / hub_resource music）から組む。
 import { createArtwork, youtubeSource } from './music-youtube.mjs';
+import { filterWorks } from './yt-unplayable.mjs';
+import { musicMenuButton } from './music-track-menu.mjs';
 
 const HUB_TRACK = /^music:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 const BARE_TRACK = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
@@ -21,7 +23,7 @@ export function normalizeEntries(...sources) {
   const map = new Map();
   for (const list of sources) {
     if (!Array.isArray(list)) continue;
-    for (const item of list) {
+    for (const item of filterWorks(list)) {
       if (!item || typeof item !== 'object' || typeof item.id !== 'string' || typeof item.title !== 'string' || !item.title) continue;
       const bare = BARE_TRACK.test(item.id);
       const prefixed = HUB_TRACK.test(item.id);
@@ -52,6 +54,27 @@ export function selectCollection(entries, { kind, name, artist = '' }) {
 
 export const collectionTypeLabel = (kind, rows) => (kind === 'artist' ? 'アーティスト' : rows.length > 1 ? 'アルバム' : 'シングル');
 
+const secondsLabel = (value) => {
+  const seconds = Number(value);
+  if (!Number.isFinite(seconds) || seconds <= 0) return '';
+  const total = Math.round(seconds);
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+};
+
+/** 曲の並び（selectCollection の結果）からアルバムの札を作る。アルバム名を持つ曲だけ。初めに現れた順で安定。 */
+export function albumTiles(rows) {
+  const map = new Map();
+  for (const row of rows) {
+    if (!row.work.album) continue;
+    const label = albumLabel(row.work), key = collectionKey(label);
+    if (!key) continue;
+    const entry = map.get(key) ?? { name: label, count: 0, cover: row.work };
+    entry.count++;
+    map.set(key, entry);
+  }
+  return [...map.values()];
+}
+
 const el = (document, tag, className, text) => {
   const node = document.createElement(tag);
   if (className) node.className = className;
@@ -69,7 +92,7 @@ const link = (document, label, action, aria) => {
 /**
  * @param seed     いま手元にある曲・作品（同期で先に出す）
  * @param load     追加で目録を引く。配列（またはその Promise）を返す。失敗しても seed の分は残る
- * @param actions  { playTracks(tracks, startTrack), playWork(work), openWork(work), enqueue(track), openArtist(name), openAlbum(name, artist) }
+ * @param actions  { playTracks(tracks, startTrack), playWork(work), enqueue(track), openArtist(name), openAlbum(name, artist) }
  */
 export function renderMusicCollection({ document, host, kind, name, artist = '', seed = [], load, hubAsset, actions, isCurrent = () => true }) {
   if (kind !== 'artist' && kind !== 'album') throw Error('invalid_collection_kind');
@@ -129,11 +152,11 @@ export function renderMusicCollection({ document, host, kind, name, artist = '',
       const copy = el(document, 'span', 'mc-text');
       const title = el(document, 'button', 'mc-title', row.work.title);
       title.type = 'button';
-      title.setAttribute('aria-label', `${row.work.title}を${row.hub ? '再生' : '開く'}`);
+      title.setAttribute('aria-label', `${row.work.title}を再生`);
       title.onclick = () => {
         if (!live()) return;
         if (row.hub) actions.playTracks?.(hubRows.map((entry) => entry.track), row.track);
-        else actions.openWork?.(row.work);
+        else actions.playWork?.(row.work);
       };
       const sub = el(document, 'span', 'mc-sub');
       if (row.work.artist) sub.append(link(document, row.work.artist, () => actions.openArtist?.(row.work.artist), `${row.work.artist}のアーティストページを開く`));
@@ -143,21 +166,43 @@ export function renderMusicCollection({ document, host, kind, name, artist = '',
         sub.append(link(document, albumName, () => actions.openAlbum?.(albumName, row.work.artist ?? ''), `アルバム ${albumName}を開く`));
       }
       copy.append(title, sub);
-      item.append(copy);
-      const side = el(document, 'button', 'head-action mc-next', row.hub ? '次に再生' : '詳細');
-      side.type = 'button';
-      side.setAttribute('aria-label', `${row.work.title}${row.hub ? 'を次に再生' : 'の詳細を開く'}`);
-      side.onclick = () => {
-        if (!live()) return;
-        if (row.hub) actions.enqueue?.(row.track);
-        else actions.openWork?.(row.work);
-      };
-      item.append(side);
+      item.append(copy, el(document, 'span', 'mc-time', secondsLabel(row.work.durationSeconds ?? row.work.duration)));
+      if (row.hub) {
+        const side = el(document, 'button', 'head-action mc-next', '次に再生');
+        side.type = 'button';
+        side.setAttribute('aria-label', `${row.work.title}を次に再生`);
+        side.onclick = () => { if (live()) actions.enqueue?.(row.track); };
+        item.append(side);
+      }
+      item.append(musicMenuButton(document, row.work, { className: 'mc-more' }));
       list.append(item);
     });
     const children = [hero, status];
     if (rows.length) children.push(list);
     else if (!loading) children.push(el(document, 'p', 'meta mc-empty', failed ? '曲を取得できませんでした。' : `${name}の曲は見つかりませんでした。`));
+    if (kind === 'artist') {
+      const albums = albumTiles(rows);
+      if (albums.length) {
+        const shelf = el(document, 'section', 'mc-albums');
+        shelf.setAttribute('aria-label', 'アルバム');
+        shelf.append(el(document, 'h3', 'mh-shelf-title', 'アルバム'));
+        const strip = el(document, 'div', 'mh-row');
+        strip.setAttribute('role', 'list');
+        for (const album of albums) {
+          const card = el(document, 'article', 'mh-card mc-album');
+          card.setAttribute('role', 'listitem');
+          const open = el(document, 'button', 'mh-card-open');
+          open.type = 'button';
+          open.setAttribute('aria-label', `アルバム ${album.name}を開く`);
+          open.append(createArtwork(document, album.cover, { hubAsset, className: 'mw-art mw-art-card' }), el(document, 'strong', 'mh-card-title', album.name), el(document, 'span', 'mh-card-artist', `${album.count}曲`));
+          open.onclick = () => { if (live()) actions.openAlbum?.(album.name, name); };
+          card.append(open);
+          strip.append(card);
+        }
+        shelf.append(strip);
+        children.push(shelf);
+      }
+    }
     root.replaceChildren(...children);
     root.setAttribute('aria-busy', String(loading));
   }

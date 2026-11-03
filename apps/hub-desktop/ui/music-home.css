@@ -103,3 +103,34 @@
 .yt-now-close:hover { background: var(--interactive-hover); }
 
 .music-tab[hidden], #music-home[hidden] { display: none; }
+
+/* ===== 音楽ホーム：検索欄と横の棚（2026-11-02、Spotify のデスクトップ版の配置を参考。色・記号・名前は写さない） ===== */
+.mh { gap: var(--space-5); }
+.mh-head { display: grid; gap: var(--space-2); }
+.mh-head .mh-greeting { order: -1; }
+#hub-shell .view .mh-search { position: relative; width: 100%; max-width: 480px; padding: 0 var(--space-3) 0 var(--space-4); border-radius: var(--radius-pill); background: var(--surface-sunken); }
+#hub-shell .view .mh-search input[type="search"] { flex: 1; width: auto; max-width: none; }
+.mh-search-go { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--muted); cursor: pointer; }
+.mh-search-go:hover { background: var(--interactive-hover); color: var(--text); }
+.mh-search-icon { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.mh-shelf { gap: var(--space-2); min-width: 0; }
+.mh-row { display: grid; grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 168px; gap: var(--space-2); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; padding-bottom: var(--space-2); }
+.mh-card { min-width: 0; }
+.mh-card-play { right: 20px; bottom: 74px; display: none; border-radius: 50%; box-shadow: inset 0 0 0 1px var(--ds-btn-primary-line); }
+.mh-quiet-line { margin: 0; color: var(--muted); font-size: var(--type-subhead); line-height: var(--lh-subhead); }
+.mh-quiet { display: flex; align-items: center; gap: var(--space-3); }
+.mh-skeleton-card { width: 168px; }
+
+/* ===== 再生中のバー：画面の下に1つだけ（#music-player）。左に絵・題・アーティスト、中央に操作とシーク、右に音量と再生待ち。===== */
+#hub-shell #music-player { grid-template-columns: minmax(180px, 1fr) minmax(260px, 1.6fr) minmax(110px, 1fr); min-height: 72px; padding: var(--space-2) var(--space-4); box-shadow: none; border-width: 1px 0 0; }
+#hub-shell #music-player .music-player-art { grid-column: 1; grid-row: 1; justify-self: start; }
+#hub-shell #music-player .music-player-text { grid-column: 1; grid-row: 1; margin-left: 64px; }
+#hub-shell #music-player .music-player-controls { grid-column: 2; grid-row: 1; }
+#hub-shell #music-player .music-volume { grid-column: 3; grid-row: 1; justify-self: end; font-size: 0; }
+#hub-shell #music-player .music-volume input { font-size: var(--type-caption); }
+#hub-shell #music-player .music-player-buttons button { background: none; box-shadow: none; }
+#hub-shell #music-player .music-player-buttons #music-toggle { background: var(--text); color: var(--panel); }
+#hub-shell #music-player .music-player-buttons button[aria-expanded="true"] { color: var(--ds-btn-primary-line); }
+#music-player:not([hidden]) ~ .yt-now-bar { bottom: 72px; }
+.app-shell:has(#music-player:not([hidden])) .view.on { padding-bottom: 96px; }
+.mh-head { padding-top: var(--space-3); }

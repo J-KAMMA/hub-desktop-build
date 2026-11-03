@@ -43,3 +43,15 @@
   -webkit-line-clamp: unset;
   white-space: nowrap;
 }
+/* 会話の一覧：検索欄は枠なしの面（日付の見出しの下に行が並ぶ） */
+#sidebar-ai-history .piw-history-search { border: 0; background: var(--interactive); }
+#sidebar-ai-history .piw-history-search:focus-visible { outline: 1px solid var(--emphasis); }
+#sidebar-ai-history .piw-history-delete { display: block; width: auto; min-height: 28px; margin: 0 0 var(--space-1) var(--space-2); padding: 0 var(--space-2); border: 0; background: transparent; color: var(--muted); font-size: var(--type-caption); text-align: left; }
+#sidebar-ai-history .piw-history-delete:hover { background: var(--interactive); color: var(--text); }
+/* Tree guides (2026-11-04): the runs under 今日 / 過去7日 / それ以前 hang off the same guide and elbow as the feed column. */
+#sidebar-ai-history .piw-history-project > :is(.piw-history-item, .piw-history-more, .piw-history-delete):not(#_) { position: relative; box-sizing: border-box; width: calc(100% - 22px); margin-left: 22px; }
+#sidebar-ai-history .piw-history-project > :is(.piw-history-item, .piw-history-more, .piw-history-delete):not(#_)::before { content: ""; position: absolute; top: -1px; bottom: -1px; left: -6px; border-left: 1px solid var(--line-strong); pointer-events: none; }
+#sidebar-ai-history .piw-history-project > :is(.piw-history-item, .piw-history-more):not(#_)::after { content: ""; position: absolute; top: -1px; height: calc(50% + 1px); left: -6px; width: 6px; border-left: 1px solid var(--line-strong); border-bottom: 1px solid var(--line-strong); border-bottom-left-radius: 8px; pointer-events: none; }
+#sidebar-ai-history .piw-history-project > :is(.piw-history-item, .piw-history-more, .piw-history-delete):not([hidden]):not(:has(~ :is(.piw-history-item, .piw-history-more, .piw-history-delete):not([hidden]))):not(#_)::before { content: none; }
+#sidebar-ai-history .piw-history-project-head + .piw-history-item:not(#_)::before { top: -6px; }
+#sidebar-ai-history .piw-history-project-head + .piw-history-item:not(#_)::after { top: -6px; height: calc(50% + 6px); }

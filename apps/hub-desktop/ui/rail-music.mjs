@@ -6,6 +6,9 @@
 // 埋め込み枠）は app.js の共有エンジンを deps 経由で使い、YouTube の枠は右列の置き場（ytHost）に置く。
 import { createArtwork, youtubeSource } from './music-youtube.mjs';
 import { railAvatar, railRow } from './rail-panels.mjs';
+import { musicMenuButton } from './music-track-menu.mjs';
+import { openLicenseLabel, licenseDeedUrl } from './content-license.mjs';
+import { DOWNLOAD_NONE_NOTICE, DOWNLOAD_WATERMARK_NOTICE } from './content-download.mjs';
 
 const HUB_TRACK = /^music:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 const PREVIEW = 10;
@@ -35,6 +38,7 @@ export const railTrackOf = (work) => (typeof work?.id === 'string' && HUB_TRACK.
  *  youtube: {play(work, panel), stop(), isPlaying(workId), subscribe(fn)}   共有の YouTube 枠
  *  collection({host, kind, name, artist, actions, isCurrent})   アーティスト／アルバムの頁
  *  library({host, actions, isCurrent}) / playlists({host, actions, isCurrent})
+ *  posts({host, work, isCurrent}) / report({host, work, isCurrent, open}) / download(work)   作品の下に出すポスト・報告・ダウンロード
  *  nav: {visit(route)}                            右列の戻る・進む履歴に積む
  */
 export function createRailMusic({ document, host, ytHost, deps, hubAsset = null }) {
@@ -86,18 +90,16 @@ export function createRailMusic({ document, host, ytHost, deps, hubAsset = null 
     return line;
   }
 
-  // 公開曲は行を押すとその場で再生。外部作品は右列の作品ページへ掘り下げる。
+  // 1曲1行：押すとその場で再生（公開曲は音声、YouTube は右列の枠）。⋯ に曲の操作が入る。アーティストへの移動は作品の見出しの名前から。
   function itemRow(work, queue) {
     const item = el(document, 'div', 'rail-music-item');
     const track = railTrackOf(work) ?? (work.kind === 'track' ? work : null);
     const open = track
       ? () => void deps.playTrack(track, queue.map((entry) => railTrackOf(entry) ?? entry))
-      : () => go({ type: 'work', work });
+      : () => go({ type: 'work', work, autoplay: true });
     item.append(railRow(document, { title: work.title || '楽曲', text: work.artist || '', avatar: railAvatar(document, { icon: 'music' }), onOpen: open }));
-    const links = sublinks(work);
-    if (track) links.append(button(document, '次に再生', () => deps.enqueue(track), 'rail-music-link', `${work.title || '楽曲'}を次に再生`));
-    else links.append(button(document, '詳細', () => go({ type: 'work', work }), 'rail-music-link', `${work.title || '楽曲'}の詳細を右列で開く`));
-    if (links.childNodes.length) item.append(links);
+    const more = musicMenuButton(document, track && !HUB_TRACK.test(String(work.id ?? '')) ? { ...track, id: `music:${track.id}` } : work, { className: 'rail-music-detail' });
+    item.append(more);
     return item;
   }
 
@@ -166,7 +168,6 @@ export function createRailMusic({ document, host, ytHost, deps, hubAsset = null 
       actions: {
         playTracks: (tracks, start) => { const index = tracks.findIndex((track) => track.id === start.id); const from = index >= 200 ? index : 0; void deps.playTrack(start, tracks.slice(from, from + 200)); },
         playWork: (work) => go({ type: 'work', work, autoplay: true }),
-        openWork: (work) => go({ type: 'work', work }),
         enqueue: (track) => deps.enqueue(track),
         openArtist: (name) => { const value = String(name ?? '').trim(); if (value) go({ type: 'artist', name: value.slice(0, 128) }); },
         openAlbum: (name, artist = '') => { const value = String(name ?? '').trim(); if (value) go({ type: 'album', name: value.slice(0, 128), artist: String(artist ?? '').trim() }); },
@@ -181,7 +182,7 @@ export function createRailMusic({ document, host, ytHost, deps, hubAsset = null 
     const handle = deps.library({ host: slot, isCurrent,
       actions: {
         play: (work, queue) => deps.playTrack(railTrackOf(work) ?? work, queue.map((entry) => railTrackOf(entry) ?? entry)),
-        open: (work) => go({ type: 'work', work }),
+        open: (work) => go({ type: 'work', work, autoplay: true }),
         enqueue: (work) => deps.enqueue(railTrackOf(work) ?? work),
       } });
     disposeRoute = () => handle?.destroy?.();
@@ -192,7 +193,7 @@ export function createRailMusic({ document, host, ytHost, deps, hubAsset = null 
     const slot = el(document, 'div', 'rail-music-collection');
     host.replaceChildren(el(document, 'h3', 'rail-music-page-title', 'プレイリスト'), slot);
     const handle = deps.playlists({ host: slot, isCurrent,
-      actions: { open: (item) => go({ type: 'work', work: item }), play: (queue, startId) => deps.playTrack(queue.find((track) => track.id === startId) ?? queue[0], queue) } });
+      actions: { open: (item) => go({ type: 'work', work: item, autoplay: true }), play: (queue, startId) => deps.playTrack(queue.find((track) => track.id === startId) ?? queue[0], queue) } });
     disposeRoute = () => (handle?.dispose ?? handle?.destroy)?.call(handle);
   }
 
@@ -200,7 +201,7 @@ export function createRailMusic({ document, host, ytHost, deps, hubAsset = null 
   function showWork(r) {
     const mine = turn;
     const work = r.work ?? {};
-    const track = railTrackOf(work);
+    const track = railTrackOf(work) ?? (work.kind === 'track' ? work : null);
     const source = youtubeSource(work);
     const page = el(document, 'section', 'rail-music-work');
     page.setAttribute('aria-label', '作品');
@@ -209,7 +210,7 @@ export function createRailMusic({ document, host, ytHost, deps, hubAsset = null 
     const text = el(document, 'div', 'rail-music-work-text');
     text.append(el(document, 'h3', '', work.title || '楽曲'));
     page.append(hero);
-    hero.append(text);
+    hero.append(text, musicMenuButton(document, work, { className: 'rail-music-work-more' }));
     const links = sublinks(work);
     if (links.childNodes.length) text.append(links);
     if (work.description) page.append(el(document, 'p', 'rail-music-work-body', String(work.description)));
@@ -230,7 +231,31 @@ export function createRailMusic({ document, host, ytHost, deps, hubAsset = null 
       } else status.textContent = 'この作品は右列で再生できる提供元がありません。';
     };
     page.append(actions, status);
+    // 公開曲のライセンスとダウンロード（許可は Music の設定。押すと Hub の作品頁をブラウザで開く）。
+    if (track && HUB_TRACK.test(String(work.id ?? ''))) {
+      const license = openLicenseLabel(work.license);
+      if (license) {
+        const line = el(document, 'p', 'meta rail-music-license', 'ライセンス：');
+        const deed = licenseDeedUrl(work.license);
+        if (deed && deps.openExternal) line.append(button(document, license, () => deps.openExternal(deed), 'rail-music-link', `${license}の公式の頁を開く`));
+        else line.append(license);
+        page.append(line);
+      }
+      const download = deps.download?.(work);
+      if (download) {
+        if (download.allowed) page.append(button(document, 'ダウンロード（Hubで開く）', () => download.open(), 'rail-music-chip'), el(document, 'p', 'meta', DOWNLOAD_WATERMARK_NOTICE));
+        else page.append(el(document, 'p', 'meta', DOWNLOAD_NONE_NOTICE));
+      }
+    }
+    // 曲のポスト（music_posts の読み取り）と、外部作品の報告。ポストは枠の下に出す。
+    const postsSlot = el(document, 'div', 'rail-music-work-posts');
+    const reportSlot = el(document, 'div', 'rail-music-work-report');
+    page.append(postsSlot, reportSlot);
     host.replaceChildren(page);
+    const isCurrent = () => mine === turn;
+    const posts = deps.posts?.({ host: postsSlot, work, isCurrent });
+    const report = deps.report?.({ host: reportSlot, work, isCurrent, open: r.report === true });
+    disposeRoute = () => { posts?.destroy?.(); report?.destroy?.(); };
     paint();
     if (source) unsubscribe = deps.youtube.subscribe(paint);
     if (r.autoplay && source && !deps.youtube.isPlaying(work.id ?? null)) { r.autoplay = false; deps.youtube.play(work, ytHost); }

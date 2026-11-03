@@ -200,7 +200,7 @@ html[data-material="mica"] #hub-shell .icon-rail { background: var(--material-mi
 #hub-shell.apps-active .icon-rail #desktop-apps { background: var(--interactive); color: var(--text); }
 #hub-shell .icon-rail :is(.icon-button, .icon-nav-item):focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
 /* 黒金: 現在地の記号の線を金にする（塗らない）。 */
-html[data-palette="gold-ivory"] #hub-shell .icon-rail :is(.icon-nav-item.on, #desktop-apps.current) svg { color: var(--emphasis); }
+html:is([data-template="noir"], [data-template="ivory"]) #hub-shell .icon-rail :is(.icon-nav-item.on, #desktop-apps.current) svg { color: var(--emphasis); }
 #hub-shell .icon-rail .navigation-group-start { margin-top: var(--space-2); }
 #hub-shell .icon-rail .icon-rail-main > .rail-bottom-start { margin-top: auto; }
 @media (max-height: 679px) {
@@ -254,7 +254,7 @@ html[data-palette="gold-ivory"] #hub-shell .icon-rail :is(.icon-nav-item.on, #de
 #hub-shell .icon-rail #desktop-compose svg { flex: 0 0 22px; width: 22px; height: 22px; stroke-width: 2; }
 #hub-shell.rail-expanded .icon-rail #desktop-compose::after { flex: 0 1 auto; order: 0; font-weight: var(--ds-weight-strong); }
 #hub-shell .icon-rail #desktop-compose:not([hidden]):hover { background: var(--ds-btn-primary-bg); color: var(--ds-btn-primary-fg); opacity: .88; }
-html[data-palette="gold-ivory"] #hub-shell .icon-rail #desktop-compose:not([hidden]):hover { background: var(--interactive); opacity: 1; }
+html:is([data-template="noir"], [data-template="ivory"]) #hub-shell .icon-rail #desktop-compose:not([hidden]):hover { background: var(--interactive); opacity: 1; }
 #hub-shell .icon-rail #desktop-compose:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 
 /* ===== 画面のサイドバーと右列の帯 ===== */
@@ -345,7 +345,6 @@ html[data-material="mica"] #hub-shell:not(.rail-open) .rail-marks { background: 
 #hub-shell .rail-wallet-action-icon { display: grid; place-items: center; width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 50%; background: var(--interactive); transition: background var(--dur-fast) var(--ease-out), transform var(--dur-press) var(--ease-out), border-color var(--dur-fast) var(--ease-out); }
 #hub-shell .rail-wallet-action-icon svg { width: 22px; height: 22px; }
 #hub-shell .rail-wallet-action:hover:not(:disabled) .rail-wallet-action-icon { background: var(--interactive-hover); }
-#hub-shell .rail-wallet-action:active:not(:disabled) .rail-wallet-action-icon { transform: scale(.94); }
 #hub-shell .rail-wallet-action:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 4px; border-radius: var(--radius-md); }
 #hub-shell .rail-wallet-action[aria-expanded="true"] .rail-wallet-action-icon { background: var(--selected); }
 #hub-shell .rail-wallet-action:disabled { opacity: .45; cursor: not-allowed; }
@@ -471,7 +470,7 @@ html[data-material="mica"] #hub-shell:not(.rail-open) .rail-marks { background: 
   color: var(--emphasis);
   transition: transform .15s ease, background .15s ease;
 }
-#hub-shell #rail-wallet .rail-wallet-action:hover:not(:disabled) .rail-wallet-action-icon { background: var(--interactive); transform: translateY(-1px); }
+#hub-shell #rail-wallet .rail-wallet-action:hover:not(:disabled) .rail-wallet-action-icon { background: var(--interactive); }
 #hub-shell #rail-wallet .rail-wallet-action svg { width: 20px; height: 20px; stroke-width: 2.2; }
 #hub-shell #rail-wallet .rail-wallet-action-label { font-size: var(--type-caption); font-weight: var(--weight-regular); color: var(--text); }
 #hub-shell #rail-wallet .rail-wallet-action:disabled { opacity: .45; }

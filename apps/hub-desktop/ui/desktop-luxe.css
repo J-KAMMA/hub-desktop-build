@@ -13,7 +13,7 @@
   letter-spacing: 0;
 }
 #hub-shell :is(.view, .sidebar, .rail, .dialog-shell) :is(.btn-primary, .approve):hover:not(:disabled) { background: var(--ds-btn-primary-bg); color: var(--ds-btn-primary-fg); opacity: .88; }
-html[data-palette="gold-ivory"] #hub-shell :is(.view, .sidebar, .rail, .dialog-shell) :is(.btn-primary, .approve):hover:not(:disabled) { background: var(--interactive); opacity: 1; }
+html:is([data-template="noir"], [data-template="ivory"]) #hub-shell :is(.view, .sidebar, .rail, .dialog-shell) :is(.btn-primary, .approve):hover:not(:disabled) { background: var(--interactive); opacity: 1; }
 #hub-shell :is(.btn-secondary, .head-action, .deny) {
   border: 1px solid var(--ds-btn-secondary-line);
   background: var(--ds-btn-secondary-bg);
@@ -37,9 +37,9 @@ html[data-palette="gold-ivory"] #hub-shell :is(.view, .sidebar, .rail, .dialog-s
   letter-spacing: 0;
 }
 #hub-shell .chip.on { border-color: var(--ds-chip-selected-line); background: transparent; color: var(--text); font-weight: var(--ds-weight-strong); }
-html[data-palette="gold-ivory"] .chip, html[data-palette="gold-ivory"] .chip.on { color: var(--text); }
-html[data-palette="gold-ivory"] .chip { background: var(--ds-chip-bg); border-color: transparent; }
-html[data-palette="gold-ivory"] .chip.on { background: transparent; border-color: var(--ds-chip-selected-line); }
+html:is([data-template="noir"], [data-template="ivory"]) .chip, html:is([data-template="noir"], [data-template="ivory"]) .chip.on { color: var(--text); }
+html:is([data-template="noir"], [data-template="ivory"]) .chip { background: var(--ds-chip-bg); border-color: transparent; }
+html:is([data-template="noir"], [data-template="ivory"]) .chip.on { background: transparent; border-color: var(--ds-chip-selected-line); }
 
 /* ===== 見出し・札・区切り ===== */
 #hub-shell .page-title, #hub-shell .view-head h2 { font-size: var(--ds-type-title-size); font-weight: var(--ds-weight-heavy); line-height: var(--ds-type-title-leading); letter-spacing: 0; }

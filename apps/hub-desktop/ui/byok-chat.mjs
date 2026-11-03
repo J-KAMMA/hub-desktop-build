@@ -3,6 +3,7 @@
 import { runChain, createByokStarter } from './ai-fallback.mjs';
 import { loadRules, resolveChain } from './ai-routing.mjs';
 import { privacyLabel } from './ai-provider-privacy.mjs';
+import { createWebSearch, withSearchContext } from './ai-web-search.mjs';
 import { REFUSAL, parseEvidence, buildPrompt, checkAnswer, renderCitations, cleanQuestion } from './hubpedia-ask.mjs';
 
 export const API_PREFIX = 'byok:';
@@ -127,8 +128,9 @@ export function createConnectionChat({ document, invoke, listen, host, timeline,
   panel.append(note, list, status, stop);
   host.append(panel);
 
-  let history = [], current = null, early = [], unlisten = null;
-  const busy = () => current !== null;
+  let history = [], current = null, early = [], unlisten = null, searching = false;
+  const webSearch = createWebSearch({ document, invoke });
+  const busy = () => current !== null || searching;
 
   function show(on) {
     panel.hidden = !on;
@@ -186,7 +188,7 @@ export function createConnectionChat({ document, invoke, listen, host, timeline,
     hide() { if (!busy()) show(false); },
     reset() {
       if (busy()) return false;
-      history = []; list.replaceChildren(); status.textContent = '';
+      history = []; list.replaceChildren(); status.textContent = ''; webSearch.reset();
       show(false);
       return true;
     },
@@ -194,12 +196,23 @@ export function createConnectionChat({ document, invoke, listen, host, timeline,
     async send(text, ref, label = '') {
       const target = parseRef(ref), content = String(text ?? '').trim();
       if (!target || !content || busy()) return false;
-      await ensureListener();
+      searching = true;
+      try { await ensureListener(); } finally { searching = false; }
       note.textContent = `${target.source === 'cli' ? CLI_NOTE : BILLING_NOTE} ${MEMORY_NOTE}`;
       show(true);
       history.push({ role: 'user', content });
       bubble('user', content);
       const node = bubble('assistant', '');
+      // 「Web検索」が入のときだけ、承認を通した検索結果を今回の質問に添える（履歴と画面には元の質問だけ残す）。
+      let outgoing = history;
+      if (webSearch.enabled()) {
+        searching = true; stop.hidden = true;
+        status.textContent = '検索の承認を待っています…';
+        const found = await webSearch.run(content);
+        searching = false;
+        status.textContent = found.note;
+        if (found.results.length) outgoing = history.map((m, i) => (i === history.length - 1 ? { ...m, content: withSearchContext(m.content, found.results) } : m));
+      }
       // 代替先の順序が設定されていれば、選んだモデルを先頭に、残りを順に試す。
       const rules = routing ? loadRules(routing.storage) : null;
       const rest = rules ? resolveChain(rules, routing.getTask?.() ?? 'chat', routing.available?.() ?? []).filter((r) => r !== ref) : [];
@@ -212,7 +225,7 @@ export function createConnectionChat({ document, invoke, listen, host, timeline,
         stop.hidden = false; stop.disabled = false;
         status.textContent = `${label || target.model || '既定のモデル'} に問い合わせています…`;
         onChange(true);
-        const snapshot = history.map((m) => ({ ...m }));
+        const snapshot = outgoing.map((m) => ({ ...m }));
         let switched = false;
         mine.run = runChain({
           entries: [ref, ...rest], refusalFallback: rules.refusalFallback,
@@ -237,7 +250,7 @@ export function createConnectionChat({ document, invoke, listen, host, timeline,
       status.textContent = `${label || target.model || '既定のモデル'} に問い合わせています…`;
       onChange(true);
       try {
-        current.id = await invoke('byok_chat_start', { input: { source: target.source, id: target.id, model: target.model, messages: history } });
+        current.id = await invoke('byok_chat_start', { input: { source: target.source, id: target.id, model: target.model, messages: outgoing } });
       } catch (error) {
         finish(errorText(error), false);
         return true;

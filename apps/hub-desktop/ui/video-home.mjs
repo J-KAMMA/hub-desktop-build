@@ -1,5 +1,6 @@
 // 動画のホーム（続きを見る・あとで見る・話題ごとの行）と視聴画面の部品。ヒーローは置かない（2026-10-15、デスクトップ仕様 §3.4）。画面の組み立てだけを持ち、通信や遷移は app.js から渡される。
 import { youtubeVideoId, createYouTubePlayer, youtubeThumbnailUrl } from './youtube-embed.mjs';
+import { filterVideos } from './yt-unplayable.mjs';
 import { isAllowedImageUrl, createTextCover } from './media-image.mjs';
 import { isNativeVideo, providerLabel, watchOpenLabel } from './native-video.mjs';
 import { attachNativeHls } from './native-video-player.mjs';
@@ -97,10 +98,13 @@ export function createVideoSkeletons(document, count = 6) {
   return Array.from({ length: count }, () => {
     const card = el(document, 'span', 'vh-card vh-skeleton');
     card.setAttribute('aria-hidden', 'true');
+    // 完成形の札と同じ並び：16:9 の枠、その下にチャンネルの丸と2行（題・補足）。
     const frame = el(document, 'span', 'ds-skeleton vh-skeleton-frame');
-    const lineA = el(document, 'span', 'ds-skeleton is-line vh-skeleton-line');
-    const lineB = el(document, 'span', 'ds-skeleton is-line vh-skeleton-line is-short');
-    card.append(frame, lineA, lineB);
+    const body = el(document, 'span', 'vh-skeleton-body');
+    const lines = el(document, 'span', 'vh-skeleton-lines');
+    lines.append(el(document, 'span', 'ds-skeleton is-line vh-skeleton-line'), el(document, 'span', 'ds-skeleton is-line vh-skeleton-line is-short'));
+    body.append(el(document, 'span', 'ds-skeleton vh-skeleton-avatar'), lines);
+    card.append(frame, body);
     return card;
   });
 }
@@ -134,11 +138,11 @@ export function createVideoCard(document, video, { hubAsset, relTime, onOpen, co
 }
 
 function createRow(document, title, videos, deps, open) {
-  const section = el(document, 'section', 'vh-row');
+  const section = el(document, 'section', 'vh-row vt-shelf');
   section.setAttribute('aria-label', title);
-  const grid = el(document, 'div', 'vh-grid');
+  const grid = el(document, 'div', 'vh-grid vt-grid');
   grid.append(...videos.slice(0, ROW_MAX).map((video) => createVideoCard(document, video, { ...deps, onOpen: open })));
-  section.append(el(document, 'h3', 'vh-row-title', title), grid);
+  section.append(el(document, 'h3', 'vh-row-title vt-shelf-title', title), grid);
   return section;
 }
 
@@ -185,6 +189,7 @@ export function ownFirst(items) {
 export function renderVideoHome(host, { items, deps, onOpenSaved = deps.onOpen, peerVideos = [], taken = [] }) {
   const { document } = deps;
   const nodes = [];
+  items = filterVideos(items); peerVideos = filterVideos(peerVideos); taken = filterVideos(taken);
   // 自作動画（Hub動画）は他の何よりも先に並べ、話題の行には重ねて出さない。
   const own = items.filter(isNativeVideo);
   if (own.length) {
@@ -192,10 +197,10 @@ export function renderVideoHome(host, { items, deps, onOpenSaved = deps.onOpen, 
     items = items.filter((video) => !isNativeVideo(video));
     taken = [...taken, ...own];
   }
-  const history = watchedVideos();
+  const history = filterVideos(watchedVideos()), savedList = filterVideos(savedVideos());
   if (history.length) nodes.push(createRow(document, '続きを見る', history, deps, deps.onOpen));
-  if (savedVideos().length) nodes.push(createRow(document, 'あとで見る', savedVideos(), deps, onOpenSaved));
-  const deduped = dedupeHomeSections({ groups: groupVideos(items), peerVideos, taken: [...history, ...savedVideos(), ...taken] });
+  if (savedList.length) nodes.push(createRow(document, 'あとで見る', savedList, deps, onOpenSaved));
+  const deduped = dedupeHomeSections({ groups: groupVideos(items), peerVideos, taken: [...history, ...savedList, ...taken] });
   for (const group of deduped.groups) nodes.push(createRow(document, group.name, group.videos, deps, deps.onOpen));
   // 接続した他のHubの動画（YouTubeの参照だけ）。出典のHubを各カードに表示する。
   if (deduped.peerVideos.length) nodes.push(createRow(document, 'ほかのHubの動画', deduped.peerVideos, deps, deps.onOpen));
@@ -304,7 +309,7 @@ export function createWatchHeader(document, video, { relTime }) {
 /** 「次に見る」。現在の動画を除いた一覧から、同じ分類・チャンネルを先頭に最大12件。 */
 export function createRelatedList(document, video, items, deps) {
   const rank = (item) => Number(item.category === video.category) + Number(item.channel === video.channel);
-  const others = items.filter((item) => item.id !== video.id).sort((a, b) => rank(b) - rank(a)).slice(0, 12);
+  const others = filterVideos(items).filter((item) => item.id !== video.id).sort((a, b) => rank(b) - rank(a)).slice(0, 12);
   const nodes = [el(document, 'h3', '', '次に見る'), ...others.map((item) => createVideoCard(document, item, { ...deps, compact: true }))];
   if (!others.length) nodes.push(el(document, 'p', 'meta', '次に見る動画はまだありません。'));
   return nodes;

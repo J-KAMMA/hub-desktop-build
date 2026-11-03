@@ -1,7 +1,8 @@
 // プロフィールの本文（固定の投稿・種類別のタブ・フォロー/フォロワーの一覧・リンク・登録時期）。
 // 中身は /api/client/me と /api/client/profiles/{handle} が返す範囲だけ。返らない種類のタブは作らない。
-// 記事・動画・コードは公開の一覧（?author= / ?owner=）を別に読み、1件以上返ったときだけタブを足す。
-// 音楽のタブは作らない（Musicの作り手をHubのプロフィールへ結び付けない）。
+// 記事・動画・音楽・研究・マーケットは、プロフィール応答の `kinds`（その種類が1件でもあるか）でタブを出し、
+// 開いたときに1ページだけ読む（本人のプロフィールは常に出し、空なら作る入口を添える）。コードは公開の一覧を先に確かめる。
+// 音楽は Hub のカタログに本人が登録した曲だけ（apps/music の作り手をHubのプロフィールへ結び付けない）。
 // ウォレットのアドレス・Accountの識別子・メールは受け取っても描かない（profilePeople と profileLinks で落とす）。
 
 const HANDLE = /^[A-Za-z0-9_.-]{1,64}$/;
@@ -51,9 +52,13 @@ export function profilePeople(list) {
 export function profileContent(data) {
   const all = Array.isArray(data?.posts) ? data.posts : [];
   const pinned = data?.pinnedPostId ? all.find((post) => post?.id === data.pinnedPostId) ?? null : null;
+  // 返信（replyToPostId を持つ投稿）は「返信」のタブへ。「投稿」は返信でないものだけ。
+  const isReply = (post) => typeof post?.replyToPostId === "string" && post.replyToPostId !== "";
+  const rest = pinned ? all.filter((post) => post !== pinned) : all;
   return {
     pinned,
-    posts: pinned ? all.filter((post) => post !== pinned) : all,
+    posts: rest.filter((post) => !isReply(post)),
+    replies: rest.filter(isReply),
     media: all.filter((post) => Array.isArray(post?.images) && post.images.length > 0),
     threads: Array.isArray(data?.threads) ? data.threads : [],
     communities: Array.isArray(data?.communities) ? data.communities : [],
@@ -64,23 +69,36 @@ export function profileContent(data) {
 export function profileTabs(data) {
   const content = profileContent(data);
   const tabs = [{ key: "posts", label: "投稿", count: content.posts.length + (content.pinned ? 1 : 0) }];
+  if (content.replies.length) tabs.push({ key: "replies", label: "返信", count: content.replies.length });
   if (content.media.length) tabs.push({ key: "media", label: "メディア", count: content.media.length });
   if (content.threads.length) tabs.push({ key: "threads", label: "スレッド", count: content.threads.length });
   if (content.communities.length) tabs.push({ key: "communities", label: "コミュニティ", count: content.communities.length });
   return tabs;
 }
 
-/** 記事・動画・コードのタブ。detail は端末の許可表（hub_client.rs）の名前。 */
+/**
+ * 作ったものの種類。記事・動画・音楽・研究・マーケットは Hub のプロフィール応答の `kinds`（あるかどうか）で
+ * タブを出し、開いたときに profile_kind で1ページだけ読む。コードだけは公開の一覧を先に1回確かめる。
+ * detail は端末の許可表（hub_client.rs）の名前。
+ */
 export const PROFILE_WORK_KINDS = [
-  { key: "articles", label: "記事", detail: "profile_articles" },
-  { key: "videos", label: "動画", detail: "profile_videos" },
-  { key: "code", label: "コード", detail: "profile_code" },
+  { key: "articles", label: "記事", detail: "profile_kind", create: "記事を書く" },
+  { key: "videos", label: "動画", detail: "profile_kind", create: "動画を投稿する" },
+  { key: "music", label: "音楽", detail: "profile_kind", create: "曲を登録する" },
+  { key: "research", label: "研究", detail: "profile_kind", create: "プロジェクトを作る" },
+  { key: "market", label: "マーケット", detail: "profile_kind", create: "出品する" },
+  { key: "code", label: "コード", detail: "profile_code", create: "" },
 ];
+// タブの並び：投稿・返信・記事・動画・音楽・研究・マーケット、そのあとにその他。
+export const PROFILE_TAB_ORDER = ["posts", "replies", "articles", "videos", "music", "research", "market", "media", "threads", "code", "communities"];
+const KIND_KEYS = PROFILE_WORK_KINDS.filter((kind) => kind.detail === "profile_kind").map((kind) => kind.key);
 const CURSOR = /^[A-Za-z0-9_-]{1,400}$/;
+const MARKET_SOURCES = new Set(["listing", "game", "product", "classified", "work"]);
+const RESEARCH_STATUS = { draft: "下書き", active: "進行中", paused: "一時停止", completed: "完了" };
 
-/** 一覧の応答を描ける形へ。題名の無い行・形の崩れた行は落とす。 */
+/** 一覧の応答を描ける形へ。題名の無い行・形の崩れた行は落とす。raw は各画面の行表示にそのまま渡す元の行。 */
 export function profileWorkPage(kind, payload) {
-  const list = kind === "articles" ? payload?.articles : kind === "videos" ? payload?.videos : kind === "code" ? payload?.repositories : null;
+  const list = kind === "code" ? payload?.repositories : KIND_KEYS.includes(kind) ? payload?.items : null;
   const items = [];
   for (const row of Array.isArray(list) ? list : []) {
     if (!row || typeof row !== "object") continue;
@@ -90,8 +108,14 @@ export function profileWorkPage(kind, payload) {
       continue;
     }
     if (typeof row.id !== "string" || !row.id || typeof row.title !== "string" || !row.title.trim()) continue;
-    const meta = row.locked === true ? "閲覧条件つき" : kind === "videos" ? (typeof row.duration === "string" ? row.duration : "") : (typeof row.summary === "string" ? row.summary : "");
-    items.push({ kind, id: row.id, title: row.title, meta });
+    if (kind === "market" && (!MARKET_SOURCES.has(row.source) || (row.source === "game" && !(typeof row.slug === "string" && row.slug)))) continue;
+    const meta = row.locked === true ? "閲覧条件つき"
+      : kind === "videos" ? (typeof row.duration === "string" ? row.duration : "")
+      : kind === "music" ? (typeof row.artist === "string" ? row.artist : "")
+      : kind === "research" ? (RESEARCH_STATUS[row.status] ?? "")
+      : kind === "market" ? [typeof row.priceLabel === "string" ? row.priceLabel : "", typeof row.providerLabel === "string" ? row.providerLabel : ""].filter(Boolean).join(" · ")
+      : (typeof row.summary === "string" ? row.summary : "");
+    items.push({ kind, id: row.id, title: row.title, meta, raw: row });
   }
   const next = typeof payload?.nextCursor === "string" && CURSOR.test(payload.nextCursor) ? payload.nextCursor : null;
   return { items, nextCursor: next };
@@ -117,7 +141,7 @@ export function renderProfileStats(doc, data, deps = {}) {
   const followers = Array.isArray(data?.followers);
   const following = Array.isArray(data?.followingProfiles);
   const entries = [
-    ["posts", data?.postCount, "投稿", false],
+    ...(deps.omitPosts ? [] : [["posts", data?.postCount, "投稿", false]]),
     ["followers", data?.followerCount, "フォロワー", followers],
     ["following", data?.followingCount, "フォロー中", following],
   ];
@@ -154,10 +178,31 @@ export function renderProfileFacts(doc, data, deps = {}) {
   return row;
 }
 
+const SHORTCUTS = [["ブックマーク", "onBookmarks", "profile-bookmarks"], ["リスト", "onLists", "profile-lists"], ["チャンネルを管理", "onManageChannel", "profile-studio"]];
+function profileShortcutButtons(doc, deps, base) {
+  const out = [];
+  for (const [label, key, cls] of SHORTCUTS) {
+    if (typeof deps[key] !== "function") continue;
+    const button = el(doc, "button", `${base} ${cls}`, label);
+    button.type = "button";
+    button.onclick = () => deps[key]();
+    out.push(button);
+  }
+  return out;
+}
+
+/** 本人だけの入口（ブックマーク・リスト・チャンネル管理）。ヘッダーの下に静かな行で並べる。他人には何も出さない。 */
+export function renderProfileShortcuts(doc, data, deps = {}) {
+  const row = el(doc, "div", "profile-shortcuts");
+  if (data?.isCurrentUser) row.append(...profileShortcutButtons(doc, deps, "btn btn-ghost profile-shortcut"));
+  return row;
+}
+
 /** 自分なら「プロフィールを編集」とリンクのコピー。他人ならリンクのコピーだけ（フォローとメッセージは呼び出し側）。 */
 export function renderProfileActions(doc, data, deps = {}) {
   const row = el(doc, "div", "profile-actions");
   const handle = data?.profile?.handle;
+  const separate = deps.shortcutsSeparate === true;
   if (data?.isCurrentUser && handle && deps.onEdit) {
     const edit = el(doc, "button", "ds-btn is-lg profile-edit", "プロフィールを編集");
     edit.type = "button";
@@ -165,15 +210,7 @@ export function renderProfileActions(doc, data, deps = {}) {
     row.append(edit);
   }
   // 本人だけの入口（2026-10-18：内側の列の「マイページ」を外したので、ここから開く）。
-  if (data?.isCurrentUser) {
-    for (const [label, key, cls] of [["ブックマーク", "onBookmarks", "profile-bookmarks"], ["リスト", "onLists", "profile-lists"], ["チャンネルを管理", "onManageChannel", "profile-studio"]]) {
-      if (typeof deps[key] !== "function") continue;
-      const button = el(doc, "button", `ds-btn is-lg ${cls}`, label);
-      button.type = "button";
-      button.onclick = () => deps[key]();
-      row.append(button);
-    }
-  }
+  if (data?.isCurrentUser && !separate) row.append(...profileShortcutButtons(doc, deps, "ds-btn is-lg"));
   const url = profileShareUrl(deps.origin, handle);
   if (url && deps.copyText) {
     const share = el(doc, "button", "ds-btn is-lg profile-share", "リンクをコピー");
@@ -193,7 +230,8 @@ export function renderProfileActions(doc, data, deps = {}) {
  * タブと本文。deps:
  *   postCard(post) / emptyState(icon, title, body) / personCard(person)
  *   openThread(thread) / openCommunity(community) / openProfile(handle)
- *   loadWorks(detail, ids) → 応答 / openWork(item)（無ければ記事・動画・コードのタブは作らない）
+ *   loadWorks(detail, ids) → 応答 / openWork(item)（無ければ種類別のタブは作らない）
+ *   workRow(item) → 各画面と同じ行（無ければ簡素な行） / createWork(kind)（本人の空のタブに添える作る入口）
  * 戻り値の showConnections(kind) でフォロワー・フォロー中の一覧へ切り替える。
  */
 export function createProfileBody(doc, data, deps) {
@@ -205,10 +243,18 @@ export function createProfileBody(doc, data, deps) {
   panel.setAttribute("role", "tabpanel");
   root.append(tablist, panel);
   const content = profileContent(data);
-  const tabs = profileTabs(data);
+  const handle = typeof data?.profile?.handle === "string" && HANDLE.test(data.profile.handle) ? data.profile.handle : null;
+  const self = Boolean(data?.isCurrentUser);
+  // 種類別のタブ：サーバーが「ある」と返した種類。本人は常に全部（空なら作る入口を出す）。読む道具が無ければ作らない。
+  const canLoad = Boolean(handle) && typeof deps.loadWorks === "function";
+  const present = new Set(Array.isArray(data?.kinds) ? data.kinds.filter((key) => KIND_KEYS.includes(key)) : []);
+  if (self) for (const key of KIND_KEYS) present.add(key);
+  const tabs = [...profileTabs(data)];
+  if (canLoad) for (const kind of PROFILE_WORK_KINDS) if (present.has(kind.key)) tabs.push({ key: kind.key, label: kind.label });
+  const byOrder = (a, b) => PROFILE_TAB_ORDER.indexOf(a.key) - PROFILE_TAB_ORDER.indexOf(b.key);
+  tabs.sort(byOrder);
   const buttons = new Map();
   const empty = (title, body) => deps.emptyState("user", title, body);
-  const self = Boolean(data?.isCurrentUser);
 
   const card = (title, meta, onOpen) => {
     const node = el(doc, "button", "profile-row");
@@ -229,6 +275,7 @@ export function createProfileBody(doc, data, deps) {
       nodes.push(...content.posts.map((post) => deps.postCard(post)));
       return nodes.length ? nodes : [empty("まだ投稿がありません", self ? "投稿すると、ここに並びます。" : "")];
     },
+    replies() { return content.replies.map((post) => deps.postCard(post)); },
     media() { return content.media.map((post) => deps.postCard(post)); },
     threads() {
       return content.threads.slice(0, 100).map((thread) => card(String(thread.title ?? ""), `${count(thread.postCount ?? 0)} 件の書き込み`, () => deps.openThread?.(thread)));
@@ -237,35 +284,60 @@ export function createProfileBody(doc, data, deps) {
       return content.communities.slice(0, 100).map((community) => card(String(community.name ?? ""), "", () => deps.openCommunity?.(community)));
     },
   };
-  // 記事・動画・コード。最初のページで中身があると分かった種類だけタブにする。続きは「さらに表示」。
+  // 記事・動画・音楽・研究・マーケット・コード。開いたときに1ページだけ読み、続きは「さらに表示」（サーバーのカーソル）。
   const works = new Map();
-  const handle = typeof data?.profile?.handle === "string" && HANDLE.test(data.profile.handle) ? data.profile.handle : null;
+  const workState = (kind) => {
+    if (!works.has(kind)) works.set(kind, { detail: PROFILE_WORK_KINDS.find((entry) => entry.key === kind)?.detail ?? "profile_kind", items: [], nextCursor: null, loading: false, error: false, loaded: false });
+    return works.get(kind);
+  };
+  const repaint = (kind) => { if (panel.dataset.tab === kind) panel.replaceChildren(...workNodes(kind)); };
   const workNodes = (kind) => {
-    const state = works.get(kind);
-    const nodes = state.items.map((item) => card(item.title, item.meta, () => deps.openWork?.(item)));
-    if (!nodes.length) nodes.push(empty("まだありません"));
-    if (state.error) nodes.push(el(doc, "p", "meta profile-works-error", "読み込めませんでした。もう一度お試しください。"));
+    const state = workState(kind);
+    const nodes = state.items.map((item) => deps.workRow?.(item) ?? card(item.title, item.meta, () => deps.openWork?.(item)));
+    if (!nodes.length && state.loading) nodes.push(el(doc, "p", "meta profile-works-loading", "読み込み中…"));
+    else if (!nodes.length && state.loaded && !state.error) {
+      const entry = PROFILE_WORK_KINDS.find((item) => item.key === kind);
+      nodes.push(empty(`まだ${entry?.label ?? ""}がありません`, self && entry?.create ? "最初の1つを作ると、ここに並びます。" : ""));
+      if (self && entry?.create && typeof deps.createWork === "function") {
+        const create = el(doc, "button", "head-action profile-works-create", entry.create);
+        create.type = "button";
+        create.onclick = () => deps.createWork(kind);
+        nodes.push(create);
+      }
+    }
+    if (state.error) {
+      nodes.push(el(doc, "p", "meta profile-works-error", "読み込めませんでした。もう一度お試しください。"));
+      if (!state.items.length) {
+        const retry = el(doc, "button", "head-action profile-works-retry", "もう一度読み込む");
+        retry.type = "button";
+        retry.onclick = () => void loadWork(kind, null);
+        nodes.push(retry);
+      }
+    }
     if (state.nextCursor) {
       const more = el(doc, "button", "head-action profile-works-more", state.loading ? "読み込み中…" : "さらに表示");
       more.type = "button";
       more.disabled = state.loading;
-      more.onclick = () => void loadMore(kind);
+      more.onclick = () => void loadWork(kind, state.nextCursor);
       nodes.push(more);
     }
     return nodes;
   };
-  const loadMore = async (kind) => {
-    const state = works.get(kind);
-    if (!state || state.loading || !state.nextCursor) return;
+  const loadWork = async (kind, cursor) => {
+    const state = workState(kind);
+    if (state.loading || !canLoad) return;
     state.loading = true; state.error = false;
-    if (panel.dataset.tab === kind) panel.replaceChildren(...workNodes(kind));
+    repaint(kind);
     try {
-      const page = profileWorkPage(kind, await deps.loadWorks(`${state.detail}_page`, [handle, state.nextCursor]));
+      const name = cursor ? `${state.detail}_page` : state.detail;
+      const ids = kind === "code" ? [handle, ...(cursor ? [cursor] : [])] : [handle, kind, ...(cursor ? [cursor] : [])];
+      const page = profileWorkPage(kind, await deps.loadWorks(name, ids));
       state.items.push(...page.items);
       state.nextCursor = page.nextCursor;
+      state.loaded = true;
     } catch { state.error = true; }
     state.loading = false;
-    if (panel.dataset.tab === kind) panel.replaceChildren(...workNodes(kind));
+    repaint(kind);
   };
   for (const kind of PROFILE_WORK_KINDS) renderers[kind.key] = () => workNodes(kind.key);
   const select = (key) => {
@@ -276,6 +348,8 @@ export function createProfileBody(doc, data, deps) {
       button.classList.toggle("on", on);
     }
     panel.dataset.tab = key;
+    // 種類別のタブは初めて開いたときに1ページ読む（コードは先に読み済み）。
+    if (KIND_KEYS.includes(key)) { const state = workState(key); if (!state.loaded && !state.loading && !state.error) void loadWork(key, null); }
     panel.replaceChildren(...renderers[key]());
   };
   const addTab = (tab, before = null) => {
@@ -300,19 +374,19 @@ export function createProfileBody(doc, data, deps) {
   };
   for (const tab of tabs) addTab(tab);
   select("posts");
-  // 種類の順は 投稿・メディア・スレッド・記事・動画・コード・コミュニティ。応答の届いた順では並べない。
-  const order = ["posts", "media", "threads", ...PROFILE_WORK_KINDS.map((kind) => kind.key), "communities"];
-  const ready = handle && typeof deps.loadWorks === "function"
-    ? Promise.all(PROFILE_WORK_KINDS.map(async (kind) => {
+  // コードだけは公開の一覧を先に1回確かめ、1件以上返ったときだけタブを足す。順は PROFILE_TAB_ORDER で固定（届いた順にしない）。
+  const code = PROFILE_WORK_KINDS.find((kind) => kind.key === "code");
+  const ready = canLoad
+    ? (async () => {
       let page;
-      try { page = profileWorkPage(kind.key, await deps.loadWorks(kind.detail, [handle])); } catch { return; }
+      try { page = profileWorkPage("code", await deps.loadWorks(code.detail, [handle])); } catch { return; }
       if (!page.items.length) return;
-      works.set(kind.key, { detail: kind.detail, items: page.items, nextCursor: page.nextCursor, loading: false, error: false });
-      tabs.push({ key: kind.key, label: kind.label });
-      tabs.sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
-      const after = tabs[tabs.findIndex((t) => t.key === kind.key) + 1];
-      addTab({ key: kind.key, label: kind.label }, after ? buttons.get(after.key) ?? null : null);
-    }))
+      Object.assign(workState("code"), { items: page.items, nextCursor: page.nextCursor, loaded: true });
+      tabs.push({ key: "code", label: code.label });
+      tabs.sort(byOrder);
+      const after = tabs[tabs.findIndex((t) => t.key === "code") + 1];
+      addTab({ key: "code", label: code.label }, after ? buttons.get(after.key) ?? null : null);
+    })()
     : Promise.resolve();
 
   const showConnections = (kind) => {

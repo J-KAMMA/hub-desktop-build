@@ -4,12 +4,20 @@
 .rail-music-quick { display: flex; flex-wrap: wrap; gap: var(--space-2); padding: 0 var(--space-3) var(--space-2); }
 .rail-music-chip { padding: var(--space-1) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--interactive); color: var(--text); font-size: var(--type-caption); cursor: pointer; }
 .rail-music-chip:hover { background: var(--interactive-hover); }
-.rail-music-chip.is-primary { border-color: transparent; background: var(--ds-btn-primary-bg); color: var(--ds-btn-primary-fg); box-shadow: inset 0 0 0 1px var(--ds-btn-primary-line); }
+.rail-music-chip.is-primary { border-color: var(--ds-btn-primary-line); background: var(--ds-btn-primary-bg); color: var(--ds-btn-primary-fg); }
 .rail-music-chip.is-primary:hover { opacity: .86; }
 .rail-music-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: var(--space-2) var(--space-3) 0; }
 .rail-music-heading h3 { margin: 0; }
 .rail-music-more, .rail-music-link { padding: 0; border: 0; background: transparent; color: var(--muted); font-size: var(--type-caption); cursor: pointer; }
 .rail-music-more:hover, .rail-music-link:hover { color: var(--text); text-decoration: underline; }
+/* 1曲1行。詳細のアイコン（32px・ghost）は行の右端に重ね、行にポインタかフォーカスがあるときだけ出す。 */
+.rail-music-item { position: relative; }
+.rail-music-item .rail-item.rail-row { padding-right: calc(var(--space-3) + 32px); }
+.rail-music-item .rail-music-detail { position: absolute; top: calc(50% - 16px); right: var(--space-2); display: grid; place-items: center; width: 32px; height: 32px; min-height: 32px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--muted); opacity: 0; cursor: pointer; }
+.rail-music-item .rail-music-detail svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.rail-music-item:hover .rail-music-detail, .rail-music-item:focus-within .rail-music-detail, .rail-music-item .rail-music-detail:focus-visible { opacity: 1; }
+.rail-music-item .rail-music-detail:hover { background: var(--interactive); color: var(--text); }
+.rail-music-item .rail-music-detail:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
 .rail-music-links { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); padding: 0 var(--space-3) var(--space-2) calc(var(--space-3) + 32px + var(--space-3)); }
 .rail-music-page-title { margin: 0; padding: var(--space-2) var(--space-3) 0; }
 .rail-music-status { padding: 0 var(--space-3); }
@@ -24,3 +32,4 @@
 /* YouTube の枠は右列の中（16:9）。共有の再生枠(yt-dock)がこの置き場に重なる。 */
 .rail-music-yt { margin: var(--space-2) var(--space-3); }
 .rail-music-yt[hidden] { display: none; }
+.rail-music-yt .yt-player-slot { min-width: 200px; min-height: 200px; }

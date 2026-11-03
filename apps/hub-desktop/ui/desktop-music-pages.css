@@ -25,7 +25,7 @@
 .mc-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--space-1); }
 .mc-status { margin: 0; min-height: 1.4em; }
 .mc-tracks { list-style: none; margin: 0; padding: 0; display: grid; }
-.mc-track { display: grid; grid-template-columns: 28px 40px minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-2); border-bottom: 1px solid var(--line); }
+.mc-track { display: grid; grid-template-columns: 28px 40px minmax(0, 1fr) 48px auto; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-2); border-bottom: 1px solid var(--line); }
 .mc-track:hover { background: var(--interactive); border-radius: var(--radius-sm); }
 .mc-no { color: var(--muted); font-size: var(--type-subhead); font-weight: var(--weight-regular); text-align: right; font-variant-numeric: tabular-nums; }
 .mc-text { display: grid; gap: 2px; min-width: 0; }
@@ -37,3 +37,28 @@
 .mc-sub { color: var(--muted); font-size: var(--type-subhead); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mc-empty { margin: 0; }
 .media-item-row .actions { flex-wrap: wrap; }
+
+/* プレイリストの頁：番号 / 題とアーティスト / 時間 / ⋯。ボタンは枠なしの平ら。 */
+.mp { display: grid; gap: var(--space-4); }
+.mp .mc-tracks { gap: 0; }
+.mp-row, .mp-head { display: grid; grid-template-columns: 32px minmax(0, 1fr) 56px 36px; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-2); position: relative; }
+.mp-head { border-bottom: 1px solid var(--line); color: var(--muted); font-size: var(--type-caption); list-style: none; }
+.mp-head .mc-no { font-weight: var(--weight-regular); }
+.mp-time { color: var(--muted); font-size: var(--type-subhead); font-variant-numeric: tabular-nums; text-align: right; }
+.mp-text { gap: 2px; }
+/* 曲の「⋯」（music-track-menu.mjs）。行ではポインタかフォーカスのときだけ出す。 */
+.music-more { display: inline-grid; place-items: center; flex: none; width: 32px; height: 32px; min-height: 32px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--muted); font-size: var(--type-headline); line-height: 1; cursor: pointer; }
+.music-more:hover { background: var(--interactive-hover); color: var(--text); }
+.music-more:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+.mp-more, .mc-more, .music-track-group .music-more { opacity: 0; }
+.mp-row:hover .mp-more, .mp-row:focus-within .mp-more, .mc-track:hover .mc-more, .mc-track:focus-within .mc-more, .music-track-group:hover .music-more, .music-track-group:focus-within .music-more, .music-more:focus-visible { opacity: 1; }
+.has-music-menu { position: relative; }
+.has-music-menu > .music-more { position: absolute; top: var(--space-2); right: var(--space-2); }
+.mh-card-more { position: absolute; top: var(--space-2); right: var(--space-2); opacity: 0; background: var(--surface-raised); }
+.mh-card:hover .mh-card-more, .mh-card:focus-within .mh-card-more, .mh-card-more:focus-visible { opacity: 1; }
+.rail-music-work-hero .music-more { margin-left: auto; }
+.mp-shuffle, .mp-edit { box-shadow: none; }
+.mp-artist-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: var(--space-2); }
+.mp-artist-art { border-radius: 50%; }
+.mc-albums { display: grid; gap: var(--space-2); margin-top: var(--space-4); }
+.mc-time { color: var(--muted); font-size: var(--type-subhead); font-variant-numeric: tabular-nums; text-align: right; }

@@ -13,22 +13,22 @@ test('actual thread destination retains reply ID and post number rather than onl
 });
 
 test('community message destination retains exact message and checks matching anchor', () => {
-  const result = notificationTarget(item('community_message', 'm1'), new Map(), {}, { m1: '/community?community=c1&channel=ch1&message=m1#m1' });
-  assert.deepEqual(result, { kind: 'detail', name: 'channel_messages', ids: ['c1', 'ch1'], title: 'チャンネル', state: { messageId: 'm1' } });
-  assert.deepEqual(hubPathTarget('/v2/community?message=m1&channel=ch1&community=c1'), result);
-  for (const path of ['/community?community=c1&channel=ch1&message=m1#other', '/community?community=c1&message=m1#m1', '/community?community=c1&channel=ch1&message=other#other']) {
+  const result = notificationTarget(item('community_message', 'm1'), new Map(), {}, { m1: '/community?community=c1&post=m1#m1' });
+  assert.deepEqual(result, { kind: 'detail', name: 'community', ids: ['c1'], title: 'コミュニティ', state: { messageId: 'm1' } });
+  assert.deepEqual(hubPathTarget('/v2/community?post=m1&community=c1'), result);
+  for (const path of ['/community?community=c1&post=m1#other', '/community?community=c1&post=m1&section=members#m1', '/community?community=c1&post=other#m1']) {
     assert.equal(notificationTarget(item('community_message', 'm1'), new Map(), {}, { m1: path }), null);
   }
 });
 
 test('scheduled community message IDs match the existing case-insensitive scheduled UUID grammar only', () => {
   for (const message of [`scheduled:${proposal}`, `SCHEDULED:${proposal.toUpperCase()}`, 'm'.repeat(80)]) {
-    const path = `/community?community=c1&channel=ch1&message=${encodeURIComponent(message)}#${encodeURIComponent(message)}`;
+    const path = `/community?community=c1&post=${encodeURIComponent(message)}#${encodeURIComponent(message)}`;
     assert.equal(hubPathTarget(path).state.messageId, message);
     assert.equal(notificationTarget(item('community_message', message), new Map(), {}, { [message]: path }).state.messageId, message);
   }
   for (const message of ['m'.repeat(81), 'm\n', 'm\u2028', `ſcheduled:${proposal}`, `unknown:${proposal}`, `scheduled:${proposal}/evil`, `scheduled:${proposal}%2f`, `scheduled:${proposal}\n`, `scheduled:${proposal}\u2028`, 'scheduled:not-a-uuid', `scheduled:${proposal.slice(0,-1)}`]) {
-    const path = `/community?community=c1&channel=ch1&message=${encodeURIComponent(message)}#${encodeURIComponent(message)}`;
+    const path = `/community?community=c1&post=${encodeURIComponent(message)}#${encodeURIComponent(message)}`;
     assert.equal(hubPathTarget(path), null);
     assert.equal(notificationTarget(item('community_message', message), new Map(), {}, { [message]: path }), null);
   }
@@ -71,7 +71,7 @@ test('unsafe URL, normalized traversal, malformed encoding and control inputs ar
 });
 
 test('query duplicates, empty/unknown fields and malformed decoded values never disappear', () => {
-  for (const suffix of ['community=c1&community=c2', 'community=c1&%63ommunity=c2', 'community=c1&unknown=x', 'community=c1&channel=', 'community=c1&&channel=ch1', 'community=c1&channel=ch1&', 'community=c1&channel', 'community=c1&channel=%00', 'community=c1&channel=%ff', 'community=c1&channel=a+b', 'community=c1&channel=a%2Fb']) assert.equal(hubPathTarget(`/community?${suffix}`), null);
+  for (const suffix of ['community=c1&community=c2', 'community=c1&%63ommunity=c2', 'community=c1&unknown=x', 'community=c1&post=', 'community=c1&&post=p1', 'community=c1&post=p1&', 'community=c1&post', 'community=c1&post=%00', 'community=c1&post=%ff', 'community=c1&post=a+b', 'community=c1&post=a%2Fb', 'community=c1&channel=ch1']) assert.equal(hubPathTarget(`/community?${suffix}`), null);
   assert.equal(hubPathTarget('/community?'), null);
   assert.equal(hubPathTarget('/community#'), null);
 });
@@ -110,7 +110,7 @@ test('profiles, conversation and catalog destinations use only existing local de
 
 test('community sections retain UI selection without creating new native commands', () => {
   for (const section of ['members', 'guides', 'governance', 'tokens', 'settings']) assert.deepEqual(hubPathTarget(`/v2/community?community=c1&section=${section}`).state, { section });
-  for (const path of ['/community?community=c1&section=unknown', '/community?community=c1&section=governance&channel=ch1', '/community/c1?community=c2', '/community?channel=ch1']) assert.equal(hubPathTarget(path), null);
+  for (const path of ['/community?community=c1&section=unknown', '/community?community=c1&section=governance&post=p1', '/community/c1?community=c2', '/community?post=p1']) assert.equal(hubPathTarget(path), null);
 });
 
 test('results are new immutable-input descriptors and cannot contaminate later parses', () => {

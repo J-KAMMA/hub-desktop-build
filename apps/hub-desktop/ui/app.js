@@ -6,7 +6,7 @@ import {createSidebarMine} from './sidebar-mine.mjs';
 import {renderVideoStudio, createNativeVideoApi} from './video-studio.mjs';
 import {createPublicationUpdates} from './publication-updates.mjs';
 import {isRemoteProfile, remoteFollowForm} from './remote-follow.mjs';
-import {createProfileBody, renderProfileActions, renderProfileFacts, renderProfileStats} from './profile-view.mjs';
+import {createProfileBody, renderProfileActions, renderProfileFacts, renderProfileShortcuts, renderProfileStats} from './profile-view.mjs';
 import {initNativeGitHub} from './research-github.mjs';
 import {renderContentReferenceLinks} from './content-reference-links.mjs';
 import {renderArticleBodyNodes} from './article-body.mjs';
@@ -17,7 +17,9 @@ import {parseDrafts, draftEditorPath, renderDraftList} from './article-drafts.mj
 import {createYouTubePlayer as createArticleYouTubePlayer} from './youtube-embed.mjs';
 import {contentShareReference} from './content-share-contract.mjs';
 import {createContentShare, attachContentShare} from './content-share.mjs';
-import {attachMusicContentShare} from './music-content-share.mjs';
+import {shareMusicWork} from './music-content-share.mjs';
+import { musicMenuButton, registerMusicMenu } from './music-track-menu.mjs';
+import { attributionMessage, commerceProofFetcher, createProfileAttribution, musicProofFetcher } from './profile-attribution.mjs';
 import {attachAiHandoff,buildPostDraftFromAnswer} from './ai-handoff.mjs';
 import {createBrowserAiReference} from './browser-ai-reference.mjs';
 import {createSocialStream} from './social-stream.mjs';
@@ -26,6 +28,7 @@ import {createBrowserExternalOpen} from './browser-external-open.mjs';
 import { hubMusicQuery } from "./hub-music-link.mjs";
 import { createDmController } from "./dm-controller.mjs";
 import { createYouTubeDock } from './yt-dock.mjs';
+import { unplayable as ytUnplayable } from './yt-unplayable.mjs';
 import { createPlaybackOwner } from './playback-owner.mjs';
 import { createLikeButton, createFollowButton, loadEngagement, setVideoLike } from './video-engagement.mjs';
 import { createChannelState, renderChannelPage, isChannelHandle, parseChannelPage } from './video-channel-view.mjs';
@@ -34,7 +37,7 @@ import { createVideoThumbnail, createVideoCard, createVideoSkeletons, renderVide
 import { createCoverMedia, isAllowedImageUrl } from "./media-image.mjs";
 import { peerVideoEntries } from "./peer-video.mjs";
 import { createNotificationsController } from "./notifications-controller.mjs";
-import { createChannelComposer } from "./channel-composer.mjs";
+import { createCommunityPostComposer as createChannelComposer } from "./community-post-composer.mjs";
 import { notificationTarget } from "./notification-targets.mjs";
 import { createWalletTipSettings } from "./wallet-tip-settings.mjs";
 import { createOwnedEventListings } from "./owned-event-listings.mjs";
@@ -44,7 +47,9 @@ import * as musicQueue from "./music-queue.mjs";
 import { createHarnessComparison } from "./harness-comparison.mjs";
 import { createExternalMediaRegistration, createExternalMusicReport, validateExternalMediaCatalog } from './external-media-registration.mjs';
 import { createCommunityNotifications } from "./community-notifications.mjs";
+import { createCommunityPoints } from "./community-points.mjs";
 import { createMediaPlaylists } from './media-playlists.mjs';
+import { listRowsSkeleton as createListRowsSkeleton, listRowsError as createListRowsError, renderListsRows } from './lists-view.mjs';
 import { createVideoPosts, createContentPosts } from './video-posts.mjs';
 // 動画の下は「コメント」（動画に返信するポスト）。旧来の動画コメント表は撤去した。
 function mountVideoPosts(options){
@@ -53,19 +58,27 @@ function mountVideoPosts(options){
   return {element,destroy(){posts.destroy();}};
 }
 import { createOmnibox, omniboxAddress } from './omnibox.mjs';
+import { getWebSearchEngine, webSearchUrl, webSearchLabel } from './web-search.mjs';
+import { normalizeHubSearchFilters } from './hub-search-filters.mjs';
 import { installShortcuts } from './shortcuts.mjs';
 import { installContextMenu } from './context-menu.mjs';
 import { attachContentSave, renderContentLibrary } from './content-library.mjs';
 import { attachMusicFavorite, renderMusicLibrary } from './music-library.mjs';
 import { isHubOriginalWork } from './music-originals-first.mjs';
 import { initMusicQueueView } from './music-queue-view.mjs';
-import { createMusicYoutubeSession, createArtwork as createMusicArtwork } from './music-youtube.mjs';
+import { createMusicYoutubeSession, createArtwork as createMusicArtwork, youtubeSource } from './music-youtube.mjs';
 import { createItemResolver } from './media-item-resolver.mjs';
 import { renderMusicCollection } from './music-artist-album.mjs';
 import { createRailMusic } from './rail-music.mjs';
-import { renderMusicWorkHeader } from './music-work-detail.mjs';
 import { musicDownloadAllowed, musicDownloadPageUrl } from './content-download.mjs';
 import { createMusicHome, createMusicHistory } from './music-home.mjs';
+import { musicTreeModel, renderMusicTree } from './music-tree.mjs';
+import { videoTreeModel, renderVideoTree } from './video-tree.mjs';
+import { createVideoEmpty, emptyFor } from './video-tiles.mjs';
+import { articleTreeModel, renderArticleTree } from './article-tree.mjs';
+import { renderArticleHome, renderArticleEmpty } from './article-rows.mjs';
+import { researchTreeModel, renderResearchTree } from './research-tree.mjs';
+import { renderMusicPlaylist, renderMusicArtists } from './music-pages.mjs';
 import { peerMusicEntries, peerYoutubeWork, createPeerAudio } from './peer-music.mjs';
 import { createHubTrackAudio } from './hub-track-audio.mjs';
 import { createMediaP2pSettings } from './media-p2p-settings.mjs';
@@ -102,8 +115,7 @@ import {communityMembershipRequests,communityMembershipReview,communityMembershi
 import {communityReports,communityReportReview,communityReportReviewRequest} from "./community-report-review.mjs";
 import {communityAppeals,communityAppealReview,communityAppealReviewRequest} from "./community-appeal-review.mjs";
 import {communityAppealForm} from "./community-appeal-form.mjs";
-import { communityMembershipControls, communityChannelControls, communityMemberControls, communityPollCard, communityComposerTools } from "./community-controls.mjs";
-import {communityChannelPolicyControls} from "./community-channel-policy.mjs";
+import { communityMembershipControls, communityMemberControls, communityPollCard, communityComposerTools } from "./community-controls.mjs";
 import {communityGovernanceCatalog,communityGovernanceProposal,communityGovernanceSettings,communityGovernanceCreate,communityGovernanceRequest} from './community-governance.mjs';
 import {communityAccessManagement} from "./community-access-management.mjs";
 import { createThreadReader } from "./thread-reader.mjs";
@@ -135,7 +147,7 @@ import {researchGitProposals} from './research-git-proposals.mjs';
 import { researchGitDiscussion } from './research-git-discussion.mjs';
 import {researchProposalReview} from './research-proposal-review.mjs';
 let researchDetailController=null;
-let communityChannelPolicyController=null;
+let communityDetailController=null;
 import {communityInvite} from './community-invite.mjs';
 let communityInviteController=null;
 import { templateFor } from "./desktop-template.mjs";
@@ -146,8 +158,17 @@ import { createHubNetwork } from "./hub-network.mjs";
 import { ACCOUNT_UNAVAILABLE_TEXT, accountStateLabel, isAccountUnavailable } from "./account-error.mjs";
 import { initHubPeers } from "./hub-peers.mjs";
 import { createMaterialSync } from "./material-sync.mjs";
+import { createFeedLive } from "./feed-live.mjs";
 import { createDesktopControlMetrics } from "./desktop-control-metrics.mjs";
-import { normalizeStoreGames, filterStoreGames, renderStoreGames, renderStoreLoading, renderStoreError, renderLocalGames } from "./games-view.mjs";
+import { normalizeStoreGames } from "./games-view.mjs";
+import { gamesTreeModel, renderGamesTree } from "./games-tree.mjs";
+import { createGamesPage } from "./games-page.mjs";
+import { createMarketGames } from "./market-games.mjs";
+import { marketTreeModel, renderMarketTree } from "./market-tree.mjs";
+import { createMarketBrowse } from "./market-browse.mjs";
+import { createMarketProductPage } from "./market-product.mjs";
+import { renderCart as renderCartRows, renderPurchased, createOrdersList, renderWebRows, WEB_ROWS } from "./market-me.mjs";
+import { normalizeProduct } from "./market-model.mjs";
 const controlMetrics = createDesktopControlMetrics();
 controlMetrics.mark("moduleReady");
 
@@ -202,6 +223,8 @@ let socialMode="legacy",socialFilter="post",socialScope="latest",socialVerifiedC
 // Initialized before the first account snapshot; helper declarations are hoisted.
 let savedSearchPanel = null, verifiedSavedSearchScope = null, savedSearchScopeRequest = {}, savedSearchViewEpoch = {};
 let feedComposer = null, feedComposerViewEpoch = {};
+var feedLive = null; // フィードの新着確認。var なので宣言前に読んでも落ちない
+
 let mixedPublicationUpdates = null;
 let homeAccountEpoch = {}, homeSummaryRequest = {}, homeExtrasRequest = {};
 function homeAccountSnapshot() {
@@ -685,9 +708,9 @@ const SIDEBAR_FAMILY = {
   mail: "messages", contacts: "messages", purchased: "market", cart: "market", order: "market",
   profile: "account", settings: "account", wallet: "account",
 };
-const SIDEBAR_TITLES = { feed: "タイムライン", discovery: "コンテンツ", notifications: "絞り込み", messages: "受信トレイ", market: "マーケット", account: "アカウント" };
+const SIDEBAR_TITLES = { feed: "タイムライン", discovery: "コンテンツ", notifications: "通知", messages: "受信トレイ", market: "マーケット", account: "アカウント" };
 const DETAIL_SIDEBAR_FAMILY = {
-  saved_articles:"discovery",article_drafts:"discovery",video_library:"discovery",music_library:"discovery",video_playlists:"discovery",music_playlists:"discovery",
+  saved_articles:"discovery",article_drafts:"discovery",video_library:"discovery",music_library:"discovery",video_playlists:"discovery",music_playlists:"discovery",music_playlist:"discovery",music_artists:"discovery",
   community_governance:'community',community_governance_proposal:'community',community_governance_settings:'community',community_governance_create_context:'community',community_governance_mutation_context:'community',
   research_project: "research",
   research_network_fork: "research",
@@ -697,14 +720,14 @@ const DETAIL_SIDEBAR_FAMILY = {
   research_git_management: "research", research_git_history: "research", research_git_commit: "research", research_git_compare: "research", research_git_proposals: "research", research_git_proposal: "research", research_git_discussion: "research",
   post: "feed", thread: "threads", community: "community", tag: "feed", list: "feed",
   ranking_item: "discovery", service_item: "discovery",
-  article: "discovery", hubpedia_article: "discovery", book: "discovery", book_chapter: "discovery", video: "discovery", music_work: "discovery", music_artist: "discovery", music_album: "discovery",
+  article: "discovery", hubpedia_article: "discovery", book: "discovery", book_chapter: "discovery", video: "discovery", music_artist: "discovery", music_album: "discovery",
   listing: "market", commerce_product: "market",
-  channel_messages: "community", community_reports:"community", community_report:"community", community_appeals:"community", community_appeal:"community", community_appeal_history:"community", community_membership_requests:"community", community_membership_request:"community", community_members: "community", profile: "feed",
+  community_reports:"community", community_report:"community", community_appeals:"community", community_appeal:"community", community_appeal_history:"community", community_membership_requests:"community", community_membership_request:"community", community_members: "community", profile: "feed",
   community_guides: "community", community_guide: "community", community_guide_revisions: "community", community_guide_revision: "community",
   community_guide_proposals: "community", community_guide_proposal: "community",
 };
 const DETAIL_PARENT_VIEW = {
-  saved_articles:'articles',article_drafts:'articles',video_library:'videos',music_library:'music',video_playlists:'videos',music_playlists:'music',
+  saved_articles:'articles',article_drafts:'articles',video_library:'videos',music_library:'music',video_playlists:'videos',music_playlists:'music',music_playlist:'music',music_artists:'music',
   community_governance:'community',community_governance_proposal:'community',community_governance_settings:'community',community_governance_create_context:'community',community_governance_mutation_context:'community',
   research_project: "research",
   research_network_fork: "research",
@@ -714,8 +737,8 @@ const DETAIL_PARENT_VIEW = {
   research_git_management: "research", research_git_history: "research", research_git_commit: "research", research_git_compare: "research", research_git_proposals: "research", research_git_proposal: "research", research_git_discussion: "research",
   post: "feed", thread: "threads", community: "community", tag: "feed", list: "lists", profile: "feed",
   ranking_item: "ranking", service_item: "services",
-  article: "articles", hubpedia_article: "hubpedia", book: "books", book_chapter: "books", video: "videos", music_work: "music", music_artist: "music", music_album: "music",
-  listing: "market", commerce_product: "market", channel_messages: "community", community_reports:"community", community_report:"community", community_appeals:"community", community_appeal:"community", community_appeal_history:"community", community_membership_requests:"community", community_membership_request:"community", community_members: "community",
+  article: "articles", hubpedia_article: "hubpedia", book: "books", book_chapter: "books", video: "videos", music_artist: "music", music_album: "music",
+  listing: "market", commerce_product: "market", community_reports:"community", community_report:"community", community_appeals:"community", community_appeal:"community", community_appeal_history:"community", community_membership_requests:"community", community_membership_request:"community", community_members: "community",
   community_guides: "community", community_guide: "community", community_guide_revisions: "community", community_guide_revision: "community",
   community_guide_proposals: "community", community_guide_proposal: "community",
 };
@@ -759,8 +782,9 @@ const navCommunities = createNavCommunities({
   document, host: communitiesHost, asset: (img, url) => hubAsset(img, url),
   load: () => invoke("hub_resource", { resource: "communities", query: "" }),
   signedIn: () => desktopAccount.state === "registered",
-  onOpen: (row) => void openDetail("community", [row.id], { title: row.name }),
+  onOpen: (row) => { if (communitiesHost.closest(".sidebar-tree")) sidebarContextOwner = "feed"; void openDetail("community", [row.id], { title: row.name }); },
   onAll: () => void navigateFrom({ dataset: { view: "community" }, childNodes: [] }),
+  onSub: (key) => { const open = detailTrail.at(-1); if (currentView === "detail" && open?.name === "community") selectCommunitySection(open, key); },
 });
 window.addEventListener("hub-account-changed", () => { navCommunities.clear(); if (currentView === "community" || sidebarParentView() === "community") renderSidebarContext(currentView); });
 let nativeSidebar = null;
@@ -835,7 +859,12 @@ const sidebarMine = createSidebarMine({
 });
 function appendSidebarMine(view) {
   const shell = document.querySelector(".app-shell");
-  if (appsOpen || ["ai", "browser"].includes(shell.dataset.sidebarContext) || view === "messages") return;
+  // The feed column is a tree that already holds its tags and lists, so the lower "あなたのもの" block would repeat them.
+  if (appsOpen || ["ai", "browser"].includes(shell.dataset.sidebarContext) || view === "messages" || view === "feed" || sidebarFeedTreeOwned) return;
+  if (["market", "cart", "purchased", "order"].includes(view)) return; // マーケットの木が列の全部
+  if (view === "music" || (view === "detail" && MUSIC_TREE_DETAILS.has(detailTrail.at(-1)?.name))) return; // 音楽の木が列の全部
+  if (view === "articles" || (view === "detail" && ["saved_articles", "article_drafts"].includes(detailTrail.at(-1)?.name))) return; // 記事の木が列の全部
+  if (view === "research" || (view === "detail" && DETAIL_SIDEBAR_FAMILY[detailTrail.at(-1)?.name] === "research")) return; // 研究の木が列の全部
   const name = view === "detail" ? detailTrail.at(-1)?.name : "";
   const key = view === "detail"
     ? ({ saved_articles: "articles", article_drafts: "articles", video_library: "videos", music_library: "music", video_playlists: "videos", music_playlists: "music" }[name] ?? (name.startsWith("research_") ? "research" : null))
@@ -849,7 +878,55 @@ function appendSidebarMine(view) {
 // 中身の無い画面では列ごと畳む（利用者が畳んだ状態とは別に覚え、中身のある画面に戻れば開き直す）。
 let sidebarCollapsedForEmpty = false;
 let sidebarEmptyView = false;
+// 自分宛て = メンションと返信。ほかの種類は返ってくる通知の type / targetType だけで分ける（返らない欄は作らない）。
+const matchesNotifTab = (item, tab) => {
+  if (tab === "unread") return !item.isRead;
+  if (tab === "mention") return item.context === "mention" || item.type === "social_reply" || item.type === "thread_reply";
+  if (tab === "feed") return item.targetType === "social_post" || item.targetType === "profile" || item.type === "followed";
+  if (tab === "community") return item.targetType === "community_message";
+  if (tab === "system") return item.type === "system";
+  return true;
+};
+const NOTIF_TREE_MAIN = [["all", "すべて", "bell"], ["mention", "自分宛て", "at"]];
+const NOTIF_TREE_FILTERS = [["unread", "未読", "system"], ["feed", "フィード", "post"], ["community", "コミュニティ", "community"], ["system", "お知らせ", "bell"]];
+const notifCounts = (items) => Object.fromEntries([...NOTIF_TREE_MAIN, ...NOTIF_TREE_FILTERS].map(([key]) => [key, key === "all" ? 0 : items.filter((item) => matchesNotifTab(item, key)).length]));
 const sidebarLists = { epoch: null, items: [], loading: false };
+// フィードの木の行（タグ・リスト・話題・スレッド・コミュニティ）から開いた画面では、列を入れ替えず木のまま本文だけを変える（2026-11-02）。
+// アイコンの列を直接押したら外す。木の行が押す「アイコンの列」は feedTreeNav で見分ける。
+let sidebarContextOwner = null;
+let feedTreeNav = false;
+let sidebarFeedTreeOwned = false;
+const FEED_TREE_VIEWS = new Set(["search", "threads", "community", "lists"]);
+const FEED_TREE_DETAILS = new Set(["tag", "list", "community"]);
+for (const rail of document.querySelectorAll(".icon-rail, #primary-nav, .account-nav")) {
+  rail.addEventListener("click", () => { if (!feedTreeNav) sidebarContextOwner = null; }, true);
+}
+// 木の枝の最初と最後の行に印を付ける。線の上端と、最後の行の曲がり角はこの印で決まる（非同期で入る行があるため構造では決めない）。
+function markTreeEdges(kids) {
+  const items = [...kids.querySelectorAll(".sidebar-context-item, .sidebar-tree-sub, .sidebar-tree-note")]
+    .filter((node) => !node.classList.contains("nav-community-all") && !node.closest("[hidden]"));
+  for (const node of kids.querySelectorAll(".is-tree-first, .is-tree-last")) node.classList.remove("is-tree-first", "is-tree-last");
+  items[0]?.classList.add("is-tree-first");
+  items.at(-1)?.classList.add("is-tree-last");
+}
+// 音楽の木（music-tree.mjs）の持ち主：この名前の詳細でも、内側左列は音楽の木のまま（押しても列は変わらない）。
+const MUSIC_TREE_DETAILS = new Set(["music_library", "music_playlists", "music_playlist", "music_artists", "music_artist", "music_album"]);
+// 木の「プレイリスト」の子。ログイン中だけ。プレイリストの頁を開き直したときだけ読み直す。
+const musicPlaylistList = { items: [], loaded: false, loading: false, epoch: null, entry: null };
+function loadMusicPlaylistList(entry) {
+  if (desktopAccount.state !== "registered") { if (musicPlaylistList.items.length) musicPlaylistList.items = []; return; }
+  const stale = entry && musicPlaylistList.entry !== entry;
+  if (musicPlaylistList.loading || (musicPlaylistList.loaded && musicPlaylistList.epoch === homeAccountEpoch && !stale)) return;
+  const epoch = homeAccountEpoch;
+  musicPlaylistList.loading = true; musicPlaylistList.entry = entry ?? musicPlaylistList.entry;
+  void Promise.resolve(invoke("hub_client", { name: "music_playlists" })).then((data) => {
+    if (epoch !== homeAccountEpoch) return;
+    musicPlaylistList.items = (Array.isArray(data?.playlists) ? data.playlists : []).filter((item) => item && typeof item.id === "string").map((item) => ({ id: item.id, title: String(item.title ?? "") })).slice(0, 100);
+  }).catch(() => { if (epoch === homeAccountEpoch) musicPlaylistList.items = []; }).finally(() => {
+    musicPlaylistList.loading = false; musicPlaylistList.loaded = true; musicPlaylistList.epoch = epoch;
+    if (epoch === homeAccountEpoch && (currentView === "music" || (currentView === "detail" && MUSIC_TREE_DETAILS.has(detailTrail.at(-1)?.name)))) renderSidebarContext(currentView);
+  });
+}
 function renderSidebarContext(view) {
   fillSidebarContext(view);
   appendSidebarMine(view);
@@ -861,13 +938,12 @@ function placeMessagesSide() {
   const shell = document.querySelector(".app-shell");
   const open = !appsOpen && !shell.classList.contains("sidebar-collapsed") && matchMedia("(min-width: 861px)").matches;
   const inColumn = currentView === "messages" && open;
-  const mailInColumn = currentView === "mail" && open && !document.querySelector("#mail-main").hidden;
-  if (inColumn) { if (messagesSide.parentElement !== sidebarContext) sidebarContext.append(messagesSide); }
-  else if (messagesSide.parentElement !== messagesLayout) messagesLayout.prepend(messagesSide);
-  if (mailInColumn) { if (mailListCol.parentElement !== sidebarContext) sidebarContext.append(mailListCol); }
-  else if (mailListCol.parentElement !== mailLayoutNode) mailLayoutNode.prepend(mailListCol);
+  // 列は木（メール／連絡先）を持つ。会話の一覧（#messages-list）は木の枝の元データとして本文側に残し、CSS で隠す。メールの一覧は本文側。
+  if (messagesSide.parentElement !== messagesLayout) messagesLayout.prepend(messagesSide);
+  if (mailListCol.parentElement !== mailLayoutNode) mailLayoutNode.prepend(mailListCol);
   shell.classList.toggle("sidebar-holds-messages", inColumn);
-  shell.classList.toggle("sidebar-holds-mail", mailInColumn);
+  // remove() は無い class でも属性を書き直し、この関数を呼ぶ MutationObserver が無限に回る。あるときだけ外す。
+  if (shell.classList.contains("sidebar-holds-mail")) shell.classList.remove("sidebar-holds-mail");
 }
 // 狭い窓で会話を開いているか。状態はシェルの class だけが持つ（初期化の順に左右されない）。
 function setDmThreadShown(open) {
@@ -900,7 +976,7 @@ function loadSidebarLists() {
     sidebarLists.loading = false;
     if (epoch !== homeAccountEpoch) return;
     sidebarLists.epoch = epoch;
-    if (["feed", "lists", "bookmarks"].includes(currentView)) renderSidebarContext(currentView);
+    if (["feed", "lists", "bookmarks"].includes(currentView) || sidebarFeedTreeOwned) renderSidebarContext(currentView);
   });
 }
 // フォロー中（画面ごとの人・チャンネル）とフォロー中のタグ。Hub の /api/client/sidebar を hub_detail で読む。
@@ -908,7 +984,7 @@ const SIDEBAR_REMOTE_KIND = { feed: "feed", videos: "videos", music: "music", ar
 const sidebarRemote = createSidebarRemote({
   invoke, epoch: () => homeAccountEpoch, registered: () => desktopAccount.state === "registered",
   changed: (kind) => {
-    if (SIDEBAR_REMOTE_KIND[sidebarParentView()] === kind) renderSidebarContext(currentView);
+    if (SIDEBAR_REMOTE_KIND[sidebarParentView()] === kind || (kind === "feed" && sidebarFeedTreeOwned)) renderSidebarContext(currentView);
     refreshViewChips();
   },
 });
@@ -982,13 +1058,19 @@ function fillSidebarContext(view) {
   const previous = document.querySelector(".app-shell").dataset.sidebarContext;
   const detailName = view === "detail" ? detailTrail.at(-1)?.name : null;
   const contextView = detailName ? (DETAIL_PARENT_VIEW[detailName] || view) : view;
-  const isLibrary = ["saved_articles","article_drafts","video_library","music_library","video_playlists","music_playlists"].includes(detailName);
-  const family = view === "detail"
+  const isLibrary = ["saved_articles","article_drafts","video_library","music_library","video_playlists","music_playlists"].includes(detailName) || MUSIC_TREE_DETAILS.has(detailName);
+  const feedTreeOwned = !appsOpen && sidebarContextOwner === "feed" && view !== "feed"
+    && (FEED_TREE_VIEWS.has(view) || (view === "detail" && FEED_TREE_DETAILS.has(detailName)));
+  sidebarFeedTreeOwned = feedTreeOwned;
+  const family = feedTreeOwned ? "feed" : view === "detail"
     ? (DETAIL_SIDEBAR_FAMILY[detailName] || previous || "feed")
     : (SIDEBAR_FAMILY[view] || view);
   document.querySelector(".app-shell").dataset.sidebarContext = family;
   // 題は列の中身の名前にする（本文の見出しと同じ語を並べない）。
-  const sidebarTitle = appsOpen ? "すべての機能" : isLibrary ? ({ videos: "動画を見る", music: "音楽を聴く", articles: "記事を読む" }[contextView] || "ライブラリ") : ({ ai: "作業", browser: "タブ", feed: "フィード", search: "結果の種類", videos: "動画を見る", music: "音楽を聴く", research: "プロジェクト", settings: "設定の項目", messages: "会話", mail: "メールのフォルダ", market: "買い物", purchased: "買い物", cart: "買い物", order: "買い物", lists: "保存したもの", bookmarks: "保存したもの" }[view] || (readingDirectory.has(contextView) ? (view === "detail" ? "目次" : { articles: "記事を読む", hubpedia: "分野", community: "コミュニティの分類", threads: "話題の種別" }[contextView]) : null) || (family === "research" ? "プロジェクト" : SIDEBAR_TITLES[family]) || "この画面");
+  // 受信トレイの列は題を持たない木（メール／連絡先）。題の段ごと畳む。
+  const inboxTree = !appsOpen && (view === "messages" || view === "mail");
+  document.querySelector(".app-shell").classList.toggle("sidebar-inbox-tree", inboxTree);
+  const sidebarTitle = appsOpen ? "すべての機能" : inboxTree ? "" : feedTreeOwned ? "フィード" : isLibrary ? ({ videos: "動画を見る", music: "音楽を聴く", articles: "記事を読む" }[contextView] || "ライブラリ") : ({ ai: "作業", browser: "タブ", feed: "フィード", search: "結果の種類", videos: "動画を見る", music: "音楽を聴く", research: "プロジェクト", settings: "Hub Desktop", messages: "会話", mail: "メールのフォルダ", market: "買い物", purchased: "買い物", cart: "買い物", order: "買い物", lists: "ブックマークとリスト", bookmarks: "ブックマークとリスト" }[view] || (readingDirectory.has(contextView) ? (view === "detail" ? (detailName === "hubpedia_article" ? "Hubpedia" : "目次") : { articles: "記事を読む", hubpedia: "分野", community: "コミュニティの分類", threads: "話題の種別" }[contextView]) : null) || (family === "research" ? "プロジェクト" : SIDEBAR_TITLES[family]) || "この画面");
   document.querySelector(".sidebar .brand h1").textContent = sidebarTitle;
   // 画面ごとのタブはすべて左の列に縦に並べる（ユーザー指定 2026-10-11）。
   if (sidebarContext.parentElement !== document.querySelector(".sidebar")) document.querySelector("#primary-nav").before(sidebarContext);
@@ -996,11 +1078,12 @@ function fillSidebarContext(view) {
   sidebarMoreObserver = null;
   sidebarContext.replaceChildren();
   if (!appsOpen && (family === "ai" || family === "browser")) return;
+  let host = sidebarContext; // 木の枝の中では、行はその枝の入れ物へ入る
   const section = (label) => {
     const title = document.createElement("p");
     title.className = "nav-group";
     title.textContent = label;
-    sidebarContext.append(title);
+    host.append(title);
     return title;
   };
   const action = (label, click, selected = false) => {
@@ -1009,7 +1092,7 @@ function fillSidebarContext(view) {
     button.className = `sidebar-context-item${selected ? " on" : ""}`;
     button.textContent = label;
     button.onclick = event => { if(owner===homeAccountEpoch&&button.isConnected)return click(event); };
-    sidebarContext.append(button);
+    host.append(button);
     return button;
   };
   // 一覧の行：左に名前、右に件数や状態（薄い字）。
@@ -1180,57 +1263,129 @@ function fillSidebarContext(view) {
   const openChannelProfile = (channel) => {
     if (channel.type === "profile" && channel.handle) void openDetail("profile", [channel.handle], { title: channel.name });
   };
-  // 音楽：ホーム・公開曲・外部作品・フォロー中の新着／マイページ。
+  // 音楽の列は木（music-tree.mjs）：ホーム / ライブラリ（お気に入り・プレイリスト（各プレイリスト）・アーティスト）。
+  // 音楽のどの頁にいても同じ木で、押した行が現在になるだけ。アップロードは、デスクトップに音楽の投稿口が無いので出さない。
+  // ゲームの列は木（games-tree.mjs）：ライブラリ（登録したゲーム）/ ストア（マーケットのゲームの種別を開く入口）。押しても列は変わらず、本文だけが替わる。
+  const gamesColumn = () => {
+    try { gamesView.tree = renderGamesTree({
+      document, host: sidebarContext,
+      model: gamesTreeModel({ installed: gamesView.entries }),
+      route: gamesPage.route(),
+      // ストアはマーケットのゲームの種別が持つ。この画面の本文は替えない。
+      onGo: (target) => (target.page === "store" ? openMarketGames() : gamesPage.go(target)),
+    }); } catch { /* ゲーム画面の初期化前 */ }
+  };
+  // マーケットの列は木（market-tree.mjs）：マーケット（種別）/ 自分（カート・購入済み・注文・出品中/売上）。押しても列は変わらず、本文だけが替わる。
+  const marketColumn = () => {
+    const route = view === "cart" ? { page: "cart" } : view === "purchased" ? { page: "purchased" } : view === "order" ? { page: "orders" } : { page: "browse", category: marketBrowse?.state().category ?? "all" };
+    const cartCount = Object.values(shop.cart).reduce((n, q) => n + q, 0);
+    marketView.tree = renderMarketTree({
+      document, host: sidebarContext, model: marketTreeModel({ sells: marketView.sells === true, canList: desktopAccount.state === "registered", cartCount }), route,
+      onGo: (target) => {
+        if (target.page === "browse") { if (currentView !== "market") document.querySelector('.nav-item[data-view="market"]')?.click(); document.querySelector('[data-shop-tab="products"]')?.click(); marketBrowse?.setCategory(target.category); }
+        else if (target.page === "cart") document.querySelector("#market-cart-open")?.click();
+        else if (target.page === "purchased" || target.page === "orders") { document.querySelector('.nav-item[data-view="purchased"]')?.click(); if (target.page === "orders") document.querySelector("#orders-list")?.scrollIntoView?.({ block: "start" }); }
+        else if (target.page === "sell") { if (currentView !== "market") document.querySelector('.nav-item[data-view="market"]')?.click(); document.querySelector('[data-shop-tab="seller"]')?.click(); const details = document.querySelector("#seller-product-details"); if (details && !document.querySelector("#seller-console")?.hidden) { details.open = true; details.scrollIntoView?.({ block: "start" }); } }
+        else if (target.page === "listings") { if (currentView !== "market") document.querySelector('.nav-item[data-view="market"]')?.click(); document.querySelector('[data-shop-tab="listings"]')?.click(); }
+        else if (target.page === "selling") { if (currentView !== "market") document.querySelector('.nav-item[data-view="market"]')?.click(); document.querySelector('[data-shop-tab="seller"]')?.click(); }
+      },
+    });
+    // 出品者かどうかは既存の読み（commerce_seller_state）を一度だけ使う。変わったときだけ列を描き直す。
+    if (marketView.sells === undefined) {
+      marketView.sells = false;
+      void invoke("commerce_seller_state").then((session) => { if (session?.loggedIn) { marketView.sells = true; renderSidebarContext(currentView); } }).catch(() => undefined);
+    }
+  };
   const musicColumn = () => {
     const onMusic = view === "music";
-    const goMusic = (tab) => {
-      if (currentView !== "music") document.querySelector('.icon-rail [data-view="music"]')?.click();
-      musicSideMode = null;
-      document.querySelector(`#music-tab-${tab}`)?.click();
-      syncMusicSidePanel();
+    const current = detailTrail.at(-1);
+    const route = onMusic ? { page: "home" }
+      : detailName === "music_library" ? { page: "favorites" }
+      : detailName === "music_playlists" ? { page: "playlists" }
+      : detailName === "music_playlist" ? { page: "playlist", id: current?.ids?.[0] }
+      : detailName === "music_artists" || detailName === "music_artist" ? { page: "artists" } : null;
+    loadMusicPlaylistList(detailName === "music_playlists" ? current : null);
+    const go = (target) => {
+      if (target.page === "home") {
+        if (currentView !== "music") document.querySelector('.icon-rail [data-view="music"]')?.click();
+        musicSideMode = null;
+        document.querySelector("#music-tab-home")?.click();
+        syncMusicSidePanel();
+      } else if (target.page === "favorites") document.querySelector("#music-saved").click();
+      else if (target.page === "playlists") document.querySelector("#music-playlists").click();
+      else if (target.page === "playlist") void openDetail("music_playlist", [target.id], { title: musicPlaylistList.items.find((item) => item.id === target.id)?.title || "プレイリスト", local: true, data: {} });
+      else if (target.page === "artists") void openDetail("music_artists", [], { title: "アーティスト", local: true, data: {} });
     };
-    for (const [tab, label, icon] of [["home", "ホーム", "home"], ["tracks", "公開曲", "tracks"], ["catalog", "外部作品", "external"]]) {
-      navRow(label, icon, () => goMusic(tab), onMusic && !musicSideMode && musicTab === tab);
-    }
-    void sidebarRemote.load("music"); // フォロー中のタグ（本文上のチップ）もここで読む
-    // フォロー中の節は動画だけ。追っている人の新着は、ここから開く。
-    if (desktopAccount.state === "registered") navRow("フォロー中の新着", "channel", () => openMusicSideMode("subscriptions"), onMusic && musicSideMode === "subscriptions");
-    // 自分のライブラリは上の段の続きに並べる（見出しも区切りも無い、2026-10-18）。
-    navRow("履歴", "history", () => openMusicSideMode("history"), onMusic && musicSideMode === "history");
-    navRow("再生リスト", "playlist", () => document.querySelector("#music-playlists").click(), detailName === "music_playlists");
-    navRow("お気に入り", "favorite", () => document.querySelector("#music-saved").click(), detailName === "music_library");
+    renderMusicTree({ document, host: sidebarContext, model: musicTreeModel({ playlists: musicPlaylistList.items, canUpload: false }), route, onGo: go });
   };
-  // 動画：ホーム・ショート／フォロー中（追っている動画チャンネル）／マイページ。カテゴリは本文上のチップ。
+  // 動画の列は木（video-tree.mjs）：ホーム / ショート / フォロー中（フォローしている人）/ ライブラリ（あとで見る・再生リスト・履歴・自分の動画）。押しても列は変わらない。
   const videoColumn = () => {
-    const onVideos = view === "videos";
-    const listing = onVideos && videoWatchIndex < 0;
-    navRow("ホーム", "home", () => setVideoMode("home"), listing && videoMode === "home");
-    navRow("ショート", "shorts", () => setVideoMode("shorts"), listing && videoMode === "shorts");
-    navRow("履歴", "history", () => setVideoMode("history"), listing && videoMode === "history");
-    navRow("再生リスト", "playlist", () => document.querySelector("#video-playlists").click(), detailName === "video_playlists");
-    navRow("あとで見る", "later", () => document.querySelector("#video-saved").click(), detailName === "video_library");
-    navRow("自分の動画", "upload", () => void openVideoStudio(), false);
+    const listing = view === "videos" && videoWatchIndex < 0;
+    const signedIn = desktopAccount.state === "registered";
+    if (signedIn) void sidebarRemote.load("videos");
+    const entry = sidebarRemote.state("videos");
     const channelQuery = document.querySelector("#video-query")?.value ?? "";
-    channelBlock("videos", () => setVideoMode("subscriptions"), listing && videoMode === "subscriptions", (channel) => {
-      setVideoMode("home", false);
-      document.querySelector("#video-query").value = channel.name;
-      void searchVideos(true);
-    }, (channel) => listing && videoMode === "home" && channelQuery === channel.name);
+    const modeRoute = { home: { page: "home" }, shorts: { page: "shorts" }, history: { page: "history" }, subscriptions: { page: "subscriptions" } };
+    const route = detailName === "video_library" ? { page: "later" }
+      : detailName === "video_playlists" ? { page: "playlists" }
+      : listing && videoMode === "home" && channelQuery && entry.items.some((channel) => channel.name === channelQuery) ? { page: "channel", id: entry.items.find((channel) => channel.name === channelQuery).handle ?? channelQuery }
+      : listing ? (modeRoute[videoMode] ?? { page: "home" }) : null;
+    const go = (target) => {
+      if (target.page === "home") setVideoMode("home");
+      else if (target.page === "shorts") setVideoMode("shorts");
+      else if (target.page === "history") setVideoMode("history");
+      else if (target.page === "subscriptions") setVideoMode("subscriptions");
+      else if (target.page === "later") document.querySelector("#video-saved").click();
+      else if (target.page === "playlists") document.querySelector("#video-playlists").click();
+      else if (target.page === "studio") void openVideoStudio();
+      else if (target.page === "channel") {
+        // フォロー中の人 = 動画のチャンネル。押すと、その人のチャンネルページ（読み取りのみ・フォローは人のフォローと同じ動詞）を開く。
+        const channel = entry.items.find((item) => (item.handle ?? item.name) === target.id);
+        if (channel?.handle) openVideoChannel(channel.handle);
+      }
+    };
+    renderVideoTree({
+      document, host: sidebarContext, route, onGo: go,
+      model: videoTreeModel({ channels: entry.items, signedIn, channelsStatus: entry.failed ? "failed" : !entry.loaded || entry.loading ? "loading" : "done", canUpload: true }),
+      avatar: (doc, channel) => channelAvatar(doc, channel, hubAsset),
+    });
+    // フォロー中の続き（今の channelBlock と同じ：最後の行が見えたら次の頁を読む）。
+    if (signedIn && entry.next) {
+      const sentinel = document.createElement("div");
+      sentinel.className = "sidebar-more-sentinel";
+      sentinel.setAttribute("aria-hidden", "true");
+      sidebarContext.append(sentinel);
+      if (typeof IntersectionObserver === "function") {
+        sidebarMoreObserver = new IntersectionObserver((entries) => {
+          if (entries.some((item) => item.isIntersecting)) void sidebarRemote.more("videos");
+        }, { root: sidebarContext, rootMargin: "0px 0px 240px 0px" });
+        sidebarMoreObserver.observe(sentinel);
+      }
+    }
   };
-  // 記事：ホーム／マイページ（保存・下書き）。タグは本文上のチップ。
+  // 記事：木（ホーム〔フォロー中のタグ・下書き・シリーズ〕/ マガジン〔保存した記事〕）。押しても列は変わらない。
   const articleColumn = () => {
     const directory = readingDirectory.get("articles");
-    navRow("ホーム", "home", () => {
-      if (currentView !== "articles") document.querySelector('.icon-rail [data-view="articles"]')?.click();
-      directory.filter = "";
-      const input = document.querySelector("#articles-query");
-      if (input?.value) { input.value = ""; void loadCatalog("articles"); }
-      renderReadingCatalog("articles");
-      renderSidebarContext(currentView);
-    }, view === "articles" && !directory.filter && !document.querySelector("#articles-query")?.value);
-    navRow("保存した記事", "bookmark", () => document.querySelector("#articles-saved").click(), detailName === "saved_articles");
-    navRow("下書き", "draft", () => document.querySelector("#articles-drafts").click(), detailName === "article_drafts");
-    void sidebarRemote.load("articles"); // フォロー中のタグ（本文上のチップ）
+    const onArticles = view === "articles";
+    const route = detailName === "saved_articles" ? { page: "saved" }
+      : detailName === "article_drafts" ? { page: "drafts" }
+      : onArticles && directory.filter ? { page: "tag", id: directory.filter }
+      : onArticles ? { page: "home" } : null;
+    void sidebarRemote.load("articles"); // フォロー中のタグ（changed -> renderSidebarContext で木の枝が埋まる）
+    const go = (target) => {
+      const toArticles = () => { if (currentView !== "articles") document.querySelector('.icon-rail [data-view="articles"]')?.click(); };
+      if (target.page === "home" || target.page === "tags" || target.page === "tag") {
+        toArticles();
+        directory.filter = target.page === "tag" ? target.id : "";
+        const input = document.querySelector("#articles-query");
+        if (input?.value) { input.value = ""; void loadCatalog("articles"); }
+        renderReadingCatalog("articles");        // 絞り込みと一覧だけ描き直す。列は触らない
+        tree.select(target.page === "tags" ? { page: "home" } : target);
+      } else if (target.page === "drafts") document.querySelector("#articles-drafts").click();
+      else if (target.page === "saved") document.querySelector("#articles-saved").click();
+      else if (target.page === "series") document.querySelector("#articles-series").click(); // Web版を既定のブラウザで開く（従来どおり）
+    };
+    const tree = renderArticleTree({ document, host: sidebarContext, model: articleTreeModel({ tags: sidebarRemote.tags() }), route, onGo: go });
   };
   if (isLibrary) {
     // ライブラリの画面も親の画面と同じ列を出す（今いる項目を選択中にする）。
@@ -1240,78 +1395,183 @@ function fillSidebarContext(view) {
     return;
   }
   if (family === "research") {
-    if (detailName === "research_project") {
-      section("このプロジェクト");
-      for (const heading of document.querySelectorAll("#detail-content [data-research-section]")) {
-        action(heading.dataset.researchSection, () => {
-          heading.scrollIntoView({ behavior: "smooth", block: "start" });
-          heading.tabIndex = -1;
-          heading.focus({ preventScroll: true });
-        });
+    // 研究の列は木（research-tree.mjs）：プロジェクト（各プロジェクト）/ 探す。押した行が現在になるだけで、列は変わらない。
+    const current = detailTrail.at(-1);
+    const route = view === "research" ? { page: "projects" }
+      : detailName === "research_network_fork" ? null
+      : current?.ids?.[0] ? { page: "project", id: current.ids[0] } : null;
+    const go = (target) => {
+      if (owner !== homeAccountEpoch) return;
+      if (target.page === "project") {
+        void openDetail("research_project", [target.id], { title: researchWorkspace.projects().find((item) => item.id === target.id)?.title || "プロジェクト" });
+        return;
       }
-    }
-    if(researchWorkspace.projects().length && view === "detail") section("ほかのプロジェクト");
-    for (const project of researchWorkspace.projects()) {
-      action(project.title, () => void openDetail("research_project", [project.id], { title: project.title }), detailTrail.at(-1)?.ids[0] === project.id);
-    }
+      if (currentView !== "research") document.querySelector('.icon-rail [data-view="research"]')?.click();
+      if (target.page === "discover") document.querySelector("#research-query")?.focus();
+      else document.querySelector("#research-results")?.scrollIntoView({ block: "start" });
+    };
+    renderResearchTree({ document, host: sidebarContext, model: researchTreeModel({ projects: researchWorkspace.projects() }), route, onGo: go });
     return;
   }
-  if (view === "feed") {
-    // フィード：ホーム（投稿）・スレッド・コミュニティ／マイページ（フォロー中の流れは本文上の「フォロー中」）。
-    // 並び（おすすめ・人気）とフォロー中のタグは本文の上のチップ。「新着」は置かない（2026-10-12）。
+  // 木の列（2026-11-02）：根は線を持たず、枝は曲がり線でぶら下がる。フィード・ブックマーク／リストが同じ作り。
+  // 根が null のときは枝を持たない（ブックマーク）。枝の中の行は build が置く。
+  const tree = (label, icon, click, selected, build) => {
+    const group = document.createElement("div");
+    group.className = "sidebar-tree";
+    sidebarContext.append(group);
+    host = group;
+    navRow(label, icon, click, selected).classList.add("sidebar-tree-root");
+    if (build) {
+      const kids = document.createElement("div");
+      kids.className = "sidebar-tree-children";
+      kids.setAttribute("role", "group");
+      kids.setAttribute("aria-label", label);
+      group.append(kids);
+      host = kids;
+      build(kids);
+      markTreeEdges(kids);
+    }
+    host = sidebarContext;
+  };
+  const sub = (label) => {
+    const heading = document.createElement("p");
+    heading.className = "sidebar-tree-sub";
+    heading.textContent = label;
+    host.append(heading);
+  };
+  // アイコンの列の行き先を押す。フィードの木から押したときだけ、列は木のまま本文だけが変わる（sidebarContextOwner）。
+  const railGo = (target, fromFeedTree = false) => {
+    if (fromFeedTree) { sidebarContextOwner = "feed"; feedTreeNav = true; }
+    try { document.querySelector(`.icon-rail [data-view="${target}"], #primary-nav [data-view="${target}"], .account-nav [data-view="${target}"]`)?.click(); }
+    finally { feedTreeNav = false; }
+  };
+  const treeLink = (label, target, selected) => {
+    const button = action(label, () => railGo(target, true), selected);
+    if (selected) button.setAttribute("aria-current", "page");
+    return button;
+  };
+  const openFromTree = (name, ids, title) => { sidebarContextOwner = "feed"; void openDetail(name, ids, { title }); };
+  const detailId = detailName ? detailTrail.at(-1)?.ids?.[0] : null;
+  if (view === "feed" || feedTreeOwned) {
+    // フィードの列は3本の根の木：フィード（フォロー中のタグ・リスト）／スレッド／コミュニティ。
+    // 枝は常に出す。根を押すとこれまでどおり投稿のタブか selectSocial に移る。枝を押しても列は変わらず、押した行が現在になる。
+    // 並び（おすすめ・人気）は本文の上のチップ。「新着」は置かない（2026-10-12）。
+    if (view === "feed") sidebarContextOwner = null;
+    const atFeed = view === "feed";
     const kind = socialMode === "legacy" ? "post" : socialFilter;
     const following = socialMode === "mixed" && socialScope === "following";
-    for (const [filter, label, icon] of [["post", "ホーム", "home"], ["thread", "スレッド", "thread"], ["community", "コミュニティ", "community"]]) {
-      navRow(label, icon, () => filter === "post" ? selectFeedTab(feedTabKey()) : selectSocial("mixed", filter, "latest"), kind === filter && !following);
-    }
-    if (kind === "thread") destination("スレッドを探す・作る", "threads");
-    if (kind === "community") destination("コミュニティを探す・参加する", "community");
-    void sidebarRemote.load("feed"); // フォロー中のタグ（本文上のチップ）
+    const rootClick = (filter) => () => {
+      if (!atFeed && filter === "post") { railGo("feed"); return; }
+      sidebarContextOwner = null;
+      if (filter === "post") selectFeedTab(feedTabKey()); else void selectSocial("mixed", filter, "latest");
+    };
+    tree("フィード", "home", rootClick("post"), atFeed && kind === "post" && !following, () => {
+      sub("フォロー中のタグ");
+      const tags = sidebarRemote.tags().slice(0, 8);
+      if (tags.length) for (const tag of tags) row(`#${tag}`, "", () => openFromTree("tag", [tag], `#${tag}`), detailName === "tag" && detailId === tag);
+      else if (desktopAccount.state === "registered" && !sidebarRemote.state("feed").loaded) { /* 読み込み中は何も置かない */ }
+      else {
+        const note = document.createElement("p");
+        note.className = "sidebar-tree-note";
+        note.textContent = "フォロー中のタグはまだありません";
+        host.append(note);
+      }
+      treeLink("話題を探す", "search", view === "search");
+      sub("リスト");
+      for (const list of sidebarLists.items) {
+        row(list.name || "リスト", (list.profileIds ?? []).length || "", () => openFromTree("list", [list.id], list.name),
+          detailName === "list" && detailId === list.id);
+      }
+      treeLink("すべて見る", "lists", view === "lists");
+    });
+    // スレッド：参加中・フォロー中を返す既存の読み取りは許可リストに無い（sidebar は feed/videos/music/articles だけ）ので、探す・作るだけを置く。
+    tree("スレッド", "thread", rootClick("thread"), atFeed && kind === "thread", () => {
+      treeLink("探す・作る", "threads", view === "threads");
+    });
+    tree("コミュニティ", "community", rootClick("community"), atFeed && kind === "community", (kids) => {
+      if (desktopAccount.state === "registered") {
+        kids.append(communitiesHost);
+        navCommunities.setCurrent(detailName === "community" ? detailId ?? "" : "", detailName === "community" ? communitySectionItems(detailTrail.at(-1)) : []);
+        void navCommunities.refresh().then(() => markTreeEdges(kids));
+      }
+      treeLink("コミュニティを探す", "community", view === "community");
+    });
+    loadSidebarLists();
+    void sidebarRemote.load("feed"); // フォロー中のタグ
     return;
   }
   if (family === "feed" && !readingDirectory.has(contextView)) {
     // タイムラインはアイコンの列にあるので、詳細から戻るときだけ出す。
     if (view === "detail" && detailTrail.length === 1 && detailReturn.view === "feed") destination("タイムライン", "feed");
     loadSidebarLists();
-    // ブックマークとリストの画面では、互いへの2行だけなら列を出さない（自分のリストが読めたときだけ並べる）。
-    const savedView = ["lists", "bookmarks"].includes(view);
-    if (savedView && !sidebarLists.items.length) return;
-    if (!savedView) section("保存したもの");
-    destination("ブックマーク", "bookmarks");
-    if (sidebarLists.items.length) {
-      destination("すべてのリスト", "lists");
-      section("リスト");
+    // ブックマークとリストの画面（2026-11-02）：フィードと同じ木。根は「ブックマーク」「リスト」、
+    // 自分のリストは「リスト」の枝に並べ、最後に「すべて見る」。「リスト」の根が一覧を開く。
+    tree("ブックマーク", "bookmark", () => railGo("bookmarks"), view === "bookmarks", null);
+    tree("リスト", "list", () => railGo("lists"), view === "lists", () => {
       for (const list of sidebarLists.items) {
         row(list.name || "リスト", (list.profileIds ?? []).length || "", () => void openDetail("list", [list.id], { title: list.name }),
-          detailName === "list" && detailTrail.at(-1)?.ids[0] === list.id);
+          detailName === "list" && detailId === list.id);
       }
-    } else destination("リスト", "lists");
+      action("すべて見る", () => railGo("lists"), false);
+    });
   } else if (view === "notifications") {
-    for (const [key, label] of [["all", "すべて"], ["unread", "未読"], ["feed", "フィード"], ["community", "コミュニティ"], ["system", "お知らせ"]]) {
-      mirror(`#view-notifications [data-notif-tab="${key}"]`, label);
-    }
-  } else if (view === "messages" || view === "mail") {
-    // DM・メール・連絡先は上の切り替えに置き、その下にDMの会話の一覧かメールのフォルダを並べる。
-    // 会話の一覧（.messages-side）は finishSidebarContext が列へ移す。列を畳むと本文の左へ戻る。
-    // メールにつながっていないあいだは、列に置けるのが切り替えだけなので畳む（DMへはアイコンの列から戻れる）。
-    const folders = view === "mail" && !document.querySelector("#mail-main").hidden;
-    if (view === "messages" || folders) switchRow("受信の種類", [["DM", "messages"], ["メール", "mail"], ["連絡先", "contacts"]]);
-    if (folders) {
-      for (const tab of document.querySelectorAll("[data-mail-folder]")) mirror(`[data-mail-folder="${tab.dataset.mailFolder}"]`, tab.textContent);
-    }
+    // 通知の列は木（2026-11-03）：根「通知」の下に すべて・自分宛て、「絞り込み」の下に 未読・フィード・コミュニティ・お知らせ。
+    // 押すと本文の一覧だけが替わり（setNotifTab）、列は同じ木のまま、押した行が現在になる。件数は読み込んだ通知から数える。
+    let items = [], current = "all";
+    try { items = notificationsData?.notifications ?? []; current = notifTab; } catch { /* 宣言前 */ }
+    const counts = notifCounts(items);
+    const leaf = ([key, label, glyph]) => {
+      const meta = counts[key] ? String(counts[key]) : "";
+      const button = row(label, meta, () => setNotifTab(key), current === key);
+      button.prepend(sidebarIcon(document, glyph));
+      button.dataset.notifTree = key;
+    };
+    tree("通知", "bell", () => setNotifTab("all"), false, () => {
+      for (const entry of NOTIF_TREE_MAIN) leaf(entry);
+      sub("絞り込み");
+      for (const entry of NOTIF_TREE_FILTERS) leaf(entry);
+    });
+  } else if (inboxTree) {
+    // 受信トレイの列は切り替え無しの木（2026-11-02）：根「メール」と根「連絡先」。連絡先の枝は DM の相手（既存の会話一覧）。
+    // 列はメッセージとメールのどちらを開いても同じ木のまま、本文だけが変わり、押した行が現在になる。
+    // メールの一覧と本文はこれまでどおり本文側の列（loadMail）。メールのアドレスは Hub のプロフィールに結び付けない。
+    tree("メール", "mail", () => { if (view !== "mail") document.querySelector('#primary-nav [data-view="mail"]')?.click(); }, view === "mail", null);
+    // messagesData と activeConversationId は後ろで宣言される let。最初の描画は宣言より前に走るので、読めるまでは空として扱う。
+    let dm = null, activeId = null;
+    try { dm = messagesData; activeId = activeConversationId; } catch { /* 宣言前 */ }
+    const peers = dm ? dm.conversations.map((conversation) => {
+      const profiles = new Map(dm.profiles.map((profile) => [profile.id, profile]));
+      return { conversation, peer: conversationPeer(conversation, profiles, dm.currentProfileId) };
+    }) : [];
+    tree("連絡先", "contacts", () => { if (view !== "messages") document.querySelector('#primary-nav [data-view="messages"]')?.click(); }, false, () => {
+      for (const { conversation, peer } of peers) {
+        const name = peer.displayName || peer.handle || "（名無し）";
+        const button = action("", () => {
+          for (const other of sidebarContext.querySelectorAll(".sidebar-contact-row")) { other.classList.toggle("on", other === button); if (other === button) other.setAttribute("aria-current", "true"); else other.removeAttribute("aria-current"); }
+          if (currentView === "messages") void openConversation(conversation.id);
+          else void navigateFrom({ dataset: { view: "messages" }, childNodes: [] }).then(() => openConversation(conversation.id));
+        }, view === "messages" && activeId === conversation.id);
+        button.classList.add("sidebar-channel-row", "sidebar-contact-row");
+        button.title = name;
+        const label = document.createElement("span");
+        label.className = "sidebar-item-label";
+        label.textContent = name;
+        const when = document.createElement("span");
+        when.className = "sidebar-item-meta";
+        when.textContent = conversation.lastMessageAt ? relTime(conversation.lastMessageAt) : "";
+        button.append(channelAvatar(document, { type: "profile", name, avatarUrl: peer.avatarUrl }, hubAsset), label, when);
+        if (view === "messages" && activeId === conversation.id) button.setAttribute("aria-current", "true");
+      }
+      if (!peers.length && dm) {
+        const note = document.createElement("p");
+        note.className = "sidebar-tree-note";
+        note.textContent = "まだやり取りはありません";
+        host.append(note);
+        treeLink("相手を探す", "search", false);
+      }
+    });
   } else if (family === "market") {
-    if (view === "market") {
-      for (const [key, label] of [["products", "商品"], ["listings", "出品"], ["seller", "販売者"]]) mirror(`#view-market [data-shop-tab="${key}"]`, label);
-    }
-    action(document.querySelector("#market-cart-open")?.textContent || "カート", () => document.querySelector("#market-cart-open")?.click(), view === "cart").classList.add("sidebar-cart");
-    section("購入と保管");
-    destination("購入済み", "purchased");
-    // この端末からの注文（端末に保存した控え。新しい問い合わせはしない）。
-    const orders = shop.orders.slice(0, 5);
-    if (orders.length) {
-      section("最近の注文");
-      for (const receipt of orders) row(receipt.title || "注文", orderStatusText(receipt.status), () => document.querySelector('#primary-nav [data-view="purchased"]')?.click());
-    }
+    marketColumn();
   } else if (view === "search") {
     // 結果の種類だけを持つ。結果が無いあいだは列を畳む（行き先の一覧はアイコンの列と「すべての機能」にある）。
     const tabs = document.querySelector("#search-tabs");
@@ -1322,6 +1582,8 @@ function fillSidebarContext(view) {
     videoColumn();
   } else if (view === "music") {
     musicColumn();
+  } else if (view === "games") {
+    gamesColumn();
   } else if (readingDirectory.has(contextView)) {
     if (contextView === "community" && desktopAccount.state === "registered") {
       // 参加中のコミュニティ（hub_resource communities の自分の memberships）。見出しは一覧が描かれたときだけ出す。
@@ -1330,31 +1592,108 @@ function fillSidebarContext(view) {
       sidebarContext.append(communitiesHost);
       const current = view === "detail" && detailName === "community" ? detailTrail.at(-1)?.ids?.[0] : "";
       const sync = () => { heading.hidden = communitiesHost.hidden; };
-      navCommunities.setCurrent(current);
+      navCommunities.setCurrent(current, current ? communitySectionItems(detailTrail.at(-1)) : []);
       sync();
       void navCommunities.refresh().then(sync);
     }
     if (view === "detail") {
       const returning = detailTrail.length === 1 && detailReturn.view === contextView;
       if (contextView !== "hubpedia" && (returning || !document.querySelector(`.icon-rail [data-view="${contextView}"]`))) destination({ articles: "記事一覧", community: "コミュニティ一覧", threads: "スレッド一覧" }[contextView], contextView);
+      if (detailName === "hubpedia_article") {
+        // 記事の目次の木（2026-11-03）：根「記事の目次」の下に本文の見出しを段つきで並べ、最後に出典。押すと本文のその節へ寄る。
+        const body = document.querySelector("#detail-content .hubpedia-reading");
+        const entries = body ? hubpediaHeadings(body) : [];
+        const sources = document.querySelector("#detail-content .hubpedia-sources")?.parentElement?.querySelector(".result-heading");
+        const numbers = hubpediaNumbers(entries);
+        const top = () => viewScroller()?.scrollTo?.({ top: 0, behavior: "smooth" });
+        tree("記事の目次", "article", top, false, () => {
+          entries.forEach((entry, index) => {
+            const button = row(entry.text, numbers[index], () => entry.node.scrollIntoView?.({ behavior: "smooth", block: "start" }));
+            button.dataset.tocLevel = String(Math.min(entry.level, 3));
+          });
+          if (sources) row("出典", "", () => sources.scrollIntoView?.({ behavior: "smooth", block: "start" })).dataset.tocLevel = "1";
+        });
+      } else {
       const headings = [...document.querySelectorAll("#detail-content .detail-h, #detail-content h2, #detail-content h3")];
       if (headings.length) section("目次");
       for (const heading of headings) {
         action(heading.textContent, () => heading.scrollIntoView({ behavior: "smooth", block: "start" }));
+      }
       }
     } else if (contextView === "articles") {
       articleColumn();
     }
     // コミュニティ・スレッド・資料の分類は本文の上のチップにある（列には並べない）。
   } else if (view === "profile") {
-    // プロフィールの節（投稿・メディア・記事など）を左の列に並べる。本文のタブと同じものを押す。
-    for (const tab of document.querySelectorAll("#view-profile .profile-tab")) {
-      const label = tab.firstChild?.textContent?.trim() || tab.textContent.trim();
-      const count = tab.querySelector(".profile-tab-count")?.textContent?.trim() ?? "";
-      row(label, count, () => { tab.click(); renderSidebarContext("profile"); }, tab.classList.contains("on"));
-    }
+    // プロフィールの列は木（2026-11-03）：根「プロフィール」の下に 投稿・返信・メディア（返った種類だけ。記事・動画・コード・スレッド・コミュニティも同じ）、
+    // 「つながり」の下に フォロー中・フォロワー。押すのは本文の札と同じもの。「いいね」はこの端末が読める応答に無いので置かない。
+    const tabs = [...document.querySelectorAll("#view-profile .profile-tab")];
+    const active = document.querySelector("#view-profile .profile-panel")?.dataset.tab ?? "";
+    const glyphs = { posts: "post", replies: "reply", media: "image", threads: "thread", communities: "community", articles: "article", videos: "video", music: "tracks", research: "research", market: "market", code: "code" };
+    tree("プロフィール", "contacts", () => { tabs.find((tab) => tab.dataset.tab === "posts")?.click(); renderSidebarContext("profile"); }, false, () => {
+      for (const tab of tabs) {
+        const label = tab.firstChild?.textContent?.trim() || tab.textContent.trim();
+        const count = tab.querySelector(".profile-tab-count")?.textContent?.trim() ?? "";
+        row(label, count, () => { tab.click(); renderSidebarContext("profile"); }, tab.dataset.tab === active).prepend(sidebarIcon(document, glyphs[tab.dataset.tab] ?? "list"));
+      }
+      const links = [["following", "フォロー中", "contacts"], ["followers", "フォロワー", "community"]]
+        .map(([kind, label, glyph]) => ({ kind, label, glyph, stat: document.querySelector(`#profile-stats button[data-connections="${kind}"]`) }))
+        .filter((entry) => entry.stat);
+      if (links.length) sub("つながり");
+      for (const { kind, label, glyph, stat } of links) {
+        row(label, "", () => { stat.click(); renderSidebarContext("profile"); }, active === kind).prepend(sidebarIcon(document, glyph));
+      }
+    });
   } else if (view === "settings") {
-    for (const tab of document.querySelectorAll(".inner-nav-item")) mirror(`[data-settings-sec="${tab.dataset.settingsSec}"]`, tab.textContent);
+    // 設定の列は木（2026-11-03）：根「設定」の下に、節を3つの見出しで分けて並べる。
+    // 押すのは本文の節の切り替えと同じもの（.inner-nav-item）。節は減らさず並べ替えだけ。検索は列の頭に置く（本文の検索欄と同じ入力を使う）。
+    const sections = new Map([...document.querySelectorAll("#view-settings .inner-nav-item")].map((tab) => [tab.dataset.settingsSec, tab]));
+    const groups = [
+      ["アカウントと安全", [["account", "contacts"], ["notifications", "bell"], ["privacy", "lock"]]],
+      ["Hubの機能", [["appearance", "display"], ["ai", "sparkle"], ["wallet", "wallet"], ["browser", "external"]]],
+      ["この端末とアプリ", [["device", "device"], ["advanced", "code"], ["app-info", "system"]]],
+    ];
+    const searchSource = document.querySelector("#settings-search");
+    if (searchSource) {
+      const field = document.createElement("input");
+      field.type = "search";
+      field.className = "sidebar-app-search settings-column-search";
+      field.placeholder = "設定を検索";
+      field.setAttribute("aria-label", "設定を検索");
+      field.autocomplete = "off";
+      field.spellcheck = false;
+      field.maxLength = 100;
+      field.value = searchSource.value;
+      field.addEventListener("input", () => { searchSource.value = field.value; searchSource.dispatchEvent(new Event("input", { bubbles: true })); });
+      field.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === "ArrowDown") searchSource.dispatchEvent(new KeyboardEvent("keydown", { key: event.key, bubbles: true, cancelable: true })); });
+      sidebarContext.append(field);
+    }
+    const current = [...sections.values()].find((tab) => tab.classList.contains("on"))?.dataset.settingsSec ?? "account";
+    tree("設定", "system", () => sections.get("account")?.click(), false, () => {
+      for (const [label, entries] of groups) {
+        sub(label);
+        for (const [key, glyph] of entries) {
+          const tab = sections.get(key);
+          if (!tab) continue;
+          const button = row({ privacy: "プライバシー", advanced: "詳細", "app-info": "アプリ情報" }[key] ?? tab.textContent.trim(), "", () => { tab.click(); renderSidebarContext("settings"); }, current === key && !searchSource?.value);
+          button.prepend(sidebarIcon(document, glyph));
+          button.dataset.settingsTree = key;
+        }
+      }
+    });
+  }
+  if (view === "wallet") {
+    // ウォレットの列は木（2026-11-03）：根「ウォレット」の下に、本文の区画（この端末のウォレット・プロフィール連携・連携中のアドレス・履歴・チップ設定）を並べる。
+    // 押すと本文のその区画へ寄せるだけ。署名・送金・確認の手順には触れない。区画はウォレットを読み込んだあとの本文から数える。
+    const blocks = [...document.querySelectorAll("#wallet-results > *")].map((node) => {
+      const label = node.classList.contains("wallet-device") ? "この端末のウォレット" : (node.querySelector("h2, h3, summary")?.textContent ?? "").trim();
+      return label ? { node, label } : null;
+    }).filter(Boolean);
+    const glyphOf = (label) => /履歴|アクティビティ/.test(label) ? "history" : /チップ|受取/.test(label) ? "heart" : /連携/.test(label) ? "contacts" : "wallet";
+    tree("ウォレット", "wallet", () => document.querySelector("#view-wallet")?.scrollIntoView?.({ block: "start" }), false, () => {
+      const short = { "この端末のウォレット": "この端末", "プロフィール連携": "連携", "連携中のアドレス": "アドレス", "最近の履歴": "履歴", "チップの受取設定": "チップ" };
+      for (const { node, label } of blocks) row(short[label] ?? label, "", () => node.scrollIntoView?.({ block: "start", behavior: "smooth" })).prepend(sidebarIcon(document, glyphOf(label)));
+    });
   }
   // 見つける系（概要・世界・ランキング・サービス・本・この端末）とアカウント（プロフィール・ウォレット）は、
   // 列に置けるのが他の画面への行き先だけなので、何も出さずに畳む。行き先は「すべての機能」にある。
@@ -1371,7 +1710,7 @@ function showView(view, title, history = {}) {
   if (previousView === "wallet" && view !== "wallet") releaseWalletTipSettings();
   if (previousView === "market" && view !== "market") releaseOwnedEventListings();
   if (previousView === "node" && view !== "node") hubPeers.closeTransfer();
-  if(view!=="detail" && typeof releaseResearchDetail==='function'){releaseResearchDetail();releaseCommunityChannelPolicy();}
+  if(view!=="detail" && typeof releaseResearchDetail==='function'){releaseResearchDetail();releaseCommunityDetail();}
   const viewChanged = currentView !== view;
   if(viewChanged)disposeExternalMediaRegistration();
   if(viewChanged&&previousView==='videos')stopVideoPlayer();
@@ -1383,8 +1722,9 @@ function showView(view, title, history = {}) {
     boardKey: threadBoardKey, boardTitle: threadBoardTitle, query: document.querySelector("#threads-query").value,
   });
   currentView = view;
+  if (typeof feedLive !== "undefined") feedLive?.sync();
   // 音楽の画面（一覧と作品の詳細）を離れたら YouTube の埋め込みを外す。音も止まる。
-  if (typeof musicYoutube !== "undefined") musicYoutube.sync(view === "music" || (view === "detail" && detailTrail.at(-1)?.name === "music_work") || railMusic?.hostsYoutube() === true);
+  if (typeof musicYoutube !== "undefined") musicYoutube.sync(view === "music" || railMusic?.hostsYoutube() === true);
   syncSavedSearchView(previousView, view);
   if(typeof feedComposer!=='undefined'){
     if(viewChanged&&(previousView==='feed'||view==='feed'))feedComposerViewEpoch={};
@@ -1575,7 +1915,7 @@ function webDiscoveryAction(label, query) {
   button.type = "button";
   button.className = "approve";
   button.textContent = label;
-  button.onclick = () => void enterBrowser(`https://www.google.com/search?q=${encodeURIComponent(query)}`);
+  button.onclick = () => void openWebSearch(query);
   return button;
 }
 
@@ -1647,13 +1987,10 @@ function searchPost(record) {
   });
 }
 
-// 検索結果のグループからネイティブ詳細への写し方。対応する面が無い
-// グループ（人物・リスト等）はクリックなしのカードのままにする。
-function searchResultCard(key, record) {
-  if (key === "posts") return searchPost(record) ?? resultCard(record);
-  const card = resultCard(record, key === "coreEntities" ? GROUP_LABELS[record?.sourceGroup] ?? "Hubの項目" : undefined);
-  const title = textValue(record, ["title", "name", "displayName", "display_name", "slug", "id"]);
-  const open = key === "coreEntities"
+// 検索結果1件を開く関数（無ければ null）。検索カードと上の検索欄の候補が同じ道を使う。
+function searchResultOpener(key, record, title) {
+  if (key === "posts") return record?.id ? () => openDetail("post", [record.id], { title: "投稿" }) : null;
+  return key === "coreEntities"
     ? (typeof record?.href === "string" && record.href.startsWith("/") ? () => openHubPath(record.href, title) : null)
     : ({
     threads: () => record.id && openDetail("thread", [record.id], { title: title || "スレッド" }),
@@ -1664,10 +2001,20 @@ function searchResultCard(key, record) {
     videos: () => openDetail("video", [record.id ?? ""], { local: true, data: record, title: title || "動画" }),
     projects: () => record.id && openDetail("research_project", [record.id], {title}),
     books: () => record.id && openDetail("book", [record.id], {title}),
+    games: () => record.slug && openStoreGame(record),
     tracks: () => playMusicTrack(record, [record]),
-    works: () => openDetail("music_work", [record.id ?? ""], { local: true, data: record, title: title || "楽曲" }),
+    works: () => playMusicWork(record),
     profiles: () => record.handle && openDetail("profile", [record.handle], { title: title || "プロフィール" }),
-  }[key]);
+  }[key] ?? null);
+}
+
+// 検索結果のグループからネイティブ詳細への写し方。対応する面が無い
+// グループ（人物・リスト等）はクリックなしのカードのままにする。
+function searchResultCard(key, record) {
+  if (key === "posts") return searchPost(record) ?? resultCard(record);
+  const card = resultCard(record, key === "coreEntities" ? GROUP_LABELS[record?.sourceGroup] ?? "Hubの項目" : undefined);
+  const title = textValue(record, ["title", "name", "displayName", "display_name", "slug", "id"]);
+  const open = searchResultOpener(key, record, title);
   if (!open) return card;
   card.classList.add("is-link");
   card.tabIndex = 0;
@@ -1786,7 +2133,7 @@ function articleCoverLabel(article) {
   return title ? Array.from(title)[0] : "記事";
 }
 
-function catalogCard({ title, body, meta = [], imageUrl, href, onOpen, cover = false, coverLabel, badge = "" }) {
+function catalogCard({ title, body, meta = [], imageUrl, href, onOpen, cover = false, coverLabel, badge = "", menuWork = null }) {
   const card = document.createElement("article");
   card.className = "card result-card";
   if (cover) {
@@ -1831,6 +2178,7 @@ function catalogCard({ title, body, meta = [], imageUrl, href, onOpen, cover = f
     card.onclick = open;
     card.onkeydown = (event) => { if (event.key === "Enter" && event.target === card) open(); };
   }
+  if (menuWork) { card.classList.add("has-music-menu"); card.append(musicMenuButton(document, menuWork)); }
   return card;
 }
 
@@ -2287,6 +2635,7 @@ async function renderWallet(target, data, isCurrent = () => true) {
   walletTipSettingsController=createWalletTipSettings({document,invoke,getScope:()=>articleEditorScope(),
     isCurrent:()=>isCurrent()&&currentView==="wallet"&&tipGeneration===researchAccountGeneration});
   target.append(walletTipSettingsController.element);
+  if (currentView === "wallet" && typeof renderSidebarContext === "function") renderSidebarContext("wallet"); // 区画の一覧（列の木）
 }
 
 let videoCollection = [];
@@ -2567,13 +2916,10 @@ function renderVideoCatalog(target, state) {
   else target.replaceChildren(...items.map(video => videoCard(video)));
   renderVideoHomeRows(state);
   if (!items.length && !waiting && state.error) {
-    target.replaceChildren(pageErrorState("読み込めませんでした", friendlyError(state.error), () => void videoSearch.retry()));
+    target.replaceChildren(createVideoEmpty(document, { ...emptyFor({ failed: true }), body: friendlyError(state.error) }, { onAction: () => void videoSearch.retry() }));
   } else if (!items.length && !waiting) {
-    const empty = videoMode === "shorts" ? ["60秒以下の動画はまだありません", "読み込んだ動画のうち、長さが60秒以下のものをここに並べます。"]
-      : videoMode === "subscriptions" ? [videoSubscriptions.failed ? "フォロー中の新着を読み込めませんでした" : "フォロー中の新着はまだありません", "動画のチャンネルを登録すると、新しい動画がここに並びます。"]
-      : videoMode === "history" ? ["この起動中に見た動画はまだありません", "見た動画がここに並びます（端末には残しません）。"]
-      : [state.query || videoCategory || videoOrder === "live" ? "条件に一致する動画はありません" : "動画はまだありません", "検索語やカテゴリ、表示順を変えるか、Webで探してください。"];
-    target.append(pageState("search", ...empty));
+    const failed = videoMode === "subscriptions" && videoSubscriptions.failed;
+    target.append(createVideoEmpty(document, emptyFor({ mode: videoMode, failed, filtered: Boolean(state.query || videoCategory || videoOrder === "live") })));
   }
   renderMediaSearchState("video", state, target, document.querySelector("#videos-state"));
   if (currentView === "videos") renderSidebarContext("videos");
@@ -2583,7 +2929,7 @@ function renderMediaSearchState(kind, state, target, status) {
   target.setAttribute("aria-busy", String(state.loading));
   status.classList.toggle("warning", Boolean(state.error));
   status.textContent = state.error ? friendlyError(state.error) : state.loading ? "検索しています…" : `${state.total} 件中 ${state.items.length} 件を表示`;
-  if (state.error && !target.querySelector(":scope > .state-panel")) {
+  if (state.error && !target.querySelector(":scope > :is(.state-panel, .vt-empty)")) {
     target.append(stateRetryButton(() => void (kind === "video" ? videoSearch : musicSearch).retry()));
   }
   const more = document.querySelector(`#${kind}-more`);
@@ -2873,7 +3219,7 @@ const researchWorkspace = initResearch({
   openGitHub:()=>nativeGitHub.open(),
   document, invoke, friendlyError: (error) => friendlyError(error),
   openProject: (project) => void openDetail("research_project", [project.id], { title: project.title }),
-  changed: () => { if (currentView === "research") renderSidebarContext("research"); },
+  changed: () => { if (currentView === "research" || (currentView === "detail" && DETAIL_SIDEBAR_FAMILY[detailTrail.at(-1)?.name] === "research")) renderSidebarContext(currentView); },
   openWeb: async (path) => {
     try { await invoke("open_external", { url: `${await invoke("hub_origin")}${path}` }); }
     catch (error) { showNotice(friendlyError(error)); }
@@ -2899,7 +3245,7 @@ const CATALOGS = {
     card: (a) => catalogCard({ cover: true, coverLabel: articleCoverLabel(a), title: a.title, body: a.summary, imageUrl: a.thumbnailUrl, meta: ["作者の記事", a.authorName ?? a.author, relTime(a.createdAt ?? a.publishedAt)], onOpen: a.id ? () => void openDetail("article", [a.id], { title: a.title }) : null }) },
   videos: { resource: "videos", render: renderVideoCatalog },
   music: { resource: "music", items: (d) => d?.works, empty: "外部作品はまだありません",
-    card: (w) => catalogCard({ title: w.title, body: w.artist, imageUrl: w.artworkUrl, meta: [w.genre, w.year], onOpen: () => void openDetail("music_work", [w.id ?? ""], { local: true, data: w, title: w.title }) }) },
+    card: (w) => catalogCard({ title: w.title, body: w.artist, imageUrl: w.artworkUrl, meta: [w.genre, w.year], menuWork: w, onOpen: () => void playMusicWork(w) }) },
   market: { resource: "market", items: (d) => d?.listings, empty: "出品はまだありません",
     card: (l) => catalogCard({ title: l.title, body: l.summary, meta: [l.category, l.priceLabel, l.providerLabel], onOpen: l.id ? () => void openDetail("listing", [l.id], { title: l.title }) : null }) },
   books: { resource: "books", items: (d) => d?.books, empty: "本はまだありません",
@@ -2909,13 +3255,25 @@ const CATALOGS = {
       onOpen: r.id ? () => void openDetail("ranking_item", [r.id], { local: true, data: r, title: r.title }) : null }) },
   contacts: { client: "contacts", items: (d) => d?.contacts, empty: "連絡先はまだありません", card: contactCard },
   bookmarks: { client: "bookmarks", items: (d) => d?.items, empty: "ブックマークはまだありません", card: bookmarkCard },
-  lists: { client: "lists", items: (d) => d?.lists, empty: "リストはまだありません",
-    card: (l) => catalogCard({ title: l.name, body: l.description, meta: [`${(l.profileIds ?? []).length} 人`, `${(l.threadIds ?? []).length} スレッド`, l.visibility === "public" ? "公開" : "非公開"], onOpen: l.id ? () => void openDetail("list", [l.id], { title: l.name }) : null }) },
+  lists: { client: "lists", render: renderListsView },
   services: { client: "services", items: (d) => d?.services, empty: "サービスはまだありません",
     card: (s) => catalogCard({ title: s.displayName || s.serviceName, body: s.description, meta: [s.serviceName, SERVICE_STATUS[s.status]],
       onOpen: s.id ? () => void openDetail("service_item", [s.id], { local: true, data: s, title: s.displayName || s.serviceName }) : null }) },
   wallet: { client: "wallet", render: renderWallet },
 };
+
+// リストの画面（2026-11-02）：区切り線の行。名前・人数（薄い字）・あれば1行の説明。押すとそのリストを開く。
+// 0件は「リストを作る」つきの空の状態、読めなかったときは静かな1行と再試行。枠つきのカードは使わない。
+const LIST_ROWS_DEADLINE_MS = 12_000;
+const listRowsSkeleton = () => createListRowsSkeleton(document);
+const listRowsError = (retry, message) => createListRowsError(document, retry, message);
+async function renderListsView(target, data) {
+  renderListsRows(document, target, data, {
+    emptyState: (title) => emptyState("doc", title, ""),
+    onCreate: () => { const form = document.querySelector("#lists-create"); if (form?.hidden) document.querySelector("#lists-create-toggle")?.click(); form?.querySelector("input, textarea")?.focus(); },
+    onOpen: (list) => void openDetail("list", [list.id], { title: list.name }),
+  });
+}
 
 // A UI deadline: callers explicitly show partial data or a retry state.
 // It does not cancel the underlying native request.
@@ -2975,12 +3333,13 @@ async function loadCatalog(view, query = document.querySelector(view === "music"
   target.catalogRequest = request;
   state.textContent = view === "wallet" ? "ウォレットを読み込んでいます…" : "";
   state.classList.remove("warning");
-  target.replaceChildren(skeletonResult(), skeletonResult(), skeletonResult());
+  if (view === "lists") target.replaceChildren(listRowsSkeleton());
+  else target.replaceChildren(skeletonResult(), skeletonResult(), skeletonResult());
   try {
     const source = def.client
       ? invoke("hub_client", { name: def.client })
       : invoke("hub_resource", { resource: query.trim() && def.queryResource ? def.queryResource : def.resource, query, boardKey: view === "threads" ? threadBoardKey || null : null });
-    const data = await settleWithin(source, view === "wallet" ? 15_000 : 30_000);
+    const data = await settleWithin(source, view === "wallet" ? 15_000 : view === "lists" ? LIST_ROWS_DEADLINE_MS : 30_000);
     if (target.catalogRequest !== request) return;
     if (view !== "wallet") state.textContent = "";
     if (def.render) {
@@ -3015,6 +3374,12 @@ async function loadCatalog(view, query = document.querySelector(view === "music"
       await renderWallet(target, { hubUnavailable: true, accountUnavailable: isAccountUnavailable(error) }, () => target.catalogRequest === request);
       return;
     }
+    if (view === "lists" && !accountNeeded(error)) {
+      state.textContent = "";
+      state.classList.remove("warning");
+      target.replaceChildren(listRowsError(() => loadCatalog(view, query), error === "request_timeout" ? "時間内に読み込めませんでした" : "読み込めませんでした"));
+      return;
+    }
     showClientError(state, target, error, () => loadCatalog(view, query));
   }
 }
@@ -3030,7 +3395,18 @@ function renderReadingCatalog(view) {
   const shown = items.filter(item => (!filter || readingLabels(view, item).includes(filter)) &&
     (pagedCatalogs.has(view) || matchesSearch(query, item.title ?? item.name, item.summary ?? item.description, item.authorName ?? item.author, readingLabels(view, item).join(" "))));
   const target = document.querySelector(`#${view}-results`);
-  if (shown.length) target.replaceChildren(...shown.map(item => CATALOGS[view].card(item)));
+  if (view === "articles" && shown.length) {
+    target.replaceChildren(renderArticleHome(document, shown, {
+      hubAsset, hubOrigin: hubOrigin ?? "", relTime,
+      onOpen: (a) => { if (a.id) void openDetail("article", [a.id], { title: a.title }); },
+    }));
+  } else if (view === "articles") {
+    const filtered = Boolean(query || filter);
+    target.replaceChildren(renderArticleEmpty(document, filtered ? "filtered" : "none", { actions: {
+      clear: () => { readingDirectory.get(view).filter = ""; const input = document.querySelector("#articles-query"); if (input) input.value = ""; void loadCatalog(view); },
+      write: () => document.querySelector("#articles-create-toggle")?.click(),
+    } }));
+  } else if (shown.length) target.replaceChildren(...shown.map(item => CATALOGS[view].card(item)));
   else {
     const empty = (view === "articles" ? pageState : emptyState)("search", query || filter ? "条件に一致する項目がありません" : CATALOGS[view].empty,
       query || filter ? "検索語や左列の絞り込みを変更してください。" : view === "articles" ? "「＋書く」から最初の記事を書けます。" : view === "hubpedia" ? "公開された百科項目がここに並びます。" : "「＋作成」から始められます。");
@@ -3055,7 +3431,6 @@ function renderReadingCatalog(view) {
 let musicQueueView = null;
 const musicPlayer = { tracks: [], queue: [], currentId: null, currentTrack: null, currentIndex: -1, artUrl: null, request: 0, sourceRequest: 0, directUrl: null };
 const hubTrackAudio = createHubTrackAudio({ invoke });
-let musicReturnPending = false;
 const musicAudio = document.querySelector("#music-player-audio");
 let musicTab = "home";
 // 内側左列の「フォロー中の新着」「履歴」を音楽の本文に出す（2026-10-15）。ホーム・公開曲・外部作品のタブを押すと戻る。
@@ -3109,12 +3484,12 @@ function syncMusicSidePanel() {
   let cards = [];
   if (musicSideMode === "subscriptions") {
     cards = musicSubscriptions.items.map((work) => catalogCard({ title: work.title || "楽曲", body: work.artist || "", meta: [work.genre, work.submittedByDisplayName].filter(Boolean),
-      onOpen: () => void openDetail("music_work", [work.id], { local: true, data: work, title: work.title || "楽曲" }) }));
+      menuWork: work, onOpen: () => void playMusicWork(work) }));
   } else {
     cards = musicHistory.list().map((entry) => {
       const item = entry.kind === "track" ? entry.track : entry.work;
       return catalogCard({ title: item.title || "楽曲", body: item.artist || "", meta: [entry.kind === "track" ? "Hubの公開曲" : "外部作品"],
-        onOpen: () => entry.kind === "track" ? void playMusicTrack(item, musicPlayer.tracks) : void openDetail("music_work", [item.id ?? ""], { local: true, data: item, title: item.title || "楽曲" }) });
+        menuWork: entry.kind === "track" ? { ...item, id: "music:" + item.id } : item, onOpen: () => entry.kind === "track" ? void playMusicTrack(item, musicPlayer.tracks) : void playMusicWork(item) });
     });
   }
   const note = document.createElement("p");
@@ -3186,11 +3561,13 @@ const playbackOwner = createPlaybackOwner();
 playbackOwner.register("music-audio", () => { if (!musicAudio.paused) musicAudio.pause(); });
 musicAudio.addEventListener("play", () => playbackOwner.claim("music-audio"));
 const ytDock = createYouTubeDock({ document, owner: playbackOwner, invoke, stage: () => document.querySelector("#browser-stage"), storage: (() => { try { return window.localStorage; } catch { return null; } })() });
+// 埋め込みで再生できないと分かった YouTube の項目は一覧から外す（絞り込みは yt-unplayable.mjs の1か所）。表示中の一覧は描き直す。
+ytUnplayable().subscribe(() => { try { if (currentView === "videos" && videoSearchState) renderVideoHomeRows(videoSearchState, false); if (currentView === "music") musicHome?.repaint(); } catch { /* 描き直せなくても再生は止まっている */ } });
 // P2P の手元キャッシュの手入れ（再検証・取消された曲の削除・古い断片の掃除）。起動の少し後と60分ごと（DESIGN.md §6.4）。
 const maintainMediaCache = () => void Promise.resolve(invoke("media_cache_maintain")).catch(() => {});
 setTimeout(maintainMediaCache, 20000); setInterval(maintainMediaCache, 60 * 60 * 1000);
 const musicYoutube = createMusicYoutubeSession({ document, bar: document.querySelector("#music-yt-bar"), hubAsset: (img, url) => hubAsset(img, url), dock: ytDock,
-  onOpenWork: work => void openDetail("music_work", [work.id ?? ""], { local: true, data: work, title: work.title || "楽曲" }),
+  onOpenWork: work => openMusicWorkInRail(work, { autoplay: false }),
   onPlayed: (work) => { musicHistory.add({ kind: "work", work }); musicHome?.repaint(); if (currentView === "music") renderSidebarContext("music"); } });
 let musicCatalogLoaded = false;
 
@@ -3231,9 +3608,9 @@ musicHome = createMusicHome({
   },
   actions: {
     playPeer: (entry) => playPeerMusic(entry),
-    openWork: (work) => void openDetail("music_work", [work.id ?? ""], { local: true, data: work, title: work.title }),
-    playWork: (work) => { musicYoutube.requestAutoplay(work.id ?? null); void openDetail("music_work", [work.id ?? ""], { local: true, data: work, title: work.title }); },
-    playTrack: (track) => { musicHistory.add({ kind: "track", track: { ...track } }); void playMusicTrack(track, musicPlayer.tracks); },
+    openWork: (work) => void playMusicWork(work),
+    playWork: (work) => void playMusicWork(work),
+    playTrack: (track) => { musicHistory.add({ kind: "track", track: { ...track } }); musicHome?.repaint(); void playMusicTrack(track, musicPlayer.tracks); },
     search: (query) => {
       const wasLoaded = musicCatalogLoaded;
       document.querySelector("#music-catalog-query").value = query;
@@ -3262,8 +3639,7 @@ function playPeerMusic(entry) {
   if (entry?.youtubeId) {
     const work = peerYoutubeWork(entry);
     musicAudio.pause();
-    musicYoutube.requestAutoplay(work.id);
-    void openDetail("music_work", [work.id], { local: true, data: work, title: work.title });
+    void playMusicWork(work);
     return true;
   }
   if (!entry?.audioPath) return false;
@@ -3344,7 +3720,7 @@ function renderMusicTracks() {
     row.append(number, musicTrackArt(track), copy, album, duration);
     row.onclick = () => void playMusicTrack(track, tracks);
     const group=document.createElement('div');group.className='music-track-group';group.append(row);
-    const next=actionButton('次に再生','head-action',()=>{if(currentView==='music'&&target.contains(group))enqueueMusicTrack(track,'next');});next.className='head-action music-queue-add';next.setAttribute('aria-label',(track.title||'楽曲')+'を次に再生');group.append(next);
+    const next=actionButton('次に再生','head-action',()=>{if(currentView==='music'&&target.contains(group))enqueueMusicTrack(track,'next');});next.className='head-action music-queue-add';next.setAttribute('aria-label',(track.title||'楽曲')+'を次に再生');group.append(next,musicMenuButton(document,{...track,id:'music:'+track.id}));
     if(desktopAccount.state!=='registered'||currentView!=='music')return group;
     const generation=researchAccountGeneration;
     musicFavoriteControls.add(attachMusicFavorite({document,host:group,workId:'music:'+track.id,invoke:musicFavoriteInvoke,
@@ -3363,17 +3739,6 @@ function musicAudioUrl(origin, trackId) {
   } catch { return null; }
 }
 
-
-function selectedMusicWork() {
-  const track = musicPlayer.currentTrack;
-  if (!track || track.id !== musicPlayer.currentId || !musicQueue.isPublicMusicTrackId(track.id) || /[\p{Cc}\p{Surrogate}]/u.test(track.id)) return null;
-  try {
-    // 再生元がblob:の時は、その曲を取った直接URL（musicPlayer.directUrl）で出典を確かめる。
-    const source = new URL(musicPlayer.directUrl ?? musicAudio.src);
-    if (musicAudioUrl(source.origin, track.id) !== source.href) return null;
-    return { id: "music:" + track.id, origin: source.origin, title: track.title || "音楽作品", sourceRequest: musicPlayer.sourceRequest };
-  } catch { return null; }
-}
 
 function syncMusicPlayerBounds() {
   const player = document.querySelector("#music-player");
@@ -3396,7 +3761,6 @@ function updateMusicControls() {
   document.querySelector("#music-prev").disabled = !musicQueue.adjacentMusicQueueTrack(musicPlayer.queue, musicPlayer.currentId, -1);
   document.querySelector("#music-next").disabled = !musicQueue.adjacentMusicQueueTrack(musicPlayer.queue, musicPlayer.currentId, 1);
   toggle.disabled = !musicPlayer.currentId && musicPlayer.queue.length === 0;
-  document.querySelector("#music-return-work").disabled = !selectedMusicWork();
   renderRailNowPlaying();
   musicQueueView?.render();
 }
@@ -3429,6 +3793,124 @@ function enqueueMusicTrack(track, placement = "last") {
 function removeMusicQueueTrack(id) { return applyMusicQueue(() => musicQueue.removeMusicQueue(musicPlayer.queue, id)); }
 function replaceMusicQueue(tracks) { return applyMusicQueue(() => musicQueue.normalizeMusicQueue(tracks)); }
 
+// --- 曲の再生と操作（作品の頁は無い。2026-11-02 所有者承認） ---
+// 曲を押すとその場で再生する。Hub の公開曲は音声を鳴らし、YouTube の曲は右列の「再生中」に16:9の枠を出す。画面は切り替えない。
+// 曲の操作は「⋯」メニュー（music-track-menu.mjs）に集める。
+const HUB_MUSIC_WORK_ID = /^music:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
+const MUSIC_WORK_ID = /^(?:[A-Za-z0-9_-]{1,128}|music:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/iu;
+const musicWorkOf = (input) => { const work = input?.work ?? input; return work && typeof work === "object" ? work : null; };
+/** 右列を「音楽」の再生中に切り替えて開き、その作品を右列の中で出す。 */
+function openMusicWorkInRail(input, { autoplay = true, report = false } = {}) {
+  const work = musicWorkOf(input);
+  if (!work || !railMusic) return false;
+  selectRailView("music");
+  const route = { type: "work", work, autoplay, report };
+  railNav.visit("music", "m" + (++railNavSeq), { route });
+  railMusic.show(route);
+  return true;
+}
+/** 曲を押したとき。公開曲は音声、YouTube は右列の枠。再生できない作品も右列に出し、⋯ から提供元を開ける。 */
+function playMusicWork(input, queue = null, { openRail = false } = {}) {
+  const work = musicWorkOf(input);
+  if (!work) return false;
+  if (HUB_MUSIC_WORK_ID.test(String(work.id ?? ""))) {
+    const track = { ...work, id: work.id.slice(6) };
+    void playMusicTrack(track, queue?.length ? queue : [track]);
+    if (openRail) openMusicWorkInRail(work, { autoplay: false });
+    return true;
+  }
+  return openMusicWorkInRail(work, { autoplay: youtubeSource(work) !== null });
+}
+/** 曲のID（深いリンク・プレイリスト）から曲を再生する。作品が手元に無ければ読んでから。 */
+async function openMusicWorkById(id, known = null) {
+  const generation = researchAccountGeneration;
+  try {
+    let work = musicWorkOf(known);
+    if (!work || work.id !== id) {
+      if (typeof id !== "string" || !MUSIC_WORK_ID.test(id)) return false;
+      work = (await invoke("hub_detail", { name: "music_work", ids: [id] }))?.work;
+    }
+    if (generation !== researchAccountGeneration || !work || typeof work.id !== "string") return false;
+    return playMusicWork(work, null, { openRail: true });
+  } catch (error) { showNotice(friendlyError(error)); return false; }
+}
+function currentMusicBarWork() {
+  const track = musicPlayer.currentTrack;
+  return track && !track.peer && musicQueue.isPublicMusicTrackId(track.id) ? { ...track, id: "music:" + track.id } : null;
+}
+function openMusicDownload(work) { const url = musicDownloadPageUrl(hubOrigin ?? "", work.id.slice(6)); if (url) void enterBrowser(url); }
+const reportableMusicWork = (work) => work?.source === "community" && typeof work.id === "string" && !work.id.startsWith("music:") && !work.id.startsWith("sample");
+async function toggleMusicFavorite(work) {
+  if (desktopAccount.state !== "registered") { showNotice("お気に入りにはHubへの接続が必要です。"); return; }
+  const generation = researchAccountGeneration;
+  try {
+    const saved = await invoke("hub_client", { name: "music_favorites" });
+    if (generation !== researchAccountGeneration) return;
+    const ids = Array.isArray(saved?.favoriteIds) ? saved.favoriteIds : [];
+    const add = !ids.includes(work.id);
+    if (add && ids.length >= 200) { showNotice("お気に入りの追加は200件までです。保存済みの作品を解除してから追加してください。"); return; }
+    const next = await invoke("hub_client_action", { action: add ? "favorite_music" : "unfavorite_music", target: work.id });
+    if (generation !== researchAccountGeneration) return;
+    if (!Array.isArray(next?.favoriteIds) || next.favoriteIds.includes(work.id) !== add) throw Error("invalid_music_favorite_state");
+    musicFavoriteRead = null;
+    showNotice(add ? "お気に入りに保存しました。" : "お気に入りを解除しました。");
+  } catch { showNotice("お気に入りを更新できませんでした。もう一度操作してください。"); }
+}
+// 「プロフィールに表示」。Commerce は出品者セッション、Music は管理用アサーション（どちらも Rust が持ち、窓には渡らない）で証明を取る。
+const profileAttribution = createProfileAttribution({ invoke, fetchProof: {
+  market: commerceProofFetcher(invoke),
+  music: musicProofFetcher(invoke),
+} });
+// 自分の曲（公開中・スキャン済み）と、すでに表示している曲。メニューは同期で組まれるので、先に読んでおく（⋯に触れた時に読み、60秒は再利用）。
+const musicAttributionState = { eligible: new Set(), attributed: new Set(), loadedAt: 0, loading: null };
+function primeMusicAttribution() {
+  if (musicAttributionState.loading) return musicAttributionState.loading;
+  if (Date.now() - musicAttributionState.loadedAt < 60_000) return Promise.resolve();
+  musicAttributionState.loadedAt = Date.now();
+  musicAttributionState.loading = (async () => {
+    try {
+      const own = await invoke("music_own_attribution_candidates");
+      const eligible = new Set(Array.isArray(own?.ids) ? own.ids.filter((id) => typeof id === "string") : []);
+      const attributed = new Set(await profileAttribution.ids("music").catch(() => []));
+      musicAttributionState.eligible = eligible;
+      musicAttributionState.attributed = attributed;
+    } catch { musicAttributionState.eligible = new Set(); musicAttributionState.attributed = new Set(); }
+    finally { musicAttributionState.loading = null; }
+  })();
+  return musicAttributionState.loading;
+}
+document.addEventListener("pointerover", (event) => { if (event.target?.closest?.("[data-music-menu]")) void primeMusicAttribution(); }, { passive: true });
+const musicMenuDeps = {
+  profileAttribution: {
+    // メニューを開く前に待つ（読み込み中か60秒を過ぎた時だけ Promise。新しければ null で即開く）。
+    ready: () => musicAttributionState.loading ?? (Date.now() - musicAttributionState.loadedAt < 60_000 ? null : primeMusicAttribution()),
+    label: (work) => {
+      void primeMusicAttribution();
+      const id = String(work?.id ?? "").slice(6);
+      if (musicAttributionState.attributed.has(id)) return "プロフィールから外す";
+      return musicAttributionState.eligible.has(id) ? "プロフィールに表示" : null;
+    },
+    run: async (work) => {
+      const id = String(work?.id ?? "").slice(6);
+      const shown = musicAttributionState.attributed.has(id);
+      try {
+        if (shown) await profileAttribution.remove("music", id); else await profileAttribution.show("music", id);
+        musicAttributionState.loadedAt = 0;
+        await primeMusicAttribution();
+        showNotice(shown ? "プロフィールから外しました。" : "プロフィールに表示しました。");
+      } catch (error) { showNotice(attributionMessage(error)); }
+    },
+  },
+  enqueue: (work) => enqueueMusicTrack({ ...work, id: work.id.slice(6) }, "next"),
+  favorite: (work) => void toggleMusicFavorite(work),
+  addToPlaylist: (work) => void openDetail("music_playlists", [work.id], { title: "プレイリストに追加", local: true, data: { selectedItem: { id: work.id, title: work.title || "楽曲" } } }),
+  share: (work) => void shareMusicWork({ workId: work.id, title: work.title || "楽曲" }, {
+    invoke, isCurrent: () => true, onShare: offerPublicContentShare, onStatus: (text) => { if (text) showNotice(text); },
+    getViewer: async () => (await invoke("hub_client", { name: "me" }))?.profile?.id }),
+  canReport: reportableMusicWork,
+  report: (work) => { if (!openMusicWorkInRail(work, { autoplay: false, report: true })) showNotice("報告を開けませんでした。"); },
+  openExternal: (url) => void invoke("open_external", { url }).catch((error) => showNotice(friendlyError(error))),
+};
 async function playMusicTrack(input, queue = musicPlayer.queue, options = {}) {
   const request = ++musicPlayer.request, generation = researchAccountGeneration;
   const state = document.querySelector("#music-playback-state");
@@ -3529,36 +4011,9 @@ async function toggleMusicPlayback() {
 
 
 
-async function returnToMusicWork() {
-  const selected = selectedMusicWork(), snapshot = homeAccountSnapshot(), generation = researchAccountGeneration;
-  if (musicReturnPending || !selected) return false;
-  const current = () => {
-    const now = selectedMusicWork();
-    return homeAccountCurrent(snapshot) && generation === researchAccountGeneration
-      && now?.id === selected.id && now.origin === selected.origin && now.sourceRequest === selected.sourceRequest;
-  };
-  musicReturnPending = true;
-  document.querySelector("#music-return-work").disabled = true;
-  try {
-    const captured = await captureHomeScope(snapshot);
-    if (!current() || captured?.origin !== selected.origin) return false;
-    const data = await invoke("hub_detail", { name: "music_work", ids: [selected.id] });
-    if (!current() || data?.work?.id !== selected.id || !await confirmHomeScope(captured) || !current()) return false;
-    await openDetail("music_work", [selected.id], { title: selected.title, local: true, data,
-      targetSelection: { origin: selected.origin, workId: selected.id }, isCurrent: current });
-    return current();
-  } catch (error) {
-    if (current()) showNotice(friendlyError(error));
-    return false;
-  } finally {
-    musicReturnPending = false;
-    document.querySelector("#music-return-work").disabled = !selectedMusicWork();
-  }
-}
-
 document.querySelector("#music-search-web").onclick = () => {
   const query = document.querySelector("#music-query").value.trim() || "音楽";
-  void enterBrowser(`https://www.google.com/search?q=${encodeURIComponent(query)}`);
+  void openWebSearch(query);
 };
 for (const tab of ["home", "tracks", "catalog"]) {
   document.querySelector(`#music-tab-${tab}`).onclick = () => {
@@ -3590,7 +4045,7 @@ document.querySelector("#music-next").onclick = () => {
   if (track) void playMusicTrack(track);
 };
 document.querySelector("#music-toggle").onclick = () => { void toggleMusicPlayback(); };
-document.querySelector("#music-return-work").onclick = () => { void returnToMusicWork(); };
+document.querySelector("#music-more-slot").replaceWith(musicMenuButton(document, () => currentMusicBarWork(), { label: "再生中の曲のその他の操作", className: "music-player-more" }));
 document.querySelector("#music-volume").oninput = (event) => { musicAudio.volume = Number(event.target.value) / 100; };
 musicAudio.volume = 0.8;
 document.querySelector("#music-seek").oninput = (event) => {
@@ -3635,6 +4090,8 @@ bindSearchInput(document.querySelector("#music-catalog-query"), {form: document.
 // --- EC（Commerce） ---
 // 商品・注文作成・入金照合はCommerceが持つ。配送先の確認だけIdentityへ行き、
 // 署名済みの確認情報（assertion）だけが戻る。宛先・鍵はこの窓にも来ない。
+let marketBrowse = null; // createMarketBrowse（後ろで作る）。作る前に呼ばれても何もしない。
+const marketView = { tree: null };
 const SHOP_CART_KEY = "hub.desktop.shop-cart.v1";
 const SHOP_CART_PRODUCTS_KEY = "hub.desktop.shop-cart-products.v1";
 const SHOP_ORDERS_KEY = "hub.desktop.shop-orders.v1";
@@ -3703,7 +4160,7 @@ let shopLoadVersion = 0,shopVisibleKey='',shopRecoveryKey='',shopLoadFailed=fals
 const shopViewKey=()=>JSON.stringify([desktopAccount.state,desktopAccount.deviceId,shop.query,shop.sellerFilter?.id,shop.sort,shop.inStock,shop.freeShipping]);
 const shopRecovery=createReadRecovery({retry:()=>loadShop({automatic:true}),active:()=>document.querySelector('#view-market')?.classList.contains('on')&&shopLoadFailed&&shopRecoveryKey===shopViewKey()});
 window.addEventListener('pagehide',()=>{shopLoadVersion++;shopRecovery.reset();},{once:true});
-window.addEventListener('hub-account-changed',()=>{shopVisibleKey='';shopLoadVersion++;shopRecovery.reset();shop.visible=[];shop.otherProducts=[];shop.catalogStale=true;shop.paymentsEnabled=false;document.querySelector('#shop-results')?.replaceChildren();if(document.querySelector('#view-market')?.classList.contains('on'))void loadShop();});
+window.addEventListener('hub-account-changed',()=>{shopVisibleKey='';shopLoadVersion++;shopRecovery.reset();shop.visible=[];shop.otherProducts=[];shop.catalogStale=true;shop.paymentsEnabled=false;document.querySelector('#shop-results')?.replaceChildren();if(document.querySelector('#view-market')?.classList.contains('on'))marketBrowse?.reload();});
 function showShopPartialFailure(state) {
   const message = document.createElement("span");
   message.textContent = `${shop.loadError}${shop.visible.length || shop.otherProducts.length ? "取得できた商品だけを表示しています。" : "再試行して一覧を確認してください。"}`;
@@ -4103,86 +4560,40 @@ function shopPlaceholderMedia(label) {
 }
 
 function renderCommerceProductDetail(target, product, entry) {
-  // 左に絵、右に名前・価格・送料・在庫と購入の箱。説明は下に全幅で置く（Booth・Amazonの商品ページの順）。
-  const card = document.createElement("article");
-  card.className = "shop-detail";
-  const media = document.createElement("div");
-  media.className = "shop-detail-media";
-  if (product.imageUrl) {
-    const image = document.createElement("img");
-    hubAsset(image, product.imageUrl);
-    image.alt = product.title || "商品画像";
-    media.append(image);
-  } else {
-    media.append(shopPlaceholderMedia(product.seller?.publicName ?? product.title));
-  }
-  card.append(media);
-  const info = document.createElement("div");
-  info.className = "shop-detail-info";
-  const sellerLink = shopSellerLink(product);
-  const seller = sellerLink ?? document.createElement("p");
-  if (!sellerLink) { seller.className = "meta"; seller.textContent = product.seller?.publicName || "Hubの商品"; }
-  else sellerLink.addEventListener("click", () => { detailTrail = []; document.querySelector('.nav-item[data-view="market"]')?.click(); });
-  const title = document.createElement("h3");
-  title.textContent = product.title;
-  const price = shopPriceLine(product);
-  price.classList.add("shop-detail-price");
-  const facts = document.createElement("dl");
-  facts.className = "shop-detail-facts";
-  detailRow(facts, "送料", shopShippingText(product).replace(/^送料 /, ""));
-  const stockText = shopStockText(product);
-  if (stockText) detailRow(facts, "在庫", product.stockQuantity > 3 ? `${stockText}（${product.stockQuantity}点）` : stockText);
-  const fulfillment = { seller_shipping: "販売者が発送", platform_3pl: "委託倉庫から発送" }[product.fulfillmentType];
-  if (fulfillment) detailRow(facts, "配送", fulfillment);
-  const detailTax = shopTax(product);
-  if (detailTax) {
-    if (Number.isFinite(detailTax.totalForOneJpyc)) detailRow(facts, "1点のお支払い（税・送料込み）", `${detailTax.totalForOneJpyc.toLocaleString()} JPYC`);
-    detailRow(facts, "消費税", `${detailTax.rateBps / 100}%（込み）`);
-  } else detailRow(facts, "税", "注文時にCommerceが確定");
-  info.append(seller, title, price, facts);
-  const actions = document.createElement("div");
-  actions.className = "shop-detail-actions";
-  const cart = document.createElement("button");
-  cart.type = "button";
-  cart.className = "head-action";
-  cart.textContent = "カートを見る";
-  cart.onclick = () => {
-    detailTrail = [];
-    document.querySelector("#market-cart-open")?.click();
-  };
-  actions.append(shopAddButton(product), cart);
-  info.append(actions);
-  if (!shop.paymentsEnabled) {
-    const note = document.createElement("p");
-    note.className = "meta";
-    note.textContent = "現在は決済メンテナンス中です。商品とカートの内容は確認できます。";
-    info.append(note);
-  }
-  const trust = document.createElement("p");
-  trust.className = "meta shop-detail-note";
-  trust.textContent = "支払いと注文はCommerceが扱います。住所はIdentityで確認し、Hubには保存されません。";
-  info.append(trust);
-  if (product.seller?.legalDisplayUrl) {
-    const legal = document.createElement("button");
-    legal.type = "button";
-    legal.className = "shop-detail-legal";
-    legal.textContent = "販売条件・返品（販売者のページ）↗";
-    legal.onclick = () => enterBrowser(product.seller.legalDisplayUrl);
-    info.append(legal);
-  }
-  card.append(info);
-  if (product.description) {
-    const about = document.createElement("section");
-    about.className = "shop-detail-about";
-    const heading = document.createElement("h4");
-    heading.textContent = "商品の説明";
-    const description = document.createElement("p");
-    description.className = "detail-p";
-    description.textContent = product.description;
-    about.append(heading, description);
-    card.append(about);
-  }
-  target.replaceChildren(card);
+  // 見せ方は market-product.mjs。購入は既存のカート→カート画面の既存の道だけ（新しい購入の道は作らない）。
+  const item = normalizeProduct(product);
+  if (!item) { target.replaceChildren(); return; }
+  const page = createMarketProductPage({
+    document, host: target,
+    deps: {
+      asset: hubAsset,
+      addToCart: async (picked, quantity) => {
+        const ok = await addShopProduct(picked.raw);
+        if (ok && quantity > 1) { shop.cart[picked.id] = Math.min(20, quantity); shopSave(); updateCartBadge(); }
+        page.refresh({ inCart: Boolean(shop.cart[picked.id]) });
+        return ok;
+      },
+      goCheckout: () => { detailTrail = []; document.querySelector("#market-cart-open")?.click(); },
+      openWeb: (path) => void openHubWebPath(path),
+      openSeller: (seller) => { detailTrail = []; filterMarketSeller(seller); },
+      openProfile: (handle) => void openDetail("profile", [handle], { title: handle }),
+      openLegal: (url) => enterBrowser(url),
+      openItem: (picked) => void openDetail("commerce_product", [picked.id], { local: true, data: picked.raw, title: "商品詳細" }),
+    },
+  });
+  page.show(item, {
+    inCart: Boolean(shop.cart[item.id]),
+    paymentsEnabled: shop.paymentsEnabled,
+    related: (marketBrowse?.loadedProducts() ?? []).filter((other) => other.id !== item.id && other.seller?.id && other.seller.id === item.seller?.id),
+  });
+}
+
+// 店舗を選ぶと、その店の商品だけの一覧に切り替える（解除は一覧の上の行から）。
+function filterMarketSeller(seller) {
+  shop.sellerFilter = { id: seller.id, name: seller.publicName ?? "店舗" };
+  document.querySelector('.nav-item[data-view="market"]')?.click();
+  marketBrowse?.setCategory("all");
+  marketBrowse?.reload();
 }
 
 // 店舗名を押すとその店の商品だけに絞る。
@@ -4206,12 +4617,14 @@ function updateCartBadge() {
   const button = document.querySelector("#market-cart-open");
   if (button) button.textContent = count ? `カート（${count}）` : "カート";
   for (const item of document.querySelectorAll("#sidebar-context .sidebar-cart")) item.textContent = button?.textContent || "カート";
+  marketView.tree?.setCount(count);
 }
 
 function cartProductSnapshot(product) {
   return {
     id: product.id,
     title: product.title,
+    imageUrl: product.imageUrl ?? null,
     priceJpyc: product.priceJpyc,
     shippingJpyc: product.shippingJpyc,
     taxIncluded: product.taxIncluded ?? null,
@@ -4270,89 +4683,75 @@ async function renderCart() {
     syncCartControls();
     return;
   }
-  for (const { product, quantity, saved } of entries) {
-    const row = document.createElement("div");
-    row.className = "card";
-    const head = document.createElement("div");
-    head.className = "actions";
-    const title = document.createElement("strong");
-    title.textContent = `${product.title}（${product.seller?.publicName ?? ""}）`;
-    head.append(title);
-    const qty = document.createElement("input");
-    qty.type = "number";
-    qty.min = "1";
-    qty.max = String(Math.min(20, product.stockQuantity ?? 20));
-    qty.value = String(quantity);
-    qty.onchange = async () => {
-      if (shopCartLocked() || !(await discardPrepared())) { qty.value = String(quantity); return; }
-      if (shopCartLocked()) { qty.value = String(quantity); return; }
-      shop.cart[product.id] = Math.max(1, Math.min(20, Number(qty.value)));
-      shopSave();
-      void renderCart();
-    };
-    const qtyLabel = document.createElement("label");
-    qtyLabel.className = "field";
-    qtyLabel.append(qty);
-    const remove = document.createElement("button");
-    remove.type = "button";
-    remove.className = "head-action";
-    remove.textContent = "削除";
-    remove.onclick = async () => {
-      if (shopCartLocked() || !(await discardPrepared())) return;
-      if (shopCartLocked()) return;
-      delete shop.cart[product.id];
-      delete shop.cartProducts[product.id];
-      delete shop.assertions[product.id];
-      delete shop.zones[product.id];
-      shopSave();
-      updateCartBadge();
-      void renderCart();
-    };
-    head.append(qtyLabel, remove);
-    const price = document.createElement("p");
-    price.className = "meta";
-    const unitPrice = shopCartUnit(product);
-    const taxWord = unitPrice.taxed ? "税込" : "本体価格";
-    price.textContent = product.checkoutRecovered ? "保存した注文の確定額は下の確認欄に表示します。"
-      : product.shippingJpyc === null
-        ? `${(unitPrice.unit * quantity).toLocaleString()} JPYC（${saved ? "追加時の" : ""}商品の目安・${taxWord}。送料は注文時に確認。確定額はCommerceで確認）`
-        : `${(unitPrice.unit * quantity + (unitPrice.ship ?? 0)).toLocaleString()} JPYC（${saved ? "追加時の" : ""}目安・${taxWord}・送料込。確定額はCommerceで確認）`;
+  // 行の見せ方は market-me.mjs。数量・削除・配送先の確認は既存の道（この関数の外のハンドラ）のまま。
+  const cartLineExtra = ({ product }) => {
+    const wrap = document.createElement("div");
+      const fulfill = document.createElement("div");
+      fulfill.className = "actions";
+      const zone = shop.zones[product.id];
+      if (shop.assertions[product.id]) {
+        const ok = document.createElement("p");
+        ok.className = "meta";
+        ok.textContent = `配送先を確認済み${zone ? `（${zone}宛）` : ""}・確認情報は5分間有効です`;
+        const again = document.createElement("button");
+        again.type = "button";
+        again.className = "head-action";
+        again.textContent = "再確認";
+        again.onclick = () => void confirmFulfillment(product);
+        fulfill.append(ok, again);
+      } else {
+        const note = document.createElement("p");
+        note.className = "meta";
+        note.textContent = "配送先はIdentityで安全に確認します。氏名・住所はこの端末にもHubにも保存されません。";
+        const confirm = document.createElement("button");
+        confirm.type = "button";
+        confirm.className = "approve";
+        confirm.textContent = "配送先を確認";
+        confirm.onclick = () => void confirmFulfillment(product);
+        fulfill.append(note, confirm);
+      }
+
     if (product.seller?.legalDisplayUrl) {
       const legal = document.createElement("button");
       legal.type = "button";
       legal.className = "seller-link";
       legal.textContent = "販売条件・返品";
-      legal.onclick = () =>
-        void invoke("open_external", { url: product.seller.legalDisplayUrl }).catch(() => undefined);
-      price.append(" ", legal);
+      legal.onclick = () => void invoke("open_external", { url: product.seller.legalDisplayUrl }).catch(() => undefined);
+      wrap.append(legal);
     }
-    const fulfill = document.createElement("div");
-    fulfill.className = "actions";
-    const zone = shop.zones[product.id];
-    if (shop.assertions[product.id]) {
-      const ok = document.createElement("p");
-      ok.className = "meta";
-      ok.textContent = `配送先を確認済み${zone ? `（${zone}宛）` : ""}・確認情報は5分間有効です`;
-      const again = document.createElement("button");
-      again.type = "button";
-      again.className = "head-action";
-      again.textContent = "再確認";
-      again.onclick = () => void confirmFulfillment(product);
-      fulfill.append(ok, again);
-    } else {
-      const note = document.createElement("p");
-      note.className = "meta";
-      note.textContent = "配送先はIdentityで安全に確認します。氏名・住所はこの端末にもHubにも保存されません。";
-      const confirm = document.createElement("button");
-      confirm.type = "button";
-      confirm.className = "approve";
-      confirm.textContent = "配送先を確認";
-      confirm.onclick = () => void confirmFulfillment(product);
-      fulfill.append(note, confirm);
-    }
-    row.append(head, price, fulfill);
-    lines.append(row);
-  }
+    wrap.append(fulfill);
+    return wrap;
+  };
+  const removeCartLine = async (id) => {
+    if (shopCartLocked() || !(await discardPrepared())) return;
+    if (shopCartLocked()) return;
+    delete shop.cart[id];
+    delete shop.cartProducts[id];
+    delete shop.assertions[id];
+    delete shop.zones[id];
+    shopSave();
+    updateCartBadge();
+    void renderCart();
+  };
+  renderCartRows({
+    document, host: lines, lines: entries, showTotals: false,
+    deps: {
+      asset: hubAsset, locked: shopCartLocked,
+      openItem: (id) => { const found = entries.find((entry) => entry.id === id); if (found) void openDetail("commerce_product", [id], { local: true, data: { ...found.product, id }, title: "商品詳細" }); },
+      setQuantity: async (id, next) => {
+        if (shopCartLocked() || !(await discardPrepared())) return;
+        if (shopCartLocked()) return;
+        shop.cart[id] = Math.max(1, Math.min(20, next));
+        shopSave();
+        updateCartBadge();
+        void renderCart();
+      },
+      remove: removeCartLine,
+      checkout: () => document.querySelector("#cart-checkout")?.click(),
+      browse: () => document.querySelector('.nav-item[data-view="market"]')?.click(),
+      lineExtra: cartLineExtra,
+    },
+  });
   renderCartSummary(entries);
   syncCartControls();
 }
@@ -4799,110 +5198,52 @@ document.querySelectorAll("#orders-filter button").forEach((button) => {
   });
 });
 
+// 注文の状態を取り直す（一覧の自動更新と「状態を更新」で同じ項目を写す）。
+async function refreshOrderReceipt(receipt, { automatic = false } = {}) {
+  if (!automatic && (receipt.status === "wallet_unknown" || receipt.status === "status_pending" && receipt.transactionHash)) { await openOrderDetail(receipt.id); return; }
+  try {
+    // トークンは空でもよい——端末の資格情報保管庫から引かれる。
+    const body = await invoke("commerce_order_status", { orderId: receipt.id, accessToken: shopToken(receipt.id) ?? "" });
+    const order = body?.order;
+    receipt.status = order?.status ?? receipt.status;
+    if (automatic) receipt.fulfillmentType = order?.fulfillmentType ?? receipt.fulfillmentType;
+    receipt.fulfillmentStatus = order?.fulfillmentStatus;
+    receipt.trackingNumber = order?.trackingNumber;
+    receipt.returnStatus = order?.returnStatus ?? receipt.returnStatus;
+    receipt.paymentException = body?.paymentException ?? null;
+    if (body?.physicalEscrow) receipt.escrow = body.physicalEscrow;
+    shopSave();
+    renderOrders();
+  } catch (error) {
+    if (!automatic) showNotice(`更新できませんでした: ${friendlyError(error)}`);
+  }
+}
+let ordersList = null;
 function renderOrders() {
-  const list = document.querySelector("#orders-list");
-  const state = document.querySelector("#orders-state");
-  if (!list) return;
-  list.replaceChildren();
-  if (!shop.orders.length) {
-    if (state) state.textContent = "この端末からの注文はまだありません。";
-    return;
-  }
-  const visible = shop.orders.filter((receipt) =>
-    orderFilter === "all" ? true
-    : orderFilter === "attention" ? orderBuyerAttention(receipt)
-    : orderFilter === "open" ? !orderBuyerAttention(receipt) && !orderBuyerDone(receipt)
-    : orderBuyerDone(receipt));
-  if (!visible.length) {
-    if (state) state.textContent = "この条件の注文はありません。";
-    return;
-  }
-  if (state) state.textContent = "";
-  for (const receipt of visible.slice(0, orderVisibleCount)) {
+  const host = document.querySelector("#orders-list");
+  if (!host) return;
+  const deps = {
+    asset: hubAsset,
+    statusText: orderStatusText,
+    fulfillmentText,
+    bucketOf: (receipt) => (orderBuyerAttention(receipt) ? "attention" : orderBuyerDone(receipt) ? "done" : "open"),
+    openOrder: (id) => void openOrderDetail(id),
+    openWeb: (path) => void openHubWebPath(path),
+    refresh: (receipt) => void refreshOrderReceipt(receipt),
+    browse: () => document.querySelector('.nav-item[data-view="market"]')?.click(),
+  };
+  ordersList ??= createOrdersList({ document, host, deps });
+  // 支払い待ちも取り直す——期限切れの反映と在庫解放の確認が一覧で見える。
+  for (const receipt of shop.orders.slice(0, 20)) {
     const needsEscrow = ["paid", "partially_refunded", "refunded"].includes(receipt.status) && !receipt.escrow;
-    // 支払い待ちも取り直す——期限切れの反映と在庫解放の確認が一覧で見える。
     if ((["awaiting_payment", "submitted"].includes(receipt.status) || needsEscrow) && !orderAutoRefreshed.has(receipt.id)) {
       orderAutoRefreshed.add(receipt.id);
-      void invoke("commerce_order_status", { orderId: receipt.id, accessToken: shopToken(receipt.id) ?? "" }).then((body) => {
-        const order = body?.order;
-        receipt.status = order?.status ?? receipt.status;
-        receipt.fulfillmentType = order?.fulfillmentType ?? receipt.fulfillmentType;
-        receipt.fulfillmentStatus = order?.fulfillmentStatus;
-        receipt.trackingNumber = order?.trackingNumber;
-        receipt.returnStatus = order?.returnStatus ?? receipt.returnStatus;
-        receipt.paymentException = body?.paymentException ?? null;
-        if (body?.physicalEscrow) receipt.escrow = body.physicalEscrow;
-        shopSave();
-        renderOrders();
-      }).catch(() => {});
+      void refreshOrderReceipt(receipt, { automatic: true });
     }
-    const card = document.createElement("div");
-    card.className = "card";
-    const title = document.createElement("strong");
-    title.textContent = receipt.title;
-    const meta = document.createElement("p");
-    meta.className = "meta";
-    meta.textContent = `${new Date(receipt.createdAt).toLocaleDateString("ja-JP")} ・ ${receipt.amountJpyc.toLocaleString()} JPYC ・ ${receipt.id}`;
-    const status = document.createElement("p");
-    status.className = "meta";
-    status.textContent = `支払い: ${orderStatusText(receipt.status)}${receipt.fulfillmentStatus ? ` ・ 配送: ${fulfillmentText(receipt.fulfillmentStatus)}` : ""}${receipt.trackingNumber ? ` ・ ${receipt.trackingNumber}` : ""}${receipt.status === "awaiting_payment" && receipt.expiresAt ? ` ・ 期限 ${new Date(receipt.expiresAt).toLocaleString("ja-JP")}` : ""}`;
-    let escrowLine = null;
-    if (receipt.escrow) {
-      escrowLine = document.createElement("p");
-      escrowLine.className = "meta";
-      const deadline = receipt.escrow.state === "funded"
-        ? `発送期限 ${new Date(receipt.escrow.shipBy).toLocaleDateString("ja-JP")}`
-        : receipt.escrow.state === "shipped"
-          ? `受取期限 ${new Date(receipt.escrow.releaseAt).toLocaleDateString("ja-JP")}`
-          : "";
-      escrowLine.textContent = `資金ロック: ${escrowText(receipt.escrow.state)}${deadline ? ` ・ ${deadline}` : ""}`;
-    }
-    const actions = document.createElement("div");
-    actions.className = "actions";
-    const open = document.createElement("button");
-    open.type = "button";
-    open.className = "head-action";
-    open.textContent = "詳細・受取・返品";
-    open.onclick = () => void openOrderDetail(receipt.id);
-    const refresh = document.createElement("button");
-    refresh.type = "button";
-    refresh.className = "head-action";
-    refresh.textContent = "状態を更新";
-    refresh.onclick = async () => {
-      if (receipt.status === "wallet_unknown" || receipt.status === "status_pending" && receipt.transactionHash) { await openOrderDetail(receipt.id); return; }
-      try {
-        // トークンは空でもよい——端末の資格情報保管庫から引かれる。
-        const body = await invoke("commerce_order_status", { orderId: receipt.id, accessToken: shopToken(receipt.id) ?? "" });
-        const order = body?.order;
-        receipt.status = order?.status ?? receipt.status;
-        receipt.fulfillmentStatus = order?.fulfillmentStatus;
-        receipt.trackingNumber = order?.trackingNumber;
-        receipt.returnStatus = order?.returnStatus ?? receipt.returnStatus;
-        receipt.paymentException = body?.paymentException ?? null;
-        if (body?.physicalEscrow) receipt.escrow = body.physicalEscrow;
-        shopSave();
-        renderOrders();
-      } catch (error) {
-        status.textContent = `更新できませんでした: ${String(error)}`;
-      }
-    };
-    actions.append(open, refresh);
-    card.append(...[title, meta, status, escrowLine, actions].filter(Boolean));
-    if (receipt.paymentException) {
-      const warn = document.createElement("p");
-      warn.className = "meta";
-      warn.textContent = receipt.paymentException.exceptionType === "underpaid"
-        ? "支払い額が不足しています。詳細から不足分を送金してください。"
-        : "支払い額が超過しています。詳細を開いて状況を確認してください。";
-      card.append(warn);
-    }
-    list.append(card);
   }
-  if (visible.length > orderVisibleCount) {
-    const more = document.createElement("button"); more.type = "button"; more.className = "head-action";
-    more.textContent = `続きを表示（残り${visible.length - orderVisibleCount}件）`;
-    more.onclick = () => { orderVisibleCount += 20; renderOrders(); }; list.append(more);
-  }
+  ordersList.set(shop.orders);
+  const purchased = document.querySelector("#purchased-items");
+  if (purchased) renderPurchased({ document, host: purchased, receipts: shop.orders, deps });
 }
 
 // ---- 注文詳細（支払い・発送・受取・返品の操作面） ----
@@ -5674,7 +6015,9 @@ function renderSellerGate(gate) {
   row.className = "actions";
   row.append(login, openWeb);
   card.append(title, note, row, sellerOnboardingForm());
-  gate.replaceChildren(card);
+  const webRows = document.createElement("div");
+  renderWebRows({ document, host: webRows, rows: WEB_ROWS.filter((entry) => entry.path !== "/v2/market/digital"), openWeb: (path) => void openHubWebPath(path) });
+  gate.replaceChildren(card, webRows);
 }
 
 // 登録は challenge → 内容確認 → ウォレット署名（所有確認のみ）→ session。
@@ -5763,6 +6106,7 @@ async function sellerChallenge(publicName, legalDisplayUrl) {
 }
 
 let sellerProductsAll = [];
+let sellerAttributedIds = new Set();
 let sellerProductsCursor = null;
 
 async function loadSellerProducts(before) {
@@ -5776,6 +6120,7 @@ async function loadSellerProducts(before) {
   }
   try {
     const body = await invoke("commerce_seller_products", before ? { before } : {});
+    if (!before) sellerAttributedIds = new Set(await profileAttribution.ids("market").catch(() => []));
     const fresh = body?.products ?? [];
     sellerProductsCursor = body?.nextCursor ?? null;
     const known = new Set(sellerProductsAll.map((p) => p.id));
@@ -5878,7 +6223,23 @@ async function loadSellerProducts(before) {
         const detailsBox = document.querySelector("#seller-product-details"); if (detailsBox) detailsBox.open = true;
         form.scrollIntoView({ behavior: "smooth", block: "start" });
       };
-      actions.append(toggle, restock, edit);
+      const profileToggle = document.createElement("button");
+      profileToggle.type = "button";
+      profileToggle.className = "head-action";
+      const shown = sellerAttributedIds.has(product.id);
+      profileToggle.textContent = shown ? "プロフィールから外す" : "プロフィールに表示";
+      profileToggle.hidden = product.status !== "active" && !shown;
+      profileToggle.onclick = async () => {
+        profileToggle.disabled = true;
+        try {
+          if (shown) await profileAttribution.remove("market", product.id); else await profileAttribution.show("market", product.id);
+          await loadSellerProducts();
+        } catch (error) {
+          meta.textContent = attributionMessage(error);
+          profileToggle.disabled = false;
+        }
+      };
+      actions.append(toggle, restock, edit, profileToggle);
       card.append(title, meta, actions, stockForm);
       list.append(card);
     }
@@ -6668,13 +7029,15 @@ shopLoad();
 for (const tab of document.querySelectorAll("[data-shop-tab]")) {
   tab.onclick = () => {
     for (const other of document.querySelectorAll("[data-shop-tab]")) other.classList.toggle("on", other === tab);
-    const current = tab.dataset.shopTab;
+    const current = tab.dataset.shopTab === "games" ? "products" : tab.dataset.shopTab;
+    if (tab.dataset.shopTab === "games") marketBrowse?.setCategory("game");
     document.querySelector("#market-shop").hidden = current !== "products";
+    document.querySelector("#market-games").hidden = true;
     document.querySelector("#market-listings").hidden = current !== "listings";
     document.querySelector("#market-seller").hidden = current !== "seller";
     syncOwnedEventListings();
     if (current === "listings") { void loadMarketTickets(); if (!document.querySelector("#market-results")?.childElementCount) void loadCatalog("market"); }
-    if (current === "products" && !shop.products.length) void loadShop();
+    if (current === "products") marketBrowse?.show();
     if (current === "seller") void loadSeller();
   };
 }
@@ -7249,15 +7612,15 @@ function syncCommunityInvite(reset=false){
   communityInviteController=communityInvite(document,{invoke,friendlyError,connectAccount:()=>connectDesktopAccount(),isCurrent:()=>currentView==='community'&&generation===researchAccountGeneration,onJoined:id=>void openDetail('community',[id],{title:'コミュニティ'})});
   document.querySelector('#view-community .view-head')?.after(communityInviteController.root);
 }
-function releaseCommunityChannelPolicy(invalidate=false){
-  if(invalidate)communityChannelPolicyController?.invalidate?.();else communityChannelPolicyController?.dispose?.();
-  communityChannelPolicyController=null;
+function releaseCommunityDetail(invalidate=false){
+  if(invalidate)communityDetailController?.invalidate?.();else communityDetailController?.dispose?.();
+  communityDetailController=null;
 }
 
 let videoCommentsController=null;
 async function renderDetailEntry(entry) {
   videoCommentsController?.destroy();videoCommentsController=null;
-  releaseResearchDetail();releaseCommunityChannelPolicy();
+  releaseResearchDetail();releaseCommunityDetail();
   const revision = ++detailRenderRevision, generation=researchAccountGeneration;
   const current=()=>revision===detailRenderRevision&&generation===researchAccountGeneration&&currentView==="detail"&&detailTrail.at(-1)===entry;
   paintDetailHead(entry);
@@ -7274,8 +7637,8 @@ async function renderDetailEntry(entry) {
     state.textContent = "";
     entry.data = data;
     const controller=DETAIL_RENDERERS[entry.name](target, data, entry);
-    if(entry.name==="community")communityChannelPolicyController=controller;
-    if(['thread','channel_messages','research_project','research_network_fork','research_git_management','research_git_history','research_git_commit','research_git_compare','research_git_proposals','research_git_proposal','research_git_discussion','research_proposal','research_document','research_revision','community_governance','community_governance_proposal','community_governance_settings','community_governance_create_context','community_governance_mutation_context','video_playlists','music_playlists','music_work'].includes(entry.name))researchDetailController=controller;
+    if(entry.name==="community")communityDetailController=controller;
+    if(['thread','research_project','research_network_fork','research_git_management','research_git_history','research_git_commit','research_git_compare','research_git_proposals','research_git_proposal','research_git_discussion','research_proposal','research_document','research_revision','community_governance','community_governance_proposal','community_governance_settings','community_governance_create_context','community_governance_mutation_context','video_playlists','music_playlists'].includes(entry.name))researchDetailController=controller;
     if (['article','video'].includes(entry.name)) {
       const generation=researchAccountGeneration;
       const actionHost=entry.name==='article'?target.querySelector('.article-actions')??target:target;
@@ -7284,23 +7647,9 @@ async function renderDetailEntry(entry) {
       attachContentShare({document,host:actionHost,kind:entry.name,id:entry.ids[0],title:data.article?.title??data.video?.title??entry.title,
         isCurrent:current,onShare:offerPublicContentShare});
     }
-    if(['video','music_work'].includes(entry.name))appendPlaylistEntry(target,entry.name==='video'?'video':'music',{id:entry.ids[0],title:data?.title??data?.work?.title??entry.title});
-    if(entry.name==='music_work'){
-      const options=researchEditorOptions(entry);
-      const musicActions=target.querySelector('.mw-actions')??target;
-      attachMusicFavorite({document,host:musicActions,workId:entry.ids[0],invoke:options.invoke,isCurrent:options.isCurrent});
-      const sharing=attachMusicContentShare(musicActions,{workId:entry.ids[0],title:data.work?.title??data.title??entry.title},{invoke:options.invoke,isCurrent:current,onShare:offerPublicContentShare,getViewer:async()=>{const me=await options.invoke('hub_client',{name:'me'});return me?.profile?.id;}});
-      if(sharing)researchDetailController={dispose(){controller?.dispose?.();sharing.dispose();},invalidate(){controller?.invalidate?.();sharing.invalidate();}};
-    }
-    if(entry.name==='music_work'&&/^(?:[A-Za-z0-9_-]{1,128}|music:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/iu.test(entry.ids[0]??'')){
-      // 曲のポスト欄。ポストはHubのもの。購入・決済の操作は置かない。
-      const options=researchEditorOptions(entry);
-      videoCommentsController=createContentPosts(document,{kind:'music',id:entry.ids[0],invoke:options.invoke,renderPost:post=>postCard(post),
-        state:entry.videoCommentDraft??={},isCurrent:()=>current()&&options.isCurrent()});
-      target.append(videoCommentsController.element);
-    }
+    if(entry.name==='video')appendPlaylistEntry(target,'video',{id:entry.ids[0],title:data?.title??data?.work?.title??entry.title});
     attachDetailAiHandoff(entry,data,target,current);
-    const referenceKind={article:'article',video:'video',hubpedia_article:'hubpedia',music_work:'music',thread:'thread',community:'community'}[entry.name];
+    const referenceKind={article:'article',video:'video',hubpedia_article:'hubpedia',thread:'thread',community:'community'}[entry.name];
     if(referenceKind)void appendResearchBacklinks(target,referenceKind,entry.ids[0],()=>revision===detailRenderRevision&&currentView==='detail');
     if (readingDirectory.has(DETAIL_PARENT_VIEW[entry.name]) || DETAIL_PARENT_VIEW[entry.name] === "research") renderSidebarContext("detail");
   } catch (error) {
@@ -7333,6 +7682,8 @@ function renderFeedResearchUpdates(target,items,current=()=>true) {
     openLink:(href,title,isCurrent)=>openHubPath(href,title,isCurrent)});
 }
 async function openDetail(name, ids, opts = {}) {
+  // 作品の頁は無い（2026-11-02）。曲への深いリンクは、その曲を再生して右列の「再生中」を開く。
+  if (name === "music_work") { if (!opts.isCurrent || opts.isCurrent()) await openMusicWorkById(ids?.[0], opts.data); return; }
   await exitBrowser();
   if(opts.isCurrent&&!opts.isCurrent())return;
   if(currentView==='videos')captureVideoScene();
@@ -7405,17 +7756,13 @@ function detailForHubPath(path) {
   if (profile) return { name: "profile", ids: [profile[1]], title: `@${profile[1]}` };
   const tag = path.match(/^\/(?:v2\/)?tag\/([^/?#]{1,128})/);
   if (tag) return { name: "tag", ids: [decodeURIComponent(tag[1])], title: `#${decodeURIComponent(tag[1])}` };
-  // コミュニティ通知は /v2/community?community=<id>&channel=<id> の
-  // クエリ形で来る。チャンネル指定があればそのチャンネルまで開く。
+  // コミュニティ通知は /v2/community?community=<id>&post=<id> の
+  // クエリ形で来る。コミュニティの投稿ストリームを開く。
   const communityQuery = path.match(/^\/(?:v2\/)?community\?(.{1,500})/);
   if (communityQuery) {
     const params = new URLSearchParams(communityQuery[1]);
     const communityId = params.get("community") ?? "";
-    const channelId = params.get("channel") ?? "";
     const idOk = (id) => /^[A-Za-z0-9_-]{1,80}$/.test(id);
-    if (idOk(communityId) && idOk(channelId)) {
-      return { name: "channel_messages", ids: [communityId, channelId], title: "チャンネル" };
-    }
     if (idOk(communityId)) {
       return { name: "community", ids: [communityId], title: "コミュニティ" };
     }
@@ -8085,6 +8432,48 @@ async function renderArticleDrafts(target, _data, entry) {
   }
 }
 
+// 本文の見出し（h3=大、h4=中、h5=小）から目次の箱を作る。番号は 1 / 1.1 / 1.1.1。
+function hubpediaHeadings(root) {
+  const base = Math.min(...[...root.querySelectorAll("h3.detail-h, h4.detail-h, h5.detail-h, h6.detail-h")].map((h) => Number(h.tagName[1])), 6);
+  return [...root.querySelectorAll("h3.detail-h, h4.detail-h, h5.detail-h, h6.detail-h")].map((node) => ({ node, level: Number(node.tagName[1]) - base + 1, text: node.textContent.trim() })).filter((entry) => entry.text);
+}
+function hubpediaNumbers(entries) {
+  const counters = [];
+  return entries.map(({ level }) => {
+    counters.length = level;
+    for (let i = 0; i < level; i += 1) counters[i] = counters[i] ?? 0;
+    counters[level - 1] += 1;
+    return counters.slice(0, level).join(".");
+  });
+}
+function hubpediaContents(body) {
+  const entries = hubpediaHeadings(body);
+  if (entries.length < 2) return null;
+  const numbers = hubpediaNumbers(entries);
+  const nav = document.createElement("nav");
+  nav.className = "hubpedia-toc";
+  nav.setAttribute("aria-label", "目次");
+  const title = document.createElement("p");
+  title.className = "hubpedia-toc-title";
+  title.textContent = "目次";
+  const list = document.createElement("ol");
+  entries.forEach((entry, index) => {
+    const item = document.createElement("li");
+    item.dataset.level = String(Math.min(entry.level, 3));
+    const link = document.createElement("button");
+    link.type = "button";
+    link.className = "hubpedia-toc-link";
+    const number = document.createElement("span");
+    number.className = "hubpedia-toc-number";
+    number.textContent = numbers[index];
+    link.append(number, entry.text);
+    link.onclick = () => entry.node.scrollIntoView?.({ behavior: "smooth", block: "start" });
+    item.append(link);
+    list.append(item);
+  });
+  nav.append(title, list);
+  return nav;
+}
 function renderHubpediaDetail(target, data) {
   const nodes = [];
   const head = document.createElement("div");
@@ -8102,25 +8491,34 @@ function renderHubpediaDetail(target, data) {
     summary.textContent = data.summary;
     head.append(summary);
   }
-  nodes.push(head);
+  let body = null;
   if (data.bodyMarkdown) {
-    const body = document.createElement("div");
+    body = document.createElement("div");
     body.className = "hubpedia-reading detail-body";
     body.append(...markdownBlocks(data.bodyMarkdown));
-    nodes.push(body);
   }
+  // 目次の箱（Wikipedia の型）：細い線の枠に番号つきの見出し。節が2つ以上あるときだけ。押すとその節へ寄る。
+  const toc = body ? hubpediaContents(body) : null;
+  if (toc) head.append(toc);
+  nodes.push(head);
+  if (body) nodes.push(body);
   if (data.sources?.length) {
-    nodes.push(detailSection("出典", data.sources.slice(0, 20).map((source) => {
-      const card = catalogCard({
-        title: source.title ?? source.url,
-        meta: [source.publisher, source.license],
-      });
-      if (source.url && /^https?:\/\//.test(source.url)) {
-        card.classList.add("is-link");
-        card.onclick = () => void enterBrowser(source.url);
-      }
-      return card;
-    })));
+    // 出典は番号つきの行（枠なし）。URL があるものだけ押せる。
+    const list = document.createElement("ol");
+    list.className = "hubpedia-sources";
+    for (const source of data.sources.slice(0, 20)) {
+      const item = document.createElement("li");
+      const link = source.url && /^https?:\/\//.test(source.url);
+      const title = document.createElement(link ? "button" : "span");
+      title.className = "hubpedia-source-title";
+      title.textContent = source.title ?? source.url ?? "";
+      if (link) { title.type = "button"; title.onclick = () => void enterBrowser(source.url); }
+      item.append(title);
+      const note = [source.publisher, source.license].filter(Boolean).join(" · ");
+      if (note) { const meta = document.createElement("span"); meta.className = "meta"; meta.textContent = note; item.append(meta); }
+      list.append(item);
+    }
+    nodes.push(detailSection("出典", [list]));
   }
   target.replaceChildren(...nodes);
 }
@@ -8291,7 +8689,7 @@ function renderCommunityGuides(target, data, entry) {
 function renderCommunityGuide(target, data, entry) {
   target.replaceChildren(communityGuidePage(document,{communityId:entry.ids[0],pageId:entry.ids[1],data,revision:entry.name === "community_guide_revision",draft:entry.guideDraft??={},invoke:researchEditorOptions(entry).invoke,onOpen:(name,ids,title)=>void openDetail(name,ids,{title})}));
 }
-function communityPreferenceControls(data,entry,onChannels) {
+function communityPreferenceControls(data,entry) {
   if(!data.viewerId || !['active','muted'].includes(data.viewerStatus))return null;
   const options=researchEditorOptions(entry),revision=detailRenderRevision,generation=researchAccountGeneration;
   const current=()=>revision===detailRenderRevision&&generation===researchAccountGeneration&&options.isCurrent();
@@ -8300,21 +8698,82 @@ function communityPreferenceControls(data,entry,onChannels) {
     onReadAll:async()=>{
       const next=await options.invoke('hub_detail',{name:'community',ids:[entry.ids[0]]});
       if(!current())return;
-      if(next?.viewerId!==data.viewerId || next?.community?.id!==entry.ids[0] || !Array.isArray(next.channels) || !['active','muted'].includes(next.viewerStatus))throw Error('既読操作は受け付けましたが、現在のチャンネルを確認できませんでした。画面を更新してください。');
-      entry.data=next;onChannels(next.channels);
+      if(next?.viewerId!==data.viewerId || next?.community?.id!==entry.ids[0] || !['active','muted'].includes(next.viewerStatus))throw Error('既読操作は受け付けましたが、現在の状態を確認できませんでした。画面を更新してください。');
+      entry.data=next;
     }});
   return{root:controller.element,ready:controller.ready,dispose:controller.destroy,invalidate:controller.destroy};
 }
-function communityChannelSection(communityId,channels) {
-  return detailSection('チャンネル',channels.length?channels.map(channel=>catalogCard({
-    title:`# ${channel.name}`,body:channel.description,
-    onOpen:()=>void openDetail('channel_messages',[communityId,channel.id],{title:`#${channel.name}`})
-  })):[emptyState('community','チャンネルはまだありません')]);
+
+// コミュニティ内の見出し（投稿 / メンバー / 設定）。左の列の木と同じ行き先。
+const COMMUNITY_SECTIONS = [["posts", "投稿"], ["members", "メンバー"], ["settings", "設定"]];
+function communitySection(entry) {
+  const asked = entry.section ?? entry.targetSelection?.section;
+  return asked === "members" || asked === "settings" ? asked : "posts";
 }
+function communitySectionItems(entry) {
+  if (!entry || entry.name !== "community") return [];
+  const data = entry.data ?? {}, member = ["active", "muted"].includes(data.viewerStatus);
+  const section = communitySection(entry);
+  return COMMUNITY_SECTIONS
+    .filter(([key]) => key === "posts" || (key === "members" ? Boolean(data.viewerId) : member))
+    .map(([key, label]) => ({ key, label, selected: key === section }));
+}
+function selectCommunitySection(entry, key) {
+  if (!entry || entry.name !== "community" || !COMMUNITY_SECTIONS.some(([value]) => value === key)) return;
+  if (communitySection(entry) === key) return;
+  entry.section = key;
+  if (entry.targetSelection) entry.targetSelection.section = undefined;
+  void renderDetailEntry(entry);
+}
+
+// 投稿ストリームの読み込み。種類のチップで読み直し、続きはカーソルで足す。
+function mountCommunityStream(host, entry, holder, ownerCurrent) {
+  const stream = entry.stream ??= { kind: null };
+  const [communityId] = entry.ids;
+  const request = (cursor) => {
+    const kind = stream.kind ?? null;
+    if (cursor) return kind ? ["community_posts_kind_page", [communityId, kind, cursor]] : ["community_posts_page", [communityId, cursor]];
+    return kind ? ["community_posts_kind", [communityId, kind]] : ["community_posts", [communityId]];
+  };
+  let epoch = 0;
+  const paint = () => {
+    holder.ctrl?.dispose?.();
+    holder.ctrl = renderCommunityStream(host, stream.data, entry, {
+      onKind: (kind) => { stream.kind = kind; stream.data = null; void load(); },
+      onMore: () => void load(stream.data?.nextCursor ?? null),
+      reload: () => load(),
+    });
+  };
+  async function load(cursor = null) {
+    const mine = ++epoch;
+    if (!cursor) host.replaceChildren(skeletonResult(), skeletonResult());
+    const [name, ids] = request(cursor);
+    try {
+      const next = await invoke("hub_detail", { name, ids });
+      if (mine !== epoch || !ownerCurrent()) return;
+      if (!Array.isArray(next?.messages)) throw new Error("投稿を確認できませんでした。");
+      const before = cursor ? stream.data : null;
+      const seen = new Set((before?.messages ?? []).map((message) => message.id));
+      stream.data = before
+        ? { ...next, messages: [...before.messages, ...next.messages.filter((message) => !seen.has(message.id))], profiles: { ...before.profiles, ...next.profiles }, pollOptions: [...(before.pollOptions ?? []), ...(next.pollOptions ?? [])] }
+        : next;
+      paint();
+    } catch (error) {
+      if (mine !== epoch || !ownerCurrent()) return;
+      const note = document.createElement("p");
+      note.className = "meta warning";
+      note.textContent = friendlyError(error);
+      host.replaceChildren(note, retryButton(() => void load(cursor)));
+    }
+  }
+  return load();
+}
+
 function renderCommunityDetail(target, data, entry) {
   const community = data.community ?? {};
   const membership = data.membership;
-  const channels = data.channels ?? [];
+  const section = communitySection(entry);
+  entry.section = section;
   const nodes = [];
   const head = document.createElement("div");
   head.className = "card";
@@ -8344,6 +8803,12 @@ function renderCommunityDetail(target, data, entry) {
     description.textContent = community.description;
     head.append(description);
   }
+  const isMember = Boolean(data.viewerId) && ["active", "muted"].includes(data.viewerStatus);
+  const revision=detailRenderRevision,generation=researchAccountGeneration;
+  const sectionCurrent=()=>revision===detailRenderRevision&&generation===researchAccountGeneration&&currentView==="detail"&&detailTrail.at(-1)===entry;
+  // 自分のポイント（ポイントを使わないコミュニティや未参加なら何も出ない）
+  const points = isMember ? createCommunityPoints({ document, communityId: community.id, invoke: researchEditorOptions(entry).invoke, isCurrent: sectionCurrent }) : null;
+  if (points) head.append(points.own);
   // 参加・退出。未接続なら接続を促すだけ——ボタンを出しても通らない。
   const joinRow = document.createElement("div");
   joinRow.className = "actions community-join-row";
@@ -8356,47 +8821,72 @@ function renderCommunityDetail(target, data, entry) {
   if(data.canManage)joinRow.append(buttonAction("通報",()=>void openDetail("community_reports",[community.id],{title:"通報"})));
   if(data.canManage)joinRow.append(buttonAction("異議申立ての審査",()=>void openDetail("community_appeals",[community.id],{title:"異議申立て"})));
   if(data.viewerId && membership)joinRow.append(buttonAction("自分の異議申立て",()=>void openDetail("community_appeal_history",[community.id],{title:"自分の異議申立て"})));
-  if (data.viewerId) joinRow.append(buttonAction("メンバー", () => void openDetail("community_members", [community.id], { title: "メンバー" })));
   if(community.governanceMode==='dao')joinRow.append(buttonAction('ガバナンス',()=>{if(joinCurrent())void openDetail('community_governance',[community.id],{title:'ガバナンス',governanceState:entry.governanceState??={}});}));
   if (community.visibility !== "private" || ["active", "muted"].includes(data.viewerStatus))
     joinRow.append(buttonAction("ガイド", () => void openDetail("community_guides", [community.id], { title: "ガイド" })));
   head.append(joinRow);
+  // 投稿 / メンバー / 設定
+  const tabs = document.createElement("div");
+  tabs.className = "chip-row community-sections";
+  tabs.setAttribute("role", "group");
+  tabs.setAttribute("aria-label", "コミュニティの内容");
+  for (const item of communitySectionItems(entry)) {
+    const tab = document.createElement("button");
+    tab.type = "button";
+    tab.className = "chip";
+    tab.textContent = item.label;
+    tab.dataset.section = item.key;
+    tab.setAttribute("aria-pressed", String(item.selected));
+    tab.onclick = () => { if (sectionCurrent()) selectCommunitySection(entry, item.key); };
+    tabs.append(tab);
+  }
+  head.append(tabs);
   nodes.push(head);
-  let channelSection=communityChannelSection(community.id,channels);
-  const preferences=communityPreferenceControls(data,entry,next=>{
-    const section=communityChannelSection(community.id,next);channelSection.replaceWith(section);channelSection=section;
-  });
-  if(preferences)nodes.push(preferences.root);
-  nodes.push(channelSection);
-  let policy=null,access=null;
-  if (data.canManage) {
-    nodes.push(communityChannelControls(document, { communityId: community.id, channels, invoke, refresh: () => renderDetailEntry(entry) }));
-    const revision=detailRenderRevision,generation=researchAccountGeneration;
-    policy=communityChannelPolicyControls(document,{communityId:community.id,invoke,state:entry.channelPolicyState??={},isCurrent:()=>revision===detailRenderRevision&&generation===researchAccountGeneration&&currentView==="detail",onChanged:()=>void renderDetailEntry(entry)});
-    nodes.push(policy.root);
-    access=communityAccessManagement(document,{communityId:community.id,invoke,storage:entry.accessManagementState??={},isCurrent:()=>revision===detailRenderRevision&&generation===researchAccountGeneration&&currentView==="detail",onChanged:()=>void renderDetailEntry(entry)});
-    nodes.push(access.root);
-  } else {entry.channelPolicyState=undefined;entry.accessManagementState=undefined;}
+  const controllers=[join], holder={ctrl:null}, pending=[];
+  if (points) pending.push(points.ready);
+  if (section === "posts") {
+    const host = document.createElement("div");
+    host.className = "community-stream";
+    nodes.push(host);
+    pending.push(mountCommunityStream(host, entry, holder, sectionCurrent));
+  } else if (section === "members") {
+    if (points) nodes.push(points.ranking);
+    if (data.viewerId) nodes.push(buttonAction("メンバーを検索・管理", () => void openDetail("community_members", [community.id], { title: "メンバー" })));
+  } else {
+    if (points) nodes.push(...points.toggle);
+    const preferences=communityPreferenceControls(data,entry);
+    if(preferences){nodes.push(preferences.root);controllers.push(preferences);}
+    if (data.canManage) {
+      const access=communityAccessManagement(document,{communityId:community.id,invoke,storage:entry.accessManagementState??={},isCurrent:()=>revision===detailRenderRevision&&generation===researchAccountGeneration&&currentView==="detail",onChanged:()=>void renderDetailEntry(entry)});
+      nodes.push(access.root);controllers.push(access);
+    } else entry.accessManagementState=undefined;
+    if (!nodes.length || nodes.length === 1) nodes.push(emptyState("community", "設定できる項目はありません"));
+  }
   target.replaceChildren(...nodes);
-  const controllers=[join,policy,access,preferences].filter(Boolean);return{get ready(){return Promise.all(controllers.map(c=>c.ready));},dispose(){controllers.forEach(c=>c.dispose());},invalidate(){controllers.forEach(c=>c.invalidate());}};
+  return{get ready(){return Promise.all([...controllers.map(c=>c.ready),...pending]);},dispose(){controllers.forEach(c=>c.dispose());holder.ctrl?.dispose?.();},invalidate(){controllers.forEach(c=>c.invalidate());holder.ctrl?.invalidate?.();}};
 }
 
-// --- チャンネル：メッセージ・返信・リアクション ---
-const MESSAGE_KIND_LABELS = { chat: "雑談", guide: "案内", question: "質問", party: "募集" };
+// --- コミュニティの投稿ストリーム（チャンネルは無い。タグのチップで絞る） ---
+const MESSAGE_KIND_LABELS = { chat: "雑談", guide: "共同ページ", question: "質問", party: "募集" };
 
-function channelMessageCard(message, profiles, handlers) {
+function communityPostCard(message, profiles, handlers) {
   const card = document.createElement("article");
-  card.className = "card result-card channel-message";
+  card.className = "card result-card community-post";
   const profile = profiles?.[message.authorProfileId];
   const head = document.createElement("p");
   head.className = "meta";
   const flags = [
     message.kind && message.kind !== "chat" ? MESSAGE_KIND_LABELS[message.kind] : "",
-    message.pinnedAt ? "固定" : "",
     message.editedAt ? "編集済み" : "",
     relTime(message.createdAt),
   ].filter(Boolean);
   head.textContent = `${profile?.displayName ?? message.botName ?? "メンバー"} · ${flags.join(" · ")}`;
+  if (message.pinnedAt) {
+    const pin = document.createElement("span");
+    pin.className = "pin-marker";
+    pin.textContent = "固定";
+    head.prepend(pin, " ");
+  }
   card.append(head);
   if (message.replyToMessageId) {
     const anchor = document.createElement("p");
@@ -8406,6 +8896,12 @@ function channelMessageCard(message, profiles, handlers) {
   }
   const body = document.createElement("p");
   body.className = "detail-p";
+  if (message.locked) {
+    body.classList.add("meta");
+    body.textContent = "鍵付きの投稿です。条件を満たすと読めます。";
+    card.append(body);
+    return card;
+  }
   body.textContent = message.body;
   card.append(body);
   if (message.images?.length) {
@@ -8436,42 +8932,37 @@ function channelMessageCard(message, profiles, handlers) {
     reaction.onclick = () => void handlers.react(message, emoji);
     bar.append(reaction);
   }
-  // 編集・削除は自分のメッセージだけ。ピン留めはモデレーターだけ。
-  // 他人のメッセージには通報を出す。権限はハブ側でも確かめられる。
+  // ⋯ メニュー。編集・削除は自分の投稿だけ。固定はオーナーとモデレーターだけ。他人の投稿には通報。
+  // 権限はハブ側でも確かめられる。
+  const items = [];
+  const item = (label, run) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "head-action";
+    button.textContent = label;
+    button.onclick = run;
+    items.push(button);
+  };
   if (handlers.viewerId && message.authorProfileId === handlers.viewerId) {
-    const edit = document.createElement("button");
-    edit.type = "button";
-    edit.className = "head-action";
-    edit.textContent = "編集";
-    edit.onclick = () => handlers.edit(message, card);
-    const remove = document.createElement("button");
-    remove.type = "button";
-    remove.className = "head-action";
-    remove.textContent = "削除";
-    remove.onclick = () => void handlers.remove(message);
-    bar.append(edit, remove);
+    item("編集", () => handlers.edit(message, card));
+    item("削除", () => void handlers.remove(message));
   }
-  if (handlers.canModerate) {
-    const pin = document.createElement("button");
-    pin.type = "button";
-    pin.className = "head-action";
-    pin.textContent = message.pinnedAt ? "固定を解除" : "固定する";
-    pin.onclick = () => void handlers.pin(message);
-    bar.append(pin);
-  }
+  if (handlers.canModerate) item(message.pinnedAt ? "固定を解除" : "固定する", () => void handlers.pin(message));
   if (handlers.viewerId && message.authorProfileId && message.authorProfileId !== handlers.viewerId) {
-    const report = document.createElement("button");
-    report.type = "button";
-    report.className = "head-action";
-    report.textContent = "通報";
-    report.onclick = () => {
+    item("通報", () => {
       const existing = card.querySelector(".report-form");
       if (existing) { existing.remove(); return; }
-      card.append(reportForm("community_message", message.id, {
-        communityId: handlers.communityId, channelId: handlers.channelId,
-      }));
-    };
-    bar.append(report);
+      card.append(reportForm("community_message", message.id, { communityId: handlers.communityId }));
+    });
+  }
+  if (items.length) {
+    const menu = document.createElement("details");
+    menu.className = "post-menu";
+    const summary = document.createElement("summary");
+    summary.textContent = "⋯";
+    summary.setAttribute("aria-label", "投稿のメニュー");
+    menu.append(summary, ...items);
+    bar.append(menu);
   }
   if (handlers.canPost) card.append(bar);
   const poll = handlers.pollOptions?.filter(option => option.messageId === message.id) ?? [];
@@ -8479,16 +8970,17 @@ function channelMessageCard(message, profiles, handlers) {
   return card;
 }
 
-function renderChannelMessages(target, data, entry) {
+// data は GET communities/{id}/posts の応答（キーは messages のまま）。ctx.onKind / ctx.onMore は読み込む側が渡す。
+function renderCommunityStream(target, data, entry, ctx = {}) {
   const messages = data.messages ?? [];
   const profiles = data.profiles ?? {};
-  const [communityId, channelId] = entry.ids;
+  const [communityId] = entry.ids;
   const nodes = [];
   const generation=researchAccountGeneration,revision=detailRenderRevision;
   let disposed=false;
   const current=()=>!disposed&&generation===researchAccountGeneration&&revision===detailRenderRevision&&currentView==='detail'&&detailTrail.at(-1)===entry;
   const options=researchEditorOptions(entry);
-  const channelInvoke=async(name,args)=>{
+  const postInvoke=async(name,args)=>{
     if(!current())throw Error('account_changed');
     const managed=name==='hub_client_action'&&['community_poll_create','community_poll_vote','community_message_schedule'].includes(args?.action);
     let scope;
@@ -8507,25 +8999,35 @@ function renderChannelMessages(target, data, entry) {
     }
     return result;
   };
-  const refresh=()=>current()?renderDetailEntry(entry):Promise.resolve();
+  const refresh=()=>current()?(ctx.reload?ctx.reload():renderDetailEntry(entry)):Promise.resolve();
   const formState=document.createElement('p');formState.className='meta';
   const controller=data.canPost===true&&data.viewerProfileId?createChannelComposer({
-    document,communityId,channelId,viewerId:data.viewerProfileId,state:entry.channelDraft??={},
-    invoke:channelInvoke,getScope:()=>articleEditorScope(),isCurrent:current,
+    document,communityId,viewerId:data.viewerProfileId,state:entry.postDraft??={},
+    invoke:postInvoke,getScope:()=>articleEditorScope(),isCurrent:current,
     uploadFiles:uploadChannelImages,onSent:refresh,formatError:friendlyError,
     onError:()=>{if(current())formState.textContent='操作結果を確認してください。';}
   }):null;
   const textarea=controller?.textarea,kind=controller?.kind;
+  const act=async(action,message,extra={})=>{
+    if(!current())return;
+    try{
+      await postInvoke("hub_client_action",{action,target:communityId,...extra,options:{messageId:message.id,...(extra.options??{})}});
+      await refresh();
+    }catch(error){
+      if(!current())return;
+      formState.textContent=friendlyError(error);
+      formState.classList.add("warning");
+    }
+  };
   const handlers = {
     communityId,
-    channelId,
-    invoke:channelInvoke,
+    invoke:postInvoke,
     viewerId: data.viewerProfileId ?? null,
     canPost: data.canPost === true, pollOptions: data.pollOptions ?? [], refresh,
     canModerate: data.canModerate === true,
     reply: (message) => {
       if(!current()||!controller)return;
-      if(controller.setReply({id:message.id,channelId,communityId,label:[...(profiles[message.authorProfileId]?.displayName??'メンバー'),...('「'+message.body.slice(0,40)+'」')].slice(0,120).join('')}))textarea.focus();
+      if(controller.setReply({id:message.id,communityId,label:[...(profiles[message.authorProfileId]?.displayName??'メンバー'),...('「'+message.body.slice(0,40)+'」')].slice(0,120).join('')}))textarea.focus();
     },
     edit: (message, card) => {
       if(!current())return;
@@ -8550,11 +9052,11 @@ function renderChannelMessages(target, data, entry) {
         save.disabled = true;
         note.textContent = "保存しています…";
         try {
-          await channelInvoke("hub_client_action", {
-            action: "channel_message_edit",
+          await postInvoke("hub_client_action", {
+            action: "community_post_edit",
             target: communityId,
             text: next,
-            options: { channelId, messageId: message.id },
+            options: { messageId: message.id },
           });
           await refresh();
         } catch (error) {
@@ -8568,60 +9070,46 @@ function renderChannelMessages(target, data, entry) {
       box.focus();
     },
     remove: async (message) => {
-      if (!current()||!confirm("このメッセージを削除しますか？")) return;
-      try {
-        await channelInvoke("hub_client_action", {
-          action: "channel_message_delete",
-          target: communityId,
-          options: { channelId, messageId: message.id },
-        });
-        await refresh();
-      } catch (error) {
-        if(!current())return;
-        formState.textContent = friendlyError(error);
-        formState.classList.add("warning");
-      }
+      if (!current()||!confirm("この投稿を削除しますか？")) return;
+      await act("community_post_delete", message);
     },
-    pin: async (message) => {
-      if(!current())return;
-      try {
-        await channelInvoke("hub_client_action", {
-          action: message.pinnedAt ? "channel_message_unpin" : "channel_message_pin",
-          target: communityId,
-          options: { channelId, messageId: message.id },
-        });
-        await refresh();
-      } catch (error) {
-        if(!current())return;
-        formState.textContent = friendlyError(error);
-        formState.classList.add("warning");
-      }
-    },
-    react: async (message, emoji) => {
-      if(!current())return;
-      try {
-        await channelInvoke("hub_client_action", {
-          action: "message_reaction",
-          target: communityId,
-          options: { channelId, messageId: message.id, emoji },
-        });
-        await refresh();
-      } catch (error) {
-        if(!current())return;
-        formState.textContent = friendlyError(error);
-        formState.classList.add("warning");
-      }
-    },
+    pin: (message) => act(message.pinnedAt ? "community_post_unpin" : "community_post_pin", message),
+    react: (message, emoji) => act("community_post_reaction", message, { options: { emoji } }),
   };
+  // タグのチップ（雑談 / 共同ページ / 質問 / 募集）。押すとその種類だけを読み直す。
+  const chips = document.createElement("div");
+  chips.className = "chip-row community-kind-chips";
+  chips.setAttribute("role", "group");
+  chips.setAttribute("aria-label", "投稿の種類");
+  const stream = entry.stream ??= { kind: null };
+  for (const [value, label] of [[null, "すべて"], ...Object.entries(MESSAGE_KIND_LABELS)]) {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "chip";
+    chip.textContent = label;
+    chip.dataset.kind = value ?? "";
+    chip.setAttribute("aria-pressed", String((stream.kind ?? null) === value));
+    chip.onclick = () => { if (current() && (stream.kind ?? null) !== value) ctx.onKind?.(value); };
+    chips.append(chip);
+  }
+  nodes.push(chips);
   nodes.push(detailSection(
-    `メッセージ ${messages.length || ""}`.trim(),
+    `投稿 ${messages.length || ""}`.trim(),
     messages.length
-      ? messages.map((message) => {const card=channelMessageCard(message,profiles,handlers);card.dataset.messageId=message.id;return card;})
-      : [emptyState("community", "まだメッセージはありません")],
+      ? messages.map((message) => {const card=communityPostCard(message,profiles,handlers);card.dataset.messageId=message.id;return card;})
+      : [emptyState("community", "まだ投稿はありません")],
   ));
+  if (data.nextCursor && ctx.onMore) {
+    const more = document.createElement("button");
+    more.type = "button";
+    more.className = "head-action community-more";
+    more.textContent = "さらに読み込む";
+    more.onclick = () => { if (current()) { more.disabled = true; ctx.onMore(); } };
+    nodes.push(more);
+  }
   if (controller) {
-    nodes.push(controller.element,communityComposerTools(document,{communityId,channelId,invoke:channelInvoke,refresh,textarea,kind,hasImages:controller.hasImages}));
-  } else { const note = document.createElement("p"); note.className = "meta"; note.textContent = "投稿するには、Desktop接続とこのチャンネルへの投稿権限が必要です。"; nodes.push(note); }
+    nodes.push(controller.element,communityComposerTools(document,{communityId,invoke:postInvoke,refresh,textarea,kind,hasImages:controller.hasImages}));
+  } else { const note = document.createElement("p"); note.className = "meta"; note.textContent = "投稿するには、Desktop接続とこのコミュニティへの投稿権限が必要です。"; nodes.push(note); }
   nodes.push(formState);
   const messageId=entry.targetSelection?.messageId;
   if(messageId&&!entry.targetSelection.applied){
@@ -8630,8 +9118,8 @@ function renderChannelMessages(target, data, entry) {
     if(message&&card&&!message.deletedAt&&!message.moderatedAt){
       entry.targetSelection.applied=true;card.tabIndex=-1;card.dataset.notificationTarget='true';
       queueMicrotask(()=>{if(current()&&card.isConnected){card.focus({preventScroll:true});card.scrollIntoView({block:'center'});}});
-    }else{
-      const note=document.createElement('p');note.className='meta';note.textContent='通知のメッセージは表示できません。削除されたか、現在の表示範囲にありません。';note.setAttribute('role','status');nodes.unshift(note);
+    }else if(!ctx.onMore||!data.nextCursor){
+      const note=document.createElement('p');note.className='meta';note.textContent='通知の投稿は表示できません。削除されたか、現在の表示範囲にありません。';note.setAttribute('role','status');nodes.unshift(note);
     }
   }
   target.replaceChildren(...nodes);
@@ -8729,7 +9217,6 @@ function openMusicAlbum(name, artist = '') { const value = String(name ?? '').tr
 function musicCollectionSeed() {
   const known = [...musicPlayer.tracks, ...musicPlayer.queue];
   if (musicPlayer.currentTrack && !musicPlayer.currentTrack.peer) known.push(musicPlayer.currentTrack);
-  for (const detail of detailTrail) { const work = detail.name === 'music_work' ? (detail.data?.work ?? detail.data) : null; if (work?.id) known.push(work); }
   return known;
 }
 async function loadMusicCollectionSources(query) {
@@ -8749,41 +9236,57 @@ function renderMusicCollectionDetail(target, data, entry) {
     isCurrent: () => revision === detailRenderRevision && generation === researchAccountGeneration && currentView === 'detail' && detailTrail.at(-1) === entry,
     actions: {
       playTracks: (tracks, start) => { const index = tracks.findIndex(track => track.id === start.id); const from = index >= 200 ? index : 0; void playMusicTrack(start, tracks.slice(from, from + 200)); },
-      playWork: work => { musicYoutube.requestAutoplay(work.id ?? null); void openDetail('music_work', [work.id ?? ''], { local: true, data: work, title: work.title || '楽曲' }); },
-      openWork: work => void openDetail('music_work', [work.id ?? ''], { local: true, data: work, title: work.title || '楽曲' }),
+      playWork: work => void playMusicWork(work),
+      openWork: work => void playMusicWork(work),
       enqueue: track => enqueueMusicTrack(track, 'next'),
       openArtist: openMusicArtist, openAlbum: openMusicAlbum } });
 }
-function renderMusicDetail(target, item, entry) {
-  item=item.work??item;
-  { const band = document.querySelector("#detail-title"); if (band) band.textContent = "音楽"; }
-  // 再生できるのは YouTube の埋め込みか Music Worker の公開曲だけ。他の提供元は「〇〇で開く」。
-  musicYoutube.stop();
-  const isTrack = /^music:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(item.id ?? '');
-  const trackItem = isTrack ? { ...item, id: item.id.slice(6) } : null;
-  const accountTurn = researchAccountGeneration;
-  const header = renderMusicWorkHeader({ document, work: item, session: musicYoutube, hubAsset: (img, url) => hubAsset(img, url),
-    openExternal: (url) => void enterBrowser(url),
-    onOpenArtist: typeof openMusicArtist === 'function' ? openMusicArtist : null, onOpenAlbum: typeof openMusicAlbum === 'function' ? openMusicAlbum : null,
-    autoplay: !isTrack && musicYoutube.consumeAutoplay(item.id ?? null),
-    local: isTrack ? {
-      play: () => playMusicTrack(trackItem, [trackItem]),
-      next: () => { if (currentView === 'detail' && (!entry || detailTrail.at(-1) === entry) && accountTurn === researchAccountGeneration && target.contains(header.root)) enqueueMusicTrack(trackItem, 'next'); },
-    } : null,
-    // ダウンロードはHubの作品頁で行う（使い捨ての札と透かし）。許可は Music の設定。
-    download: isTrack ? { allowed: musicDownloadAllowed(item), open: () => { const url = musicDownloadPageUrl(hubOrigin ?? '', trackItem.id); if (url) void enterBrowser(url); } } : null });
-  target.replaceChildren(header.root);
-  if(entry&&item.source==='community'&&item.id===entry.ids[0]&&!item.id.startsWith('music:')){
-    const options=researchEditorOptions(entry),revision=detailRenderRevision;
-    const controller=createExternalMusicReport({document,workId:item.id,invoke:options.invoke,
-      getAccount:()=>desktopAccount.state==='registered'?String(researchAccountGeneration):null,
-      isCurrent:()=>options.isCurrent()&&revision===detailRenderRevision,state:(entry.editorState??={}).externalMusicReport??={}});
-    const box=document.createElement('details');box.className='detail-form';
-    const summary=document.createElement('summary');summary.textContent='作品を報告';box.append(summary,controller.element);target.append(box);
-    return{root:controller.element,ready:controller.ready,dispose:controller.destroy,invalidate:controller.destroy};
-  }
+function musicPageCurrent(entry) {
+  const revision = detailRenderRevision, generation = researchAccountGeneration;
+  return () => revision === detailRenderRevision && generation === researchAccountGeneration && currentView === "detail" && detailTrail.at(-1) === entry;
 }
-
+function musicPageActions() {
+  return {
+    playTracks: (tracks, start) => { const index = tracks.findIndex((track) => track.id === start.id); const from = index >= 200 ? index : 0; void playMusicTrack(start, tracks.slice(from, from + 200)); },
+    playWork: (work) => void playMusicWork(work),
+    openWork: (work) => void playMusicWork(work),
+    enqueue: (track) => enqueueMusicTrack(track, "next"),
+    openArtist: openMusicArtist,
+  };
+}
+function renderMusicPlaylistDetail(target, data, entry) {
+  musicYoutube.stop();
+  { const band = document.querySelector("#detail-title"); if (band) band.textContent = "音楽"; }
+  target.replaceChildren();
+  const current = musicPageCurrent(entry);
+  const note = document.createElement("p");
+  note.className = "meta"; note.setAttribute("role", "status"); note.textContent = "読み込んでいます…";
+  target.append(note);
+  const resolver = createItemResolver({ invoke, kind: "music" });
+  let page = null, gone = false;
+  void (async () => {
+    try {
+      const raw = await invoke("hub_client", { name: "music_playlists" });
+      if (gone || !current()) return;
+      const found = (Array.isArray(raw?.playlists) ? raw.playlists : []).find((item) => item?.id === entry.ids[0]);
+      if (!found) { note.textContent = "このプレイリストは見つかりませんでした。"; return; }
+      note.remove();
+      page = renderMusicPlaylist({ document, host: target, playlist: { id: found.id, title: String(found.title ?? ""), description: String(found.description ?? ""), items: Array.isArray(found.workIds) ? found.workIds : [] },
+        resolve: (id) => resolver.resolve(id), hubAsset: (img, url) => hubAsset(img, url), isCurrent: current,
+        actions: { ...musicPageActions(), edit: () => document.querySelector("#music-playlists").click() } });
+    } catch { if (!gone) note.textContent = "プレイリストを読み込めませんでした。"; }
+  })();
+  const stop = () => { gone = true; page?.destroy(); };
+  return { dispose: stop, destroy: stop, invalidate: stop };
+}
+function renderMusicArtistsDetail(target, data, entry) {
+  musicYoutube.stop();
+  { const band = document.querySelector("#detail-title"); if (band) band.textContent = "音楽"; }
+  target.replaceChildren();
+  const page = renderMusicArtists({ document, host: target, load: () => loadMusicCollectionSources(""), hubAsset: (img, url) => hubAsset(img, url), isCurrent: musicPageCurrent(entry), actions: { openArtist: openMusicArtist } });
+  const stop = () => page.destroy();
+  return { dispose: stop, destroy: stop, invalidate: stop };
+}
 // --- プロフィール詳細：本人か他人かで操作が変わる ---
 function renderProfileDetail(target, data, entry) {
   const profile = data.profile;
@@ -8984,7 +9487,7 @@ const REPORT_REASONS = {
 };
 
 // targetType=community_message のとき targetId はメッセージID、
-// extra に {communityId, channelId} を渡す（宛先の三段組み立てのため）。
+// extra に {communityId} を渡す（宛先の組み立てのため）。
 function reportForm(targetType, targetId, extra = {}) {
   const form = document.createElement("div");
   form.className = "detail-form report-form";
@@ -9012,9 +9515,9 @@ function reportForm(targetType, targetId, extra = {}) {
     note.textContent = "送っています…";
     try {
       await invoke("hub_client_action", {
-        action: targetType === "social_post" ? "report_post" : targetType === "community_message" ? "channel_message_report" : targetType === "thread_post" ? "thread_post_report" : "report_profile",
+        action: targetType === "social_post" ? "report_post" : targetType === "community_message" ? "community_post_report" : targetType === "thread_post" ? "thread_post_report" : "report_profile",
         target: targetType === "community_message" ? extra.communityId : targetId,
-        options: { reason: select.value, details: details.value.trim(), ...(targetType === "community_message" ? { channelId: extra.channelId, messageId: targetId } : {}) },
+        options: { reason: select.value, details: details.value.trim(), ...(targetType === "community_message" ? { messageId: targetId } : {}) },
       });
       form.replaceChildren();
       const done = document.createElement("p");
@@ -9044,7 +9547,7 @@ async function loadSafetyControls() {
   return safetyControls;
 }
 
-// --- タグ詳細：1つのタグで6種類が並ぶ（Web版 /v2/tag と同じ断面） ---
+// --- タグ詳細：1つのタグで8種類が並ぶ（Web版 /v2/tag と同じ断面） ---
 function renderTagDetail(target, data) {
   const nodes = [];
   const head = document.createElement("div");
@@ -9053,53 +9556,102 @@ function renderTagDetail(target, data) {
   title.textContent = `#${data.tag}`;
   const meta = document.createElement("p");
   meta.className = "meta";
+  // 件数はサーバーの正確な数（counts）を優先。無い古い応答は読み込んだ数で補う。
   const counts = [
     ["posts", "投稿"], ["threads", "スレッド"], ["articles", "記事"],
-    ["videos", "動画"], ["music", "音楽"],
-  ].map(([key, label]) => data[key]?.length ? `${label} ${data[key].length}` : "").filter(Boolean);
+    ["videos", "動画"], ["music", "音楽"], ["communities", "コミュニティ"], ["market", "マーケット"], ["games", "ゲーム"],
+  ].map(([key, label]) => { const n = Number(data.counts?.[key] ?? data[key]?.length ?? 0); return n > 0 ? `${label} ${n}` : ""; }).filter(Boolean);
   meta.textContent = counts.join(" · ") || "このタグの項目はまだありません";
-  head.append(title, meta);
+  // フォローは全種類で1つ（UNIFY.md）。窓は動詞だけ送る。
+  const follow = document.createElement("button");
+  follow.type = "button";
+  follow.className = "head-action";
+  let followed = data.following === true;
+  const paintFollow = () => { follow.textContent = followed ? "フォロー中" : "タグをフォロー"; follow.setAttribute("aria-pressed", String(followed)); };
+  paintFollow();
+  follow.onclick = async () => {
+    follow.disabled = true;
+    try {
+      await invoke("hub_client_action", { action: followed ? "unfollow_tag" : "follow_tag", target: data.tag });
+      followed = !followed;
+    } catch (error) { showNotice(friendlyError(error)); }
+    follow.disabled = false;
+    paintFollow();
+  };
+  head.append(title, meta, follow);
   nodes.push(head);
-  if (data.posts?.length) {
-    nodes.push(detailSection("投稿", data.posts.map((post) => postCard(post))));
-  }
-  if (data.threads?.length) {
-    nodes.push(detailSection("スレッド", data.threads.map((t) => catalogCard({
+  // 種類ごとの描き方。続きの行も同じ関数で作る。
+  const yen = (p) => (p.currency === "JPY" && Number.isFinite(p.priceMinor) ? `¥${Number(p.priceMinor).toLocaleString("ja-JP")}` : "");
+  const KIND_VIEWS = [
+    ["posts", "投稿", (post) => postCard(post)],
+    ["threads", "スレッド", (t) => catalogCard({
       title: t.title,
       meta: [`${t.postCount ?? 0} 投稿`, relTime(t.updatedAt)],
       onOpen: () => void openDetail("thread", [t.id], { title: t.title }),
-    }))));
-  }
-  if (data.articles?.length) {
-    nodes.push(detailSection("記事", data.articles.map((a) => catalogCard({
+    })],
+    ["articles", "記事", (a) => catalogCard({
       title: a.title,
       body: a.summary,
       imageUrl: a.thumbnailUrl,
       onOpen: a.id ? () => void openDetail("article", [a.id], { title: a.title }) : null,
-    }))));
-  }
-  if (data.videos?.length) {
-    nodes.push(detailSection("動画", data.videos.map((v) => catalogCard({
+    })],
+    ["videos", "動画", (v) => catalogCard({
       title: v.title,
       body: v.channel,
       imageUrl: v.thumbnailUrl,
       onOpen: () => void openDetail("video", [v.id ?? ""], { local: true, data: v, title: v.title }),
-    }))));
-  }
-  if (data.music?.length) {
-    nodes.push(detailSection("音楽", data.music.map((w) => catalogCard({
+    })],
+    ["music", "音楽", (w) => catalogCard({
       title: w.title,
       imageUrl: w.artworkUrl,
-      onOpen: () => void openDetail("music_work", [w.id ?? ""], { local: true, data: w, title: w.title }),
-    }))));
-  }
-  if (data.products?.length) {
-    nodes.push(detailSection("商品", data.products.map((p) => catalogCard({
+      menuWork: w,
+      onOpen: () => void playMusicWork(w),
+    })],
+    ["communities", "コミュニティ", (c) => catalogCard({
+      title: c.communityName || c.communitySlug || "コミュニティ",
+      body: c.excerpt,
+      meta: [c.postKind, c.author, relTime(c.createdAt)].filter(Boolean),
+      onOpen: c.communityId ? () => void openDetail("community", [c.communityId], { title: c.communityName || "コミュニティ" }) : null,
+    })],
+    ["games", "ゲーム", (g) => catalogCard({
+      title: g.title,
+      body: g.summary,
+      onOpen: g.slug ? () => void openStoreGame(g) : null,
+    })],
+    // サーバーの種類名は market（応答の配列も market）。古い products も読む。
+    ["market", "商品", (p) => catalogCard({
       title: p.title,
       body: p.summary,
-      meta: [p.priceLabel, p.providerLabel],
+      imageUrl: p.imageUrl,
+      meta: [p.priceLabel || yen(p), p.providerLabel || p.seller].filter(Boolean),
       onOpen: p.id ? () => void openDetail("listing", [p.id], { title: p.title }) : null,
-    }))));
+    })],
+  ];
+  for (const [kind, label, build] of KIND_VIEWS) {
+    const items = data[kind] ?? (kind === "market" ? data.products : null);
+    if (!items?.length) continue;
+    const section = detailSection(label, items.map(build));
+    // 続き：サーバーの kind+cursor（keyset）。押したときだけ読み、cursor が尽きたら外す。
+    let cursor = data.nextCursors?.[kind] ?? null;
+    if (cursor) {
+      const more = document.createElement("button");
+      more.type = "button";
+      more.className = "head-action";
+      more.textContent = "さらに表示";
+      more.onclick = async () => {
+        more.disabled = true;
+        try {
+          const next = await invoke("hub_detail", { name: "tag_page", ids: [data.key || data.tag, kind, cursor] });
+          const rows = next?.[kind] ?? (kind === "market" ? next?.products : null) ?? [];
+          more.before(...rows.map(build));
+          cursor = next?.nextCursors?.[kind] ?? null;
+          if (!cursor || !rows.length) more.remove();
+        } catch (error) { showNotice(friendlyError(error)); }
+        more.disabled = false;
+      };
+      section.append(more);
+    }
+    nodes.push(section);
   }
   if (nodes.length === 1) {
     nodes.push(emptyState("search", "このタグの項目はまだありません", "別のタグを試してください。"));
@@ -9385,7 +9937,7 @@ function researchEditorOptions(entry) {
     shareContent:offerPublicContentShare,
   };
 }
-function invalidateDetailContext(reload=true) {sidebarContext.replaceChildren();releaseResearchDetail(true);releaseCommunityChannelPolicy(true);researchAccountGeneration++;syncCommunityInvite(true);detailRenderRevision++;for(const entry of new Set([...detailTrail,...detailForwardTrail,...toolbarTrail.flatMap(t=>[...(t.detailTrail??[]),...(t.detailForwardTrail??[])])])){entry.editorState=undefined;entry.replyDraft=undefined;entry.channelDraft=undefined;entry.videoCommentDraft=undefined;entry.knowledge=undefined;entry.guideDraft=undefined;entry.membershipReviewDraft=undefined;entry.memberState=undefined;entry.channelPolicyState=undefined;entry.accessManagementState=undefined;entry.joinState=undefined;entry.governanceState=undefined;entry.reportDraft=undefined;entry.reportPage=undefined;entry.appealReviewDraft=undefined;entry.appealSubmitDraft=undefined;entry.appealPage=undefined;entry.data=undefined;}if(reload&&currentView==='detail'&&(['thread','community','channel_messages'].includes(detailTrail.at(-1)?.name)||['research_','community_governance','community_guide','community_member','community_report','community_appeal'].some(prefix=>detailTrail.at(-1)?.name.startsWith(prefix))||['article','video','saved_articles','video_library','music_library','video_playlists','music_playlists','music_work'].includes(detailTrail.at(-1)?.name)))void renderDetailEntry(detailTrail.at(-1));}
+function invalidateDetailContext(reload=true) {sidebarContext.replaceChildren();releaseResearchDetail(true);releaseCommunityDetail(true);researchAccountGeneration++;syncCommunityInvite(true);detailRenderRevision++;for(const entry of new Set([...detailTrail,...detailForwardTrail,...toolbarTrail.flatMap(t=>[...(t.detailTrail??[]),...(t.detailForwardTrail??[])])])){entry.editorState=undefined;entry.replyDraft=undefined;entry.postDraft=undefined;entry.videoCommentDraft=undefined;entry.knowledge=undefined;entry.guideDraft=undefined;entry.membershipReviewDraft=undefined;entry.memberState=undefined;entry.channelPolicyState=undefined;entry.accessManagementState=undefined;entry.joinState=undefined;entry.governanceState=undefined;entry.reportDraft=undefined;entry.reportPage=undefined;entry.appealReviewDraft=undefined;entry.appealSubmitDraft=undefined;entry.appealPage=undefined;entry.data=undefined;}if(reload&&currentView==='detail'&&(['thread','community'].includes(detailTrail.at(-1)?.name)||['research_','community_governance','community_guide','community_member','community_report','community_appeal'].some(prefix=>detailTrail.at(-1)?.name.startsWith(prefix))||['article','video','saved_articles','video_library','music_library','video_playlists','music_playlists'].includes(detailTrail.at(-1)?.name)))void renderDetailEntry(detailTrail.at(-1));}
 window.addEventListener('hub-account-changed',()=>invalidateDetailContext());
 window.addEventListener('hub-origin-changed',()=>{
   const previous=detailTrail.at(-1);
@@ -9444,16 +9996,16 @@ function mediaPlaylistDetail(target,data,entry) {
       const track=queue.find(track=>track.id===selection.startId.slice(6));
       return playMusicTrack(track,queue,{isCurrent:()=>current()&&scope.isCurrent()});
     }:undefined,
-    onOpen:item=>{if(current())void openDetail(kind==='video'?'video':'music_work',[item.id],{title:item.title??(kind==='video'?'動画':'音楽作品')});}});
+    onOpen:item=>{if(!current())return;if(kind==='video')void openDetail('video',[item.id],{title:item.title??'動画'});else void openMusicWorkById(item.id,item);}});
   target.append(controller.element);
   return {dispose:controller.destroy,invalidate:()=>{controller.invalidate();controller.destroy();}};
 }
 const DETAIL_RENDERERS = {
-  video_playlists:mediaPlaylistDetail,music_playlists:mediaPlaylistDetail,
+  video_playlists:mediaPlaylistDetail,music_playlists:mediaPlaylistDetail,music_playlist:renderMusicPlaylistDetail,music_artists:renderMusicArtistsDetail,
   music_library:(target,data,entry)=>{
     const options=researchEditorOptions(entry);target.replaceChildren();
     return renderMusicLibrary({document,host:target,embedded:true,invoke:options.invoke,isCurrent:options.isCurrent,renderCover:mediaItemCover('music'),
-      onOpen:work=>openDetail('music_work',[work.id],{local:true,data:work,title:work.title}),
+      onOpen:work=>playMusicWork(work),
       onPlay:(work,queue)=>{
         const start=queue.findIndex(item=>item.id===work.id);
         return playMusicTrack({...work,id:work.id.slice(6)},queue.slice(start>=200?start:0,(start>=200?start:0)+200).map(item=>({...item,id:item.id.slice(6)})));
@@ -9503,13 +10055,11 @@ const DETAIL_RENDERERS = {
   community_guides: renderCommunityGuides, community_guide: renderCommunityGuide,
   community_guide_revisions: renderCommunityGuides, community_guide_revision: renderCommunityGuide,
   community_guide_proposals:renderCommunityGuides, community_guide_proposal:(target,data,entry)=>target.replaceChildren(communityGuideProposal(document,{data,communityId:entry.ids[0],proposalId:entry.ids[1],invoke:researchEditorOptions(entry).invoke,state:entry.guideDraft??={},onOpen:(name,ids,title)=>void openDetail(name,ids,{title})})),
-  channel_messages: renderChannelMessages,
   ranking_item: renderRankingDetail,
   service_item: renderServiceDetail,
   listing: renderListingDetail,
   commerce_product: renderCommerceProductDetail,
   video: renderVideoDetail,
-  music_work: renderMusicDetail,
   music_artist: renderMusicCollectionDetail, music_album: renderMusicCollectionDetail,
   profile: renderProfileDetail,
   tag: renderTagDetail,
@@ -9597,7 +10147,7 @@ async function navigateFrom(item, history = {}, progress = {}) {
       if (view === "node") await loadNode();
       if (view === "compute") await loadCompute();
       if (view === "research") await researchWorkspace.load();
-      if (view === "market" && !history.detailReplay) void loadShop();
+      if (view === "market" && !history.detailReplay) marketBrowse?.show();
       if (view === "purchased") renderOrders();
       if (view === "music") {
         void loadMusicTracks();
@@ -10045,7 +10595,15 @@ document.querySelector("#search-query").oninput = (event) => {
   document.querySelector("#search-web-state").textContent = "";
 };
 // 一番上の検索はHubの検索とWebのアドレス欄を兼ねる（2026-10-12）。アドレスならブラウザで開き、言葉ならHub内を探す。
-const browserSearchEngine = () => { try { return window.localStorage.getItem("hub.browser.searchEngine") || "google"; } catch { return "google"; } };
+// Web検索の送信先は設定の「Web検索」（hub.desktop.webSearchEngine、既定 DuckDuckGo）。web-search.mjs が正本。
+const browserSearchEngine = () => { try { return getWebSearchEngine(window.localStorage); } catch { return getWebSearchEngine(null); } };
+const openWebSearch = (query) => { const url = webSearchUrl(browserSearchEngine(), query); if (url) void enterBrowser(url); return Boolean(url); };
+// 入力中の候補用のHub検索。確定と同じ読み取り（hub_resource search）を1回だけ、語数と長さを検索と同じ上限で。
+const omniboxHubSearch = async (typed) => {
+  const query = String(typed ?? "").normalize("NFKC").trim().toLocaleLowerCase("ja");
+  if (!query || query.length > 100 || query.split(/\s+/u).length > 8 || /[\u0000-\u001f\u007f-\u009f]/u.test(query.replace(/\s/gu, ""))) return null;
+  return invoke("hub_resource", { resource: "search", query, cursor: null, offset: 0, searchFilters: { ...normalizeHubSearchFilters() }, order: "recommended" });
+};
 async function runHubSearch(term) {
   const value = String(term ?? "").trim();
   if (!value) return;
@@ -10069,9 +10627,17 @@ const toolbarOmnibox = !startupTool && window.__TAURI__?.core?.invoke ? createOm
   document, window,
   form: document.querySelector("#toolbar-search-form"), input: document.querySelector("#toolbar-search-input"),
   getEngine: browserSearchEngine,
+  searchHub: omniboxHubSearch,
   loadPages: async () => { const [saved, visited] = await Promise.all([invoke("browser_favorites").catch(() => []), invoke("browser_history").catch(() => [])]); return [...(Array.isArray(saved) ? saved : []), ...(Array.isArray(visited) ? visited : [])]; },
   onHubSearch: (term) => runHubSearch(term),
   onOpen: (url) => enterBrowser(url),
+  onOpenResult: (group, record) => {
+    const title = textValue(record, ["title", "name", "displayName", "display_name", "slug", "id"]);
+    const open = record && typeof record === "object" ? (searchResultOpener(group, record, title) ?? searchResultOpener("coreEntities", record, title)) : null;
+    if (!open) return false;
+    void Promise.resolve(open()).catch(() => {});
+    return true;
+  },
 }) : null;
 const mainWindow = !startupTool ? window.__TAURI__?.window?.getCurrentWindow?.() : null;
 if (mainWindow) {
@@ -10394,8 +10960,11 @@ document.querySelector("#search-web").onclick = () => {
   const state = document.querySelector("#search-web-state");
   if (!query) { state.textContent = "検索語を入力してください。"; return; }
   state.textContent = "";
-  void enterBrowser(`https://www.google.com/search?q=${encodeURIComponent(query)}`);
+  void openWebSearch(query);
 };
+const syncSearchWebLabel = () => { const label = `Webでも探す（${webSearchLabel(browserSearchEngine())}）`; const button = document.querySelector("#search-web"); if (button) button.textContent = label; };
+syncSearchWebLabel();
+window.addEventListener("hub-web-search-changed", syncSearchWebLabel);
 for (const tab of document.querySelectorAll("[data-market-tab]")) {
   tab.onclick = () => document.querySelector(
     `.nav-item[data-view="${tab.dataset.marketTab}"]`
@@ -10414,7 +10983,7 @@ const settingsPanels = {
   identity: createIdentityPanel({ document, invoke }),
   cache: createCachePanel({ document, invoke }),
   storage: createStoragePanel({ document, invoke, openExternal: (url) => invoke("open_external", { url }) }),
-  browser: createBrowserPanel({ document, invoke }),
+  browser: createBrowserPanel({ document, invoke, storage: safeStorage, onWebSearchChange: () => window.dispatchEvent(new Event("hub-web-search-changed")) }),
   ai: createAiConnectionsPanel({ document, invoke, storage: safeStorage, listen: window.__TAURI__?.event?.listen ? (name, callback) => window.__TAURI__.event.listen(name, callback) : null }),
   about: createAboutPanel({ document, invoke, getVersion: () => window.__TAURI__.app.getVersion() }),
 };
@@ -10526,7 +11095,7 @@ const saveSettings = async () => {
 for (const save of settingsSaves()) save.onclick = saveSettings;
 
 document.querySelector("#open-games").onclick = () => openTool("games");
-// 左列のゲームはアプリ内のゲーム画面（data-view="games"）。ストア一覧は loadGamesView、詳細はWebをシステムのブラウザで開く。
+// 左列のゲームはアプリ内のゲーム画面（data-view="games"、ライブラリと起動だけ）。ストアはマーケットのゲームの種別（loadMarketGames）、購入はWebの商品頁をシステムのブラウザで開く。
 
 // --- AI ツール（x402 従量課金）---
 // 実行系は支払いゲート: 初回呼出しで 402 と支払い要件が返り、窓は要件の
@@ -11641,6 +12210,9 @@ window.hubContextMenu?.register?.((target) => {
   return items;
 });
 
+// 曲の「⋯」メニュー（右クリックでも同じ項目）。
+if (window.hubContextMenu) registerMusicMenu(window.hubContextMenu, musicMenuDeps, { document });
+
 // 投稿本文の中のリンクは、題だけの札に整える。Hub 内の作品は「記号＋種別＋題」、外部は域名＋道筋。
 // 題そのものは本文に無い（IDだけ）ので、IDの読みやすい形を出す。絵は取らない（外部の画像は読まない）。
 function decoratePostLinks(body) {
@@ -11732,7 +12304,7 @@ function fuseSocialSources(status){
  rows.sort((a,b)=>b.date-a.date);list.append(...rows.map(row=>row.node));
  for(const button of socialBar.children)button.setAttribute("aria-current",button.dataset.socialFilter?button.dataset.socialFilter===socialFilter?"page":"false":button.dataset.socialScope===socialScope?"page":"false");
 }
-socialStreamController=createSocialStream({document,invoke,getContext:()=>socialVerifiedContext?{...socialVerifiedContext,filter:socialFilter,scope:socialScope}:null,isCurrent:()=>currentView==="feed"&&socialMode==="mixed",renderPost:postCard,formatTime:relTime,onOpenThread:item=>openDetail("thread",[item.id],{title:item.title}),onOpenCommunityPost:item=>openDetail("channel_messages",[item.communityId,item.channelId],{title:item.channelName}),onStatus:fuseSocialSources});
+socialStreamController=createSocialStream({document,invoke,getContext:()=>socialVerifiedContext?{...socialVerifiedContext,filter:socialFilter,scope:socialScope}:null,isCurrent:()=>currentView==="feed"&&socialMode==="mixed",renderPost:postCard,formatTime:relTime,onOpenThread:item=>openDetail("thread",[item.id],{title:item.title}),onOpenCommunityPost:item=>openDetail("community",[item.communityId],{title:item.communityName,targetSelection:{messageId:item.id}}),onStatus:fuseSocialSources});
 async function loadMixedSocialFeed(){
  mixedPublicationUpdates?.dispose();mixedPublicationUpdates=null;
  if(socialWantedScene){socialExternal=[];socialStreamController.invalidate();}
@@ -11815,15 +12387,12 @@ async function loadFeed({automatic=false,observeStartup=false}={}) {
   const scope = feedScope,key=feedViewKey(),retained=feedVisibleKey===key;
   feedRecoveryView=key;
   const current=()=>revision===feedLoadRevision&&key===feedViewKey();
-  const refreshButton = document.querySelector("#feed-refresh");
-  refreshButton.disabled = true;
   feedMore.hidden = true;
   feedFresh.hidden = true;
   feedFreshItems = [];
-  feed.state.textContent = "投稿を読み込んでいます…";
+  feed.state.textContent = retained ? "" : "投稿を読み込んでいます…";
   feed.state.classList.remove("warning");
   if(!retained){feedVisibleKey='';feedSnapshot=null;feed.list.replaceChildren(skeletonPost(), skeletonPost(), skeletonPost());}
-  else feed.state.textContent='投稿を更新しています。前回の表示を残しています。';
   try { feedSeenId = localStorage.getItem(feedSeenKey()); } catch { feedSeenId = null; }
   try {
     await observeRead("feedReadyWait",()=>hubNetwork.ready);
@@ -11908,14 +12477,13 @@ async function loadFeed({automatic=false,observeStartup=false}={}) {
       feedVisibleKey='';feedSnapshot=null;feed.list.replaceChildren(connectState());
     } else {
       const waiting=feedRecovery.schedule(error);
-      if(retained){feed.state.textContent=(waiting?readWaitText(error):friendlyError(error))+' 前回の表示を残しています。';refreshButton.disabled=false;return;}
+      if(retained){feed.state.textContent=(waiting?readWaitText(error):friendlyError(error))+' 前回の表示を残しています。';return;}
       const notice = statePanel(waiting ? "clock" : "alert", waiting?"Hubへの接続を待っています":"フィードを読み込めませんでした", waiting?readWaitText(error):friendlyError(error), () => loadFeed());
       notice.classList.add("feed-error");
       feed.list.replaceChildren(notice);
     }
     updateSourceSummary("#feed-sources", [], false);
   }
-  refreshButton.disabled = false;
 }
 // リストのタブ：Hub の /api/lists/{id}/feed（hub_detail "list_feed"）を読み、投稿は他の並びと同じ投稿カードで描く。
 // スレッドの返信は、スレッド名を添えた同じ形のカードにする。
@@ -11939,11 +12507,9 @@ function listFeedItemCards(items) {
 async function loadListFeed() {
   const revision = ++feedLoadRevision, listId = feedListId, key = feedViewKey();
   const current = () => revision === feedLoadRevision && feedScope === "list" && feedListId === listId && key === feedViewKey() && currentView === "feed";
-  const refreshButton = document.querySelector("#feed-refresh");
   feedLoadFailed = false;
   feedMore.hidden = feedFresh.hidden = true;
   feed.state.textContent = "";
-  refreshButton.disabled = true;
   feed.list.replaceChildren(skeletonPost(), skeletonPost(), skeletonPost());
   try {
     if (desktopAccount.state !== "registered") { feed.list.replaceChildren(connectState("自分のリストを表示するには、この端末をHubアカウントへ接続してください。")); return; }
@@ -11955,8 +12521,6 @@ async function loadListFeed() {
     if (!current()) return;
     feedLoadFailed = !isReadAccessDenied(error);
     feed.list.replaceChildren(isReadAccessDenied(error) ? connectState() : statePanel("alert", "リストの投稿を読み込めませんでした", friendlyError(error), () => loadFeed()));
-  } finally {
-    if (revision === feedLoadRevision) refreshButton.disabled = false;
   }
 }
 window.addEventListener("focus", () => {
@@ -11990,27 +12554,30 @@ async function loadMoreFeed() {
 }
 feedMore.onclick = () => void loadMoreFeed();
 
-// 新着の知らせ。45秒ごとに先頭を取り、手元に無いものがあれば数だけ告げる。
-// 勝手に差し込むと読んでいる行が動くので、押したときに先頭へ足す（Web版と同じ）。
-setInterval(async () => {
-  // Web版と同じく、時系列が意味を持つ並びだけを見る。おすすめ・人気は
-  // 順位が動くので「新着」を数えない。
-  if (feedScope === "popular" || feedScope === "recommended" || feedScope === "list" || document.visibilityState === "hidden") return;
-  if (!document.querySelector("#view-feed")?.classList.contains("on")) return;
-  try {
-    const result = await invoke("hub_feed", { scope: feedScope, limit: 10 });
-    const known = new Set([...feed.list.querySelectorAll(".post")].map((node) => node.dataset.postId));
-    feedFreshItems = result.posts.filter((post) => !known.has(post.id));
-    feedFreshShow.textContent = `新しい投稿 ${feedFreshItems.length}件`;
-    feedFresh.hidden = feedFreshItems.length === 0;
-  } catch { /* 次の周で取り直す */ }
-}, 45_000);
-feedFreshShow.onclick = () => {
-  feed.list.prepend(...feedFreshItems.map(postCard));
-  feedFreshItems = [];
-  feedFresh.hidden = true;
-  document.querySelector("#view-feed").scrollTo({ top: 0, behavior: "smooth" });
-};
+// 新着の知らせ（Xと同じ作法）。見えている間だけ60秒ごとに先頭を確かめ、表示中の最新より新しい投稿があれば
+// 「新しいポスト（N）」のピルで数だけ告げる。勝手に差し込まず、スクロールも動かさない。押したら先頭へ足して先頭へ戻る。
+// 窓や画面が見えない間は止める。タイマーは1本だけ（feed-live.mjs）。
+feedLive = createFeedLive({
+  document, invoke,
+  active: () => currentView === "feed" && socialMode === "legacy" && document.querySelector("#view-feed")?.classList.contains("on") === true,
+  scope: () => feedScope,
+  token: () => feedLoadRevision + "|" + feedViewKey(),
+  shown: () => {
+    const ids = new Set([...feed.list.querySelectorAll(".post")].map((node) => node.dataset.postId));
+    const newest = Math.max(0, ...(feedSnapshot?.result?.posts ?? []).map((post) => Date.parse(post.createdAt) || 0));
+    return { ids, newest };
+  },
+  getItems: () => feedFreshItems, setItems: (items) => { feedFreshItems = items; },
+  pill: feedFresh, pillButton: feedFreshShow,
+  render: (posts) => {
+    const cards = posts.map(postCard);
+    feed.list.prepend(...cards);
+    if (feedSnapshot?.result?.posts) feedSnapshot.result.posts = [...posts, ...feedSnapshot.result.posts];
+  },
+  scrollTop: () => viewScroller()?.scrollTo({ top: 0, behavior: "auto" }),
+  reload: () => loadFeed(),
+});
+feedLive.sync();
 
 // 続きは下端の手前 600px で自動で読む（Web §4.2）。「もっと見る」は押せるまま残すが、探さなくてよい。
 {
@@ -12052,9 +12619,8 @@ feedFreshShow.onclick = () => {
   queue();
 }
 
-document.querySelector("#feed-refresh").onclick = () => loadFeed();
 document.querySelector("#video-refresh").onclick = () => loadCatalog("videos");
-document.querySelector("#music-refresh").onclick = () => musicTab === "catalog" ? loadCatalog("music") : loadMusicTracks();
+document.querySelector("#music-refresh").onclick = () => { if (musicTab === "catalog") return loadCatalog("music"); void musicHome?.reload(); return searchMusic(true); };
 document.querySelector("#notifications-refresh").onclick = () => loadNotifications();
 document.querySelector("#messages-refresh").onclick = () => loadMessages();
 document.querySelector("#wallet-refresh").onclick = () => loadCatalog("wallet");
@@ -12156,6 +12722,7 @@ function renderFeedTabs() {
   if (hadFocus) host.querySelector('[role="tab"][tabindex="0"]')?.focus({ preventScroll: true });
 }
 function selectFeedTab(key) {
+  if (currentView === "feed" && socialMode === "legacy" && key === feedTabKey() && typeof feedLive !== "undefined" && feedLive) { void feedLive?.refreshNow(); return; }
   if (key.startsWith("list:")) { feedScope = "list"; feedListId = key.slice(5); }
   else { feedScope = key; feedListId = null; }
   try { localStorage.setItem(FEED_TAB_KEY, key); } catch { /* 覚えられなくても切り替えは効く */ }
@@ -12928,29 +13495,27 @@ function groupNotifications(items) {
   return order.sort((a, b) => Date.parse(b.latest.createdAt) - Date.parse(a.latest.createdAt));
 }
 
-function groupedNotificationText(group, names) {
-  if (group.items.length === 1 || !names.length) return group.latest.text || "新しい通知があります";
+// まとめた行の文を「名前（太字）」と「続き」に分ける。まとめない行は続きだけ。
+function groupedNotificationParts(group, names) {
+  if (group.items.length === 1 || !names.length) return { who: "", rest: group.latest.text || "新しい通知があります" };
   const shown = names.slice(0, 2);
-  const rest = group.actorIds.length - shown.length;
-  const who = `${shown.map((name) => `${name}さん`).join("と")}${rest > 0 ? `、ほか${rest}人` : ""}`;
+  const others = group.actorIds.length - shown.length;
+  const who = `${shown.map((name) => `${name}さん`).join("と")}${others > 0 ? `、ほか${others}人` : ""}`;
   const verb = {
     social_reaction: "があなたの投稿にいいねしました",
     social_repost: "があなたの投稿をリポストしました",
     social_bookmark: "があなたの投稿を保存しました",
     followed: "があなたをフォローしました",
   }[group.latest.type] ?? "";
-  return `${who}${verb}`;
+  return { who, rest: verb };
+}
+function groupedNotificationText(group, names) {
+  const parts = groupedNotificationParts(group, names);
+  return parts.who + parts.rest;
 }
 
 // 行き先は Web 版の画面。メッセージだけはアプリに画面があるので
 // ネイティブの会話を開く。
-const matchesNotifTab = (item, tab) => {
-  if (tab === "unread") return !item.isRead;
-  if (tab === "feed") return item.targetType === "social_post" || item.targetType === "profile" || item.type === "followed";
-  if (tab === "community") return item.targetType === "community_message";
-  if (tab === "system") return item.type === "system";
-  return true;
-};
 
 let notificationsData = null;
 let notifTab = "all";
@@ -13026,7 +13591,7 @@ function notificationCard(group) {
   const profiles = new Map((data?.actors ?? []).map((p) => [p.id, p]));
   const actors = group.actorIds.map((id) => profiles.get(id)).filter(Boolean);
   const card = document.createElement("article");
-  card.className = "post notif" + (group.isRead ? "" : " unread");
+  card.className = "post notif notif-x" + (group.isRead ? "" : " unread");
   card.tabIndex = 0;
   card.dataset.listRow = "";
   // 左の 40 の列に種類の記号（いいねだけ --reaction-like）。未読は左端の点（CSS）。
@@ -13038,7 +13603,7 @@ function notificationCard(group) {
   // まとめた行は顔を重ねる（3人まで）。1件なら顔1つ。
   const avatars = document.createElement("span");
   avatars.className = "notif-avatars";
-  for (const actor of (actors.length ? actors.slice(0, 3) : [undefined])) {
+  for (const actor of (actors.length ? actors.slice(0, 6) : [])) {
     const avatar = document.createElement("span");
     avatar.className = "post-avatar";
     if (actor?.avatarUrl) {
@@ -13059,13 +13624,27 @@ function notificationCard(group) {
   const body = document.createElement("p");
   body.className = "post-body";
   const soleName = actors.length === 1 && group.items.length === 1 ? (actors[0].displayName || "Hub") : "";
-  // 文に名前が入っていないときだけ、先頭に名前を足す。
-  const lead = soleName && !(item.text || "").includes(soleName) ? `${soleName}　` : "";
-  body.textContent = lead + groupedNotificationText(group, actors.map((p) => p.displayName));
+  const parts = groupedNotificationParts(group, actors.map((p) => p.displayName));
+  // 名前は太字。文の頭が名前ならそのまま、入っていないときだけ先頭に足す。
+  if (parts.who) {
+    const strong = document.createElement("strong");
+    strong.textContent = parts.who;
+    body.append(strong, parts.rest);
+  } else if (soleName && parts.rest.startsWith(soleName)) {
+    const strong = document.createElement("strong");
+    strong.textContent = soleName;
+    body.append(strong, parts.rest.slice(soleName.length));
+  } else if (soleName && !parts.rest.includes(soleName)) {
+    const strong = document.createElement("strong");
+    strong.textContent = soleName;
+    body.append(strong, `　${parts.rest}`);
+  } else body.append(parts.rest);
   const when = document.createElement("span");
   when.className = "meta when";
-  when.textContent = relTime(item.createdAt);
-  content.append(avatars, body);
+  when.textContent = ` · ${relTime(item.createdAt)}`;
+  body.append(when);
+  if (actors.length) content.append(avatars);
+  content.append(body);
   // 元の投稿の本文の頭（ハブが付けたときだけ。閲覧条件つきの投稿には付かない）。
   const excerpt = group.items.find((entry) => typeof entry.excerpt === "string" && entry.excerpt)?.excerpt;
   if (excerpt) {
@@ -13074,7 +13653,6 @@ function notificationCard(group) {
     quote.textContent = excerpt;
     content.append(quote);
   }
-  content.append(when);
   if (!group.isRead) {
     const mark = document.createElement("button");
     mark.className = "deny notification-read";
@@ -13121,9 +13699,10 @@ function renderNotifications() {
   list.replaceChildren(...(groups.length
     ? groups.map(notificationCard)
     : [pageState("bell",
-        notifTab === "unread" ? "未読の通知はありません" : "通知はありません",
+        notifTab === "unread" ? "未読の通知はありません" : notifTab === "mention" ? "自分宛ての通知はありません" : "通知はありません",
         notifTab === "all" ? "返信・いいね・フォローがあるとここに来ます。" : undefined,
         () => loadNotifications())]));
+  renderSidebarContext("notifications"); // 件数と選択中の行（列は同じ木のまま作り直す）
 }
 
 async function loadNotifications() {
@@ -13131,17 +13710,17 @@ async function loadNotifications() {
   return notificationsController.load();
 }
 
-for (const button of document.querySelectorAll("[data-notif-tab]")) {
-  button.onclick = () => {
-    for (const other of document.querySelectorAll("[data-notif-tab]")) {
-      const selected = other === button;
-      other.classList.toggle("on", selected);
-      other.setAttribute("aria-pressed", String(selected));
-    }
-    notifTab = button.dataset.notifTab;
-    renderNotifications();
-  };
+// 本文の札は すべて / 自分宛て の2つ。列の木はほかの絞り込みも持つ（札は 自分宛て 以外では「すべて」が選ばれる）。
+function setNotifTab(key) {
+  notifTab = key;
+  for (const tab of document.querySelectorAll("#view-notifications [data-notif-tab]")) {
+    const selected = tab.dataset.notifTab === (key === "mention" ? "mention" : "all");
+    tab.setAttribute("aria-selected", String(selected));
+    tab.tabIndex = selected ? 0 : -1;
+  }
+  renderNotifications();
 }
+for (const button of document.querySelectorAll("#view-notifications [data-notif-tab]")) button.onclick = () => setNotifTab(button.dataset.notifTab);
 
 {
   const more = document.querySelector("#notifications-more"), menu = more.nextElementSibling;
@@ -13365,7 +13944,7 @@ function renderThread() {
     const empty = emptyState("bubble", "会話はまだありません", "相手のプロフィールからメッセージを始められます。");
     const find = document.createElement("button");
     find.type = "button";
-    find.className = "approve";
+    find.className = "btn-primary";
     find.textContent = "相手を探す";
     find.onclick = () => void navigateFrom({ dataset: { view: "search", title: "検索" }, childNodes: [] });
     empty.append(find);
@@ -14182,6 +14761,7 @@ function railLoadError(text, retry, showPublicPosts = false) {
   return box;
 }
 
+const railMusicPostDrafts = new Map(), railMusicReportDrafts = new Map();
 function initRailMusic() {
   const accountOptions = () => {
     const generation = researchAccountGeneration;
@@ -14205,6 +14785,32 @@ function initRailMusic() {
       },
       playTrack: (track, queue) => playMusicTrack(track, queue),
       enqueue: (track) => enqueueMusicTrack(track, "next"),
+      posts: ({ host, work, isCurrent }) => {
+        if (typeof work?.id !== "string" || !MUSIC_WORK_ID.test(work.id)) return null;
+        const options = accountOptions();
+        const controller = createContentPosts(document, { kind: "music", id: work.id, invoke: options.invoke, renderPost: (post) => postCard(post),
+          state: (railMusicPostDrafts.get(work.id) ?? railMusicPostDrafts.set(work.id, {}).get(work.id)),
+          isCurrent: () => isCurrent() && options.generation === researchAccountGeneration });
+        host.append(controller.element);
+        return controller;
+      },
+      report: ({ host, work, isCurrent, open }) => {
+        if (!reportableMusicWork(work)) return null;
+        const options = accountOptions();
+        const controller = createExternalMusicReport({ document, workId: work.id, invoke: options.invoke,
+          getAccount: () => desktopAccount.state === "registered" ? String(researchAccountGeneration) : null,
+          isCurrent: () => isCurrent() && options.generation === researchAccountGeneration, state: (railMusicReportDrafts.get(work.id) ?? railMusicReportDrafts.set(work.id, {}).get(work.id)) });
+        const box = document.createElement("details");
+        box.className = "detail-form";
+        box.open = open === true;
+        const summary = document.createElement("summary");
+        summary.textContent = "作品を報告";
+        box.append(summary, controller.element);
+        host.append(box);
+        return controller;
+      },
+      download: (work) => HUB_MUSIC_WORK_ID.test(String(work?.id ?? "")) ? { allowed: musicDownloadAllowed(work), open: () => openMusicDownload(work) } : null,
+      openExternal: (url) => musicMenuDeps.openExternal(url),
       youtube: { play: (work, panel) => musicYoutube.play({ work, panel }), stop: () => musicYoutube.stop(), isPlaying: (id) => musicYoutube.isPlaying(id), subscribe: (fn) => musicYoutube.subscribe(fn) },
       nav: { visit: (route) => railNav.visit("music", "m" + (++railNavSeq), { route }) },
       collection: ({ host, kind, name, artist, actions, isCurrent }) => {
@@ -14772,6 +15378,7 @@ dmController=createDmController({invoke,getScope:getDmScope,isCurrent:()=>curren
     for(const message of data.messages){const prior=latest.get(message.conversationId);if(!prior||message.createdAt>prior.createdAt)latest.set(message.conversationId,message);}
     document.querySelector('#messages-list').replaceChildren(...(data.conversations.length?data.conversations.map(conversation=>conversationCard(conversation,profiles,data.currentProfileId,latest)):[emptyState('bubble','会話はまだありません')]));
     setBadge('nav-badge-messages',data.messageCount);renderThread();
+    if(currentView==='messages'||currentView==='mail')renderSidebarContext(currentView);
   },
   onState:value=>{
     dmForm.querySelector('button[type=submit]').disabled=value.pending||!activeConversationId||Boolean(value.attemptState);
@@ -14839,7 +15446,7 @@ async function askAiAboutPublicContent(draft,source){
 }
 // 詳細画面の「AIに聞く」。すでに描画した公開データだけを材料にし、投稿の公開範囲が public でなければ出さない。
 function attachDetailAiHandoff(entry,data,target,current){
-  const kind={post:'post',article:'article',video:'video',music_work:'music'}[entry.name],id=entry.ids?.[0];
+  const kind={post:'post',article:'article',video:'video'}[entry.name],id=entry.ids?.[0];
   if(!kind||typeof id!=='string'||!id)return;
   const item={post:data?.post,article:data?.article,video:data?.video??data,music:data?.work??data}[kind];
   if(!item||typeof item!=='object'||kind==='post'&&item.audience!=='public')return;
@@ -14911,14 +15518,54 @@ function profileViewDeps() {
     onBookmarks: () => document.querySelector('#primary-nav [data-view="bookmarks"]')?.click(),
     onLists: () => document.querySelector('#primary-nav [data-view="lists"]')?.click(),
     onManageChannel: () => void openVideoStudio(),
-    // 記事・動画・コードのタブ（公開の一覧）。名前は hub_client.rs の許可表の profile_* だけ。
+    // 記事・動画・音楽・研究・マーケット・コードのタブ。名前は hub_client.rs の許可表の profile_* だけ。
     loadWorks: (name, ids) => invoke("hub_detail", { name, ids }),
-    openWork: (item) => {
-      if (item.kind === "articles") return void openDetail("article", [item.id], { title: item.title });
-      if (item.kind === "videos") return void invoke("hub_detail", { name: "video", ids: [item.id] }).then((data) => { if (data?.video) openVideoWatch(data.video); }).catch((error) => showNotice(friendlyError(error)));
-      if (item.kind === "code") return void openHubPath(`/v2/code/${encodeURIComponent(item.owner)}/${encodeURIComponent(item.name)}`, item.name);
-    },
+    openWork: openProfileWork,
+    workRow: profileWorkRow,
+    createWork: createProfileWork,
   };
+}
+// プロフィールのタブの行を開く。各画面と同じ開き口（記事・動画・研究・出品）を使い、音楽はその場で再生する。
+function openProfileWork(item) {
+  const raw = item.raw ?? {};
+  if (item.kind === "articles") return void openDetail("article", [item.id], { title: item.title });
+  if (item.kind === "videos") return void invoke("hub_detail", { name: "video", ids: [item.id] }).then((data) => { if (data?.video) openVideoWatch(data.video); }).catch((error) => showNotice(friendlyError(error)));
+  if (item.kind === "music") return void playMusicWork(raw);
+  if (item.kind === "research") return void openDetail("research_project", [item.id], { title: item.title });
+  if (item.kind === "market") {
+    if (raw.source === "game") return void openStoreGame({ ...raw, slug: raw.slug });
+    // Commerce の公開商品。買う画面は既存の商品詳細（決済は Commerce の道）。
+    if (raw.source === "product") return void invoke("commerce_public_product", { productId: item.id }).then((data) => {
+      if (data?.product?.id !== item.id) throw new Error("commerce_product_unavailable");
+      return openDetail("commerce_product", [item.id], { local: true, data: data.product, title: item.title });
+    }).catch((error) => showNotice(friendlyError(error)));
+    // 売ります・買います／仕事は個別の頁が無い。アプリ内にはこの画面が無いので、Webの一覧を既定のブラウザで開く。
+    if (raw.source === "classified") return void openHubWebPath("/v2/market");
+    if (raw.source === "work") return void openHubWebPath("/v2/work");
+    return void openDetail("listing", [item.id], { title: item.title });
+  }
+  if (item.kind === "code") return void openHubPath(`/v2/code/${encodeURIComponent(item.owner)}/${encodeURIComponent(item.name)}`, item.name);
+}
+// 行の中身は、その種類の各画面（タグ詳細の種類別・検索結果）と同じ catalogCard。
+function profileWorkRow(item) {
+  const raw = item.raw;
+  if (!raw) return null;
+  const open = () => openProfileWork(item);
+  const when = relTime(raw.publishedAt ?? raw.updatedAt);
+  if (item.kind === "articles") return catalogCard({ title: item.title, body: raw.locked ? "" : raw.summary, meta: [raw.locked ? "閲覧条件つき" : "", when], onOpen: open });
+  if (item.kind === "videos") return catalogCard({ title: item.title, imageUrl: raw.thumbnailUrl, meta: [raw.locked ? "閲覧条件つき" : raw.duration, when], onOpen: open });
+  if (item.kind === "music") return catalogCard({ title: item.title, body: raw.artist, menuWork: raw, onOpen: open });
+  if (item.kind === "research") return catalogCard({ title: item.title, meta: [item.meta, when], onOpen: open });
+  if (item.kind === "market") return catalogCard({ title: item.title, body: raw.summary, meta: [item.meta, { game: "ゲーム", product: "商品", classified: "売ります・買います", work: "仕事" }[raw.source] ?? "", when], onOpen: open });
+  return null;
+}
+// 本人の空のタブから、その種類を作る画面へ。既存の入口のボタンを押すだけ（新しい作成画面は作らない）。
+function createProfileWork(kind) {
+  if (kind === "videos") return void openVideoStudio();
+  const [view, button] = { articles: ["articles", "#articles-create-toggle"], music: ["music", "#music-add-external"], research: ["research", "#research-create-web"], market: ["market", '[data-shop-tab="listings"]'] }[kind] ?? [];
+  if (!view) return;
+  mineGo(view);
+  setTimeout(() => mineClick(button), 0);
 }
 async function renderOwnProfileSections(me, full, posts) {
   const stats = me.stats ?? {};
@@ -14928,10 +15575,13 @@ async function renderOwnProfileSections(me, full, posts) {
     followerCount: full?.followerCount ?? stats.followerCount, followingCount: full?.followingCount ?? stats.followingCount };
   const deps = { ...profileViewDeps(), origin: hubOrigin ?? await invoke("hub_origin").catch(() => null) };
   const body = createProfileBody(document, data, deps);
-  document.querySelector("#profile-actions").replaceChildren(renderProfileActions(document, data, deps));
+  document.querySelector("#profile-actions").replaceChildren(renderProfileActions(document, data, { ...deps, shortcutsSeparate: true }));
   document.querySelector("#profile-facts").replaceChildren(renderProfileFacts(document, data, deps));
-  document.querySelector("#profile-stats").replaceChildren(renderProfileStats(document, data, { onConnections: (kind) => { body.showConnections(kind); if (currentView === "profile") renderSidebarContext("profile"); } }));
+  document.querySelector("#profile-shortcuts").replaceChildren(renderProfileShortcuts(document, data, deps));
+  document.querySelector("#profile-stats").replaceChildren(renderProfileStats(document, data, { omitPosts: true, onConnections: (kind) => { body.showConnections(kind); if (currentView === "profile") renderSidebarContext("profile"); } }));
   posts.replaceChildren(body.root);
+  // 本文の札を押したとき、左の木の「いま開いている行」も追従させる（木の行を押したときは自分で描き直す）。
+  body.root.addEventListener("click", (event) => { if (event.target.closest?.(".profile-tab") && currentView === "profile") renderSidebarContext("profile"); });
   if (currentView === "profile") renderSidebarContext("profile");
   void body.ready.then(() => { if (currentView === "profile") renderSidebarContext("profile"); });
 }
@@ -15269,71 +15919,118 @@ async function loadGames(announce = true) {
   }
 }
 
-// --- ゲーム画面（ストア + このPC） ---
-const gamesView = { search: document.querySelector("#games-search"), store: document.querySelector("#games-store"), local: document.querySelector("#games-local-list"), state: document.querySelector("#games-view-state"), add: document.querySelector("#games-view-add"), games: [], loaded: false, request: 0 };
+// --- ゲーム画面（ライブラリと起動だけ。ストアはマーケットのゲームの種別、2026-11-02） ---
+const gamesView = { search: document.querySelector("#games-search"), main: document.querySelector("#games-main"), state: document.querySelector("#games-view-state"), entries: [], tree: null };
+const marketGamesView = { main: document.querySelector("#market-games-main"), query: document.querySelector("#market-games-query"), request: 0 };
 
+// 購入・入手はWebのマーケットの商品頁（Commerce の道）。アプリ内に別の決済は作らない。
 async function openStoreGame(entry) {
-  try { await invoke("open_external", { url: new URL(`/v2/games/${encodeURIComponent(entry.slug)}`, await invoke("hub_origin")).href }); }
+  try { await invoke("open_external", { url: new URL(`/v2/market/games/${encodeURIComponent(entry.slug)}`, await invoke("hub_origin")).href }); }
   catch (error) { showNotice(friendlyError(error)); }
 }
 
-function paintStoreGames() {
-  renderStoreGames(document, gamesView.store, filterStoreGames(gamesView.games, gamesView.search.value), { asset: hubAsset, open: (entry) => void openStoreGame(entry), retry: () => void loadStoreGames() });
+// ゲーム画面の「ストア」は、マーケットを開いてゲームの種別へ移る入口。
+function openMarketGames() {
+  document.querySelector('.nav-item[data-view="market"]')?.click();
+  document.querySelector('[data-shop-tab="games"]')?.click();
 }
 
-async function loadStoreGames() {
-  const request = ++gamesView.request;
-  renderStoreLoading(document, gamesView.store);
+const marketGames = createMarketGames({
+  document, host: marketGamesView.main,
+  deps: { asset: hubAsset, openWeb: (entry) => void openStoreGame(entry), reloadStore: () => void loadMarketGames() },
+});
+marketGamesView.query.oninput = () => marketGames.setQuery(marketGamesView.query.value);
+
+// マーケットの一覧（market-browse.mjs）。読みは既存の commerce_catalog と market_tickets だけ。ゲームの種別は上の marketGames がそのまま本文になる。
+marketBrowse = createMarketBrowse({
+  document, host: document.querySelector("#market-browse"),
+  deps: {
+    gamesHost: marketGamesView.main,
+    openGames: () => { marketGames.showList(); void loadMarketGames(); },
+    setGamesQuery: (query) => marketGames.setQuery(query),
+    asset: hubAsset,
+    friendlyError,
+    onCategory: (category) => marketView.tree?.select({ page: "browse", category }),
+    filter: () => (shop.sellerFilter ? { key: shop.sellerFilter.id, label: `${shop.sellerFilter.name}の商品`, clear: () => { shop.sellerFilter = null; } } : null),
+    openItem: (item) => (item.kind === "ticket" ? void openHubWebPath("/v2/market/tickets") : void openDetail("commerce_product", [item.id], { local: true, data: item.raw, title: "商品詳細" })),
+    loadProducts: async ({ query, sort, before, inStock, freeShipping }) => {
+      shop.query = query; shop.sort = sort; shop.inStock = inStock === true; shop.freeShipping = freeShipping === true;
+      const { data, listed, others, nextCursor } = await settleWithin(fetchShopCatalog(before));
+      if (before) mergeShopProducts(listed); else shop.products = listed; // カートの解決用（既存）
+      shop.assets = data?.paymentAssets ?? shop.assets;
+      shop.catalogStale = false;
+      shop.paymentsEnabled = data?.paymentsEnabled === true;
+      updateCartBadge();
+      return { items: [...listed, ...(shop.sellerFilter ? [] : others)], nextCursor };
+    },
+    loadTickets: async () => (await settleWithin(invoke("hub_resource", { resource: "market_tickets", query: "" })))?.events ?? [],
+  },
+});
+
+const gamesPage = createGamesPage({
+  document, host: gamesView.main,
+  deps: {
+    asset: hubAsset,
+    onRoute: (route) => gamesView.tree?.select(route),   // tree highlight only; the column is never rebuilt
+    add: async (button) => {
+      if (button) button.disabled = true;
+      try {
+        const added = await invoke("pick_game_executable");
+        if (added) { await Promise.all([loadLocalGames(), loadGames(false)]); gamesView.state.textContent = `${added.title}を追加しました`; }
+      } catch (error) { gamesView.state.textContent = friendlyError(error); }
+      if (button) button.disabled = false;
+    },
+    launch: async (entry, button) => {
+      button.disabled = true;
+      gamesView.state.textContent = `${entry.title}を起動しています…`;
+      try { await invoke("launch_game", { id: entry.id }); gamesView.state.textContent = `${entry.title}を起動しました`; }
+      catch (error) { gamesView.state.textContent = friendlyError(error); }
+      button.disabled = false;
+    },
+    remove: async (entry, button) => {
+      if (!window.confirm(`「${entry.title}」を一覧から外しますか？
+ゲーム本体は削除しません。`)) return;
+      button.disabled = true;
+      try {
+        await invoke("remove_game", { id: entry.id });
+        gamesPage.go({ page: "library" });
+        await Promise.all([loadLocalGames(), loadGames(false)]);
+      } catch (error) { gamesView.state.textContent = friendlyError(error); button.disabled = false; }
+    },
+  },
+});
+
+// マーケットのゲームの種別の一覧。ストアと同じ読み（hub_resource games_store）。
+async function loadMarketGames() {
+  const request = ++marketGamesView.request;
+  marketGames.setStore({ status: "loading" });
   try {
     const data = await settleWithin(invoke("hub_resource", { resource: "games_store", query: "" }), 30_000);
-    if (request !== gamesView.request) return;
-    gamesView.games = normalizeStoreGames(data);
-    gamesView.loaded = true;
-    paintStoreGames();
+    if (request !== marketGamesView.request) return;
+    marketGames.setStore({ status: "ready", games: normalizeStoreGames(data) });
   } catch (error) {
-    if (request !== gamesView.request) return;
-    renderStoreError(document, gamesView.store, friendlyError(error), () => void loadStoreGames());
+    if (request !== marketGamesView.request) return;
+    marketGames.setStore({ status: "error", message: friendlyError(error) });
   }
 }
 
 async function loadLocalGames() {
   try {
-    const entries = await invoke("games");
-    renderLocalGames(document, gamesView.local, entries, {
-      launch: async (entry, button) => {
-        button.disabled = true;
-        gamesView.state.textContent = `${entry.title}を起動しています…`;
-        try { await invoke("launch_game", { id: entry.id }); gamesView.state.textContent = `${entry.title}を起動しました`; }
-        catch (error) { gamesView.state.textContent = friendlyError(error); }
-        button.disabled = false;
-      },
-      remove: async (entry, button) => {
-        if (!window.confirm(`「${entry.title}」を一覧から外しますか？\nゲーム本体は削除しません。`)) return;
-        button.disabled = true;
-        try { await invoke("remove_game", { id: entry.id }); await Promise.all([loadLocalGames(), loadGames(false)]); }
-        catch (error) { gamesView.state.textContent = friendlyError(error); button.disabled = false; }
-      },
-    });
+    gamesView.entries = await invoke("games");
+    gamesPage.setLocal(gamesView.entries);
+    sidebarMine.invalidate("games.library");
+    if (currentView === "games") renderSidebarContext("games"); // tree children follow the registered games
   } catch (error) {
-    gamesView.local.replaceChildren();
+    gamesPage.setLocal([]);
     gamesView.state.textContent = friendlyError(error);
   }
 }
 
 async function loadGamesView() {
-  void loadLocalGames();
-  await loadStoreGames();
+  await loadLocalGames();
 }
 
-gamesView.search.oninput = () => { if (gamesView.loaded) paintStoreGames(); };
-gamesView.add.onclick = async () => {
-  gamesView.add.disabled = true;
-  try {
-    const added = await invoke("pick_game_executable");
-    if (added) { await Promise.all([loadLocalGames(), loadGames(false)]); gamesView.state.textContent = `${added.title}を追加しました`; }
-  } catch (error) { gamesView.state.textContent = friendlyError(error); }
-  gamesView.add.disabled = false;
-};
+gamesView.search.oninput = () => gamesPage.setQuery(gamesView.search.value);
 
 game.add.onclick = async () => {
   game.add.disabled = true;
@@ -16235,7 +16932,7 @@ function initPiWork({ timers = globalThis, invokeWork = invoke, isActive = () =>
     if (key === last.history) return;
     last.history = key;
     const entries = renderPiWorkHistory({
-      document, entries: all, query, selectedId: selected?.id ?? null, busy, openGroups: historyWorkspaceOpen,
+      document, entries: all, query, selectedId: selected?.id ?? null, busy, openGroups: historyWorkspaceOpen, groupBy: "date",
       onDelete: ({ run }) => void deleteHubWork(run),
       onSelect: ({ kind, run }) => {
         if (controller.state.busy || choosingWorkspace) return;

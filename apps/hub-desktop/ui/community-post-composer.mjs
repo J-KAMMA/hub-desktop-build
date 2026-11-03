@@ -1,4 +1,4 @@
-const kinds = {chat:'雑談', guide:'案内', question:'質問', party:'募集'};
+const kinds = {chat:'雑談', guide:'共同ページ', question:'質問', party:'募集'};
 const exact = (value, keys) => value !== null && typeof value === 'object' && !Array.isArray(value)
   && [Object.prototype, null].includes(Object.getPrototypeOf(value)) && Reflect.ownKeys(value).length === keys.length
   && keys.every(key => Object.hasOwn(Object.getOwnPropertyDescriptor(value, key) ?? {}, 'value'));
@@ -11,24 +11,24 @@ const same = (a,b) => a && b && a.key === b.key && a.generation === b.generation
 function scopeValue(value) {
   if(value === null) return null;
   if(!exact(value,['key','generation']) || !Number.isSafeInteger(value.generation) || value.generation < 0
-    || typeof value.key !== 'string' || value.key.length > 4096) throw Error('channel_scope_invalid');
+    || typeof value.key !== 'string' || value.key.length > 4096) throw Error('post_scope_invalid');
   const pair = JSON.parse(value.key);
-  if(!Array.isArray(pair) || pair.length !== 2 || !text(pair[0],512) || !id(pair[1]) || JSON.stringify(pair) !== value.key) throw Error('channel_scope_invalid');
+  if(!Array.isArray(pair) || pair.length !== 2 || !text(pair[0],512) || !id(pair[1]) || JSON.stringify(pair) !== value.key) throw Error('post_scope_invalid');
   const url = new URL(pair[0]);
   if(url.origin !== pair[0] || url.username || url.password || !(url.protocol === 'https:'
-    || url.protocol === 'http:' && ['localhost','127.0.0.1','[::1]'].includes(url.hostname))) throw Error('channel_scope_invalid');
+    || url.protocol === 'http:' && ['localhost','127.0.0.1','[::1]'].includes(url.hostname))) throw Error('post_scope_invalid');
   return {...value, origin:pair[0], deviceId:pair[1]};
 }
-async function expectedMessageId(viewerId, communityId, channelId, requestId) {
-  const bytes = new TextEncoder().encode(JSON.stringify(['hub-community-message-v1',viewerId,communityId,channelId,requestId]));
+async function expectedMessageId(viewerId, communityId, requestId) {
+  const bytes = new TextEncoder().encode(JSON.stringify(['hub-community-message-v1',viewerId,communityId,requestId]));
   return 'cm-' + [...new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256',bytes))].map(byte=>byte.toString(16).padStart(2,'0')).join('');
 }
 
 /** Entry-owned memory only. File references and message text are never logged or stored. */
-export function createChannelComposer({document,communityId,channelId,viewerId,state,invoke,getScope,isCurrent=()=>true,
+export function createCommunityPostComposer({document,communityId,viewerId,state,invoke,getScope,isCurrent=()=>true,
   uploadFiles,onSent=()=>{},onError=()=>{},formatError=()=> '操作を完了できませんでした。'}) {
-  if(!id(communityId,80) || !id(channelId,80) || !id(viewerId) || !state || typeof state !== 'object'
-    || ![Object.prototype,null].includes(Object.getPrototypeOf(state)) || typeof invoke !== 'function' || typeof getScope !== 'function') throw Error('channel_composer_invalid');
+  if(!id(communityId,80) || !id(viewerId) || !state || typeof state !== 'object'
+    || ![Object.prototype,null].includes(Object.getPrototypeOf(state)) || typeof invoke !== 'function' || typeof getScope !== 'function') throw Error('post_composer_invalid');
   const make = (tag, label, className='') => {const node=document.createElement(tag);node.className=className;if(label!==undefined)node.textContent=label;return node;};
   const element=make('form',undefined,'card detail-form'), textarea=make('textarea'), kind=make('select'), status=make('p','','meta');
   textarea.rows=2;textarea.maxLength=2000;textarea.placeholder='メッセージを書く';textarea.setAttribute('aria-label','メッセージ');
@@ -36,7 +36,7 @@ export function createChannelComposer({document,communityId,channelId,viewerId,s
   const replyHint=make('p','','meta'), clearReply=make('button','返信先を解除','head-action');clearReply.type='button';
   const imageInput=make('input');imageInput.type='file';imageInput.accept='image/jpeg,image/png,image/webp';imageInput.multiple=true;imageInput.hidden=true;
   const images=make('div',undefined,'composer-images'), add=make('button','画像','head-action'), submit=make('button','送信','approve'), recheck=make('button','送信結果を再取得','head-action');
-  add.type=recheck.type='button';submit.type='submit';submit.dataset.channelAction='send';recheck.dataset.channelAction='recheck';status.setAttribute('role','status');
+  add.type=recheck.type='button';submit.type='submit';submit.dataset.postAction='send';recheck.dataset.postAction='recheck';status.setAttribute('role','status');
   const actions=make('div',undefined,'detail-form-row');actions.append(kind,add,submit);element.append(replyHint,clearReply,textarea,actions,imageInput,images,status,recheck);
   let disposed=false,invalidated=false,busy=true,initialized=false,scope=null,epoch=0;
   const live=()=>!disposed&&!invalidated&&isCurrent()===true;
@@ -51,21 +51,21 @@ export function createChannelComposer({document,communityId,channelId,viewerId,s
     &&Array.isArray(op.imageIds)&&op.imageIds.length<=4&&Array.from(op.imageIds).every(imageId)&&new Set(op.imageIds).size===op.imageIds.length
     &&['uploading','sending','unknown','rejected'].includes(op.status)&&Number.isSafeInteger(op.revision)&&op.revision>=0
     &&(!['sending','unknown'].includes(op.status)||op.imageIds.length===op.files.length);
-  const stateValid=()=>exact(state,['version','scopeKey','generation','viewerId','communityId','channelId','body','kind','reply','files','revision','operation'])
+  const stateValid=()=>exact(state,['version','scopeKey','generation','viewerId','communityId','body','kind','reply','files','revision','operation'])
     &&state.version===1&&state.scopeKey===scope.key&&state.generation===scope.generation&&state.viewerId===viewerId
-    &&state.communityId===communityId&&state.channelId===channelId&&text(state.body,2000)&&Object.hasOwn(kinds,state.kind)
+    &&state.communityId===communityId&&text(state.body,2000)&&Object.hasOwn(kinds,state.kind)
     &&replyValid(state.reply)&&filesValid(state.files)&&Number.isSafeInteger(state.revision)&&state.revision>=0&&operationValid(state.operation);
   function clearState(){for(const key of Reflect.ownKeys(state))delete state[key];}
-  function initializeState(){clearState();Object.assign(state,{version:1,scopeKey:scope.key,generation:scope.generation,viewerId,communityId,channelId,
+  function initializeState(){clearState();Object.assign(state,{version:1,scopeKey:scope.key,generation:scope.generation,viewerId,communityId,
     body:'',kind:'chat',reply:null,files:[],revision:0,operation:null});}
   function invalidate(){if(disposed||invalidated)return;invalidated=true;initialized=false;epoch++;scope=null;clearState();textarea.value='';kind.value='chat';images.replaceChildren();replyHint.textContent='';status.textContent='接続が変わりました。画面を開き直してください。';paint();}
   const current=(captured,turn,op)=>connected()&&turn===epoch&&same(scope,captured)&&(!op||state.operation===op);
-  const assertCurrent=(captured,turn,op)=>{if(!current(captured,turn,op))throw Error('channel_context_changed');};
+  const assertCurrent=(captured,turn,op)=>{if(!current(captured,turn,op))throw Error('post_context_changed');};
   async function fresh(captured,turn,op){
     assertCurrent(captured,turn,op);
     let next;try{next=scopeValue(await getScope());}catch{next=null;}
-    if(!current(captured,turn,op))throw Error('channel_context_changed');
-    if(!same(captured,next)){invalidate();throw Error('channel_context_changed');}
+    if(!current(captured,turn,op))throw Error('post_context_changed');
+    if(!same(captured,next)){invalidate();throw Error('post_context_changed');}
     return next;
   }
   function paint(){
@@ -89,7 +89,7 @@ export function createChannelComposer({document,communityId,channelId,viewerId,s
     if(!connected()||!scope||busy||state.operation?.status==='unknown')return false;
     if(message===null)state.reply=null;
     else{
-      if(!message||!messageId(message.id)||message.channelId!==channelId||message.communityId!==undefined&&message.communityId!==communityId)return false;
+      if(!message||!messageId(message.id)||message.communityId!==undefined&&message.communityId!==communityId)return false;
       const label=typeof message.label==='string'?message.label:[...(message.body??'')].slice(0,40).join('');
       if(!text(label,120))return false;state.reply={id:message.id,label};
     }
@@ -103,7 +103,7 @@ export function createChannelComposer({document,communityId,channelId,viewerId,s
   }
   add.onclick=()=>{if(!add.disabled&&connected())imageInput.click();};imageInput.onchange=()=>{const files=Array.from(imageInput.files??[]);imageInput.value='';addFiles(files);};clearReply.onclick=()=>setReply(null);
   function matchMessage(message,op){
-    if(!message||message.id!==op.messageId||message.channelId!==channelId||message.authorProfileId!==viewerId||message.body!==op.body
+    if(!message||message.id!==op.messageId||message.communityId!==communityId||message.authorProfileId!==viewerId||message.body!==op.body
       ||message.kind!==op.kind||!Object.hasOwn(message,'replyToMessageId')||message.replyToMessageId!==op.replyToMessageId||!Array.isArray(message.images))return false;
     const attached=Array.from(message.images,image=>image?.id);
     return attached.length===op.imageIds.length&&new Set(attached).size===attached.length&&attached.every(id=>op.imageIds.includes(id));
@@ -116,7 +116,7 @@ export function createChannelComposer({document,communityId,channelId,viewerId,s
     state.operation=null;busy=false;status.textContent='送信を確認しました。';paint();
     assertCurrent(captured,turn);
     try{await onSent(receipt,{assertCurrent:()=>assertCurrent(captured,turn)});}
-    catch{if(current(captured,turn)){status.textContent='送信は確認済みです。表示を更新できませんでした。';onError({code:'channel_refresh_failed'});}}
+    catch{if(current(captured,turn)){status.textContent='送信は確認済みです。表示を更新できませんでした。';onError({code:'post_refresh_failed'});}}
   }
   async function send(){
     if(!connected()||!scope||busy||state.operation?.status==='unknown'||state.operation?.status==='sending'||syncInput()===false)return false;
@@ -125,44 +125,44 @@ export function createChannelComposer({document,communityId,channelId,viewerId,s
     busy=true;paint();let op=null,sent=false;
     try{
       await fresh(captured,turn);
-      const requestId=globalThis.crypto.randomUUID(),messageId=await expectedMessageId(viewerId,communityId,channelId,requestId);await fresh(captured,turn);
+      const requestId=globalThis.crypto.randomUUID(),messageId=await expectedMessageId(viewerId,communityId,requestId);await fresh(captured,turn);
       op={requestId,messageId,...snapshot,imageIds:[],status:'uploading'};state.operation=op;status.textContent='送信を準備しています…';
       if(op.files.length){
-        if(typeof uploadFiles!=='function')throw Error('channel_upload_unavailable');
+        if(typeof uploadFiles!=='function')throw Error('post_upload_unavailable');
         const ids=await uploadFiles(op.files,{assertCurrent:()=>assertCurrent(captured,turn,op),
-          invoke:async(command,args)=>{if(command!=='hub_upload_image')throw Error('channel_upload_command_invalid');await fresh(captured,turn,op);
+          invoke:async(command,args)=>{if(command!=='hub_upload_image')throw Error('post_upload_command_invalid');await fresh(captured,turn,op);
             const value=await invoke(command,{...args,expectedDeviceId:captured.deviceId,expectedOrigin:captured.origin,expectedViewerId:viewerId});await fresh(captured,turn,op);return value;},
           onProgress:message=>{if(current(captured,turn,op)&&text(message,120))status.textContent=message;}});
         await fresh(captured,turn,op);
-        if(!Array.isArray(ids)||ids.length!==op.files.length||Array.from(ids).some(id=>!imageId(id))||new Set(ids).size!==ids.length)throw Error('channel_upload_receipt_invalid');
+        if(!Array.isArray(ids)||ids.length!==op.files.length||Array.from(ids).some(id=>!imageId(id))||new Set(ids).size!==ids.length)throw Error('post_upload_receipt_invalid');
         op.imageIds=[...ids];
       }
       await fresh(captured,turn,op);op.status='sending';sent=true;status.textContent='送信中…';
-      const result=await invoke('hub_client_action',{action:'channel_message',target:communityId,text:op.body,requestId:op.requestId,
-        options:{channelId,kind:op.kind,replyToMessageId:op.replyToMessageId,...(op.imageIds.length?{imageIds:[...op.imageIds]}:{}),
+      const result=await invoke('hub_client_action',{action:'community_post',target:communityId,text:op.body,requestId:op.requestId,
+        options:{kind:op.kind,replyToMessageId:op.replyToMessageId,...(op.imageIds.length?{imageIds:[...op.imageIds]}:{}),
           expectedDeviceId:captured.deviceId,expectedOrigin:captured.origin,expectedViewerId:viewerId}});
       await fresh(captured,turn,op);
-      if(!exact(result,['message'])||!matchMessage(result.message,op))throw Error('channel_send_unconfirmed');
+      if(!exact(result,['message'])||!matchMessage(result.message,op))throw Error('post_send_unconfirmed');
       await accept(op,captured,turn,result);return true;
     }catch(error){
       if(!current(captured,turn,op))return false;
-      if(['channel_message_scope_conflict','image_scope_conflict','desktop_not_connected','account_changed'].includes(String(error?.message??error))){invalidate();onError({code:'channel_scope_changed'});return false;}
+      if(['community_post_scope_conflict','image_scope_conflict','desktop_not_connected','account_changed'].includes(String(error?.message??error))){invalidate();onError({code:'post_scope_changed'});return false;}
       // Status alone is not proof of no write: the current server can reject
       // after image publication/readback. Only an explicit zero-effect code is safe.
-      const known=/^channel_message_prewrite_rejected:(400|401|403|404|413|429)(?::|$)/u.test(String(error));
+      const known=/^community_post_prewrite_rejected:(400|401|403|404|413|429)(?::|$)/u.test(String(error));
       if(op)op.status=sent&&!known?'unknown':'rejected';
       status.textContent=sent&&!known?'送信結果が不明です。再送せず、結果を再取得してください。':formatError(error);
-      onError({code:sent&&!known?'channel_send_unknown':'channel_send_rejected'});return false;
+      onError({code:sent&&!known?'post_send_unknown':'post_send_rejected'});return false;
     }finally{if(current(captured,turn,op)){busy=false;paint();}}
   }
   async function recheckResult(){
     const op=state.operation;if(!connected()||busy||op?.status!=='unknown'||!scope)return false;
     const captured={...scope},turn=epoch;busy=true;paint();status.textContent='送信結果を再取得しています…';
     try{
-      await fresh(captured,turn,op);const data=await invoke('hub_detail',{name:'channel_messages',ids:[communityId,channelId]});await fresh(captured,turn,op);
-      if(data?.viewerProfileId!==viewerId||!Array.isArray(data.messages))throw Error('channel_read_unconfirmed');
+      await fresh(captured,turn,op);const data=await invoke('hub_detail',{name:'community_posts',ids:[communityId]});await fresh(captured,turn,op);
+      if(data?.viewerProfileId!==viewerId||!Array.isArray(data.messages))throw Error('post_read_unconfirmed');
       const matched=data.messages.filter(message=>message?.id===op.messageId);
-      if(matched.length!==1||!matchMessage(matched[0],op)){status.textContent='この投稿の保存結果をまだ確認できません。再送せず、チャンネルの状態を確認してください。';return false;}
+      if(matched.length!==1||!matchMessage(matched[0],op)){status.textContent='この投稿の保存結果をまだ確認できません。再送せず、コミュニティの投稿を確認してください。';return false;}
       await accept(op,captured,turn,{message:matched[0]});return true;
     }catch{if(current(captured,turn,op))status.textContent='結果を再取得できませんでした。未確認の投稿と草稿を保持しています。';return false;}
     finally{if(current(captured,turn,op)){busy=false;paint();}}
@@ -177,7 +177,7 @@ export function createChannelComposer({document,communityId,channelId,viewerId,s
   const ready=(async()=>{
     try{const next=scopeValue(await getScope());if(!live())return false;scope=next;if(!scope){invalidate();return false;}
       if(!stateValid())initializeState();initialized=true;
-      if(state.operation){const captured={...scope},turn=epoch,expected=await expectedMessageId(viewerId,communityId,channelId,state.operation.requestId);await fresh(captured,turn);if(state.operation.messageId!==expected)initializeState();}
+      if(state.operation){const captured={...scope},turn=epoch,expected=await expectedMessageId(viewerId,communityId,state.operation.requestId);await fresh(captured,turn);if(state.operation.messageId!==expected)initializeState();}
       if(state.operation?.status==='uploading')state.operation=null;else if(state.operation?.status==='sending')state.operation.status='unknown';
       textarea.value=state.body;kind.value=state.kind;if(state.operation?.status==='unknown')status.textContent='前回の送信結果が未確認です。再送せず、結果を再取得してください。';return true;
     }catch{invalidate();return false;}

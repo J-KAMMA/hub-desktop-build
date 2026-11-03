@@ -334,8 +334,6 @@ fn community(value: &Value, item_id: &str, created_at: &str) -> Result<(), Strin
             "id",
             "communityId",
             "communityName",
-            "channelId",
-            "channelName",
             "body",
             "createdAt",
             "authorName",
@@ -349,9 +347,7 @@ fn community(value: &Value, item_id: &str, created_at: &str) -> Result<(), Strin
     if p["id"] != item_id
         || p["createdAt"] != created_at
         || !identifier(&p["communityId"])
-        || !identifier(&p["channelId"])
         || !string(&p["communityName"], 200)
-        || !string(&p["channelName"], 100)
         || !string(&p["body"], 4000)
         || !string(&p["authorName"], 160)
         || !nullable_string(&p["authorHandle"], 64)
@@ -632,7 +628,7 @@ mod tests {
         json!({"kind":"thread","id":"thread-1","createdAt":AT,"origin":BASE,"payload":{"id":"thread-1","title":"議論","boardKey":"general","postCount":1,"threadType":"discussion","status":"open","updatedAt":AT}})
     }
     fn community_item() -> Value {
-        json!({"kind":"community_post","id":"scheduled:11111111-2222-4333-8444-555555555555","createdAt":AT,"origin":BASE,"payload":{"id":"scheduled:11111111-2222-4333-8444-555555555555","communityId":"c-1","communityName":"公開community","channelId":"ch-1","channelName":"公開channel","body":"literal body","createdAt":AT,"authorName":"著者","authorHandle":null,"replyCount":0,"likeCount":0,"kind":"chat"}})
+        json!({"kind":"community_post","id":"scheduled:11111111-2222-4333-8444-555555555555","createdAt":AT,"origin":BASE,"payload":{"id":"scheduled:11111111-2222-4333-8444-555555555555","communityId":"c-1","communityName":"公開community","body":"literal body","createdAt":AT,"authorName":"著者","authorHandle":null,"replyCount":0,"likeCount":0,"kind":"chat"}})
     }
     fn token(viewer: Value) -> String {
         URL_SAFE_NO_PAD.encode(serde_json::to_vec(&json!({"version":1,"filter":"all","scope":"latest","viewerId":viewer,"origin":BASE,"lanes":{"post":{"after":null,"done":false},"thread":{"after":null,"done":false},"community_post":{"after":null,"done":false}}})).unwrap())
@@ -665,7 +661,7 @@ mod tests {
         validate(&value, BASE, "all", "latest", 20, false).unwrap();
         assert_eq!(value["items"][0]["payload"].as_object().unwrap().len(), 18);
         assert_eq!(value["items"][1]["payload"].as_object().unwrap().len(), 7);
-        assert_eq!(value["items"][2]["payload"].as_object().unwrap().len(), 12);
+        assert_eq!(value["items"][2]["payload"].as_object().unwrap().len(), 10);
         for depth in 0..3 {
             let mut wrong = value.clone();
             match depth {

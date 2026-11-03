@@ -26,7 +26,7 @@ function payload(item){
  if(item.kind==='post'){post(value,item.origin);if(value.id!==item.id||value.createdAt!==item.createdAt)throw bad();}
  else if(item.kind==='thread'){
   if(!exact(value,['id','title','boardKey','postCount','threadType','status','updatedAt'])||value.id!==item.id||!text(value.title,480)||!id(value.boardKey)||!count(value.postCount)||!['question','information','discussion','recruitment','issue','chat'].includes(value.threadType)||!['open','closed'].includes(value.status)||!date(value.updatedAt))throw bad();
- }else if(!exact(value,['id','communityId','communityName','channelId','channelName','body','createdAt','authorName','authorHandle','replyCount','likeCount','kind'])||value.id!==item.id||!id(value.communityId)||!id(value.channelId)||!text(value.communityName,200)||!text(value.channelName,100)||!text(value.body,4000)||value.createdAt!==item.createdAt||!text(value.authorName,160)||!nullable(value.authorHandle,item=>text(item,64))||!count(value.replyCount)||!count(value.likeCount)||!['chat','guide','question','party'].includes(value.kind))throw bad();
+ }else if(!exact(value,['id','communityId','communityName','body','createdAt','authorName','authorHandle','replyCount','likeCount','kind'])||value.id!==item.id||!id(value.communityId)||!text(value.communityName,200)||!text(value.body,4000)||value.createdAt!==item.createdAt||!text(value.authorName,160)||!nullable(value.authorHandle,item=>text(item,64))||!count(value.replyCount)||!count(value.likeCount)||!['chat','guide','question','party'].includes(value.kind))throw bad();
 }
 export function parseSocialStream(raw,context){
  if(!exact(raw,['version','filter','scope','viewerId','signedIn','items','hasMore','nextCursor','failures'])||raw.version!==1||!filters.includes(raw.filter)||!scopes.includes(raw.scope)||typeof raw.signedIn!=='boolean'||!nullable(raw.viewerId,value=>id(value,128))||raw.signedIn!==(raw.viewerId!==null)||!Array.isArray(raw.items)||raw.items.length>20||typeof raw.hasMore!=='boolean'||!cursor(raw.nextCursor)||raw.hasMore!==(raw.nextCursor!==null)||!Array.isArray(raw.failures)||raw.failures.length>3||new Set(raw.failures).size!==raw.failures.length||!raw.failures.every(kind=>permitted(raw.filter).includes(kind))||raw.failures.length&&!raw.hasMore)throw bad();
@@ -61,11 +61,11 @@ export function renderSocialItem(document,item,{renderPost,onOpenThread,onOpenCo
   if(!thread&&p.authorHandle)who.append(node(document,'span','meta','@'+p.authorHandle));
   const time=node(document,'span','meta when',formatTime(when));time.title=new Date(when).toLocaleString('ja-JP');
   head.append(who,time);
-  const kind=node(document,'p','meta social-stream-kind',[thread?(p.status==='closed'?'受付終了':'受付中'):p.communityName,thread?null:p.channelName,elsewhere?item.origin:null].filter(Boolean).join(' · '));
+  const kind=node(document,'p','meta social-stream-kind',[thread?(p.status==='closed'?'受付終了':'受付中'):p.communityName,elsewhere?item.origin:null].filter(Boolean).join(' · '));
   const body=node(document,'div','post-body',thread?p.title:p.body);
   const foot=node(document,'div','post-foot');
   foot.append(node(document,'span','meta',thread?`${p.postCount} 投稿`:`返信 ${p.replyCount} · いいね ${p.likeCount}`));
-  const open=node(document,'button','btn btn-ghost social-stream-open',thread?'スレッドを開く':'チャンネルで見る');open.type='button';open.onclick=()=>{if(isCurrent())return thread?onOpenThread(p):onOpenCommunityPost(p);};foot.append(open);
+  const open=node(document,'button','btn btn-ghost social-stream-open',thread?'スレッドを開く':'コミュニティで見る');open.type='button';open.onclick=()=>{if(isCurrent())return thread?onOpenThread(p):onOpenCommunityPost(p);};foot.append(open);
   content.append(head,kind,body,foot);card.append(avatar,content);
   card.tabIndex=0;
   card.addEventListener('click',e=>{if(!e.target.closest('a,button,input,textarea,select'))open.click();});

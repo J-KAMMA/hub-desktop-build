@@ -31,7 +31,7 @@ function fixture(kind){
 for(const kind of ['feed','shop']){
  test(`${kind}: keeps displayed items while waiting and after a timeout, then automatically replaces them`,async t=>{
   t.mock.timers.enable({apis:['setTimeout']});const f=fixture(kind);t.after(f.dispose);await f.load();assert.equal(f.target.textContent,'old');
-  let reject;f.pending=new Promise((_,r)=>reject=r);const loading=f.load();await new Promise(setImmediate);assert.equal(f.target.textContent,'old');assert.match(f.status.textContent,/前回の表示/);
+  let reject;f.pending=new Promise((_,r)=>reject=r);const loading=f.load();await new Promise(setImmediate);assert.equal(f.target.textContent,'old');if(kind==='feed')assert.equal(f.status.textContent,'');else assert.match(f.status.textContent,/前回の表示/);
   if(kind==='shop'){assert.equal(f.shop.catalogStale,true);assert.equal(f.shop.paymentsEnabled,false);}
   reject('network_timeout');await loading;assert.equal(f.target.textContent,'old');assert.match(f.status.textContent,/応答を待っています/);
   f.pending=null;f.items=[{id:'new',title:'new'}];t.mock.timers.tick(1000);await new Promise(setImmediate);

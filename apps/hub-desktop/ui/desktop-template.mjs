@@ -18,7 +18,7 @@ const BY_VIEW = Object.freeze({
 const BY_DETAIL = Object.freeze({
   article: "reading", hubpedia_article: "reading", book: "reading", book_chapter: "reading",
   ranking_item: "stream", service_item: "stream",
-  video: "wide", music_work: "wide", music_artist: "wide", music_album: "wide", listing: "wide", commerce_product: "wide",
+  video: "wide", music_artist: "wide", music_album: "wide", listing: "wide", commerce_product: "wide",
 });
 
 export function templateFor(view, detailName = "") {

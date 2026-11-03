@@ -19,12 +19,19 @@ test('wallet explorer is bound to supported chain and exact transaction, copy/op
  const {document}=new JSDOM('<main/>').window,row=document.querySelector('main'),calls=[];let current=true;appendWalletHistoryLinks(document,row,item,{copy:v=>calls.push(['copy',v]),open:v=>calls.push(['open',v]),isCurrent:()=>current});
  const buttons=row.querySelectorAll('button');await buttons[0].onclick();await buttons[1].onclick();assert.deepEqual(calls,[['copy',txHash],['open',item.explorerUrl]]);current=false;await buttons[1].onclick();assert.equal(calls.length,2);
 });
-test('orders can reach records beyond first twenty, filtering resets page, refresh keeps visible tail',()=>{
- const source=readFileSync(new URL('./app.js',import.meta.url),'utf8');const from=source.indexOf('let orderFilter = "all";'),to=source.indexOf('// ---- 注文詳細',from);assert.ok(from>=0&&to>from);
- const {document}=new JSDOM('<div id="orders-filter"><button data-filter="all"></button><button data-filter="done"></button></div><p id="orders-state"></p><div id="orders-list"></div>').window;
+test('orders can reach records beyond first twenty, filtering resets page, refresh keeps visible tail',async()=>{
+ const source=readFileSync(new URL('./app.js',import.meta.url),'utf8');const from=source.indexOf('async function refreshOrderReceipt('),to=source.indexOf('// ---- 注文詳細',from);assert.ok(from>=0&&to>from);
+ const {document}=new JSDOM('<div id="purchased-items"></div><div id="orders-list"></div>').window;
+ const {createOrdersList,renderPurchased}=await import('./market-me.mjs');
  const shop={orders:Array.from({length:45},(_,i)=>({id:'order-'+i,title:'商品'+i,status:i%2?'paid':'refunded',amountJpyc:100,createdAt:'2026-10-01'}))},opened=[];
- const render=new Function('document','shop','orderAutoRefreshed','openOrderDetail','invoke','shopToken','shopSave','orderStatusText','fulfillmentText','escrowText',source.slice(from,to)+'; return renderOrders;')(document,shop,new Set(shop.orders.map(x=>x.id)),id=>opened.push(id),()=>Promise.reject(),()=>null,()=>{},s=>s,s=>s,s=>s);
- render();const rows=()=>document.querySelectorAll('#orders-list .card');assert.equal(rows().length,20);document.querySelector('#orders-list>button').click();assert.equal(rows().length,40);document.querySelector('#orders-list>button').click();assert.equal(rows().length,45);rows()[44].querySelector('button').click();assert.deepEqual(opened,['order-44']);render();assert.equal(rows().length,45);document.querySelector('[data-filter="done"]').click();assert.equal(rows().length,20);document.querySelector('#orders-list>button').click();assert.equal(rows().length,23);document.querySelector('[data-filter="all"]').click();assert.equal(rows().length,20);
+ const render=new Function('document','shop','orderAutoRefreshed','openOrderDetail','invoke','shopToken','shopSave','orderStatusText','fulfillmentText','orderBuyerAttention','orderBuyerDone','hubAsset','openHubWebPath','showNotice','friendlyError','createOrdersList','renderPurchased',source.slice(from,to)+'; return renderOrders;')(document,shop,new Set(shop.orders.map(x=>x.id)),id=>opened.push(id),()=>Promise.reject(),()=>null,()=>{},s=>s,s=>s,()=>false,r=>r.status==='refunded',()=>{},()=>{},()=>{},String,createOrdersList,renderPurchased);
+ render();const rows=()=>document.querySelectorAll('#orders-list .mk-row');assert.equal(rows().length,20);
+ document.querySelector('#orders-list .mk-more .mk-btn').click();assert.equal(rows().length,40);
+ document.querySelector('#orders-list .mk-more .mk-btn').click();assert.equal(rows().length,45);
+ rows()[44].querySelector('.mk-btn').click();assert.deepEqual(opened,['order-44']);
+ document.querySelector('.mk-chip[data-filter="done"]').click();assert.equal(rows().length,20);
+ document.querySelector('#orders-list .mk-more .mk-btn').click();assert.equal(rows().length,23);
+ document.querySelector('.mk-chip[data-filter="all"]').click();assert.equal(rows().length,20);
 });
 
 test('real thread form sends quote parent, retains it on failure, clears confirmed draft and safely handles closed threads',async()=>{

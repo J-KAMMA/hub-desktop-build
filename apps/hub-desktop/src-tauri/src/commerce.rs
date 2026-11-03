@@ -1589,6 +1589,35 @@ pub async fn seller_products(before: Option<&str>) -> Result<Value, String> {
     Ok(body)
 }
 
+/// プロフィールに表示するための証明（2026-11-03、docs/hub-music-attribution/DESIGN.md）。Commerce が出品者本人と
+/// 公開中の商品を確かめて署名する。Hub が出した問いかけ（22字の base64url）と商品IDだけを渡し、返った証明は窓が Hub へ渡す。
+/// Hub はこの呼び出しを中継しない。
+pub fn attribution_inputs_valid(product_id: &str, challenge: &str) -> bool {
+    !product_id.is_empty()
+        && product_id.len() <= 128
+        && product_id.as_bytes()[0].is_ascii_alphanumeric()
+        && product_id.bytes().all(|c| c.is_ascii_alphanumeric() || matches!(c, b'_' | b'.' | b':' | b'-'))
+        && challenge.len() == 22
+        && challenge.bytes().all(|c| c.is_ascii_alphanumeric() || matches!(c, b'-' | b'_'))
+}
+
+pub async fn seller_attribution_proof(product_id: &str, challenge: &str) -> Result<Value, String> {
+    if !attribution_inputs_valid(product_id, challenge) {
+        return Err("attribution_input_invalid".to_owned());
+    }
+    let base = commerce_base()?;
+    let (status, body) = send(seller_cookie(post_json(
+        format!("{base}/attribution/v1/proof"),
+        json!({ "productId": product_id, "challenge": challenge }),
+    )?)?)
+    .await?;
+    if !status.is_success() {
+        return Err(api_error(&body));
+    }
+    let proof = body.get("proof").and_then(Value::as_str).filter(|proof| proof.len() <= 4096).ok_or("attribution_proof_missing")?;
+    Ok(json!({ "proof": proof }))
+}
+
 /// 出品者の商品作成/更新。id があれば PATCH、無ければ POST。
 pub async fn seller_product_save(params: &Value) -> Result<Value, String> {
     let base = commerce_base()?;
@@ -2703,5 +2732,16 @@ mod order_token_tests {
             4,
         );
         assert!(result.is_err() && !kept.get());
+    }
+}
+
+#[cfg(test)]
+mod attribution_input_tests {
+    #[test]
+    fn attribution_inputs_are_closed() {
+        assert!(super::attribution_inputs_valid("prod_a-1.x:y", "AAAAAAAAAAAAAAAAAAAAAA"));
+        for (p, c) in [("", "AAAAAAAAAAAAAAAAAAAAAA"), ("../x", "AAAAAAAAAAAAAAAAAAAAAA"), ("p", "short"), ("p", "AAAAAAAAAAAAAAAAAAAAA="), ("p/q", "AAAAAAAAAAAAAAAAAAAAAA")] {
+            assert!(!super::attribution_inputs_valid(p, c));
+        }
     }
 }

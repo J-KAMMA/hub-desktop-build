@@ -1,5 +1,5 @@
 /* 設定画面と外観の適用。色は styles.css の意味トークンだけを使う。
-   外観の属性（data-theme / data-text-size / data-density / data-motion）は appearance-early.js と appearance.mjs が html に付ける。 */
+   外観の属性（data-template / data-theme / data-crisp / data-text-size / data-density / data-motion）は appearance-early.js と appearance.mjs が html に付ける。 */
 
 /* --- 設定の左列：見出し付きの一覧 --- */
 #view-settings .inner-nav { gap: var(--space-1, 4px); align-content: start; min-width: 200px; }
@@ -32,6 +32,29 @@
 }
 #view-settings .appearance-choice:hover { background: var(--interactive); }
 #view-settings .appearance-choice:has(input:checked) { border-color: var(--action); background: var(--selected); font-weight: 700; }
+/* カラーテンプレートの見本。.template-chip は data-template を持つので、tokens.css のそのテンプレートの色になる（見本の中だけ）。 */
+#view-settings .template-swatches { display: flex; flex-wrap: wrap; gap: var(--space-2, 8px); justify-content: flex-end; }
+#view-settings .template-swatch {
+  display: grid; justify-items: center; gap: var(--space-1, 4px); width: 88px; padding: var(--space-2, 8px) var(--space-1, 4px);
+  border: 0; border-radius: var(--radius-sm, 6px); background: transparent; color: var(--text); font: inherit; cursor: pointer;
+}
+#view-settings .template-swatch:hover { background: var(--interactive); }
+#view-settings .template-swatch:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+#view-settings .template-name { font-size: var(--type-caption); line-height: 1.3; text-align: center; }
+#view-settings .template-swatch[aria-checked="true"] .template-name { font-weight: 700; }
+#view-settings .template-chip {
+  display: grid; grid-template-rows: 1fr auto; align-items: center; justify-items: center; box-sizing: border-box;
+  width: 72px; height: 48px; padding-top: var(--space-1, 4px);
+  border: 1px solid var(--line-strong); border-radius: var(--radius-sm, 6px); background: var(--bg); color: var(--text); overflow: hidden;
+}
+#view-settings .template-chip-text { font-size: var(--type-body); font-weight: 700; }
+#view-settings .template-chip-line { align-self: stretch; margin: 0 var(--space-2, 8px) var(--space-2, 8px); border-top: 1px solid var(--line-strong); }
+#view-settings .template-chip-device { display: flex; padding: 0; background: transparent; }
+#view-settings .template-chip-device .template-chip { flex: 1 1 50%; width: auto; height: auto; border: 0; border-radius: 0; }
+#view-settings .template-swatch[aria-checked="true"] .template-chip { outline: 1px solid var(--emphasis); outline-offset: 2px; }
+#hub-shell #view-settings .appearance-settings > .appearance-template { flex-wrap: wrap; }
+#hub-shell #view-settings .appearance-template .setting-control { flex: 1 1 100%; max-width: none; justify-content: flex-start; }
+#hub-shell #view-settings .appearance-template .template-swatches { justify-content: flex-start; }
 #view-settings .appearance-settings .meta { margin: var(--space-2, 8px) 0 0; }
 #view-settings .appearance-settings > .head-action { margin-top: var(--space-4, 16px); border: 1px solid var(--line); }
 

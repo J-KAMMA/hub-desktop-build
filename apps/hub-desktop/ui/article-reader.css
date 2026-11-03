@@ -1,12 +1,12 @@
 /* 記事の読む画面（Hub Desktop）。色は tokens.css の意味トークンだけを使う。
-   測りは 680px（17px で約40字）。題は本文にだけ置き、帯は「記事」。本文は1画面目から始める。 */
-.article-reader{width:min(var(--measure-reading,680px),100%);margin:0 auto;padding:0 0 var(--space-6)}
+   測りは 680px（左右の余白 16px を引いた本文は 648px、17px で約38字）。題は本文にだけ置き、帯は「記事」。本文は1画面目から始める。 */
+.article-reader{box-sizing:border-box;width:min(var(--measure-reading,680px),100%);margin:0 auto;padding:0 var(--ds-page-inset) var(--space-6)}
 /* 表紙は本文の幅いっぱい。窓の高さが低いときは 2:1 にして、本文を1画面目へ入れる。 */
 .article-cover{position:relative;margin:0 0 var(--space-4);border-radius:var(--radius-md);overflow:hidden;aspect-ratio:2/1;background:var(--interactive)}
 .article-cover img{display:block;width:100%;height:100%;object-fit:cover}
 .article-cover::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px var(--media-outline);pointer-events:none}
 @media (min-height:900px){.article-cover{aspect-ratio:16/9}}
-.article-title{margin:0 0 var(--space-2);font-size:var(--type-title1);line-height:var(--lh-title1);font-weight:var(--weight-bold);font-feature-settings:"palt";overflow-wrap:anywhere}
+.article-title{text-wrap:balance;margin:0 0 var(--space-2);font-size:var(--type-title1);line-height:var(--lh-title1);font-weight:var(--weight-bold);font-feature-settings:"palt";overflow-wrap:anywhere}
 .article-lead{display:-webkit-box;margin:0 0 var(--space-3);overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:2;color:var(--muted);font-size:var(--type-headline);line-height:var(--lh-headline);overflow-wrap:anywhere}
 .article-byline{display:flex;align-items:center;gap:var(--space-3);margin:0 0 var(--space-1);padding:var(--space-2) 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 .article-author-avatar{display:grid;flex:none;width:40px;height:40px;place-items:center;border-radius:50%;background:var(--interactive);color:var(--text);font-size:var(--type-body);font-weight:var(--weight-bold)}

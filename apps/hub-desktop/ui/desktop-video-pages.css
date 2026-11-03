@@ -31,7 +31,9 @@
 #hub-shell .vid-channel .video-thumbnail { position: relative; }
 #hub-shell .vid-lock { position: absolute; right: var(--space-2); bottom: var(--space-2); padding: 2px var(--space-2); border-radius: var(--radius-pill); background: var(--surface-raised); color: var(--text); font-size: var(--type-caption); font-weight: var(--weight-bold); }
 
-/* ショートの縦フィード：1画面に1本。再生枠は 200×200 以上を保つ。 */
+/* ショートの縦フィード：1画面に1枚（仕組みは docs/hub-ui-reference/REEL-MECHANICS.md）。
+   カードの高さは固定。縦横比 --ar（幅÷高さ）の枠を中央に置き、切り抜かず・回さない。横長は幅いっぱい、縦長は高さいっぱい。
+   再生枠は 200×200 以上を保つ。色は意味のトークンだけ、ボタンは平ら、強調色は線だけ。 */
 #hub-shell #videos-results.vid-shorts-mode { display: block; }
 #hub-shell .vid-shorts-feed {
   --vid-short-h: clamp(420px, calc(100vh - 300px), 860px);
@@ -46,18 +48,36 @@
 /* 曲の再生バー（下に固定、94px）が出ているときは、その分だけ縮めて情報行を隠さない。 */
 #hub-shell.app-shell:has(#music-player:not([hidden])) .vid-shorts-feed { --vid-short-h: clamp(360px, calc(100vh - 400px), 780px); }
 #hub-shell .vid-shorts-feed:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
-#hub-shell .vid-short { display: grid; grid-template-rows: minmax(0, 1fr) auto; justify-items: center; gap: var(--space-3); height: var(--vid-short-h); box-sizing: border-box; padding: var(--space-4) var(--space-4) var(--space-3); scroll-snap-align: start; scroll-snap-stop: always; }
-#hub-shell .vid-short-stage { position: relative; height: 100%; max-width: 100%; aspect-ratio: 9 / 16; min-width: 200px; min-height: 200px; overflow: hidden; border-radius: var(--radius-md); background: var(--surface-raised); }
+#hub-shell .vid-short { --ar: 0.5625; display: grid; grid-template-rows: minmax(0, 1fr) auto; justify-items: center; gap: var(--space-3); height: var(--vid-short-h); box-sizing: border-box; padding: var(--space-4) var(--space-4) var(--space-3); scroll-snap-align: start; scroll-snap-stop: always; }
+#hub-shell .vid-short[hidden] { display: none; }
+/* 枠の置き場。右列のぶんを左右に空け、その内側の寸法（cqw/cqh）から枠の大きさを決める。 */
+#hub-shell .vid-short-frame { position: relative; container-type: size; width: 100%; height: 100%; box-sizing: border-box; padding-inline: 64px; display: flex; align-items: center; justify-content: center; }
+#hub-shell .vid-short-stage { position: relative; flex: none; width: min(100cqw, calc(100cqh * var(--ar))); height: min(100cqh, calc(100cqw / var(--ar))); min-width: calc(200px * max(1, var(--ar))); overflow: hidden; border-radius: var(--radius-md); background: var(--surface-raised); }
 #hub-shell .vid-short-poster { position: absolute; inset: 0; width: 100%; height: 100%; }
 #hub-shell .vid-short-poster img { width: 100%; height: 100%; object-fit: cover; }
 #hub-shell .vid-short-stage .vid-short-slot { position: absolute; inset: 0; width: auto; height: auto; aspect-ratio: auto; border-radius: 0; min-width: 200px; min-height: 200px; }
+#hub-shell .vid-short-native { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: var(--surface-sunken); cursor: pointer; }
+/* 再生位置：下端の1本の線。 */
+#hub-shell .vid-short-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 12px; display: flex; align-items: flex-end; cursor: pointer; }
+#hub-shell .vid-short-progress-fill { display: block; width: 0; height: 0; border-top: 2px solid var(--emphasis); }
 #hub-shell .vid-short-open, #hub-shell .vid-short-open:active:not(:disabled) { position: absolute; top: auto; left: 50%; bottom: var(--space-4); height: auto; transform: translateX(-50%); }
-#hub-shell .vid-short-info { display: grid; justify-items: start; gap: var(--space-1); width: min(100%, calc(var(--vid-short-h) * 9 / 16 + 120px)); min-width: 0; }
+/* 右列：枠の右下に並べる平らなアイコンボタン。 */
+#hub-shell .vid-short-rail { position: absolute; left: calc(50% + min(100cqw, calc(100cqh * var(--ar))) / 2 + var(--space-3)); bottom: max(0px, calc((100cqh - min(100cqh, calc(100cqw / var(--ar)))) / 2)); display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
+#hub-shell .vid-short-icon, #hub-shell .vid-short-rail .vid-like-button { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; width: var(--control-h); min-height: var(--control-h); padding: 0; border: 0; border-radius: var(--radius-md); background: transparent; box-shadow: none; color: var(--text); cursor: pointer; }
+#hub-shell .vid-short-icon:hover, #hub-shell .vid-short-rail .vid-like-button:hover:not(:disabled) { background: var(--selected); }
+#hub-shell .vid-short-icon svg { width: 22px; height: 22px; }
+#hub-shell .vid-short-rail .vid-like { gap: 0; }
+#hub-shell .vid-short-rail .vid-like-label, #hub-shell .vid-short-rail .vid-like-note { display: none; }
+#hub-shell .vid-short-rail .vid-like-count { font-size: var(--type-caption); }
+#hub-shell .vid-short-actions { display: contents; }
+#hub-shell .vid-short-sheet { position: absolute; right: 0; bottom: calc(100% + var(--space-2)); min-width: 160px; display: grid; padding: var(--space-1); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-raised); z-index: 2; }
+#hub-shell .vid-short-sheet[hidden] { display: none; }
+#hub-shell .vid-short-sheet-item { padding: var(--space-2) var(--space-3); border: 0; border-radius: var(--radius-sm); background: transparent; box-shadow: none; color: var(--text); text-align: left; cursor: pointer; }
+#hub-shell .vid-short-sheet-item:hover { background: var(--selected); }
+#hub-shell .vid-short-info { display: grid; justify-items: start; gap: var(--space-1); width: min(100%, calc((var(--vid-short-h) - 110px) * var(--ar) + 120px)); min-width: 0; }
 #hub-shell .vid-short-title { max-width: 100%; overflow: hidden; font-size: var(--type-headline); line-height: var(--lh-headline); text-overflow: ellipsis; white-space: nowrap; }
 #hub-shell .vid-short-channel { padding: 0; border: 0; background: transparent; color: var(--muted); font-size: var(--type-subhead); cursor: pointer; }
 #hub-shell button.vid-short-channel:hover { text-decoration: underline; }
-#hub-shell .vid-short-actions { min-height: var(--control-h); }
-#hub-shell .vid-short-actions:empty { display: none; }
 @media (prefers-reduced-motion: reduce) {
   #hub-shell .vid-shorts-feed { scroll-behavior: auto; }
 }

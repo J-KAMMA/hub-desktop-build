@@ -8,6 +8,7 @@
 // one explicit prompt and retries the same command only after the user agrees.
 
 import { isPaidAiCommand } from "./ai-paid-execution.mjs";
+import { filterInvoke } from "./yt-unplayable.mjs";
 
 const MAINNET_WARNING = "本物のお金が動きます。送る前に、ネットワーク・宛先・数量を確かめてください。";
 const TESTNET_NOTE = "テスト用のネットワークです。価値のないトークンで、本物のお金は動きません。";
@@ -30,7 +31,9 @@ export function walletSwitchRequest(error) {
 // Paid AI execution is off by default (ai-paid-execution.mjs): its commands are
 // refused here before they reach Rust, so no switch prompt can be raised for an
 // AI payment. Pass { paidAiExecution: true } to allow them again.
-export function guardWalletChain(rawInvoke, confirmSwitch, { paidAiExecution = false } = {}) {
+// 窓口の唯一の入口なので、埋め込みで再生できないと分かった YouTube の項目を一覧の応答から外す処理もここに通す（yt-unplayable.mjs）。
+export function guardWalletChain(source, confirmSwitch, { paidAiExecution = false } = {}) {
+  const rawInvoke = filterInvoke(source);
   return async (name, args) => {
     if (!paidAiExecution && isPaidAiCommand(name)) throw new Error("ai_paid_execution_disabled");
     try {

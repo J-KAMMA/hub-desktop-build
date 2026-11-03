@@ -98,7 +98,7 @@ test('browser handoff while inspecting terminal history creates a new draft and 
 
 test('project history delegates exact hub/CLI identities, full paths, search, groups and live busy guards',async t=>{
   const cli={id:'r1',workspace:'C:/other/project',prompt:'CLI task',agent:'codex',status:'done',startedAtMs:2},f=await fixture(t,{cli:[cli]});let opened=0;const card=f.document.createElement('article'),button=f.document.createElement('button'),details=f.document.createElement('div');details.className='history-details';details.hidden=true;button.onclick=()=>{opened++;details.hidden=false;};card.append(button,details);f.el('dev-history').append(card);
-  assert.equal(f.document.querySelectorAll('.piw-history-project').length,2);assert.ok([...f.document.querySelectorAll('.piw-history-project-head')].some(el=>el.title==='C:/other/project'));
+  /* 会話の一覧は日付でまとめる（2026-11-03）。作業フォルダの全パスは各行の title に残る。 */assert.ok(f.document.querySelectorAll('.piw-history-project').length>=1);assert.ok([...f.document.querySelectorAll('.piw-history-item')].some(el=>el.title.includes('C:/other/project')));
   const row=f.document.querySelector('[data-kind="cli"][data-run-id="r1"]');row.click();assert.equal(opened,1);assert.equal(f.el('ai-more').open,true);assert.equal(f.el('pi-work-title').textContent,'新しい作業');
   const old=row.onclick;f.controller.state.busy=true;old();assert.equal(opened,1);f.controller.state.busy=false;
   f.el('pi-work-history-search').value='C:/other';f.el('pi-work-history-search').dispatchEvent(new f.dom.window.Event('input'));assert.equal(f.document.querySelectorAll('.piw-history-item').length,1);assert.equal(f.document.querySelector('.piw-history-item').dataset.kind,'cli');

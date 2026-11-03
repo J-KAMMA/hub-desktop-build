@@ -22,8 +22,12 @@ function block(selectorPattern) {
   assert.ok(match, `block ${selectorPattern} exists`);
   return declarations(match[1]);
 }
-const light = block('html\\[data-theme="light"\\]');
-const dark = block('html\\[data-theme="dark"\\],\\s*html:not\\(\\[data-theme\\]\\)');
+// 明暗の骨格（data-theme）の上に、テンプレート（data-template）の色が重なる。
+const schemeLight = block('html\\[data-theme="light"\\]');
+const schemeDark = block('html\\[data-theme="dark"\\],\\s*html:not\\(\\[data-theme\\]\\)');
+const templateBlock = (id) => block(`\\[data-template="${id}"\\]`);
+const light = new Map([...schemeLight, ...templateBlock('light')]);
+const dark = new Map([...schemeDark, ...templateBlock('dark')]);
 const shared = block(':root');
 
 function resolver(theme) {
@@ -78,7 +82,7 @@ test('both themes define every token, and the single accent token feeds --action
 test('dark tokens keep the owner-chosen tight black ground and surfaces', () => {
   const r = resolver(dark);
   assert.deepEqual(['--bg', '--panel', '--content-surface', '--surface-raised', '--line', '--text', '--muted'].map((name) => r(name)),
-    ['#0b0b0d', '#111114', '#141417', '#18181c', '#232329', '#ececf1', '#a4a4b0']);
+    ['#0b0b0d', '#111114', '#141417', '#18181c', '#2e2e35', '#ececf1', '#a4a4b0']);
 });
 
 test('status colours: dark values apply whatever the OS scheme is (no prefers-color-scheme anywhere in the UI css)', () => {
@@ -111,8 +115,8 @@ test('status colours meet 4.5:1 on their own background and on the page surfaces
   }
 });
 
-test('focus colour is achromatic and matches the web (#3a3a3c / #d1d1d6)', () => {
-  assert.equal(resolver(light)('--focus-ring'), '#3a3a3c');
+test('focus colour is achromatic (light #000000 since the black-and-white Light; dark #d1d1d6 as on the web)', () => {
+  assert.equal(resolver(light)('--focus-ring'), '#000000');
   assert.equal(resolver(dark)('--focus-ring'), '#d1d1d6');
   for (const theme of [light, dark]) {
     const [r, g, b] = rgb(resolver(theme)('--focus-ring'));
@@ -218,18 +222,16 @@ test('light theme: selected is visibly darker than the page and than hover; hair
   assert.ok(contrast(r('--selected'), r('--bg')) >= 1.25, 'selected vs bg');
   assert.ok(contrast(r('--selected'), r('--panel')) >= 1.35, 'selected vs panel');
   assert.ok(luminance(r('--selected')) < luminance(r('--interactive-hover')), 'selected is stronger than hover');
-  const alphaOf = (name) => Number(/rgba\(0,\s*0,\s*0,\s*(\.?\d+(?:\.\d+)?)\)/.exec(r(name))?.[1]);
-  const over = (alpha, bg) => '#' + rgb(bg).map((v) => Math.round(v * (1 - alpha)).toString(16).padStart(2, '0')).join('');
+  // Light is black and white since 2026-11-02: the lines are solid black, not translucent black.
   for (const surface of ['--panel', '--bg']) {
-    assert.ok(contrast(over(alphaOf('--line'), r(surface)), r(surface)) >= 1.3, `hairline on ${surface}`);
-    assert.ok(contrast(over(alphaOf('--line-strong'), r(surface)), r(surface)) >= 3, `component boundary on ${surface}`);
+    assert.ok(contrast(r('--line'), r(surface)) >= 1.3, `hairline on ${surface}`);
+    assert.ok(contrast(r('--line-strong'), r(surface)) >= 3, `component boundary on ${surface}`);
   }
 });
 
-// ---- ゴールド（2026-10-16）。ライト／ダークの値の上に data-palette が重なる。 ----
-const goldOver = (base, theme) => new Map([...base, ...block(`html\\[data-palette="gold-ivory"\\]\\[data-theme="${theme}"\\]`)]);
-const goldLight = goldOver(light, 'light');
-const goldDark = goldOver(dark, 'dark');
+// ---- ゴールド（noir = 黒金ダーク、ivory = 黒金ライト）。 ----
+const goldLight = new Map([...schemeLight, ...templateBlock('ivory')]);
+const goldDark = new Map([...schemeDark, ...templateBlock('noir')]);
 const GOLD_SURFACES = ['--bg', '--panel', '--surface-raised', '--surface-sunken', '--content-surface', '--content-nested', '--interactive'];
 
 test('gold: text roles reach 4.5:1 on every surface in both themes; gold is never body text or a divider', () => {
@@ -253,8 +255,7 @@ test('gold: text roles reach 4.5:1 on every surface in both themes; gold is neve
   }
 });
 
-test('gold: the palette block does not touch the neutral focus ring', () => {
-  for (const theme of ['light', 'dark']) assert.ok(!block(`html\\[data-palette="gold-ivory"\\]\\[data-theme="${theme}"\\]`).has('--focus-ring'));
+test('gold: the focus ring stays neutral in noir and ivory', () => {
   assert.equal(resolver(goldLight)('--focus-ring'), '#3a3a3c');
   assert.equal(resolver(goldDark)('--focus-ring'), '#d1d1d6');
 });

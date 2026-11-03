@@ -45,7 +45,8 @@ test('the timeline header is a page-header with tabs and no old scope chips', ()
   const dom = new JSDOM(html);
   const view = dom.window.document.querySelector('#view-feed');
   assert.ok(view.querySelector(':scope > header.page-header > h2.page-title'));
-  assert.ok(view.querySelector('.page-header > .page-actions #feed-refresh.btn'));
+  assert.equal(view.querySelector('#feed-refresh'), null);
+  assert.ok(view.querySelector('.page-header > .page-actions #feed-sources-toggle.btn'));
   assert.equal(view.querySelector('.page-header > .page-tabs#feed-tabs[role="tablist"]') !== null, true);
   assert.equal(view.querySelector('[data-scope]'), null);
   assert.ok(view.querySelector('.layout-list #feed-list'));
@@ -139,7 +140,7 @@ test('thread and community stream items render as the same post card as timeline
   const opened = [];
   const options = { renderPost: () => document.createElement('article'), onOpenThread: (p) => opened.push(['thread', p.id]), onOpenCommunityPost: (p) => opened.push(['community', p.id]), isCurrent: () => true, primaryOrigin: 'https://hub.example', formatTime: () => '3分前' };
   const thread = renderSocialItem(document, { ...base, kind: 'thread', id: 't1', payload: { id: 't1', title: '話し合い', boardKey: 'b', postCount: 4, threadType: 'discussion', status: 'open', updatedAt: base.createdAt } }, options);
-  const community = renderSocialItem(document, { ...base, kind: 'community_post', id: 'c1', payload: { id: 'c1', communityId: 'k', communityName: '集まり', channelId: 'h', channelName: '雑談', body: '今日は晴れ', createdAt: base.createdAt, authorName: '花', authorHandle: 'hana', replyCount: 1, likeCount: 2, kind: 'chat' } }, options);
+  const community = renderSocialItem(document, { ...base, kind: 'community_post', id: 'c1', payload: { id: 'c1', communityId: 'k', communityName: '集まり', body: '今日は晴れ', createdAt: base.createdAt, authorName: '花', authorHandle: 'hana', replyCount: 1, likeCount: 2, kind: 'chat' } }, options);
   for (const card of [thread, community]) {
     assert.equal(card.tagName, 'ARTICLE');
     assert.ok(card.classList.contains('post'));

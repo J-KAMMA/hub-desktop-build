@@ -1,5 +1,6 @@
 // 設定画面の節の切り替えと、実在するコマンドだけにつながる各節。
 // 通知と受信（hub_client settings）とメディア共有は app.js 側の既存の部品を使い、ここは onSelect で知らせる。
+import { createWebSearchSetting } from './web-search.mjs';
 const ACTOR_URL = /^https:\/\/[^\s/]+(?:\/[^\s]*)?$/;
 
 export function validActorUrl(value) {
@@ -231,7 +232,7 @@ export function createCachePanel({ document, invoke }) {
 }
 
 /** ブラウザ: 広告・トラッカーの保護だけが、設定として実際に読み書きできる。 */
-export function createBrowserPanel({ document, invoke }) {
+export function createBrowserPanel({ document, invoke, storage = null, onWebSearchChange = null }) {
   const make = builder(document);
   const element = make('div', undefined, 'card');
   const toggle = make('input'); toggle.type = 'checkbox'; toggle.disabled = true;
@@ -239,6 +240,8 @@ export function createBrowserPanel({ document, invoke }) {
   const label = settingRow(document, { label: '広告と追跡を止める', desc: 'すべてのタブに効きます。ページは自動では読み込み直さないので、YouTubeの広告対策は読み込み直すと反映されます。', control: toggle, keywords: '広告 トラッカー ブロック 追跡 プライバシー' });
   const state = make('p', '', 'meta'); state.setAttribute('role', 'status');
   element.append(settingHeader(document, { label: 'アプリ内ブラウザ', desc: 'このアプリの中で外のサイトを開くときの設定です。' }), label, state);
+  const webSearch = createWebSearchSetting({ document, storage, onChange: (id) => onWebSearchChange?.(id) });
+  element.append(webSearch.element);
   const valid = (v) => v && typeof v.supported === 'boolean' && typeof v.enabled === 'boolean' && typeof v.ready === 'boolean';
   function paint(v) {
     toggle.checked = v.enabled;

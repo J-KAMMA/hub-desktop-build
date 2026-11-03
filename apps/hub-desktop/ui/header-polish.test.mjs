@@ -24,7 +24,7 @@ test('the tab row hides its scrollbar and keeps 16px tab padding with a fixed mi
 });
 
 test('header refresh buttons are 32px icon-only buttons with an aria-label and a tooltip', () => {
-  for (const id of ['feed', 'video', 'music', 'compute', 'research', 'wallet', 'node', 'notifications', 'messages', 'mail', 'rail']) {
+  for (const id of ['video', 'music', 'compute', 'research', 'wallet', 'node', 'notifications', 'messages', 'mail', 'rail']) {
     const button = document.getElementById(`${id}-refresh`);
     assert.ok(button, id);
     assert.ok(button.classList.contains('btn-icon'), id);

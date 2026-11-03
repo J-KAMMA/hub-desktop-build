@@ -42,7 +42,7 @@ test('disposed, hidden or superseded favorites ignore late private reads and mut
 
 test('library keeps text inert and separates public-track playback from external-work detail',async t=>{
   const f=fixture(t),ids=[trackId,'external-work'];const result=page(ids);result.works[0].title='<img src=x>';f.handler=async()=>result;const view=library(f);await view.ready;assert.equal(f.host.querySelector('img'),null);assert.deepEqual(f.calls[0],{command:'hub_client',args:{name:'music_library'}});
-  await find(f.host,'再生').onclick();assert.equal(f.played[0].work.id,trackId);assert.deepEqual(f.played[0].queue.map(item=>item.id),[trackId]);await find(f.host,'詳細・提供元を開く').onclick();assert.equal(f.opened[0].id,'external-work');
+  await find(f.host,'再生').onclick();assert.equal(f.played[0].work.id,trackId);assert.deepEqual(f.played[0].queue.map(item=>item.id),[trackId]);await f.host.querySelector('[data-music-work-id="external-work"] button[aria-label$="を再生"]').onclick();assert.equal(f.opened[0].id,'external-work');assert.ok(f.host.querySelector('[data-music-work-id] .music-more'),'every row has the ⋯ menu');
 });
 
 test('library reads all legacy favorites in bounded pages, including missing works, with page retry',async t=>{
@@ -68,14 +68,14 @@ test('library removal waits for confirmation, blocks duplicate commands, reloads
 
 test('stale or disposed library responses cannot render or operate old rows',async t=>{
   const f=fixture(t),pending=deferred();f.handler=()=>pending.promise;const view=library(f);f.current=false;pending.resolve(page(['private-work']));await view.ready;assert.equal(f.host.querySelectorAll('[data-music-work-id]').length,0);
-  f.current=true;f.handler=async()=>page(['work-1']);await view.reload();const old=find(f.host,'詳細・提供元を開く');f.handler=async()=>page([]);await view.reload();await old.onclick();assert.equal(f.opened.length,0);view.destroy();assert.equal(f.host.children.length,0);
+  f.current=true;f.handler=async()=>page(['work-1']);await view.reload();const old=f.host.querySelector('button[aria-label$="を再生"]');f.handler=async()=>page([]);await view.reload();await old.onclick();assert.equal(f.opened.length,0);view.destroy();assert.equal(f.host.children.length,0);
 });
 
 test('embedded music library omits its frame and heading without losing playback, detail and failure recovery',async t=>{
   for(const embedded of [undefined,false,true]){
     const f=fixture(t);f.handler=async()=>page([trackId,'external-work']);const view=library(f,{embedded});await view.ready;const root=f.host.querySelector('section');
     assert.equal(root.classList.contains('card'),embedded!==true);assert.equal(root.querySelectorAll(':scope > h3').length,embedded===true?0:1);assert.equal(root.getAttribute('aria-label'),'音楽のお気に入り');assert.equal(root.querySelector('[data-music-work-id]').classList.contains('card'),true);
-    await find(root,'再生').onclick();await find(root,'詳細・提供元を開く').onclick();assert.equal(f.played[0].work.id,trackId);assert.equal(f.opened[0].id,'external-work');
+    await find(root,'再生').onclick();await root.querySelector('[data-music-work-id="external-work"] button[aria-label$="を再生"]').onclick();assert.equal(f.played[0].work.id,trackId);assert.equal(f.opened[0].id,'external-work');
     f.handler=async()=>{throw Error('unavailable');};await find(root,'更新').onclick();assert.equal(root.querySelectorAll('[data-music-work-id]').length,2);assert.equal(find(root,'再試行').hidden,false);
   }
 });

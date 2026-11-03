@@ -1,0 +1,107 @@
+/* 研究：プロジェクトの一覧の行・静かな空の状態・詳細の札（2026-11-02）。色は意味名のトークンだけ。
+   金は線だけ・ボタンは平ら・一覧は箱にしない（行と行の間は 1px の線）。 */
+
+/* ---- 一覧の頭：説明の 1 段は出さない（画面の名前が説明している）。 ---- */
+#hub-shell #view-research > p.meta:not(#research-state) { display: none; }
+#hub-shell #view-research #research-state { margin: 0; padding: var(--ds-space-3) 0 var(--ds-space-1); color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); }
+#hub-shell #view-research #research-state:empty { display: none; }
+
+/* 作成の欄は箱にせず、線で区切る。 */
+#hub-shell #view-research .research-editor { padding: var(--ds-space-3) 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; }
+
+/* ---- 行 ---- */
+#hub-shell #view-research .research-project-list { display: block; gap: 0; width: calc(100% + 2 * var(--ds-page-inset)); max-width: none; margin: 0 calc(-1 * var(--ds-page-inset)); }
+#hub-shell #view-research .research-project-card.research-row {
+  display: grid; gap: var(--ds-space-1); width: 100%; max-width: none; box-sizing: border-box; margin: 0;
+  padding: var(--ds-space-3) var(--ds-page-inset); border: 0; border-bottom: 1px solid var(--line); border-radius: 0;
+  background: transparent; color: var(--text); text-align: left; cursor: pointer;
+}
+#hub-shell #view-research .research-project-card.research-row:hover { background: var(--interactive); }
+#hub-shell #view-research .research-project-card.research-row:focus-visible { outline: 2px solid var(--ds-focus-ring); outline-offset: -2px; }
+.research-row-head { display: flex; align-items: center; gap: var(--ds-space-2); min-width: 0; }
+#hub-shell .research-row-name { flex: 0 1 auto; min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); font-weight: var(--ds-weight-strong); color: var(--text); }
+#hub-shell .research-row-body { margin: 0; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); font-weight: var(--ds-weight-text); color: var(--text); }
+#hub-shell .research-row-meta { margin: 0; color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); }
+
+/* ---- 札（状態）：20px・角 4・線だけ ---- */
+.research-badge {
+  display: inline-flex; flex: none; align-items: center; box-sizing: border-box; height: var(--ds-badge-h);
+  padding: 0 var(--ds-badge-status-px); border: 1px solid var(--ds-badge-status-line); border-radius: var(--ds-radius-badge);
+  background: transparent; color: var(--ds-badge-status-fg); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); font-weight: var(--ds-weight-text); white-space: nowrap;
+}
+
+/* ---- 静かな空の状態：円の記号は無い。題 20/800、本文 15 muted、副ボタンは 1 つまで ---- */
+#hub-shell .state-panel.research-empty {
+  align-items: flex-start; gap: var(--ds-space-2); max-width: none; margin: 0; padding: var(--ds-space-6) var(--ds-page-inset); text-align: left;
+}
+#hub-shell .state-panel.research-empty .state-title { text-wrap: balance; font-size: var(--ds-type-title-size); line-height: var(--ds-type-title-leading); font-weight: var(--ds-weight-heavy); color: var(--text); }
+#hub-shell .state-panel.research-empty .state-body { max-width: 360px; font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); color: var(--muted); }
+#hub-shell .state-panel.research-empty .research-empty-action {
+  display: inline-flex; align-items: center; height: var(--ds-btn-h); margin-top: var(--ds-space-2); padding: 0 var(--ds-btn-px);
+  border: 1px solid var(--ds-btn-secondary-line); border-radius: var(--ds-radius-pill); background: transparent; color: var(--ds-btn-secondary-fg);
+  font-size: var(--ds-type-body-size); font-weight: var(--ds-weight-strong); cursor: pointer;
+}
+#hub-shell .state-panel.research-empty .research-empty-action:hover { background: var(--ds-btn-ghost-hover); }
+
+/* ---- 骨組み：行と同じ形 ---- */
+.research-skeleton { margin: 0; }
+.research-skel-row { display: grid; gap: var(--ds-space-2); padding: var(--ds-space-3) var(--ds-page-inset); border-bottom: 1px solid var(--line); }
+.research-skel-row > .skeleton-block { display: block; border-radius: var(--ds-radius-badge); }
+.research-skel-name { width: 40%; height: var(--ds-space-3); }
+.research-skel-body { width: 88%; height: var(--ds-space-3); }
+.research-skel-meta { width: 24%; height: var(--ds-space-3); }
+
+/* ---- プロジェクトの詳細 ---- */
+#hub-shell .research-project-detail { display: block; padding-top: var(--ds-space-3); }
+#hub-shell .research-project-detail [data-research-tab][hidden] { display: none; }
+#hub-shell .research-project-detail > .research-summary { margin: 0 0 var(--ds-space-3); font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); color: var(--text); }
+.research-page-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ds-space-2); margin: 0 0 var(--ds-space-2); }
+.research-page-head > .meta { margin: 0; color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); }
+
+/* 札：53px、線は下に 1px、選んだ札は 700 と太い下線（色の指定は desktop-luxe.css の .page-tabs が持つ） */
+#hub-shell .research-tabs { display: flex; align-items: stretch; gap: var(--ds-space-7); margin: 0 calc(-1 * var(--ds-page-inset)) var(--ds-space-2); padding-inline: var(--ds-page-inset); overflow-x: auto; scrollbar-width: none; }
+#hub-shell .research-tabs::-webkit-scrollbar { display: none; }
+#hub-shell .research-tabs > [role="tab"] { flex: none; border: 0; cursor: pointer; white-space: nowrap; }
+#hub-shell .research-tabs > [role="tab"]:focus-visible { outline: 2px solid var(--ds-focus-ring); outline-offset: -2px; }
+
+/* 節の見出し：20/800 */
+#hub-shell .research-project-detail > h3[data-research-section] { margin: var(--ds-space-4) 0 var(--ds-space-1); padding: var(--ds-space-3) 0 var(--ds-space-1); font-size: var(--ds-type-title-size); line-height: var(--ds-type-title-leading); font-weight: var(--ds-weight-heavy); color: var(--text); }
+
+/* 操作（Gitなど）は平らな副ボタン 32px、種類の絞りは小さな札（チップ） */
+#hub-shell .research-project-detail .research-group-filter { display: flex; flex-wrap: wrap; gap: var(--ds-chip-gap); margin: var(--ds-space-2) 0; }
+#hub-shell .research-project-detail .research-group-filter > button {
+  display: inline-flex; align-items: center; box-sizing: border-box; height: var(--ds-chip-h); padding: 0 var(--ds-chip-px); border: 1px solid transparent; border-radius: var(--ds-radius-pill);
+  background: var(--ds-chip-bg); color: var(--text); font-size: var(--ds-type-body-size); font-weight: var(--ds-weight-text); cursor: pointer;
+}
+#hub-shell .research-project-detail .research-group-filter > button[aria-pressed="true"] { border-color: var(--ds-chip-selected-line); background: transparent; font-weight: var(--ds-weight-strong); }
+#hub-shell .research-project-detail .research-group-filter:not([role="group"]) > button { padding: 0 var(--ds-btn-px); border-color: var(--ds-btn-secondary-line); background: transparent; color: var(--ds-btn-secondary-fg); font-weight: var(--ds-weight-strong); }
+#hub-shell .research-project-detail .research-group-filter:not([role="group"]) > button:hover { background: var(--ds-btn-ghost-hover); }
+
+/* 文書の行：全幅、下に線、名前 15/700 */
+#hub-shell .research-project-detail > button.research-doc-row {
+  display: block; width: calc(100% + 2 * var(--ds-page-inset)); max-width: none; box-sizing: border-box; margin: 0 calc(-1 * var(--ds-page-inset)); padding: var(--ds-space-3) var(--ds-page-inset);
+  border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; color: var(--text); text-align: left;
+  font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); font-weight: var(--ds-weight-strong); cursor: pointer;
+}
+#hub-shell .research-project-detail > button.research-doc-row:hover { background: var(--interactive); }
+
+/* 関連先：見出し 15/700、説明 13 muted、リンクは本文色で行にする（既定の青い下線は使わない） */
+#hub-shell .research-project-detail .research-related-links { display: block; }
+#hub-shell .research-project-detail .research-related-group { display: block; padding: 0; border: 0; }
+#hub-shell .research-project-detail .research-related-group > h4 { margin: var(--ds-space-3) 0 0; font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); font-weight: var(--ds-weight-strong); color: var(--text); }
+#hub-shell .research-project-detail .research-related-purpose { margin: 0 0 var(--ds-space-1); color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); }
+#hub-shell .research-project-detail .research-related-link { padding: var(--ds-space-3) 0; border-bottom: 1px solid var(--line); }
+#hub-shell .research-project-detail .research-related-link > a { color: var(--text); font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); font-weight: var(--ds-weight-strong); text-decoration: none; }
+#hub-shell .research-project-detail .research-related-link > a:hover { text-decoration: underline; }
+
+/* 成果の行・関係の行 */
+#hub-shell .research-project-detail .research-object-list { display: block; }
+#hub-shell .research-project-detail .research-object-row { display: grid; gap: 2px; padding: var(--ds-space-3) 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; }
+#hub-shell .research-project-detail .research-object-row h3 { margin: 0; font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); font-weight: var(--ds-weight-strong); }
+#hub-shell .research-project-detail .research-object-row .meta { margin: 0; color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); }
+#hub-shell .research-project-detail .research-object-row code { color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); overflow-wrap: anywhere; }
+#hub-shell .research-project-detail .research-relation { margin: 0; padding: var(--ds-space-3) 0; border-bottom: 1px solid var(--line); font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); }
+
+/* 詳細の中の編集・PDF・書き出しの欄も箱にしない：線で区切る */
+#hub-shell .research-project-detail .research-editor { margin: var(--ds-space-3) 0 0; padding: var(--ds-space-3) 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent; }
+#hub-shell .research-project-detail .research-editor h3 { margin: 0 0 var(--ds-space-1); font-size: var(--ds-type-title-size); line-height: var(--ds-type-title-leading); font-weight: var(--ds-weight-heavy); }

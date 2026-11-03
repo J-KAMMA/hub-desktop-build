@@ -61,7 +61,7 @@
 #hub-shell .view .approve {
   background: var(--ds-btn-primary-bg);
   color: var(--ds-btn-primary-fg);
-  box-shadow: inset 0 0 0 1px var(--ds-btn-primary-line);
+  border-color: var(--ds-btn-primary-line);
 }
 #hub-shell .view .approve:hover:not(:disabled) { opacity: .86; }
 #hub-shell .view .approve:active:not(:disabled) { opacity: .72; }
@@ -325,13 +325,7 @@
 }
 #hub-shell #view-search .chip:hover { background: var(--interactive-hover); }
 #hub-shell #view-search .chip.on { background: var(--selected); color: var(--text); }
-#hub-shell #view-search .web-search {
-  margin-top: var(--space-6);
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--line);
-}
-#hub-shell #view-search .web-search .actions { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
-#hub-shell #view-search .web-search h3 { font-size: var(--type-body); }
+#hub-shell #view-search .web-search { margin: var(--space-2) 0 var(--space-3); }
 #hub-shell #view-search .web-search .meta { margin: var(--space-1) 0 0; }
 
 /* 研究：検索欄・表示元・接続先を1本のフィルタ行に並べる。作成欄は閉じている間は出さない。 */
@@ -623,6 +617,7 @@
 .omnibox-suggestions .omnibox-row { display: grid; gap: 2px; width: 100%; padding: var(--space-2) var(--space-3); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text); text-align: left; cursor: pointer; }
 .omnibox-suggestions .omnibox-row[aria-selected="true"], .omnibox-suggestions .omnibox-row:hover { background: var(--interactive); }
 .omnibox-suggestions .omnibox-row strong { overflow: hidden; font-size: var(--type-subhead); font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
+.omnibox-suggestions .omnibox-row small.omnibox-kind { color: var(--muted); }
 .omnibox-suggestions .omnibox-row small { overflow: hidden; color: var(--muted); font-size:var(--type-caption); text-overflow: ellipsis; white-space: nowrap; }
 #hub-shell .app-toolbar #toolbar-search-form { max-width: none; min-width: 0; flex: none; }
 #hub-shell.browser-active #view-browser #browser-navigation { padding: 0; margin: 0; }
@@ -714,7 +709,7 @@
 #hub-shell #video-watch-main > .actions > .meta:empty { display: none; }
 #hub-shell .video-posts { margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--line); }
 #hub-shell .video-posts .video-posts-composer textarea { min-height: 56px; }
-#hub-shell .video-posts .video-posts-send:not(:disabled) { background: var(--ds-btn-primary-bg); color: var(--ds-btn-primary-fg); box-shadow: inset 0 0 0 1px var(--ds-btn-primary-line); border-color: transparent; }
+#hub-shell .video-posts .video-posts-send:not(:disabled) { background: var(--ds-btn-primary-bg); color: var(--ds-btn-primary-fg); border-color: var(--ds-btn-primary-line); }
 #hub-shell .video-posts .video-posts-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin: var(--space-1) 0 0; padding-bottom: var(--space-2); border-bottom: 1px solid var(--line); }
 #hub-shell .video-posts .video-posts-bar .meta { margin: 0; }
 #hub-shell .video-posts .video-posts-bar .head-action { background: transparent; border-color: transparent; color: var(--muted); }

@@ -7,42 +7,6 @@ const errorText = error => error?.message || String(error);
 const folded = (document, title) => { const node = make(document, 'details', '', 'card detail-form'); node.append(make(document, 'summary', title)); return node; };
 const lock = (node, disabled) => node.querySelectorAll('input,textarea,select,button').forEach(control => { control.disabled = disabled; });
 
-export function communityChannelControls(document, { communityId, channels, invoke, refresh, confirm = text => window.confirm(text) }) {
-  const root = folded(document, 'チャンネル管理');
-  const form = make(document, 'form', '', 'detail-form');
-  const choice = make(document, 'select'); choice.setAttribute('aria-label', '管理するチャンネル');
-  choice.append(make(document, 'option', '新しいチャンネル')); choice.firstChild.value = '';
-  channels.forEach(channel => { const option = make(document, 'option', channel.name); option.value = channel.id; choice.append(option); });
-  const name = field(document, 'チャンネル名', 'text', 50), description = field(document, 'チャンネルの説明', 'textarea', 200), note = status(document);
-  let busy = false, deletionId = null;
-  const send = async (action, extra = {}) => {
-    if (busy) return;
-    busy = true; lock(root, true); note.textContent = '更新中…';
-    try {
-      const result = await invoke('hub_client_action', { action, target: communityId, ...extra });
-      if (action === 'community_channel_delete' ? !(result.deleted && result.receipt?.auditId === deletionId && result.receipt?.targetId === choice.value) : !result.channel?.id) throw new Error('結果を確認できませんでした。チャンネル一覧を更新して確認してください。');
-      note.textContent = '更新しました'; await refresh();
-    } catch (error) { note.textContent = errorText(error); }
-    finally { busy = false; lock(root, false); syncButtons(); }
-  };
-  const save = button(document, '作成', () => {
-    if (!name.value.trim()) { note.textContent = 'チャンネル名を入力してください。'; return; }
-    return send(choice.value ? 'community_channel_edit' : 'community_channel_create', { options: { channelId: choice.value, name: name.value.trim(), description: description.value.trim() } });
-  });
-  const up = button(document, '上へ', () => send('community_channel_up', { options: { channelId: choice.value } }));
-  const down = button(document, '下へ', () => send('community_channel_down', { options: { channelId: choice.value } }));
-  const remove = button(document, '削除', () => {
-    if (busy || !choice.value || channels.length < 2 || !confirm('このチャンネルと中のメッセージを削除しますか？')) return;
-    deletionId ??= crypto.randomUUID();
-    return send('community_channel_delete', { requestId: deletionId, options: { channelId: choice.value } });
-  });
-  function syncButtons() { save.textContent = choice.value ? '変更を保存' : '作成'; [up, down, remove].forEach(item => { item.hidden = !choice.value; }); remove.disabled = channels.length < 2; }
-  choice.onchange = () => { const channel = channels.find(item => item.id === choice.value); name.value = channel?.name ?? ''; description.value = channel?.description ?? ''; deletionId = null; note.textContent = ''; syncButtons(); };
-  form.onsubmit = event => { event.preventDefault(); save.click(); };
-  const row = make(document, 'div', '', 'detail-form-row'); row.append(save, up, down, remove);
-  form.append(choice, name, description, row, note); root.append(form); syncButtons(); return root;
-}
-
 export function communityMemberControls(document, { communityId, members, viewerId, viewerRole, canManage, invoke, refresh, state = {}, confirm = text => window.confirm(text) }) {
   const root = make(document, 'section', '', 'detail-form community-member-controls');
   const query = field(document, 'メンバーを検索', 'search', 100), list = make(document, 'div'), count = status(document);
@@ -126,7 +90,7 @@ export function communityPollCard(document, { options, canVote, invoke, communit
   root.append(...buttons, make(document, 'p', `${total}票${closed ? ' · 受付終了' : ''}${closesAt && !closed ? ' · 締切 ' + new Date(closesAt).toLocaleString('ja-JP') : ''}`, 'meta'), note); return root;
 }
 
-export function communityComposerTools(document, { communityId, channelId, invoke, refresh, textarea, kind, hasImages }) {
+export function communityComposerTools(document, { communityId, invoke, refresh, textarea, kind, hasImages }) {
   const root = make(document, 'section', '', 'detail-form');
   const poll = folded(document, 'アンケートを作成'), pollForm = make(document, 'form', '', 'detail-form');
   const question = field(document, 'アンケートの質問', 'text', 200), choices = field(document, '選択肢（1行に1つ、2〜10件）', 'textarea', 1010), hours = field(document, '締切までの時間', 'number');
@@ -135,7 +99,7 @@ export function communityComposerTools(document, { communityId, channelId, invok
     if (pollBusy) return;
     const labels = [...new Set(choices.value.split(/\r?\n/).map(value => value.normalize('NFKC').trim()).filter(Boolean))];
     if (!question.value.trim() || labels.length < 2 || labels.length > 10 || labels.some(label => label.length > 100) || !Number.isInteger(hours.valueAsNumber) || hours.valueAsNumber < 1 || hours.valueAsNumber > 720) { pollState.textContent = '質問、2〜10件の選択肢、1〜720時間の締切を入力してください。'; return; }
-    const payload = { channelId, question: question.value.trim(), choices: labels, closesInHours: hours.valueAsNumber };
+    const payload = { question: question.value.trim(), choices: labels, closesInHours: hours.valueAsNumber };
     const key = JSON.stringify(payload); if (request?.key !== key) request = { key, id: crypto.randomUUID() };
     pollBusy = true; lock(poll, true); pollState.textContent = '作成中…';
     try {
@@ -157,7 +121,7 @@ export function communityComposerTools(document, { communityId, channelId, invok
       if (scheduling) return;
       scheduling = true; lock(schedule, true); scheduledState.textContent = '予約中…';
       try {
-        const result = await invoke('hub_client_action', { action: 'community_message_schedule', target: communityId, text: content, requestId: scheduleRequest.id, options: { channelId, kind: messageKind, scheduledAt: time.toISOString() } });
+        const result = await invoke('hub_client_action', { action: 'community_message_schedule', target: communityId, text: content, requestId: scheduleRequest.id, options: { kind: messageKind, scheduledAt: time.toISOString() } });
         if (result.scheduled !== true) throw new Error('予約結果を確認できませんでした。入力は保持しています。');
         if (textarea.value.trim() === content) { textarea.value = ''; textarea.dispatchEvent(new document.defaultView.Event('input')); }
         scheduledState.textContent = '予約しました'; scheduleRequest = null; preview.remove();

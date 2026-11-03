@@ -54,7 +54,7 @@ test('artist page: cover, count, play-all queues Hub tracks, rows open artist/al
   host.querySelectorAll('.mc-title')[1].click();
   assert.deepEqual(calls.shift(), ['play', [uuid(1), uuid(2)], uuid(2)]);
   host.querySelectorAll('.mc-title')[2].click();
-  assert.deepEqual(calls.shift(), ['open', 'yt_1']);
+  assert.deepEqual(calls.shift(), ['work', 'yt_1']);
   host.querySelector('.mc-track .mc-next').click();
   assert.deepEqual(calls.shift(), ['next', uuid(1)]);
   const links = host.querySelectorAll('.mc-track')[0].querySelectorAll('.mc-link');

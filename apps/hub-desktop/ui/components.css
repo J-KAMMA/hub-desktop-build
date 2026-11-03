@@ -193,7 +193,7 @@
 }
 
 /* Content sits centered in the canvas, and empty/error states are centered blocks without rules (2026-10-24). */
-#hub-shell .view:not(#view-browser):not(#view-ai) { margin-inline: 0 auto; }
+#hub-shell .view:not(#view-browser):not(#view-ai) { margin-inline: auto; } /* centered on the window by desktop-layouts.css */
 .layout-list, .layout-reading { margin-inline: auto; }
 /* state: see the State block above (max-width is --state-max). */
 
