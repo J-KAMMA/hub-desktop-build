@@ -9153,7 +9153,7 @@ function mountCommunityStream(host, entry, holder, ownerCurrent, mode = {}) {
     if (cursor) return kind ? ["community_posts_kind_page", [communityId, kind, cursor]] : ["community_posts_page", [communityId, cursor]];
     return kind ? ["community_posts_kind", [communityId, kind]] : ["community_posts", [communityId]];
   };
-  let epoch = 0, shown = "", stuck = true;
+  let epoch = 0, shown = "", stuck = true, settled = false;
   const scroller = () => host.querySelector(".community-chat-scroll");
   // 統一した読み出し（place = channel:{コミュニティ}:{チャンネル}）。旧表のメッセージは上の道のまま、新しい形の投稿だけを続けて並べる。
   // 1本の流れの場所は既定のチャンネル（サーバーの形は変えない）。種類は投稿の kind に載る。
@@ -9197,6 +9197,8 @@ function mountCommunityStream(host, entry, holder, ownerCurrent, mode = {}) {
     shown = JSON.stringify(stream.data?.messages ?? []);
   };
   async function load(cursor = null, quiet = false) {
+    // 最初の読み込みが決着する（描くか、失敗を出す）まで、静かな読み直しは始めない。追い越すと最初の結果が捨てられ、骨組みのまま止まる。
+    if (quiet && !settled) return;
     const mine = ++epoch;
     if (!cursor && !quiet) host.replaceChildren(skeletonResult(), skeletonResult());
     const [name, ids] = request(cursor);
@@ -9218,10 +9220,12 @@ function mountCommunityStream(host, entry, holder, ownerCurrent, mode = {}) {
       stream.data = before
         ? { ...next, messages: [...before.messages, ...next.messages.filter((message) => !seen.has(message.id))], profiles: { ...before.profiles, ...next.profiles }, pollOptions: [...(before.pollOptions ?? []), ...(next.pollOptions ?? [])] }
         : next;
+      settled = true;
       paint(!cursor);
     } catch (error) {
       if (mine !== epoch || !ownerCurrent()) return;
       if (quiet) return;
+      settled = true;
       const note = document.createElement("p");
       note.className = "meta warning";
       note.textContent = friendlyError(error);

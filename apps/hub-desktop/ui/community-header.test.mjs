@@ -12,12 +12,14 @@ const source = readFileSync(new URL('./app.js', import.meta.url), 'utf8');
 const fn = (name) => { const start = source.indexOf(name), end = source.indexOf('\n}', start) + 2; assert.ok(start >= 0 && end > start); return source.slice(start, end); };
 const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-function mount(data, entry = { name: 'community', ids: ['c1'] }, { channels, canManage = false, posts = {}, rules = [], members = [] } = {}) {
+function mount(data, entry = { name: 'community', ids: ['c1'] }, { channels, canManage = false, posts = {}, rules = [], members = [], postsFail = () => false } = {}) {
+  let postReads = 0;
   const dom = new JSDOM('<main></main>'), document = dom.window.document, opened = [], contentCalls = [], streams = [], invokes = [], live = [], navCalls = [];
   const stub = () => document.createElement('p');
   const invoke = async (name, args) => {
     invokes.push({ name, args });
     if (name === 'hub_detail' && args.name === 'community_channels') return { channels: channels ?? [{ kind: 'chat', name: '雑談' }, { kind: 'question', name: '質問' }, { kind: 'party', name: '募集' }], canManage };
+    if (name === 'hub_detail' && args.name.startsWith('community_posts') && postsFail(++postReads)) throw new Error('not_found');
     if (name === 'hub_detail' && args.name.startsWith('community_posts')) return { messages: posts[args.ids[1]] ?? [], profiles: {}, pollOptions: [], nextCursor: null };
     if (name === 'hub_detail' && args.name === 'community_members') return { communityId: 'c1', members, viewerId: 'me', viewerRole: 'member', canManage: false };
     if (name === 'hub_detail' && args.name === 'community_onboarding') return { community: { id: 'c1' }, rules, questions: [] };
@@ -176,4 +178,20 @@ test('設定 opens from the ⋯ menu', (t) => {
   const f = mount(member); t.after(() => f.dom.window.close());
   [...f.target.querySelectorAll('.community-more-item')].find((b) => b.textContent === '設定').click();
   assert.equal(f.entry.section, 'settings');
+});
+
+test('a live refresh that arrives before the first read finishes does not leave the stream as a skeleton', async (t) => {
+  // 2 回目の読み（静かな読み直し）は失敗する。最初の読みの結果が描かれること。
+  const f = mount(member, { name: 'community', ids: ['c1'] }, { postsFail: (n) => n >= 2 }); t.after(() => f.controller.dispose?.() ?? f.dom.window.close());
+  for (let i = 0; i < 200 && !f.live.length; i++) await Promise.resolve();
+  assert.equal(f.live.length, 1);
+  assert.equal(f.target.querySelector('.stream-for-all'), null, 'the first read is still pending');
+  await f.live[0].refresh();
+  await f.controller.ready; await tick();
+  assert.ok(f.target.querySelector('.stream-for-all'), 'the first read is painted');
+  assert.equal(f.invokes.filter((call) => call.args?.name === 'community_posts').length, 1, 'the early quiet refresh did not start a second read');
+  // 決着した後の静かな読み直しは普通に走り、失敗しても描いたものを残す。
+  await f.live[0].refresh(); await tick();
+  assert.equal(f.invokes.filter((call) => call.args?.name === 'community_posts').length, 2);
+  assert.ok(f.target.querySelector('.stream-for-all'));
 });

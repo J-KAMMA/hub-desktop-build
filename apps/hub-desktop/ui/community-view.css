@@ -131,3 +131,7 @@
 
 /* 左の列：開いているコミュニティは、流れを見ている間だけ現在の印。共有・メンバーを見ている間は、その行だけが現在。 */
 #hub-shell #sidebar-context .nav-community[data-open="true"] .nav-community-face { color: var(--text); }
+
+/* 開いた投稿（.community-thread）の下の返信欄：返信先は開いている投稿に決まっている。「返信先: …」の行、解除のボタン、種類の欄は出さない。 */
+#hub-shell :has(> .community-thread) > form.community-composer > :is(p.meta:first-child, p.meta:first-child + .head-action):not(#_):not(#_) { display: none; }
+#hub-shell :has(> .community-thread) > form.community-composer .community-composer-row > select:not(#_):not(#_) { display: none; }

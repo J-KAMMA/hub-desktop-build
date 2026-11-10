@@ -1187,3 +1187,10 @@ dialog.media-lightbox .media-lightbox-count[hidden] { display: none; }
 #hub-shell .community-content-item .community-content-title { min-height: 24px; font-size: var(--type-body); line-height: 20px; font-weight: var(--weight-strong, 600); }
 #hub-shell .community-content-item .meta { font-size: var(--type-subhead); line-height: 20px; color: var(--muted); }
 #hub-shell .community-content-item .community-content-remove:not(#_) { inset-block-start: 0; inset-inline-end: 0; min-width: 44px; min-height: 44px; background: transparent; }
+
+/* ===== スレッド（2026-11-11 所有者「スレッドとコミュニティのUIを使いやすくして」） ===== */
+/* 種別（雑談・質問・募集）は札。コミュニティの行の札と同じ形で、ほかの字（件数・時刻）と見分けが付く。 */
+#hub-shell .thread-row-meta > .thread-row-type:not(#_) { padding: 0 var(--space-2); border: 1px solid var(--divider); border-radius: var(--radius-pill); color: var(--text); font-size: var(--type-caption); line-height: var(--lh-caption); }
+#hub-shell .thread-row-meta > .thread-row-type + *::before:not(#_) { content: none; }
+/* 受付終了の知らせ・下の折りたたみは、本文と同じ左端に置く（16px ずれていた）。 */
+#hub-shell #view-detail .thread-reader ~ p.meta:not(#_) { margin: 0; padding: var(--space-3) var(--space-4); }
