@@ -239,6 +239,8 @@ export function createProfileBody(doc, data, deps) {
   const tablist = el(doc, "div", "profile-tabs");
   tablist.setAttribute("role", "tablist");
   tablist.setAttribute("aria-label", "プロフィールの中身");
+  // 中身の切り替えは左の列の木にある。本文には同じ選択を重ねて置かない（行は木から tab.click() で動く）。
+  tablist.hidden = true;
   const panel = el(doc, "div", "profile-panel");
   panel.setAttribute("role", "tabpanel");
   root.append(tablist, panel);

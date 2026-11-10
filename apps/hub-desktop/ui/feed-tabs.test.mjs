@@ -21,7 +21,7 @@ function fixture(t, { lists = [], saved = null, registered = true, detail = { it
     document, calls, feedScope: 'recommended', socialMode: 'legacy', socialFilter: 'post', socialWantedScene: null, socialStreamController: null,
     socialBar: { hidden: true }, desktopAccount: { state: registered ? 'registered' : 'none' }, homeAccountEpoch: {}, currentView: 'feed',
     localStorage: { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, v) },
-    renderSidebarContext() {}, loadFeed: async () => { calls.push('loadFeed'); }, icon: () => '',
+    renderSidebarContext(v) { calls.push('sidebar:' + v); }, sidebarContext: document.querySelector('#sidebar-context') ?? document.createElement('div'), sidebarFeedTreeOwned: false, loadFeed: async () => { calls.push('loadFeed'); }, icon: () => '',
     invoke: async (name, args) => {
       calls.push([name, args]);
       if (name === 'hub_client') return { lists };
@@ -39,55 +39,54 @@ function fixture(t, { lists = [], saved = null, registered = true, detail = { it
 }
 const plain = (value) => JSON.parse(JSON.stringify(value));
 const tick = () => new Promise((resolve) => setImmediate(resolve));
-const labels = (document) => [...document.querySelectorAll('#feed-tabs [role="tab"]')].map((tab) => tab.textContent);
+const entries = (f) => plain(f.ctx.feedTabEntries());
+const labels = (f) => entries(f).map((entry) => entry.label);
 
-test('the timeline header is a page-header with tabs and no old scope chips', () => {
+test('the timeline header has a title and actions but no tab strip (tabs moved to the left column, 2026-11-06)', () => {
   const dom = new JSDOM(html);
   const view = dom.window.document.querySelector('#view-feed');
   assert.ok(view.querySelector(':scope > header.page-header > h2.page-title'));
   assert.equal(view.querySelector('#feed-refresh'), null);
-  assert.ok(view.querySelector('.page-header > .page-actions #feed-sources-toggle.btn'));
-  assert.equal(view.querySelector('.page-header > .page-tabs#feed-tabs[role="tablist"]') !== null, true);
+  assert.equal(view.querySelector('#feed-sources-toggle'), null); // 切り替えは左の列の「…」へ移った
+  assert.ok(view.querySelector(':scope > header.page-header[hidden]')); // 孤立したボタンの帯は無い
+  assert.equal(view.querySelector('#feed-tabs'), null);
+  assert.equal(view.querySelector('.page-header > .page-tabs'), null);
   assert.equal(view.querySelector('[data-scope]'), null);
   assert.ok(view.querySelector('.layout-list #feed-list'));
   dom.window.close();
 });
 
-test('tab order is おすすめ, フォロー中, 人気, then one tab per list from the lists API', async (t) => {
+test('entry order is おすすめ, フォロー中, 人気, then one entry per list from the lists API', async (t) => {
   const f = fixture(t, { lists: [{ id: 'l1', name: '友人' }, { id: 'l2', name: '仕事' }, { id: 'bad id', name: 'x' }, { id: 'l3', name: '' }] });
   f.ctx.renderFeedTabs();
-  assert.deepEqual(labels(f.document), ['おすすめ', 'フォロー中', '人気']);
+  assert.deepEqual(labels(f), ['おすすめ', 'フォロー中', '人気']);
   await tick(); await tick();
   assert.deepEqual(plain(f.calls.filter((c) => c[0] === 'hub_client')), [['hub_client', { name: 'lists' }]]);
-  assert.deepEqual(labels(f.document), ['おすすめ', 'フォロー中', '人気', '友人', '仕事']);
-  assert.deepEqual([...f.document.querySelectorAll('#feed-tabs [role="tab"]')].map((tab) => tab.dataset.tab), ['recommended', 'following', 'popular', 'list:l1', 'list:l2']);
+  assert.deepEqual(labels(f), ['おすすめ', 'フォロー中', '人気', '友人', '仕事']);
+  assert.deepEqual(entries(f).map((entry) => entry.key), ['recommended', 'following', 'popular', 'list:l1', 'list:l2']);
 });
 
-test('without a Desktop connection only the three fixed tabs appear and the lists API is not called', async (t) => {
+test('without a Desktop connection only the three fixed entries appear and the lists API is not called', async (t) => {
   const f = fixture(t, { registered: false });
   f.ctx.renderFeedTabs(); await tick();
-  assert.deepEqual(labels(f.document), ['おすすめ', 'フォロー中', '人気']);
+  assert.deepEqual(labels(f), ['おすすめ', 'フォロー中', '人気']);
   assert.equal(f.calls.some((c) => c[0] === 'hub_client'), false);
 });
 
-test('selecting a tab persists it, marks it selected, keeps roving focus and reloads the feed', (t) => {
+test('selecting an entry persists it, marks it selected, redraws the sidebar and reloads the feed', (t) => {
   const f = fixture(t);
-  f.ctx.renderFeedTabs();
-  const tab = f.document.querySelector('#feed-tabs [data-tab="following"]');
-  tab.focus(); tab.click();
+  f.ctx.selectFeedTab('following');
   assert.equal(f.store.get('hub.desktop.feedTab.v1'), 'following');
   assert.equal(vm.runInContext('feedScope', f.ctx), 'following');
-  const tabs = [...f.document.querySelectorAll('#feed-tabs [role="tab"]')];
-  assert.deepEqual(tabs.map((x) => x.getAttribute('aria-selected')), ['false', 'true', 'false']);
-  assert.deepEqual(tabs.map((x) => x.tabIndex), [-1, 0, -1]);
-  assert.equal(f.document.activeElement, tabs[1], 'focus stays on the selected tab after repaint');
+  assert.deepEqual(entries(f).map((entry) => entry.selected), [false, true, false]);
   assert.ok(f.calls.includes('loadFeed'));
-  f.document.activeElement.dispatchEvent(new f.document.defaultView.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
-  assert.equal(vm.runInContext('feedScope', f.ctx), 'popular');
-  assert.equal(f.document.activeElement.dataset.tab, 'popular');
+  assert.ok(f.calls.includes('sidebar:feed'));
+  f.ctx.selectFeedTab('list:l9');
+  assert.equal(vm.runInContext('feedScope', f.ctx), 'list');
+  assert.equal(f.store.get('hub.desktop.feedTab.v1'), 'list:l9');
 });
 
-test('the stored tab is restored, including a list tab, and an unknown stored value is ignored', (t) => {
+test('the stored entry is restored, including a list, and an unknown stored value is ignored', (t) => {
   assert.equal(vm.runInContext('feedScope', fixture(t, { saved: 'popular' }).ctx), 'popular');
   const list = fixture(t, { saved: 'list:abc_1' }).ctx;
   assert.equal(vm.runInContext('feedScope', list), 'list');
@@ -96,19 +95,20 @@ test('the stored tab is restored, including a list tab, and an unknown stored va
   assert.equal(vm.runInContext('feedScope', fixture(t, { saved: 'evil' }).ctx), 'recommended');
 });
 
-test('a stored list that no longer exists falls back to おすすめ', async (t) => {
+test('a stored list that no longer exists falls back to おすすめ and the sidebar is redrawn', async (t) => {
   const f = fixture(t, { saved: 'list:gone', lists: [{ id: 'l1', name: '友人' }] });
   f.ctx.renderFeedTabs(); await tick(); await tick();
   assert.equal(vm.runInContext('feedScope', f.ctx), 'recommended');
   assert.equal(f.store.get('hub.desktop.feedTab.v1'), 'recommended');
+  assert.ok(f.calls.includes('sidebar:feed'));
 });
 
-test('thread and community tabs hide the timeline tabs and rename the page', (t) => {
+test('thread and community pages rename the page and do not load the lists', async (t) => {
   const f = fixture(t);
   vm.runInContext("socialMode='mixed';socialFilter='thread'", f.ctx);
-  f.ctx.renderFeedTabs();
-  assert.equal(f.document.querySelector('#feed-tabs').hidden, true);
+  f.ctx.renderFeedTabs(); await tick();
   assert.equal(f.document.querySelector('#view-feed .page-title').textContent, 'スレッド');
+  assert.equal(f.calls.some((c) => c[0] === 'hub_client'), false);
   vm.runInContext("socialFilter='community'", f.ctx);
   f.ctx.renderFeedTabs();
   assert.equal(f.document.querySelector('#view-feed .page-title').textContent, 'コミュニティ');
@@ -124,12 +124,12 @@ test('a list tab reads list_feed and draws post cards; empty and failed lists us
 
   const empty = fixture(t, { saved: 'list:l1' });
   await empty.ctx.loadListFeed();
-  assert.match(empty.document.querySelector('#feed-list .state-panel .state-title').textContent, /投稿はまだありません/);
+  assert.match(empty.document.querySelector('#feed-list .state-panel .state-title').textContent, /投稿はありません/);
 
   const failed = fixture(t, { saved: 'list:l1', detailError: 'ハブが503を返しています' });
   await failed.ctx.loadListFeed();
   const panel = failed.document.querySelector('#feed-list .state-panel');
-  assert.match(panel.querySelector('.state-body').textContent, /503/);
+  assert.match(panel.title, /503/);
   assert.ok(panel.querySelector('button.btn.btn-secondary.state-action'));
 });
 

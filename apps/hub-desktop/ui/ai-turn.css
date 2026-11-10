@@ -65,3 +65,19 @@
 @media (prefers-reduced-motion: reduce) {
   #pi-work .piw-process-mark.is-running, #pi-work .piw-trace-glyph.running { animation: none; }
 }
+
+/* 会話の要約：1行の淡い状態表示。 */
+#pi-work .piw-compaction { display: flex; align-items: center; gap: var(--space-2); margin: 0; color: var(--muted); font-size: var(--type-caption); }
+#pi-work .piw-compaction[data-phase="failed"] { color: var(--warning-text); }
+#pi-work .piw-note-icon { width: 14px; height: 14px; flex: none; }
+
+/* 中断した作業：小さな一覧と2つの操作。 */
+#pi-work .piw-interrupted { display: grid; gap: var(--space-2); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--panel); }
+#pi-work .piw-interrupted-head { display: flex; align-items: center; gap: var(--space-2); margin: 0; color: var(--muted); }
+#pi-work .piw-badge { padding: 0 var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-sm); font-size: var(--type-caption); line-height: 18px; }
+#pi-work .piw-interrupted-list { display: grid; gap: var(--space-1); margin: 0; padding: 0; list-style: none; font-size: var(--type-caption); }
+#pi-work .piw-interrupted-list li { display: flex; align-items: baseline; gap: var(--space-2); min-width: 0; }
+#pi-work .piw-interrupted-list .piw-trace-detail { min-width: 0; flex: 1; overflow: hidden; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
+#pi-work .piw-interrupted-list small { color: var(--warning-text); }
+#pi-work .piw-interrupted-actions { display: flex; gap: var(--space-2); }
+#pi-work .piw-interrupted-actions .btn { display: inline-flex; align-items: center; gap: var(--space-1); }

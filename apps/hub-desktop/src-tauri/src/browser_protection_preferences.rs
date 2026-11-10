@@ -65,3 +65,30 @@ mod tests {
         assert_eq!(fs::read_dir(&folder.0).unwrap().count(),1);
     }
 }
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct SitePreference { version: u8, sites: Vec<String> }
+
+/// Sites where blocking is off. A missing file means none; a broken file is an error (and blocking stays on).
+pub(super) fn read_sites(path: &Path) -> Result<Vec<String>, String> {
+    let bytes = match fs::read(path) {
+        Ok(bytes) => bytes,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
+        Err(_) => return Err(ERROR.into()),
+    };
+    if bytes.len() as u64 > 64 * 1024 { return Err(ERROR.into()); }
+    let preference: SitePreference = serde_json::from_slice(&bytes).map_err(|_| ERROR)?;
+    if preference.version != 1 || preference.sites.len() > 200 { return Err(ERROR.into()); }
+    Ok(preference.sites)
+}
+
+pub(super) fn write_sites(path: &Path, sites: &[String]) -> Result<(), String> {
+    let parent = path.parent().ok_or(ERROR)?;
+    fs::create_dir_all(parent).map_err(|_| ERROR)?;
+    let temporary = parent.join(format!("browser-protection-sites-{}.tmp", uuid::Uuid::new_v4()));
+    let bytes = serde_json::to_vec(&SitePreference { version: 1, sites: sites.to_vec() }).map_err(|_| ERROR)?;
+    let outcome = fs::write(&temporary, bytes).and_then(|_| fs::rename(&temporary, path));
+    if outcome.is_err() { let _ = fs::remove_file(&temporary); return Err(ERROR.into()); }
+    Ok(())
+}

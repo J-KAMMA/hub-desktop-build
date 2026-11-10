@@ -13,6 +13,9 @@ test('CSP: exact sources for native video, nothing broader', () => {
   assert.deepEqual([...directives['media-src']].sort(), ["'self'", 'blob:', ...hub].sort());
   assert.deepEqual(directives['frame-src'], ['https://www.youtube-nocookie.com']);
   assert.deepEqual(directives['default-src'], ["'self'"]);
+  assert.deepEqual([...directives['img-src']].sort(), ["'self'", 'blob:', ...hub, 'https://i.ytimg.com'].sort());
+  assert.ok(!directives['img-src'].includes('data:'));
+  for (const name of ['object-src', 'base-uri', 'form-action']) assert.deepEqual(directives[name], ["'none'"]);
   assert.equal(directives['worker-src'], undefined);
   assert.equal(directives['script-src'], undefined);
   assert.ok(!conf.app.security.csp.includes('*'));

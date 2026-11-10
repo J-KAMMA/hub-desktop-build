@@ -1,0 +1,29 @@
+/* 画面の中の小窓の再生（mini-player.mjs）。Hub の曲用の 320 幅の細い操作盤。YouTube は yt-dock.css の枠。 */
+.mini-player { position: fixed; right: 16px; bottom: 16px; z-index: 60; display: grid; gap: var(--space-1); width: 320px; max-width: calc(100vw - 32px); padding: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--material-sheet-solid); color: var(--text); box-shadow: var(--elevation-2); }
+.mini-player[hidden] { display: none; }
+.mini-player.is-dragging { user-select: none; }
+.mini-top { display: flex; align-items: center; gap: var(--space-2); cursor: grab; touch-action: none; user-select: none; }
+.mini-player.is-dragging .mini-top { cursor: grabbing; }
+.mini-art { position: relative; display: grid; flex: none; width: 36px; height: 36px; place-items: center; overflow: hidden; border-radius: var(--radius-xs); background: var(--surface-sunken); color: var(--muted); font-size: var(--type-subhead); }
+.mini-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.mini-art img[hidden] { display: none; }
+.mini-text { display: flex; min-width: 0; flex: 1; flex-direction: column; line-height: 1.25; }
+.mini-text strong, .mini-text .meta { display: block; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mini-text strong { font-size: var(--type-subhead); font-weight: var(--weight-bold); }
+.mini-text .meta { font-size: var(--type-caption); }
+.mini-bottom { display: flex; align-items: center; gap: var(--space-1); }
+.mini-btn { display: inline-grid; flex: none; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: var(--radius-xs); background: transparent; color: var(--muted); cursor: pointer; }
+.mini-btn:hover:not(:disabled) { background: var(--interactive-hover); color: var(--text); }
+.mini-btn:disabled { opacity: .35; cursor: default; }
+.mini-btn:focus-visible, .mini-seek:focus-visible { outline: 2px solid var(--emphasis); outline-offset: 1px; }
+.mini-btn .ic { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.mini-primary { background: var(--text); color: var(--panel); }
+.mini-primary:hover:not(:disabled) { background: var(--text); color: var(--panel); }
+.mini-seek { flex: 1; min-width: 0; height: 20px; margin: 0 var(--space-1); }
+.mini-time { flex: none; margin: 0; font-size: var(--type-caption); font-variant-numeric: tabular-nums; }
+
+/* 小窓が出ている間は、下の再生バーは見せない（部品と処理は残し、再生待ちの一覧だけ出せる）。 */
+body.has-mini-player #hub-shell #music-player > :not(#music-queue-panel):not(audio) { display: none; }
+body.has-mini-player #hub-shell #music-player { min-height: 0; height: 0; padding: 0; border: 0; background: none; box-shadow: none; overflow: visible; }
+body.has-mini-player #music-queue-panel { position: fixed; right: 16px; bottom: 100px; left: auto; width: min(560px, calc(100vw - 32px)); border-radius: var(--radius-md); z-index: 59; }
+body.has-mini-player .app-shell:has(#music-player:not([hidden])) .view.on { padding-bottom: 96px; }

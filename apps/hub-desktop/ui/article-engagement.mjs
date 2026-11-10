@@ -4,6 +4,7 @@
 // 書き込み（いいねの付け外し・コメント投稿）は呼び出し側が渡す関数を通す。固定動詞
 // article_like_set / article_like_clear / article_comment_create の先は
 // /api/client/articles/{id}/like|comments で、Hub 側が Web と同じ規則を適用する。
+import { createPostRow } from './post-row.mjs';
 // DOM は textContent / createElement だけで組み、innerHTML は使わない。
 
 export function parseLikeState(value) {
@@ -24,6 +25,10 @@ export function parseCommentPage(value) {
         createdAt: typeof c.createdAt === 'string' ? c.createdAt : '',
         name: String(c.author?.displayName || c.author?.handle || 'Hubの書き手'),
         handle: typeof c.author?.handle === 'string' ? c.author.handle : '',
+        avatarUrl: typeof c.author?.avatarUrl === 'string' ? c.author.avatarUrl : '',
+        profileId: typeof c.author?.profileId === 'string' ? c.author.profileId : '',
+        // 評価（1〜5）は付いているときだけ。コメントとレビューは同じ行で、星の有無だけが違う。
+        rating: Number.isInteger(c.rating) && c.rating >= 1 && c.rating <= 5 ? c.rating : null,
       })),
   };
 }
@@ -136,7 +141,8 @@ export function renderCommentForm(doc, { onSubmit, onPosted = () => {}, max = CO
   return form;
 }
 
-export function renderCommentList(doc, page, { relTime = () => '', form = null, signedOutNote = '' } = {}) {
+// rowOptions: {icon, paintAvatar, hubAsset, menuFor(comment) -> [[label, run]]}。メニューは呼び出し側が既存の道だけで組む。
+export function renderCommentList(doc, page, { relTime = () => '', form = null, signedOutNote = '', rowOptions = {} } = {}) {
   const section = el(doc, 'section', 'article-comments');
   section.append(el(doc, 'h3', 'result-heading', page.total ? `コメント ${page.total}件` : 'コメント'));
   if (!page.commentsEnabled) {
@@ -147,14 +153,16 @@ export function renderCommentList(doc, page, { relTime = () => '', form = null, 
     section.append(el(doc, 'p', 'meta', 'まだコメントはありません。'));
   }
   for (const comment of page.comments) {
-    const item = el(doc, 'article', 'article-comment');
-    const head = el(doc, 'p', 'meta');
-    const who = el(doc, 'strong', '', comment.name);
-    head.append(who);
-    const tail = [comment.handle ? `@${comment.handle}` : '', relTime(comment.createdAt)].filter(Boolean).join(' · ');
-    if (tail) head.append(doc.createTextNode(` ${tail}`));
-    item.append(head, el(doc, 'p', 'article-comment-body', comment.body));
-    section.append(item);
+    const row = createPostRow(doc, {
+      authorName: comment.name, authorHandle: comment.handle, avatarUrl: comment.avatarUrl,
+      time: relTime(comment.createdAt), timeTitle: comment.createdAt ? new Date(comment.createdAt).toLocaleString('ja-JP') : '',
+      rating: comment.rating, body: el(doc, 'p', 'post-body article-comment-body', comment.body),
+      icon: rowOptions.icon ?? (() => ''), paintAvatar: rowOptions.paintAvatar, hubAsset: rowOptions.hubAsset,
+      menu: rowOptions.menuFor?.(comment) ?? [], classes: ['article-comment'],
+    });
+    row.dataset.commentId = comment.id;
+    rowOptions.decorate?.(row, comment);
+    section.append(row);
   }
   if (form) section.append(form);
   else if (signedOutNote) section.append(el(doc, 'p', 'meta', signedOutNote));

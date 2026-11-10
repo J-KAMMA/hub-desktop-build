@@ -44,7 +44,7 @@ test('actual Desktop startup traverses pinned paper to project code and real Bac
    if(name==='hub_feed')return {posts:[],signedIn:true,hasMore:false};
    if(name==='music_tracks')return {tracks:[],works:[]};
    if(name==='commerce_catalog')return {products:[],paymentAssets:[],paymentsEnabled:false,nextCursor:null};
-   if(['dev_history','dev_agents','list_games','pi_work_list'].includes(name))return [];
+   if(['dev_history','dev_agents','pi_work_list'].includes(name))return [];
    if(['workspace','dev_workspace'].includes(name))return '';
    if(name==='dev_active_run')return null;
    throw Error('synthetic_unavailable');

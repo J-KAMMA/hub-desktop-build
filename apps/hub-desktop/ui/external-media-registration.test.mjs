@@ -710,11 +710,15 @@ test('actual app adds one small entry per existing view, uses typed catalog chec
     'validateExternalMediaCatalog',
     'invoke',
     'loadCatalog',
+    'createCommunityPicker',
+    'linkToCommunity',
+    'showNotice',
     "let currentView='videos',researchAccountGeneration=1,desktopAccount={state:'registered'};" +
       block +
       'return{open:mountExternalMediaRegistration,dispose:disposeExternalMediaRegistration,state:externalMediaDrafts,again:initExternalMediaRegistrationEntries,setView(value){disposeExternalMediaRegistration();currentView=value;}};',
   )(document, dom.window, createExternalMediaRegistration, validateExternalMediaCatalog, invoke, (view) =>
     refreshes.push(view),
+  () => ({ root: document.createElement('span'), value: () => '', reset() {} }), async () => ({ ok: true }), () => {},
   );
   t.after(() => {
     api.dispose();

@@ -696,11 +696,10 @@ export function createExternalMediaRegistration({
       c.owner(result.viewerId);
       delete state.unknown;
       planned = null;
-      metadata.replaceChildren(
-        node('p', 'meta', '登録された表示'),
-        node('p', 'detail-p', record.title),
-        node('p', 'meta', kind === 'music' ? record.genre + ' · ' + (record.tags ?? []).join(' / ') : record.channel),
-      );
+      // 2026-11-05 所有者「他でもカードか」：タグはジャンルの横の小さな札。
+      const facts = node('p', 'meta ar-meta', kind === 'music' ? record.genre : record.channel);
+      if (kind === 'music') for (const tag of record.tags ?? []) facts.append(node('span', 'post-tag', '#' + tag));
+      metadata.replaceChildren(node('p', 'meta', '登録された表示'), node('p', 'detail-p', record.title), facts);
       message('登録を確認しました。草稿は保持しています。');
       try {
         await onRegistered(record);

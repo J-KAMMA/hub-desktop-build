@@ -1,7 +1,7 @@
 /* Hub Desktop の設計トークン（DESKTOP_SPEC §1.3）。色の値はここにだけ書く。
    名前と値は Web の apps/hub/app/color-system.css に合わせる。ダークの地と面だけは
    旦那様が選んだ「引き締まった黒」（2026-10-12）を正本にする。
-   色はアプリ自身の html[data-template]（light / dark / noir / ivory / midnight。appearance-early.js / appearance.mjs が最初の描画の前に付ける）
+   色はアプリ自身の html[data-template]（paper / charcoal / light / dark / noir / ivory / midnight。appearance-early.js / appearance.mjs が最初の描画の前に付ける）
    だけで切り替える。data-theme（light か dark）はその明暗。OS の prefers-color-scheme は CSS では見ない（「端末に合わせる」は JS が解決する）。 */
 
 /* ---- 色以外の共通値（テーマに依らない） ---- */
@@ -10,6 +10,9 @@
              "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP",
              "Yu Gothic UI", Meiryo, system-ui, sans-serif;
   --font-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  /* 読み物の字（2026-11-10）。記事の本文・投稿の詳細の本文・内容の見出しだけに使う明朝／セリフ。同梱はせず、端末にある字だけを順に当てる。
+     操作部品（ボタン・一覧・入力）は --font-ui のまま。使うのは paper と charcoal（desktop-calm.css）。 */
+  --font-reading: "Iowan Old Style", Georgia, "Noto Serif JP", "BIZ UDPMincho", "Yu Mincho", "Hiragino Mincho ProN", serif;
   font-family: var(--font-ui);
 
   /* 統一デザインシステム（docs/hub-ui-reference/DESIGN-SYSTEM.md §2〜§3）。Web の apps/hub/app/v2/x-templates.css の
@@ -36,12 +39,14 @@
   --space-8: var(--ds-space-8);
 
   /* 角: 4 8 12 16 と丸。 */
-  --ds-radius-card: 16px;
-  --ds-radius-callout: 12px;
-  --ds-radius-input: 8px;
-  --ds-radius-tile-video: 12px;
+  /* macOS HIG（2026-11-05、所有者「Appleにも寄せる」）: 操作部品 6、カード・サムネイル 10、窓・シート・ポップオーバー 12。 */
+  --ds-radius-card: 10px;
+  --ds-radius-callout: 10px;
+  --ds-radius-input: 6px;
+  --ds-radius-tile-video: 10px;
   --ds-radius-tile-music: 8px;
   --ds-radius-badge: 4px;
+  --ds-radius-sheet: 12px;
   --ds-radius-pill: 999px;
   --radius-xs: var(--ds-radius-badge);
   --radius-sm: var(--ds-radius-input);
@@ -49,59 +54,74 @@
   --radius-lg: var(--ds-radius-card);
   --radius-xl: var(--ds-radius-card);
   --radius-pill: var(--ds-radius-pill);
+  --radius-sheet: var(--ds-radius-sheet);
+  --radius-chat: 22px; /* AI input card and user bubbles */
 
   /* 字: 大きさ / 行高は 13/16 · 15/20 · 17/28 · 20/24 · 23/28 · 31/36 だけ。太さは 400 · 700 · 800 だけ。 */
+  /* macOS HIG の段（2026-11-05）: Large Title 26/32 · Title1 22/28 · Title2 17/22 · Title3 15/20 · Body 13/18 · Callout 12/16 · Caption 11/14。
+     Inter + Noto Sans JP のまま（SF Pro は使わない）。本文 13 は論理 px で、150% 表示の実画面では 19.5 物理 px。日本語の長文（記事）だけ 16/28 の読み物の段を別に持つ。 */
+  --ds-type-caption-size: 12px;
+  --ds-type-caption-leading: 16px;
   --ds-type-meta-size: 13px;
-  --ds-type-meta-leading: 16px;
-  --ds-type-body-size: 15px;
+  --ds-type-meta-leading: 18px;
+  --ds-type-body-size: 14px;
   --ds-type-body-leading: 20px;
-  --ds-type-reading-size: 17px;
+  --ds-type-title3-size: 15px;
+  --ds-type-title3-leading: 20px;
+  --ds-type-reading-size: 16px;
   --ds-type-reading-leading: 28px;
-  --ds-type-title-size: 20px;
-  --ds-type-title-leading: 24px;
-  --ds-type-name-size: 23px;
+  --ds-type-title-size: 17px;
+  --ds-type-title-leading: 22px;
+  --ds-type-name-size: 22px;
   --ds-type-name-leading: 28px;
-  --ds-type-article-size: 31px;
-  --ds-type-article-leading: 36px;
+  --ds-type-article-size: 26px;
+  --ds-type-article-leading: 32px;
   --ds-weight-text: 400;
-  --ds-weight-strong: 700;
-  --ds-weight-heavy: 800;
+  --ds-weight-medium: 500;
+  --ds-weight-semibold: 600;
+  --ds-weight-strong: 600;
+  --ds-weight-heavy: 700;
+  --ds-tracking-large: -0.01em;
   --type-display: var(--ds-type-article-size);
   --type-title1: var(--ds-type-name-size);
   --type-title2: var(--ds-type-title-size);
-  --type-title3: var(--ds-type-title-size);
-  --type-headline: var(--ds-type-reading-size);
+  --type-title3: var(--ds-type-title3-size);
+  --type-headline: var(--ds-type-body-size);
   --type-body: var(--ds-type-body-size);
   --type-reading: var(--ds-type-reading-size);
-  --type-callout: var(--ds-type-body-size);
+  --type-callout: var(--ds-type-meta-size);
   --type-subhead: var(--ds-type-meta-size);
-  --type-caption: var(--ds-type-meta-size);
-  --type-footnote: var(--ds-type-meta-size);
+  --type-caption: var(--ds-type-caption-size);
+  --type-footnote: var(--ds-type-caption-size);
   --lh-display: var(--ds-type-article-leading);
   --lh-title1: var(--ds-type-name-leading);
   --lh-title2: var(--ds-type-title-leading);
-  --lh-title3: var(--ds-type-title-leading);
-  --lh-headline: var(--ds-type-reading-leading);
+  --lh-title3: var(--ds-type-title3-leading);
+  --lh-headline: var(--ds-type-body-leading);
   --lh-body: var(--ds-type-body-leading);
   --lh-reading: var(--ds-type-reading-leading);
   --lh-subhead: var(--ds-type-meta-leading);
-  --lh-caption: var(--ds-type-meta-leading);
+  --lh-caption: var(--ds-type-caption-leading);
   --weight-regular: var(--ds-weight-text);
   --weight-bold: var(--ds-weight-strong);
   --weight-heavy: var(--ds-weight-heavy);
 
   /* 押せる物と部品の寸法。 */
-  --ds-header-h: 53px;
-  --ds-tabs-h: 53px;
-  --ds-input-h: 44px;
-  --ds-search-h: 40px;
-  --ds-btn-h: 36px;
-  --ds-btn-h-compact: 32px;
-  --ds-btn-px: var(--ds-space-4);
-  --ds-icon-btn: 36px;
-  --ds-icon-btn-compact: 32px;
-  --ds-icon-size: 20px;
-  --ds-chip-h: 32px;
+  --ds-header-h: 52px;
+  --ds-tabs-h: 52px;
+  --ds-input-h: 28px;
+  --ds-search-h: 28px;
+  /* ボタンの高さは3段（28・36・44）。見た目が小さい部品も押せる範囲は 44 を保つ（shadcn-base.css の hit-extender）。 */
+  --btn-h-sm: 28px;
+  --btn-h-md: 36px;
+  --btn-h-lg: 44px;
+  --ds-btn-h: var(--btn-h-sm);
+  --ds-btn-h-compact: var(--btn-h-sm);
+  --ds-btn-px: var(--ds-space-3);
+  --ds-icon-btn: 28px;
+  --ds-icon-btn-compact: var(--btn-h-sm);
+  --ds-icon-size: 18px;
+  --ds-chip-h: var(--btn-h-sm);
   --ds-chip-px: var(--ds-space-3);
   --ds-chip-gap: var(--ds-space-2);
   --ds-badge-h: 20px;
@@ -121,16 +141,29 @@
   --ease-out: cubic-bezier(.22, 1, .36, 1);
   --ease-spring: cubic-bezier(.32, .72, 0, 1);
   --ease-in-out: cubic-bezier(.65, 0, .35, 1);
-  --dur-press: 100ms;
+  --dur-press: 150ms;
+  --dur-pressed: 80ms;
   --dur-fast: 200ms;
   --dur-base: 280ms;
   --dur-slow: 350ms;
 
   /* 机上の密度（マウス向け） */
-  --control-h: 32px;
-  --control-h-lg: 36px;
+  --control-h: 28px;
+  --control-h-lg: var(--btn-h-md);
   --hit-min: 28px;
-  --titlebar-h: 44px;
+  /* 補助の絵ボタン（窓の最小化・最大化・閉じる、×、戻る・進む、更新・その他）は全部この1つの寸法。icon-buttons.css が使う。
+     枠 32、絵 16、線 1.7、間 4。×は当たり判定だけ 44 まで広げる（隣に当たらない所だけ）。 */
+  --icon-btn: 32px;
+  --icon-btn-glyph: 16px;
+  --icon-btn-stroke: 1.7;
+  --icon-btn-gap: 4px;
+  --icon-btn-hit: 44px;
+  --icon-btn-radius: var(--radius-sm);
+  --titlebar-h: 52px;
+  --row-h: 28px;
+  --row-h-lg: 32px;
+  --sidebar-inset: 8px;
+  --press-scale: .98;
   --measure-reading: var(--ds-col-reading);
   --width-feed: var(--ds-col-main);
   --blur-bar: saturate(180%) blur(20px);
@@ -168,6 +201,16 @@ html[data-theme="light"] {
   --material-bar-solid: var(--bg);
   --material-sheet: color-mix(in srgb, var(--surface-raised) 82%, transparent);
   --material-sheet-solid: var(--surface-raised);
+  /* macOS の sidebar material（2026-11-05）: 左の帯と画面の左列。不透明の面（-solid）に薄く透ける面を重ねる。透明効果オフ・未対応では -solid。 */
+  --material-sidebar: color-mix(in srgb, var(--interactive) 72%, transparent);
+  --material-sidebar-solid: var(--interactive);
+  --hairline: color-mix(in srgb, var(--text) 12%, transparent);
+  --divider: var(--hairline);
+  --fill-subtle: color-mix(in srgb, var(--text) 7%, transparent);
+  --fill-subtle-hover: color-mix(in srgb, var(--text) 11%, transparent);
+  --fill-subtle-active: color-mix(in srgb, var(--text) 16%, transparent);
+  --focus-ring-soft: var(--focus-ring); /* 別名。焦点の輪は --focus-ring の1種類（2px・offset 2px） */
+  --shadow-float: 0 0 0 1px color-mix(in srgb, var(--text) 8%, transparent), 0 4px 12px color-mix(in srgb, var(--text) 8%, transparent), 0 20px 48px color-mix(in srgb, var(--text) 14%, transparent);
 
   --media-app-bg: #090909;
   --media-app-text: #f8f8f8;
@@ -204,6 +247,15 @@ html:not([data-theme]) {
   --material-bar-solid: var(--bg);
   --material-sheet: color-mix(in srgb, var(--surface-raised) 80%, transparent);
   --material-sheet-solid: var(--surface-raised);
+  --material-sidebar: color-mix(in srgb, var(--interactive) 72%, transparent);
+  --material-sidebar-solid: var(--interactive);
+  --hairline: color-mix(in srgb, var(--text) 12%, transparent);
+  --divider: var(--hairline);
+  --fill-subtle: color-mix(in srgb, var(--text) 10%, transparent);
+  --fill-subtle-hover: color-mix(in srgb, var(--text) 15%, transparent);
+  --fill-subtle-active: color-mix(in srgb, var(--text) 20%, transparent);
+  --focus-ring-soft: var(--focus-ring); /* 別名。焦点の輪は --focus-ring の1種類（2px・offset 2px） */
+  --shadow-float: 0 0 0 1px var(--line), 0 4px 12px color-mix(in srgb, var(--media-app-bg) 40%, transparent), 0 20px 48px color-mix(in srgb, var(--media-app-bg) 60%, transparent);
 
   --media-app-bg: #090909;
   --media-app-text: #f8f8f8;
@@ -221,10 +273,93 @@ html:not([data-theme]) {
   --avatar-6: #333366; --avatar-6-text: #d6d6fa;
 }
 
+/* ==== 落ち着いた暖色の既定（2026-11-10、所有者の決定「claudeのアプリと同じ規格で全部作ればよくね」→「見た目ね」）====
+   既定の見た目は paper（明）と charcoal（暗）の 2 つ。「端末に合わせる」（既定）は Windows が明るければ paper、暗ければ charcoal。
+   それまでの既定（黒金 = noir、金は線だけ）は選べるテンプレートとして残す。
+   地は暖かい生成りと暖かい炭色。面の段差は小さく、線は細く薄い。強調は弁柄色（べんがら）1 色で、主ボタンの面と焦点の輪に使う。
+   弁柄色は Hub が自分で選んだ色（明 #a3482a、暗 #e2885a）。他社の商標色・ロゴ・専用書体は使わない。
+   線・面は金（色相 30〜55）に見えないよう、彩度の幅を 20 以下に抑える（template-contrast.test.mjs）。 */
+[data-template="paper"] {
+  --accent-base: #a3482a;
+  --accent-base-hover: #923f24;
+  --accent-base-active: #82371f;
+  --accent-link: #8f3d22;
+  --bg: #f6f3ea;
+  --panel: #f0ece1;
+  --surface-raised: #fcfaf5;
+  --surface-sunken: #ebe7dc;
+  --content-surface: #f6f3ea;
+  --content-surface-hover: #f0ece1;
+  --content-nested: #f0ece1;
+  --interactive: #ece8dd;
+  --interactive-hover: #e4e0d4;
+  --selected: #dedacd;
+  --line: #d3cfc3;
+  --line-strong: #878276;
+  --sc-field: #858177;
+  --text: #26231d;
+  --muted: #524d44;
+  --text-meta: #5f5a50;
+  --action: var(--accent-base);
+  --action-hover: var(--accent-base-hover);
+  --action-active: var(--accent-base-active);
+  --action-text: #fffdf8;
+  --link-color: var(--accent-link);
+  --emphasis: var(--action);
+  --focus-ring: #a3482a;
+  --material-mica-tint: color-mix(in srgb, var(--bg) 92%, transparent);
+}
+[data-template="paper"][data-crisp] {
+  --text: #14120e;
+  --muted: #3f3b33;
+  --text-meta: #4a463d;
+  --line: #bdb8ab;
+  --line-strong: #6d695e;
+}
+
+html:not([data-template]),
+[data-template="charcoal"] {
+  --accent-base: #e2885a;
+  --accent-base-hover: #ea9a70;
+  --accent-base-active: #d27a4d;
+  --accent-link: #eba27c;
+  --bg: #23221f;
+  --panel: #1d1c1a;
+  --surface-raised: #2e2d29;
+  --surface-sunken: #1a1917;
+  --content-surface: #23221f;
+  --content-surface-hover: #2a2926;
+  --content-nested: #2a2926;
+  --interactive: #2c2b27;
+  --interactive-hover: #363531;
+  --selected: #383733;
+  --line: #3f3d38;
+  --line-strong: #7f7b71;
+  --sc-field: #7c786f;
+  --text: #ebe7de;
+  --muted: #bab5aa;
+  --text-meta: #aba69b;
+  --action: var(--accent-base);
+  --action-hover: var(--accent-base-hover);
+  --action-active: var(--accent-base-active);
+  --action-text: #1f1a16;
+  --link-color: var(--accent-link);
+  --emphasis: var(--action);
+  --focus-ring: #e2885a;
+  --material-mica-tint: color-mix(in srgb, var(--bg) 58%, transparent);
+}
+[data-template="charcoal"][data-crisp] {
+  --text: #ffffff;
+  --muted: #d2cdc2;
+  --text-meta: #c4bfb4;
+  --line: #4d4b45;
+  --line-strong: #9a968b;
+}
+
 /* ==== 5 つのカラーテンプレート（2026-11-02、旦那様の決定）====
    選ぶのは html[data-template]（appearance-early.js / appearance.mjs が最初の描画の前に付ける）1 つだけ。
    各テンプレートの色はここに 1 度だけ書く。html を付けないので、設定画面の見本ボタン（data-template を持つ要素）の中でも同じ値になる。
-   金（--emphasis）は noir と ivory の線と字だけ。塗りには使わない。地は無地で、質感もグラデーションも無い。
+   金（--emphasis）は noir と ivory の線と字だけ。この 2 つでは塗りに使わない（paper と charcoal の弁柄色は主ボタンの面に塗る。2026-11-10）。地は無地で、質感もグラデーションも無い。
    くっきり表示（data-crisp）は文字と線のコントラストだけを上げる。色相は変えない。 */
 
 /* light: 白い地、黒い字、黒い線（2026-11-02 所有者「ライトはグレーじゃなくて白黒がいい」）。
@@ -246,6 +381,7 @@ html:not([data-theme]) {
   --selected: #dcdcdc;
   --line: #000000;
   --line-strong: #000000;
+  --sc-field: var(--line-strong);
   --text: #000000;
   --muted: #2b2b2b;
   --text-meta: #2b2b2b;
@@ -284,6 +420,7 @@ html:not([data-theme]) {
   --selected: #24242b;
   --line: #2e2e35;
   --line-strong: #70707c;
+  --sc-field: #6a6a72;
   --text: #ececf1;
   --muted: #a4a4b0;
   --text-meta: #9b9ba7;
@@ -304,48 +441,48 @@ html:not([data-theme]) {
   --line-strong: #8e8e9a;
 }
 
-/* noir: 黒い地、白に近い字、金の線（今までの黒金のダーク。既定）。 */
-html:not([data-template]),
+/* noir: 色味のない黒い地、白と灰色の字、金は選択の線と記号だけ（2026-11-04 所有者「質感がダサい」→ 茶色がかった地とクリーム色の字をやめた。2026-11-10 まで既定）。 */
 [data-template="noir"] {
   --accent-base: #d9b44a;
   --accent-base-hover: #e8c45c;
   --accent-base-active: #c29d4a;
-  --accent-link: #f1e6c8;
-  --bg: #0e0c09;
-  --panel: #191612;
-  --surface-raised: #221e17;
-  --surface-sunken: #0e0c09;
-  --content-surface: #191612;
-  --content-surface-hover: #221e17;
-  --content-nested: #221e17;
-  --interactive: #221e17;
-  --interactive-hover: #332b1d;
-  --selected: #342c1a;
-  --selected-text: #d9b44a;
-  --line: #3a3122;
-  --line-strong: #817559;
-  --text: #f1e6c8;
-  --muted: #b9a77a;
-  --text-meta: #9c8e6f;
+  --accent-link: #e8e8ea;
+  --bg: #0a0a0b;
+  --panel: #121214;
+  --surface-raised: #1a1a1d;
+  --surface-sunken: #0a0a0b;
+  --content-surface: #121214;
+  --content-surface-hover: #1a1a1d;
+  --content-nested: #1a1a1d;
+  --interactive: #1a1a1d;
+  --interactive-hover: #242428;
+  --selected: #1f1f23;
+  --selected-text: #ffffff;
+  --line: #303036;
+  --line-strong: #6e6e76;
+  --sc-field: #6a6a72;
+  --text: #f2f2f3;
+  --muted: #c4c4ca;
+  --text-meta: #b0b0b8;
   --action: var(--accent-base);
   --action-hover: var(--accent-base-hover);
   --action-active: var(--accent-base-active);
-  --action-text: #1a1408;
+  --action-text: #0a0a0b;
   --link-color: var(--accent-link);
   --emphasis: var(--action);
   --focus-ring: #d1d1d6;
-  --chip-bg: #221e17;
-  --chip-text: #d9b44a;
-  --chip-selected-bg: #f1e6c8;
-  --chip-selected-text: #0e0c09;
+  --chip-bg: #1a1a1d;
+  --chip-text: #e8e8ea;
+  --chip-selected-bg: #f2f2f3;
+  --chip-selected-text: #0a0a0b;
   --material-mica-tint: color-mix(in srgb, var(--bg) 58%, transparent);
 }
 [data-template="noir"][data-crisp] {
-  --text: #fff4d6;
-  --muted: #d6c28f;
-  --text-meta: #c4b185;
-  --line: #4d402b;
-  --line-strong: #a8996f;
+  --text: #ffffff;
+  --muted: #d6d6dc;
+  --text-meta: #c6c6ce;
+  --line: #38383e;
+  --line-strong: #76767e;
 }
 
 /* ivory: 無地のクリーム色の地、墨色の字、金の線（今までの黒金のライト）。 */
@@ -363,10 +500,11 @@ html:not([data-template]),
   --content-nested: #eae0c9;
   --interactive: #eae0c9;
   --interactive-hover: #e0d4b8;
-  --selected: #d9c496;
+  --selected: #cdc8bd; /* 中立の灰（金を塗らない）。選択は左の金の1px線で示す（shadcn-base.css の末尾） */
   --selected-text: #3f2e08;
   --line: #d2c19b;
   --line-strong: #8a7b58;
+  --sc-field: #7a7468;
   --text: #2a2216;
   --muted: #54483a;
   --text-meta: #695d49;
@@ -410,6 +548,7 @@ html:not([data-template]),
   --selected: #22345a;
   --line: #2a3a56;
   --line-strong: #6a7e9f;
+  --sc-field: #6e7c98;
   --text: #e8edf7;
   --muted: #a9b6cc;
   --text-meta: #98a7c0;
@@ -436,6 +575,74 @@ html:is([data-template="noir"], [data-template="ivory"]) .mobile-nav-item.on { c
 html:is([data-template="noir"], [data-template="ivory"]) .chip { background: var(--chip-bg); border-color: transparent; color: var(--chip-text); }
 html:is([data-template="noir"], [data-template="ivory"]) .chip.on { background: var(--selected); border-color: transparent; color: var(--text); }
 
+/* ==== shadcn/ui の土台（2026-11-04、所有者承認。MIT, https://ui.shadcn.com、既定の neutral テーマ）====
+   shadcn の変数名を --sc-* として Hub の意味の名前へ写す。値はテンプレートごとの Hub の色から引くので、5 つのテンプレートと
+   くっきり表示の WCAG の検査はそのまま効く。対応表と部品の寸法は docs/hub-ui-reference/SHADCN-BASE.md。
+   部品の見た目は shadcn-base.css が 1 か所で当てる。 */
+:root {
+  --sc-radius: var(--ds-radius-card);
+  --sc-radius-sm: 4px;
+  --sc-radius-md: var(--ds-radius-input);
+  --sc-radius-lg: var(--ds-radius-card);
+  --sc-radius-xl: var(--ds-radius-card);
+  --sc-radius-sheet: var(--ds-radius-sheet);
+  --sc-radius-full: 999px;
+  --sc-h-xs: 20px;
+  --sc-h-sm: var(--btn-h-sm);
+  --sc-h: 28px;
+  --sc-h-lg: var(--btn-h-md);
+  --sc-px-xs: 8px;
+  --sc-px-sm: 8px;
+  --sc-px: 12px;
+  --sc-px-lg: 16px;
+  --sc-icon: 16px;
+  --sc-ring-width: var(--focus-ring-width);
+  /* 字は Hub の段（13/16・15/20…）と太さ（400・700・800）の中で最も近いもの: text-sm と text-xs → 13px、font-medium → 700。 */
+  --sc-text: var(--ds-type-body-size);
+  --sc-leading: var(--ds-type-body-leading);
+  --sc-text-xs: var(--ds-type-meta-size);
+  --sc-leading-xs: var(--ds-type-meta-leading);
+  --sc-weight: var(--ds-weight-medium);
+
+  --sc-background: var(--bg);
+  --sc-foreground: var(--text);
+  --sc-card: var(--panel);
+  --sc-card-foreground: var(--text);
+  --sc-popover: var(--surface-raised);
+  --sc-popover-foreground: var(--text);
+  --sc-primary: var(--ds-btn-primary-bg);
+  --sc-primary-foreground: var(--ds-btn-primary-fg);
+  --sc-secondary: var(--interactive);
+  --sc-secondary-foreground: var(--text);
+  --sc-muted: var(--interactive);
+  --sc-muted-foreground: var(--muted);
+  --sc-accent: var(--interactive);
+  --sc-accent-foreground: var(--text);
+  --sc-destructive: var(--danger-text);
+  --sc-destructive-foreground: var(--bg);
+  --sc-border: var(--line);
+  --sc-input: var(--line);
+  --sc-input-bg: transparent;
+  --sc-input-bg-hover: transparent;
+  --sc-ring: var(--focus-ring);
+  --sc-ring-soft: var(--focus-ring-soft);
+  --sc-overlay: color-mix(in srgb, var(--bg) 60%, transparent);
+  --sc-sidebar: var(--panel);
+  --sc-sidebar-foreground: var(--text);
+  --sc-sidebar-primary: var(--text);
+  --sc-sidebar-primary-foreground: var(--bg);
+  --sc-sidebar-accent: var(--selected);
+  --sc-sidebar-accent-foreground: var(--text);
+  --sc-sidebar-border: var(--line);
+  --sc-sidebar-ring: var(--focus-ring);
+}
+/* shadcn の dark: 入力と outline ボタンの地は input/30（文字色を薄く溶かした面）。 */
+html[data-theme="dark"],
+html:not([data-theme]) {
+  --sc-input-bg: color-mix(in srgb, var(--text) 4%, transparent);
+  --sc-input-bg-hover: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
 /* ---- 旧名の別名（両テーマ共通。値は上の Web 名から引く） ---- */
 :root {
   --danger: var(--danger-text);
@@ -447,9 +654,10 @@ html:is([data-template="noir"], [data-template="ivory"]) .chip.on { background: 
   --shadow-sm: none;
   --shadow-lg: var(--elevation-2);
 
-  /* 色の役（DESIGN-SYSTEM §3 ボタン・チップ・札）。既定は白黒: 主ボタンは --text の線と字（塗らない）。黒金は下で上書きし、金の線と字。 */
-  --ds-btn-primary-fg: var(--text);
-  --ds-btn-primary-bg: transparent;
+  /* 色の役（DESIGN-SYSTEM §3 ボタン・チップ・札）。主ボタンは shadcn/ui の default（2026-11-04）: --text の面に --bg の字。
+     どのテンプレートでも中立の白か黒で、金は塗らない（金は選択中の線と小さな記号だけ）。 */
+  --ds-btn-primary-fg: var(--bg);
+  --ds-btn-primary-bg: var(--text);
   --ds-btn-primary-line: var(--text);
   --ds-btn-secondary-fg: var(--text);
   --ds-btn-secondary-bg: transparent;
@@ -469,11 +677,21 @@ html:is([data-template="noir"], [data-template="ivory"]) .chip.on { background: 
   --ds-callout-line: var(--line-strong);
 }
 
-/* noir と ivory（金の線のテンプレート）: 主ボタン・選択中のチップ・件数の札は金の線と金の字。塗りはどこにも無い。 */
+/* paper と charcoal（2026-11-10 の既定）: 主ボタンは弁柄色の面。副ボタンと入力の線は細く薄い線のまま。 */
+html:not([data-template]),
+:is([data-template="paper"], [data-template="charcoal"]) {
+  --ds-btn-primary-fg: var(--action-text);
+  --ds-btn-primary-bg: var(--action);
+  --ds-btn-primary-line: var(--action);
+  /* 角は一段大きく（2026-11-11）。 */
+  --ds-radius-input: 8px;
+  --ds-radius-callout: 12px;
+  --ds-radius-card: 14px;
+  --ds-radius-sheet: 16px;
+}
+
+/* noir と ivory（金の線のテンプレート）: 選択中のチップの線と件数の札だけが金。主ボタンは上の中立の塗り。 */
 html:is([data-template="noir"], [data-template="ivory"]) {
-  --ds-btn-primary-fg: var(--emphasis);
-  --ds-btn-primary-bg: transparent;
-  --ds-btn-primary-line: var(--emphasis);
   --ds-chip-selected-line: var(--emphasis);
   --ds-badge-count-fg: var(--emphasis);
   --ds-badge-count-line: var(--emphasis);

@@ -34,9 +34,10 @@ export function media(document, { url, label, alt, asset, className = 'mk-media'
 }
 
 /** 静かな空の状態：題20/800・本文15 muted・副ボタンは1つまで。丸い飾りは置かない。 */
-export function emptyState(document, { title, body, actionLabel, onAction, role }) {
+export function emptyState(document, { title, body, actionLabel, onAction, role, iconNode }) {
   const box = el(document, 'div', 'mk-empty');
   if (role) box.setAttribute('role', role);
+  if (iconNode) { const mark = el(document, 'span', 'mk-empty-icon'); mark.setAttribute('aria-hidden', 'true'); mark.append(iconNode); box.append(mark); }
   box.append(el(document, 'p', 'mk-empty-title', title));
   if (body) box.append(el(document, 'p', 'mk-empty-body', body));
   if (actionLabel && onAction) box.append(button(document, actionLabel, 'mk-btn', onAction));

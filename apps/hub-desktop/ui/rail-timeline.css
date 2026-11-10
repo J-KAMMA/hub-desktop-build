@@ -1,0 +1,159 @@
+/* 右列の切り替え（rail-subtabs.mjs）と、メッセージの DM / メール。色は意味トークンだけ。 */
+
+#hub-shell .page-tabs.rail-subtabs { gap: var(--space-3); padding: 0 var(--space-3); display: flex; flex-wrap: nowrap; }
+#hub-shell .page-tabs.rail-subtabs:not(.rail-subtabs--chips) > [role="tab"]:not(#_) { flex: none; min-width: 0; padding-inline: 0; white-space: nowrap; }
+#hub-shell .page-tabs.rail-subtabs--chips:not(#_) { gap: var(--space-2); padding: var(--space-2) var(--space-3); border-bottom: 0; overflow: hidden; }
+#hub-shell .page-tabs.rail-subtabs--chips > [role="tab"]:not(#_):not(#_) { flex: none; height: 28px; min-height: 28px; padding: 0 var(--space-3); line-height: 1; text-decoration: none; border: 1px solid var(--divider); border-radius: var(--radius-pill); background: transparent; color: var(--muted); font-size: var(--type-caption); }
+#hub-shell .page-tabs.rail-subtabs--chips > [role="tab"]:not(#_):not(#_)[aria-selected="true"] { border-color: var(--emphasis); background: transparent; color: var(--text); }
+#hub-shell .page-tabs.rail-subtabs--chips > [role="tab"]:not(#_):not(#_)[aria-selected="true"]::after { content: none; display: none; }
+
+/* タイムライン（スマホ型）：細い幅に合わせた札、画像は幅いっぱい、右下に浮かぶ投稿ボタン。 */
+.rail-view--timeline { padding: 0; }
+.rail-tl { display: flex; min-height: 100%; flex-direction: column; }
+.rail-tl > .rail-subtabs:first-child { position: sticky; top: 0; z-index: 2; background: var(--content-surface); border-bottom: 1px solid var(--divider); }
+.rail-tl-sorts { background: var(--content-surface); }
+.rail-tl-status:empty { display: none; }
+.rail-tl-status { margin: 0; padding: var(--space-2) var(--space-3); }
+.rail-tl-list { display: grid; min-width: 0; flex: 1 0 auto; align-content: start; }
+.rail-tl-list > .rail-empty, .rail-tl-list > .rail-skeleton { margin: var(--space-3); }
+.rail-tl .post { min-width: 0; padding: var(--space-3); }
+.rail-tl .post-content { min-width: 0; }
+.rail-tl .post-body { overflow-wrap: anywhere; }
+.rail-tl .post-images { width: 100%; max-width: 100%; }
+.rail-tl .post-images--1 img { width: 100%; max-height: 420px; object-fit: cover; }
+.rail-tl .post-actions { max-width: none; }
+.rail-tl-card { cursor: pointer; }
+.rail-tl-lock { display: inline-grid; width: 14px; height: 14px; margin-left: var(--space-1); place-items: center; color: var(--muted); vertical-align: -2px; }
+.rail-tl-lock .ic { width: 14px; height: 14px; }
+.rail-tl-sentinel { height: 1px; }
+.rail-tl-more { margin: var(--space-3); padding: var(--space-2) var(--space-3); border: 1px solid var(--divider); border-radius: var(--radius-pill); background: transparent; color: var(--text); }
+.rail-tl-more[hidden] { display: none; }
+.rail-tl-compose { position: sticky; bottom: var(--space-4); z-index: 3; display: grid; width: 48px; height: 48px; margin: 0 var(--space-4) var(--space-4) auto; place-items: center; border: 1px solid var(--emphasis); border-radius: 50%; background: var(--content-surface); color: var(--emphasis); cursor: pointer; }
+.rail-tl-compose[hidden] { display: none; }
+.rail-tl-compose .ic { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.rail-tl-compose:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.rail-subtab { text-decoration: none; }
+.rail-tl[hidden], .rail-chat[hidden] { display: none; }
+
+/* グループのチャット：新しい書き込みが下。自分の行は右、ほかの人は左。鍵の印は非公開だけ。 */
+.rail-chat { display: flex; min-height: 100%; flex-direction: column; }
+.rail-chat-head { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--divider); background: var(--content-surface); }
+.rail-chat-back { display: grid; width: 32px; height: 32px; flex: none; place-items: center; border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--text); cursor: pointer; }
+.rail-chat-back:hover { background: var(--interactive); }
+.rail-chat-back .ic { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.rail-chat-title { display: grid; min-width: 0; }
+.rail-chat-name { display: flex; align-items: center; gap: var(--space-1); min-width: 0; }
+.rail-chat-name strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rail-chat-lock { display: inline-grid; width: 16px; height: 16px; flex: none; place-items: center; color: var(--muted); }
+.rail-chat-lock[hidden] { display: none; }
+.rail-chat-lock .ic { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.rail-chat-sub:empty { display: none; }
+.rail-chat-status { margin: 0; padding: var(--space-2) var(--space-3); }
+.rail-chat-status:empty { display: none; }
+.rail-chat-list { display: flex; flex: 1 0 auto; flex-direction: column; justify-content: flex-end; gap: var(--space-3); margin: 0; padding: var(--space-3); list-style: none; }
+.rail-chat-msg { display: flex; align-items: flex-end; gap: var(--space-2); max-width: 100%; }
+.rail-chat-msg.is-own { flex-direction: row-reverse; }
+.rail-chat-avatar { display: grid; width: 28px; height: 28px; flex: none; place-items: center; overflow: hidden; border-radius: 50%; background: var(--interactive); color: var(--text); font-size: var(--type-caption); font-weight: var(--weight-bold); }
+.rail-chat-avatar.has-image img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.rail-chat-msg.is-own .rail-chat-avatar { display: none; }
+.rail-chat-bubble { display: grid; min-width: 0; max-width: 84%; gap: 2px; padding: var(--space-2) var(--space-3); border: 1px solid var(--divider); border-radius: var(--radius-md); background: transparent; }
+.rail-chat-msg.is-own .rail-chat-bubble { border-color: var(--emphasis); }
+.rail-chat-meta { display: flex; align-items: baseline; gap: var(--space-2); font-size: var(--type-caption); }
+.rail-chat-meta strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rail-chat-text { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.rail-chat-images { display: grid; gap: 2px; overflow: hidden; border-radius: var(--radius-sm); }
+.rail-chat-images img { display: block; width: 100%; max-height: 240px; object-fit: cover; }
+.rail-view--timeline { display: flex; flex-direction: column; }
+#rail-timeline, #rail-chat { display: contents; }
+.rail-view--timeline > .rail-tl, .rail-view--timeline > .rail-chat { flex: 1 0 auto; }
+.rail-chat-sub { color: var(--muted); }
+
+/* 動画：一覧は1列の札、再生は右列の中。 */
+.rail-view--video { padding: 0; }
+.rail-video-root { display: flex; min-height: 100%; flex-direction: column; }
+.rail-video-listview, .rail-video-watch { display: flex; flex: 1 0 auto; flex-direction: column; min-width: 0; }
+.rail-video-listview[hidden], .rail-video-watch[hidden] { display: none; }
+.rail-video-sorts { position: sticky; top: 0; z-index: 2; background: var(--content-surface); }
+.rail-video-status:empty { display: none; }
+.rail-video-status { margin: 0; padding: var(--space-2) var(--space-3); }
+.rail-video-list { display: grid; gap: var(--space-4); padding: var(--space-2) var(--space-3) var(--space-4); }
+.rail-video-list > .rail-empty, .rail-video-list > .rail-skeleton { margin: 0; }
+.rail-video-list .video-card { display: grid; width: 100%; gap: var(--space-2); padding: 0; border: 0; border-radius: 0; background: transparent; color: var(--text); text-align: left; cursor: pointer; }
+.rail-video-list .video-card img, .rail-video-list .video-card .video-thumb { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: var(--radius-md); }
+.rail-video-list .vh-card-body { display: flex; gap: var(--space-2); min-width: 0; }
+.rail-video-list .video-card-copy { display: grid; min-width: 0; gap: 2px; }
+.rail-video-list .video-card-copy span { color: var(--muted); font-size: var(--type-caption); }
+.rail-video-list .video-card-copy strong { overflow-wrap: anywhere; }
+.rail-video-sentinel { height: 1px; }
+.rail-video-more { margin: var(--space-3); padding: var(--space-2) var(--space-3); border: 1px solid var(--divider); border-radius: var(--radius-pill); background: transparent; color: var(--text); }
+.rail-video-more[hidden] { display: none; }
+.rail-video-watch-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--divider); }
+.rail-video-back { display: grid; width: 32px; height: 32px; place-items: center; border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--text); cursor: pointer; }
+.rail-video-back:hover { background: var(--interactive); }
+.rail-video-back .ic { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.rail-video-central { padding: var(--space-1) var(--space-3); border: 1px solid var(--divider); border-radius: var(--radius-pill); background: transparent; color: var(--text); cursor: pointer; }
+.rail-video-watch .vh-stage { width: 100%; }
+.rail-video-watch .yt-player-slot { width: 100%; aspect-ratio: 16 / 9; }
+.rail-video-watch-meta { display: grid; gap: var(--space-2); padding: var(--space-3); }
+.rail-video-watch-meta > * { margin: 0; }
+.rail-video-watch .vh-watch-title { font-size: var(--type-headline); }
+.rail-video-back:focus-visible, .rail-video-central:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+/* 書き込み欄：DMの欄と同じ作法（Enterで送信、丸い送信ボタン）。画像は付けた分だけ縮小で並べる。 */
+.rail-chat-open { display: grid; width: 32px; height: 32px; flex: none; margin-left: auto; place-items: center; border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--muted); cursor: pointer; }
+.rail-chat-open:hover { background: var(--interactive); color: var(--text); }
+.rail-chat-open .ic, .rail-chat-attach .ic, .rail-chat-attachment-remove .ic { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.rail-chat-open:focus-visible, .rail-chat-attach:focus-visible, .rail-chat-send:focus-visible, .rail-chat-join:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.rail-chat-foot { position: sticky; bottom: 0; display: grid; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-top: 1px solid var(--divider); background: var(--content-surface); }
+.rail-chat-foot[hidden], .rail-chat-join[hidden], .rail-chat-compose[hidden] { display: none; }
+.rail-chat-join { justify-self: center; padding: var(--space-2) var(--space-4); border: 1px solid var(--emphasis); border-radius: var(--radius-pill); background: transparent; color: var(--text); cursor: pointer; }
+.rail-chat-compose { display: grid; gap: var(--space-1); margin: 0; }
+.rail-chat-compose-row { display: flex; align-items: flex-end; gap: var(--space-1); padding: var(--space-1); border: 1px solid var(--divider); border-radius: var(--radius-md); }
+.rail-chat-compose-row:focus-within { border-color: var(--emphasis); }
+.rail-chat-input, .rail-reply textarea { flex: 1 1 auto; min-width: 0; min-height: 32px; max-height: 120px; padding: 6px var(--space-2); border: 0; background: transparent; color: var(--text); font: inherit; resize: none; outline: 0; box-shadow: none; }
+.rail-chat-attach { display: grid; width: 32px; height: 32px; flex: none; place-items: center; border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--muted); cursor: pointer; }
+.rail-chat-attach:hover:not(:disabled) { background: var(--interactive); color: var(--text); }
+.rail-chat-attach:disabled { opacity: .4; cursor: default; }
+.rail-chat-send { display: inline-grid; width: 32px; height: 32px; flex: none; padding: 0; place-items: center; border-radius: var(--radius-pill); }
+.rail-chat-send svg { width: 16px; height: 16px; }
+.rail-chat-attachments { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.rail-chat-attachments:empty { display: none; }
+.rail-chat-attachment { position: relative; display: inline-grid; width: 48px; height: 48px; place-items: center; overflow: hidden; border: 1px solid var(--divider); border-radius: var(--radius-sm); }
+.rail-chat-attachment img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.rail-chat-attachment-remove { position: absolute; top: 1px; right: 1px; display: grid; width: 18px; height: 18px; padding: 0; place-items: center; border: 0; border-radius: 50%; background: var(--content-surface); color: var(--text); cursor: pointer; }
+.rail-chat-attachment-remove .ic { width: 12px; height: 12px; }
+.rail-chat-compose-note { margin: 0; }
+.rail-chat-compose-note:empty { display: none; }
+.rail-chat-msg.is-pending .rail-chat-bubble { opacity: .6; }
+.rail-chat-msg.is-failed .rail-chat-bubble { border-style: dashed; }
+.rail-chat-entry-state { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1); font-size: var(--type-caption); }
+.rail-chat-retry { padding: 0; border: 0; background: transparent; color: var(--text); text-decoration: underline; cursor: pointer; font: inherit; }
+.rail-reply { margin: var(--space-2) 0 0; }
+.rail-chat-compose-row .rail-chat-input, .rail-chat-compose-row .rail-chat-input:focus, .rail-chat-compose-row .rail-chat-input:focus-visible, .rail-reply textarea:focus-visible { border: 0 !important; outline: 0 !important; background: transparent !important; }
+.rail-state-icon { display: inline-grid; width: 28px; height: 28px; place-items: center; color: var(--muted); }
+.rail-state-icon .ic { width: 24px; height: 24px; }
+
+/* 公開グループ：チャット / 共有 / メンバーの切り替えと、チャンネルのチップ（中央と同じ分け方）。 */
+.rail-chat-nav { position: sticky; top: 52px; z-index: 1; padding: 0 var(--space-3); background: var(--content-surface); }
+.rail-chat-channels { padding: var(--space-1) var(--space-3); }
+.rail-chat-channels[hidden], .rail-chat-nav[hidden], .rail-chat-pane[hidden] { display: none; }
+.community-channels.is-horizontal .community-channel-list { display: flex; gap: var(--space-1); overflow-x: auto; scrollbar-width: none; }
+.community-channels.is-horizontal .community-channel { flex: none; padding: 4px 10px; border-radius: var(--radius-pill); }
+.rail-chat-pane { display: grid; align-content: start; gap: var(--space-2); padding: var(--space-2) var(--space-3); min-width: 0; }
+.rail-chat-members { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.rail-chat-member { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+.rail-chat-member-name { display: grid; min-width: 0; }
+.rail-chat-pane .community-shared-kinds { margin-block: var(--space-1); }
+
+/* 右列のグループの帯（2026-11-06 所有者「UIが邪魔」）：チャンネル・共有・メンバーのチップと ⋯ を細い1本に。 */
+.rail-chat-nav { display: flex; align-items: center; gap: var(--space-1); }
+.rail-chat-nav .rail-chat-channels { flex: 1 1 auto; min-width: 0; padding: var(--space-1) 0; }
+.rail-chat-more { position: relative; flex: none; }
+.rail-chat-more-toggle { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: var(--radius-pill); color: var(--muted); list-style: none; cursor: pointer; }
+.rail-chat-more-toggle::-webkit-details-marker { display: none; }
+.rail-chat-more-toggle:hover { background: var(--interactive); color: var(--text); }
+.rail-chat-more-toggle:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.rail-chat-more-list { position: absolute; inset-block-start: calc(100% + var(--space-1)); inset-inline-end: 0; z-index: 5; display: grid; min-width: 160px; padding: var(--space-1); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--panel); }
+.rail-chat-more-list:empty { display: none; }
+.rail-chat-open.is-item { display: flex; align-items: center; width: 100%; height: auto; min-height: 36px; margin-left: 0; padding: 0 var(--space-3); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text); font: inherit; white-space: nowrap; cursor: pointer; }
+.rail-chat-open.is-item:hover { background: var(--interactive); }

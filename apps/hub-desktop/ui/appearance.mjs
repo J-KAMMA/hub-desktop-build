@@ -4,18 +4,23 @@
 export const APPEARANCE_KEY = 'hub.desktop.appearance';
 export const TEMPLATE_KEY = 'hub.desktop.template';
 
-// 5 つのカラーテンプレート（2026-11-02）。scheme は data-theme（明暗）。色の値は tokens.css の [data-template] にだけある。
+// カラーテンプレート。scheme は data-theme（明暗）。色の値は tokens.css の [data-template] にだけある。
+// paper / charcoal は 2026-11-10 の既定（暖かい生成りと暖かい炭色、所有者の決定）。残りの 5 つは 2026-11-02 からのテンプレートで、選べるまま残す。
 export const TEMPLATES = Object.freeze([
+  Object.freeze({ id: 'paper', name: 'Paper', scheme: 'light' }),
+  Object.freeze({ id: 'charcoal', name: 'Charcoal', scheme: 'dark' }),
   Object.freeze({ id: 'light', name: 'Light', scheme: 'light' }),
   Object.freeze({ id: 'dark', name: 'Dark', scheme: 'dark' }),
   Object.freeze({ id: 'noir', name: 'Noir', scheme: 'dark' }),
   Object.freeze({ id: 'ivory', name: 'Ivory', scheme: 'light' }),
   Object.freeze({ id: 'midnight', name: 'Midnight', scheme: 'dark' }),
 ]);
-export const DEVICE_TEMPLATE = 'device'; // 端末に合わせる: Windows が明るければ light、暗ければ dark
-export const DEFAULT_TEMPLATE = 'noir';
+export const DEVICE_TEMPLATE = 'device'; // 端末に合わせる: Windows が明るければ paper、暗ければ charcoal
+export const DEFAULT_TEMPLATE = DEVICE_TEMPLATE;
+const DEVICE_LIGHT = 'paper';
+const DEVICE_DARK = 'charcoal';
 
-// 既定は今までの見た目（黒金のダーク＝noir）。
+// 既定は「端末に合わせる」（2026-11-10）。色を選んだことが無い人は Windows の明暗に従って paper / charcoal になる。
 export const APPEARANCE_DEFAULTS = Object.freeze({ template: DEFAULT_TEMPLATE, crisp: false, textSize: 'normal', density: 'normal', reduceMotion: false, reduceTransparency: false });
 export const APPEARANCE_CHOICES = Object.freeze({
   textSize: [['normal', '標準'], ['large', '大'], ['xlarge', '特大']],
@@ -74,10 +79,10 @@ export function saveAppearance(storage, prefs) {
   } catch { return false; }
 }
 
-/** 実際に塗るテンプレート。device は OS の設定で light / dark に解決する。 */
+/** 実際に塗るテンプレート。device（と知らない値）は OS の設定で paper / charcoal に解決する。 */
 export function resolveTemplate(template, prefersDark) {
-  if (template === DEVICE_TEMPLATE) return prefersDark ? 'dark' : 'light';
-  return TEMPLATES.some((t) => t.id === template) ? template : DEFAULT_TEMPLATE;
+  if (TEMPLATES.some((t) => t.id === template)) return template;
+  return prefersDark ? DEVICE_DARK : DEVICE_LIGHT;
 }
 export const templateScheme = (id) => TEMPLATES.find((t) => t.id === id)?.scheme ?? 'dark';
 
@@ -129,10 +134,10 @@ export function createAppearanceSettings({ document, storage, media = null }) {
     return node;
   };
   const groups = [
-    ['textSize', '文字の大きさ', '一覧・詳細・設定の文字を大きくします。サイドバー、ブラウザ、AIの画面は変わりません。', 'フォント サイズ 拡大'],
+    ['textSize', '文字の大きさ', '一覧・詳細・設定の文字を大きくします。サイドバー・ブラウザ・AIは変わりません。', 'フォント サイズ 拡大'],
     ['density', '表示の余白', '「ゆったり」は余白とボタンを広げます。', '密度 余白 ゆったり'],
   ];
-  // カラーテンプレート: 見本ボタン 5 つと「端末に合わせる」で 1 つだけ選ぶ。見本の中は data-template で、そのテンプレートの色になる。
+  // カラーテンプレート: 「端末に合わせる」（既定）と見本ボタン 7 つで 1 つだけ選ぶ。見本の中は data-template で、そのテンプレートの色になる。
   const swatches = new Map();
   const picker = make('div', undefined, 'template-swatches');
   picker.setAttribute('role', 'radiogroup');
@@ -144,7 +149,7 @@ export function createAppearanceSettings({ document, storage, media = null }) {
     node.setAttribute('aria-hidden', 'true');
     return node;
   };
-  for (const entry of [...TEMPLATES, { id: DEVICE_TEMPLATE, name: '端末に合わせる' }]) {
+  for (const entry of [{ id: DEVICE_TEMPLATE, name: '端末に合わせる' }, ...TEMPLATES]) {
     const button = make('button', undefined, 'template-swatch');
     button.type = 'button';
     button.setAttribute('role', 'radio');
@@ -152,7 +157,7 @@ export function createAppearanceSettings({ document, storage, media = null }) {
     if (entry.id === DEVICE_TEMPLATE) {
       const pair = make('span', undefined, 'template-chip template-chip-device');
       pair.setAttribute('aria-hidden', 'true');
-      pair.append(chip('light'), chip('dark'));
+      pair.append(chip(DEVICE_LIGHT), chip(DEVICE_DARK));
       button.append(pair);
     } else {
       button.append(chip(entry.id));
@@ -162,7 +167,7 @@ export function createAppearanceSettings({ document, storage, media = null }) {
     swatches.set(entry.id, button);
     picker.append(button);
   }
-  element.append(row('カラーテンプレート', '画面全体の色を 1 つ選びます。「端末に合わせる」はWindowsの設定に従い、明るければ Light、暗ければ Dark にします。', picker, { className: 'appearance-group appearance-template', keywords: 'テンプレート 配色 テーマ 色 ライト ダーク ノワール アイボリー ミッドナイト 端末に合わせる 暗い 明るい ゴールド 金' }));
+  element.append(row('カラーテンプレート', '画面全体の色を 1 つ選びます。「端末に合わせる」はWindowsの明るさに従います。', picker, { className: 'appearance-group appearance-template', keywords: 'テンプレート 配色 テーマ 色 ペーパー チャコール ライト ダーク ノワール アイボリー ミッドナイト 端末に合わせる 暗い 明るい 生成り 炭 ゴールド 金' }));
   const crisp = document.createElement('input');
   crisp.type = 'checkbox';
   crisp.addEventListener('change', () => { prefs = { ...prefs, crisp: crisp.checked }; commit(); });
@@ -185,11 +190,11 @@ export function createAppearanceSettings({ document, storage, media = null }) {
   const motion = document.createElement('input');
   motion.type = 'checkbox';
   motion.addEventListener('change', () => { prefs = { ...prefs, reduceMotion: motion.checked }; commit(); });
-  element.append(row('動きを減らす', '画面の動きや点滅を止めます。パソコン側で「アニメーションを減らす」がオンなら、これに関わらず減らします。', motion, { className: 'appearance-motion', keywords: 'アニメーション 点滅 モーション' }));
+  element.append(row('動きを減らす', '画面の動きや点滅を止めます。パソコンで「アニメーションを減らす」がオンなら常に減らします。', motion, { className: 'appearance-motion', keywords: 'アニメーション 点滅 モーション' }));
   const trans = document.createElement('input');
   trans.type = 'checkbox';
   trans.addEventListener('change', () => { prefs = { ...prefs, reduceTransparency: trans.checked }; commit(); });
-  element.append(row('透けやぼかしをやめる', '半透明の面とぼかしをやめて、ふつうの色にします。パソコン側で透明効果がオフなら、これに関わらずやめます。', trans, { className: 'appearance-transparency', keywords: '透明度 透明 ぼかし 半透明 Mica' }));
+  element.append(row('透けやぼかしをやめる', '半透明の面とぼかしをやめて、ふつうの色にします。パソコンで透明効果がオフなら常にやめます。', trans, { className: 'appearance-transparency', keywords: '透明度 透明 ぼかし 半透明 Mica' }));
   const state = make('p', '', 'meta');
   state.setAttribute('role', 'status');
   element.append(state);

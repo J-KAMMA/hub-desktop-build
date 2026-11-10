@@ -1,4 +1,4 @@
-use tauri::{AppHandle, Emitter, Manager, WebviewUrl, WebviewWindowBuilder};
+use tauri::{AppHandle, Emitter, Manager};
 
 /// Desktopのメイン画面は同梱アプリ（ui/index.html）。アプリ内ブラウザは
 /// 外部サイト専用でWeb版Hubは開かない——Web版は既定ブラウザで使うものとして
@@ -56,13 +56,6 @@ pub fn show_local() {
     });
 }
 
-/// マーケットの「購入済み > ゲーム」からランチャーを前に出す。
-/// HTTP側には一覧・パス・起動能力を渡さず、窓を開く合図だけを受ける。
-pub fn show_games() {
-    let Some(app) = APP.get() else { return };
-    open_local_tool(app, "games", "ゲームランチャー", "games");
-}
-
 /// Work の固定ローカル窓から、アプリの主窓へ戻る。
 ///
 /// URL の遷移や新しい窓は作らない。先に主窓を表示・前面化できた場合だけ、
@@ -75,27 +68,6 @@ pub fn return_to_hub(app: &AppHandle, harness: &tauri::WebviewWindow) -> Result<
     crate::no_activate::guard(|| main.unminimize()).map_err(|_| "hub_window_unavailable")?;
     crate::no_activate::guard(|| main.set_focus()).map_err(|_| "hub_window_unavailable")?;
     harness.hide().map_err(|_| "hub_window_unavailable".to_owned())
-}
-
-fn open_local_tool(app: &AppHandle, label: &str, title: &str, tool: &str) {
-    if let Some(window) = app.get_webview_window(label) {
-        let _ = window.show();
-        let _ = crate::no_activate::guard(|| window.unminimize());
-        let _ = crate::no_activate::guard(|| window.set_focus());
-        let event = if tool == "games" {
-            "hub-open-games"
-        } else {
-            "hub-open-harness"
-        };
-        let _ = window.emit(event, ());
-        return;
-    }
-    let url = WebviewUrl::App(format!("index.html?tool={tool}").into());
-    let _ = WebviewWindowBuilder::new(app, label, url)
-        .title(title)
-        .inner_size(760.0, 760.0)
-        .min_inner_size(420.0, 520.0)
-        .build();
 }
 
 #[cfg(test)]
@@ -134,7 +106,7 @@ mod tests {
             .split("pub fn show_local()")
             .nth(1)
             .unwrap()
-            .split("pub fn show_games()")
+            .split("pub fn return_to_hub")
             .next()
             .unwrap();
         assert!(show.contains("run_on_main_thread"));
@@ -151,7 +123,7 @@ mod tests {
             .split("pub fn return_to_hub")
             .nth(1)
             .expect("return helper")
-            .split("fn open_local_tool")
+            .split("#[cfg(test)]")
             .next()
             .expect("return helper body");
         let focus = body.find("main.set_focus").expect("main focus");

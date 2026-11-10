@@ -14,3 +14,13 @@ export const PAID_AI_COMMANDS = Object.freeze(["ai_catalog", "ai_call", "ai_pay_
 export function isPaidAiCommand(name) {
   return PAID_AI_COMMANDS.includes(name);
 }
+
+// AI market (2026-11-04, owner-approved): the one exception to the refusal above. A market endpoint is
+// called directly from this device and paid through the wallet confirmation (x402, testnet only).
+// This command is not in PAID_AI_COMMANDS, so the guard does not refuse it; every command above stays
+// refused. Nothing here re-enables the jkamma AI Worker (ai_catalog, ai_call, ai_pay_and_call).
+export const MARKET_AI_COMMANDS = Object.freeze(["ai_market_call"]);
+
+export function isMarketAiCommand(name) {
+  return MARKET_AI_COMMANDS.includes(name);
+}

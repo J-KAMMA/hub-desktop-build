@@ -182,7 +182,8 @@
   font-weight: 700;
 }
 #hub-shell .view :is(.segmented, .scopes) button:is(.on, [aria-pressed="true"], [aria-selected="true"]) {
-  background: var(--content-surface);
+  background: transparent;
+  border-color: var(--emphasis);
   color: var(--text);
 }
 
@@ -268,9 +269,9 @@
 #hub-shell .video-card-copy { gap: 2px; padding: var(--space-3) 2px 0; }
 #hub-shell .video-card-copy strong { -webkit-line-clamp: 2; line-height: 1.4; }
 #hub-shell .video-back { background: transparent; color: var(--muted); border-radius: var(--radius-control); }
-/* 絞り込み・分類の選択は背景色だけで示す。 */
+/* 絞り込み・分類の選択は線の輪で示す。 */
 #hub-shell :is(.video-filter, .video-category) { border-color: transparent; border-radius: var(--radius-control); background: var(--interactive); }
-#hub-shell :is(.video-filter, .video-category).on { border-color: transparent; background: var(--selected); }
+#hub-shell :is(.video-filter, .video-category).on { border-color: var(--emphasis); background: transparent; }
 /* 音楽：タブは下線ではなく背景で示す。曲の行は角丸12px。 */
 #hub-shell .music-tabs { gap: 2px; margin-bottom: var(--space-4); border-bottom: 0; }
 #hub-shell .music-tab { min-height: 30px; padding: 0 var(--space-3); border: 0; border-radius: var(--radius-control); font-size: var(--type-subhead); }
@@ -324,7 +325,7 @@
   font-weight: 700;
 }
 #hub-shell #view-search .chip:hover { background: var(--interactive-hover); }
-#hub-shell #view-search .chip.on { background: var(--selected); color: var(--text); }
+#hub-shell #view-search .chip.on { background: transparent; border-color: var(--emphasis); color: var(--text); }
 #hub-shell #view-search .web-search { margin: var(--space-2) 0 var(--space-3); }
 #hub-shell #view-search .web-search .meta { margin: var(--space-1) 0 0; }
 

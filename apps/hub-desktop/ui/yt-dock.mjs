@@ -3,9 +3,11 @@
 // 小窓は見出しをつかんで動かせる。ブラウザのタブ（ネイティブの子webview）の上でも見えるよう、
 // 小窓の矩形を browser_mini_overlay で伝えてページをその分だけ切り抜く。
 import { createYouTubePlayer } from './youtube-embed.mjs';
-import { unplayable, isUnplayableCode } from './yt-unplayable.mjs';
+import { unplayable, isUnplayableCode, isTransientCode } from './yt-unplayable.mjs';
+import { readCorner, writeCorner, nearestCorner, cornerInsets } from './mini-snap.mjs';
 
 export const UNPLAYABLE_NOTE = 'この曲はアプリ内で再生できないため一覧から外しました';
+export const TRANSIENT_NOTE = '再生できませんでした';
 const NOTE_MS = 4000;
 
 // 既定の置き場は本文の右下（右列を開いていれば右列の左）。16:9 で 356×200（再生中の埋め込みは 200×200 以上の見える大きさを保つ規則）、頭の段は 40。
@@ -32,14 +34,19 @@ export function createYouTubeDock({ document, invoke = async () => {}, stage = (
   subtitle.className = 'meta'; text.append(title, subtitle);
   const back = document.createElement('button'); back.type = 'button'; back.className = 'yt-dock-back'; back.textContent = '詳細へ'; back.title = '再生していた画面に戻る';
   const close = document.createElement('button'); close.type = 'button'; close.className = 'yt-dock-close'; close.textContent = '×'; close.title = '再生を閉じる'; close.setAttribute('aria-label', '再生を閉じる');
-  head.append(text, back, close);
+  const toggle = document.createElement('button'); toggle.type = 'button'; toggle.className = 'yt-dock-toggle'; toggle.textContent = '▶'; toggle.title = '再生'; toggle.setAttribute('aria-label', '再生');
+  head.append(text, toggle, back, close);
   const body = document.createElement('div'); body.className = 'yt-dock-body';
   host.append(head, body);
   document.body.append(host);
 
   let waitFrames = 0, current = null, slot = null, mini = false, position = readPosition(storage), sentHole = '';
   const listeners = new Set();
-  const notify = () => { for (const fn of listeners) { try { fn(state()); } catch { /* 片方の失敗で他を止めない */ } } };
+  const notify = () => {
+    const on = current?.playingNow === true;
+    toggle.textContent = on ? 'Ⅱ' : '▶'; toggle.title = on ? '一時停止' : '再生'; toggle.setAttribute('aria-label', toggle.title);
+    for (const fn of listeners) { try { fn(state()); } catch { /* 片方の失敗で他を止めない */ } }
+  };
   const state = () => ({ playing: current !== null, mini, key: current?.key ?? null, playingNow: current?.playingNow === true });
 
   // 埋め込みの再生状態は enablejsapi の postMessage で受け取る。dock の iframe 以外と、YouTube 以外の送り元は無視する。
@@ -53,16 +60,17 @@ export function createYouTubeDock({ document, invoke = async () => {}, stage = (
   };
   // 埋め込みが再生を拒んだ。覚えて、一覧から外し、枠を止める。単独の再生なら短い注意を残し、列の再生なら黙って次へ進める。
   let noteTimer = null;
-  function fail(id) {
+  // remember=false（152/153）は、その回だけ止める。一覧からは外さず、列の再生なら次へ進める。
+  function fail(id, remember = true) {
     const quiet = current?.quiet === true, onUnplayable = current?.onUnplayable;
-    unplayableStore().add(id);
+    if (remember) unplayableStore().add(id);
     if (quiet) {
       stop();
       try { onUnplayable?.(id); } catch { /* 次へ進められなくても止まるだけ */ }
       return;
     }
     body.querySelector('iframe')?.setAttribute('src', 'about:blank');
-    const line = document.createElement('p'); line.className = 'yt-dock-note meta'; line.setAttribute('role', 'status'); line.textContent = UNPLAYABLE_NOTE;
+    const line = document.createElement('p'); line.className = 'yt-dock-note meta'; line.setAttribute('role', 'status'); line.textContent = remember ? UNPLAYABLE_NOTE : TRANSIENT_NOTE;
     body.replaceChildren(line);
     current.playingNow = false;
     window.clearTimeout(noteTimer);
@@ -76,6 +84,7 @@ export function createYouTubeDock({ document, invoke = async () => {}, stage = (
     let data = event.data;
     if (typeof data === 'string') { try { data = JSON.parse(data); } catch { return; } }
     if (data && data.event === 'onError' && isUnplayableCode(data.info)) { fail(current.id); return; }
+    if (data && data.event === 'onError' && isTransientCode(data.info)) { fail(current.id, false); return; }
     if (!data || (data.event !== 'infoDelivery' && data.event !== 'onStateChange')) return;
     const code = data.event === 'onStateChange' ? data.info : data.info?.playerState;
     if (!Number.isInteger(code)) return;
@@ -139,7 +148,7 @@ export function createYouTubeDock({ document, invoke = async () => {}, stage = (
     } else {
       mini = true;
       host.classList.add('is-mini');
-      const shown = clampPosition(position ?? defaultPosition());
+      const corner = position ? null : readCorner(storage), shown = clampPosition(position ?? (corner ? cornerInsets(corner, { width: MINI_W, height: MINI_H + HEAD_H }, { width: window.innerWidth, height: window.innerHeight }) : defaultPosition()));
       reserve(true);
       Object.assign(host.style, { left: '', top: '', width: `${MINI_W}px`, right: `${shown.right}px`, bottom: `${shown.bottom}px`, clipPath: '' });
       body.style.height = `${MINI_H}px`;
@@ -162,10 +171,16 @@ export function createYouTubeDock({ document, invoke = async () => {}, stage = (
     host.classList.add('is-dragging');
     head.setPointerCapture?.(event.pointerId);
     const move = e => { position = clampPosition({ right: start.right - (e.clientX - start.x), bottom: start.bottom - (e.clientY - start.y) }); layout(); };
-    const up = () => { head.removeEventListener('pointermove', move); head.removeEventListener('pointerup', up); head.removeEventListener('pointercancel', up); host.classList.remove('is-dragging'); if (position) writePosition(storage, position); };
+    const up = () => { head.removeEventListener('pointermove', move); head.removeEventListener('pointerup', up); head.removeEventListener('pointercancel', up); host.classList.remove('is-dragging'); if (position) { snap(); writePosition(storage, position); } };
     head.addEventListener('pointermove', move); head.addEventListener('pointerup', up); head.addEventListener('pointercancel', up);
   });
 
+  // 離したら最も近い隅に吸着する。隅は音楽の小窓（mini-player.mjs）と共有する。
+  function snap() {
+    const view = { width: window.innerWidth, height: window.innerHeight }, size = { width: MINI_W, height: MINI_H + HEAD_H };
+    const corner = nearestCorner({ left: view.width - position.right - size.width, top: view.height - position.bottom - size.height, width: size.width, height: size.height }, view);
+    position = clampPosition(cornerInsets(corner, size, view)); writeCorner(storage, corner); layout(); notify();
+  }
   function attachSlot(next) {
     if (slot && resize) resize.unobserve(slot);
     slot = next ?? null;
@@ -179,6 +194,7 @@ export function createYouTubeDock({ document, invoke = async () => {}, stage = (
     layout(); notify(); return true;
   }
   close.onclick = () => stop();
+  toggle.onclick = () => { if (current?.playingNow) pause(); else { command('playVideo'); } };
   back.onclick = () => { const open = current?.onOpen; if (typeof open === 'function') open(); };
 
   return {
@@ -208,6 +224,7 @@ export function createYouTubeDock({ document, invoke = async () => {}, stage = (
     },
     stop,
     pause,
+    /** 音だけを止める／戻す。再生は始めも止めもしない。戻すのは、止めたときだけ。 */
     /** 埋め込みの音を切り替える（enablejsapi の postMessage）。消すときは再生も続ける。 */
     setMuted(on) { command(on ? 'mute' : 'unMute'); if (on) command('playVideo'); },
     resume() { command('playVideo'); },

@@ -71,6 +71,63 @@ pub(crate) fn set_enabled(enabled: bool) -> Status {
     status()
 }
 
+// ---- Per-site allowance, per-tab counts and the pure blocking decision. ----
+type Sites = std::collections::BTreeSet<String>;
+static SITES: std::sync::RwLock<Sites> = std::sync::RwLock::new(Sites::new());
+static TAB_COUNTS: std::sync::Mutex<std::collections::BTreeMap<String, std::sync::Arc<AtomicU64>>> =
+    std::sync::Mutex::new(std::collections::BTreeMap::new());
+
+/// Sites (lowercase host without `www.`) where the user turned blocking off. A site covers its subdomains.
+pub(crate) fn install_sites(sites: Vec<String>) {
+    if let Ok(mut slot) = SITES.write() { *slot = sites.into_iter().collect(); }
+}
+pub(crate) fn sites() -> Vec<String> {
+    SITES.read().map(|s| s.iter().cloned().collect()).unwrap_or_default()
+}
+pub(crate) fn with_site(site: &str, allowed: bool) -> Result<Vec<String>, String> {
+    let site = super::autoplay::normalize_site(site)?;
+    let mut next: Sites = SITES.read().map_err(|_| UNAVAILABLE)?.clone();
+    next.remove(&site);
+    if allowed {
+        if next.len() >= 200 { return Err("browser_protection_site_limit".into()); }
+        next.insert(site);
+    }
+    Ok(next.into_iter().collect())
+}
+fn tab_counter(label: &str) -> std::sync::Arc<AtomicU64> {
+    TAB_COUNTS.lock().map(|mut m| m.entry(label.to_owned()).or_default().clone()).unwrap_or_default()
+}
+fn forget_tab(label: &str) { if let Ok(mut m) = TAB_COUNTS.lock() { m.remove(label); } }
+/// Requests blocked in this tab since it opened.
+pub(crate) fn tab_blocked_count(label: &str) -> u64 {
+    TAB_COUNTS.lock().ok().and_then(|m| m.get(label).map(|c| c.load(Ordering::SeqCst))).unwrap_or(0).min(MAX_SAFE)
+}
+
+fn host_of(raw: &str) -> Option<String> {
+    tauri::Url::parse(raw).ok()?.host_str().map(|h| h.trim_end_matches('.').to_ascii_lowercase())
+}
+/// Hub's own origins and loopback: never filtered.
+fn hub_host(host: &str) -> bool {
+    host == "jkamma.com" || host.ends_with(".jkamma.com") || host == "localhost" || host.ends_with(".localhost")
+        || host == "127.0.0.1" || host == "[::1]" || host == "::1"
+}
+fn site_allowed(sites: &Sites, host: &str) -> bool {
+    let host = host.strip_prefix("www.").unwrap_or(host);
+    sites.iter().any(|s| host == s || host.strip_suffix(s.as_str()).is_some_and(|p| p.ends_with('.')))
+}
+/// The one decision. Fails open: no engine, a bad request or an exempt page means "do not block".
+/// The main document, Hub origins, and pages on a site the user allowed are never blocked.
+fn decide(engine: Option<&adblock::Engine>, sites: &Sites, url: &str, source: &str, top: Option<&str>, kind: &str, method: &str) -> bool {
+    if kind == "document" { return false; }
+    let Some(engine) = engine else { return false };
+    if host_of(url).is_none_or(|h| hub_host(&h)) { return false; }
+    if let Some(page) = host_of(top.unwrap_or(source)) {
+        if hub_host(&page) || site_allowed(sites, &page) { return false; }
+    }
+    let Ok(request) = adblock::request::Request::new(url, source, kind, method) else { return false };
+    engine.check_network_request(&request).should_block()
+}
+
 #[cfg(windows)]
 static ENGINE: std::sync::OnceLock<Result<adblock::Engine, String>> = std::sync::OnceLock::new();
 #[cfg(windows)]
@@ -277,17 +334,12 @@ mod youtube_document_lifecycle_tests {
 }
 
 #[cfg(windows)]
-fn blocked(url: &str, source: &str, kind: &str, method: &str) -> bool {
+fn blocked(url: &str, source: &str, top: Option<&str>, kind: &str, method: &str) -> bool {
     if !ENABLED.load(Ordering::SeqCst) {
         return false;
     }
-    let Some(Ok(engine)) = ENGINE.get() else {
-        return false;
-    };
-    let Ok(request) = adblock::request::Request::new(url, source, kind, method) else {
-        return false;
-    };
-    engine.check_network_request(&request).should_block()
+    let Ok(sites) = SITES.read() else { return false };
+    decide(ENGINE.get().and_then(|e| e.as_ref().ok()), &sites, url, source, top, kind, method)
 }
 
 #[cfg(windows)]
@@ -502,6 +554,7 @@ const YOUTUBE_UNAVAILABLE: &str = "browser_youtube_protection_unavailable";
         active: bool,
         worker_owner: bool,
         top_navigation: &RefCell<Option<String>>,
+        counter: &AtomicU64,
     ) -> windows_core::Result<()> {
         if !active || args.Response().is_ok() {
             return Ok(());
@@ -553,7 +606,7 @@ const YOUTUBE_UNAVAILABLE: &str = "browser_youtube_protection_unavailable";
             worker,
         )
         .unwrap_or_else(|| url.clone());
-        if !blocked(&url, &source, resource_type(context, top_document), method) {
+        if !blocked(&url, &source, top.as_deref(), resource_type(context, top_document), method) {
             return Ok(());
         }
         let response = environment.CreateWebResourceResponse(
@@ -563,10 +616,11 @@ const YOUTUBE_UNAVAILABLE: &str = "browser_youtube_protection_unavailable";
             windows_core::w!("Cache-Control: no-store\r\nContent-Length: 0\r\n"),
         )?;
         args.SetResponse(&response)?;
+        increment(counter);
         increment(&BLOCKED); // actual successful response replacement only.
         Ok(())
     }
-    unsafe fn install_core(core: ICoreWebView2) -> Result<(), String> {
+    unsafe fn install_core(core: ICoreWebView2, counter: std::sync::Arc<AtomicU64>) -> Result<(), String> {
         if !engine_ready() {
             return Err(UNAVAILABLE.into());
         }
@@ -622,6 +676,7 @@ const YOUTUBE_UNAVAILABLE: &str = "browser_youtube_protection_unavailable";
                 .map_err(|_| INSTALL_FAILED)?;
             let request_active = Rc::clone(&active);
             let request_owner = Rc::clone(&worker_owner);
+            let request_counter = counter;
             let requested =
                 WebResourceRequestedEventHandler::create(Box::new(move |sender, args| {
                     let (Some(sender), Some(args)) = (sender, args) else {
@@ -634,6 +689,7 @@ const YOUTUBE_UNAVAILABLE: &str = "browser_youtube_protection_unavailable";
                         request_active.get(),
                         request_owner.get(),
                         &top_navigation,
+                        &request_counter,
                     );
                     if result.is_err() {
                         SUPPORTED.store(false, Ordering::SeqCst);
@@ -754,14 +810,14 @@ const YOUTUBE_UNAVAILABLE: &str = "browser_youtube_protection_unavailable";
             if closing.close().is_err() {
                 SUPPORTED.store(false, Ordering::SeqCst);
                 let _ = closing.with_webview(move |platform| unsafe {
-                    if let Ok(core) = platform.controller().CoreWebView2() { let _ = install_core(core); }
+                    if let Ok(core) = platform.controller().CoreWebView2() { let _ = install_core(core, std::sync::Arc::default()); }
                     SUPPORTED.store(false, Ordering::SeqCst);
                 });
             }
         });
         Ok(())
     }
-    pub(super) fn operation(view: &tauri::Webview, remove: bool) -> Result<(), String> {
+    pub(super) fn operation(view: &tauri::Webview, remove: bool, counter: std::sync::Arc<AtomicU64>) -> Result<(), String> {
         let (tx, rx) = std::sync::mpsc::channel();
         let current = std::sync::Arc::new(AtomicBool::new(true));
         let executing = std::sync::Arc::clone(&current);
@@ -787,7 +843,7 @@ const YOUTUBE_UNAVAILABLE: &str = "browser_youtube_protection_unavailable";
                     let result = if remove {
                         uninstall_core(core.clone())
                     } else {
-                        install_core(core.clone())
+                        install_core(core.clone(), counter)
                     };
                     if !remove && !executing.load(Ordering::SeqCst) {
                         let _ = uninstall_core(core);
@@ -887,14 +943,15 @@ const YOUTUBE_UNAVAILABLE: &str = "browser_youtube_protection_unavailable";
 
 #[cfg(windows)]
 pub(crate) fn install(view: &tauri::Webview) -> Result<(), String> {
-    native::operation(view, false)
+    native::operation(view, false, tab_counter(view.label()))
 }
 #[cfg(windows)]
 pub(crate) fn uninstall(view: &tauri::Webview) -> Result<(), String> {
-    native::operation(view, true)
+    native::operation(view, true, Default::default())
 }
 #[cfg(windows)]
 pub(crate) fn close(view: &tauri::Webview) -> Result<(), String> {
+    forget_tab(view.label());
     native::close(view)
 }
 #[cfg(not(windows))]
@@ -1087,5 +1144,72 @@ mod tests {
             "https://page.example/",
             "document"
         ));
+    }
+}
+
+#[cfg(test)]
+mod blocking_tests {
+    use super::*;
+    fn engine() -> adblock::Engine {
+        let mut filters = adblock::lists::FilterSet::new(false);
+        filters.add_filter_list(
+            "||ads.example^\n||tracker.example^$third-party\n||jkamma.com/ad^".to_owned(),
+            adblock::lists::ParseOptions::default(),
+        );
+        adblock::Engine::new_with_filter_set(filters)
+    }
+    fn sites(list: &[&str]) -> Sites { list.iter().map(|s| (*s).to_owned()).collect() }
+    const PAGE: &str = "https://news.example/story";
+
+    #[test]
+    fn known_ad_and_tracker_urls_are_blocked() {
+        let e = engine();
+        assert!(decide(Some(&e), &sites(&[]), "https://ads.example/b.js", PAGE, Some(PAGE), "script", "GET"));
+        assert!(decide(Some(&e), &sites(&[]), "https://tracker.example/p.gif", PAGE, Some(PAGE), "image", "GET"));
+        assert!(!decide(Some(&e), &sites(&[]), "https://cdn.example/app.js", PAGE, Some(PAGE), "script", "GET"));
+    }
+    #[test]
+    fn main_document_is_never_blocked() {
+        let e = engine();
+        assert!(!decide(Some(&e), &sites(&[]), "https://ads.example/", "https://ads.example/", None, "document", "GET"));
+    }
+    #[test]
+    fn hub_origins_are_never_filtered() {
+        let e = engine();
+        assert!(!decide(Some(&e), &sites(&[]), "https://hub.jkamma.com/ad/x", PAGE, Some(PAGE), "script", "GET"));
+        assert!(!decide(Some(&e), &sites(&[]), "https://ads.example/b.js", "https://hub.jkamma.com/", Some("https://hub.jkamma.com/"), "script", "GET"));
+        assert!(!decide(Some(&e), &sites(&[]), "http://localhost:3020/ad", PAGE, Some(PAGE), "script", "GET"));
+    }
+    #[test]
+    fn per_site_allowance_covers_subdomains_only_for_that_site() {
+        let e = engine();
+        let allowed = sites(&["news.example"]);
+        assert!(!decide(Some(&e), &allowed, "https://ads.example/b.js", PAGE, Some(PAGE), "script", "GET"));
+        let sub = "https://m.news.example/";
+        assert!(!decide(Some(&e), &allowed, "https://ads.example/b.js", sub, Some(sub), "script", "GET"));
+        let other = "https://notnews.example/";
+        assert!(decide(Some(&e), &allowed, "https://ads.example/b.js", other, Some(other), "script", "GET"));
+        assert!(site_allowed(&allowed, "www.news.example"));
+    }
+    #[test]
+    fn engine_error_or_bad_request_fails_open() {
+        assert!(!decide(None, &sites(&[]), "https://ads.example/b.js", PAGE, Some(PAGE), "script", "GET"));
+        let e = engine();
+        assert!(!decide(Some(&e), &sites(&[]), "not a url", PAGE, Some(PAGE), "script", "GET"));
+    }
+    #[test]
+    fn site_list_round_trips_and_counts_are_per_tab() {
+        assert!(with_site("not a site", true).is_err());
+        install_sites(vec!["news.example".into()]);
+        assert_eq!(with_site("https://www.Other.example/x", true).unwrap(), vec!["news.example", "other.example"]);
+        assert!(with_site("news.example", false).unwrap().is_empty());
+        let a = tab_counter("browser-tab-test-a");
+        increment(&a);
+        increment(&a);
+        assert_eq!(tab_blocked_count("browser-tab-test-a"), 2);
+        assert_eq!(tab_blocked_count("browser-tab-test-b"), 0);
+        forget_tab("browser-tab-test-a");
+        assert_eq!(tab_blocked_count("browser-tab-test-a"), 0);
+        install_sites(vec![]);
     }
 }

@@ -1,5 +1,6 @@
 // 画像の出どころの検査と、読めない画像の代わりの表紙。
-// 窓の CSP の img-src は 'self'・blob:・data:・Hub の出どころ・i.ytimg.com だけ（広げない）。
+// 窓の CSP の img-src は 'self'・blob:・Hub の出どころ・i.ytimg.com だけ（広げない。data: は 2026-11-08 に外した）。
+// data: の画像は blob-image.mjs が形を確かめて blob: にしてから <img> に入れる（hubAsset 経由）。
 // それ以外の画像は <img> を出さず、題を組んだ表紙（.ds-cover）にする。壊れた画像の記号を見せない。
 
 const ALLOWED_ORIGINS = new Set(['http://localhost:3020', 'http://127.0.0.1:3020', 'https://hub.jkamma.com', 'https://i.ytimg.com']);

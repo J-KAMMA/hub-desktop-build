@@ -116,3 +116,92 @@
 #rail-ai-workspace-host .piw-popover { width: min(320px, calc(100vw - 32px)); }
 #rail-ai-workspace-host .piw-chip > span:not(.piw-caret) { max-width: 110px; }
 #rail-ai-workspace-host .piw-model[hidden], #rail-ai-workspace-host .piw-shortcut[hidden] { display: none; }
+
+/* AI market (slice 1): picker filters and the first-use disclosure. Tokens only. */
+.piw-model-filters { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: 0 var(--space-2) var(--space-1); }
+.piw-model-filter { border: 1px solid var(--line); border-radius: var(--radius-sm); background: transparent; color: var(--muted); font-size: var(--type-caption); padding: 2px var(--space-2); }
+.piw-model-filter[aria-pressed="true"] { color: var(--text); border-color: var(--text); }
+.ai-market-disclosure { position: fixed; inset: auto 0 var(--space-4) 0; margin: 0 auto; max-width: 420px; display: grid; gap: var(--space-2); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-sunken); color: var(--text); z-index: 50; }
+
+
+/* ===== AI screen, 2026-11-05 (owner-approved): layout after a calm chat layout. Tokens only. =====
+   One centred column; empty state is a vertically centred greeting + one large input card; the
+   user's turns are soft bubbles, the assistant's output is plain text. Separation by whitespace. */
+#hub-shell #view-ai .piw-shell:not(#_):not(#_):not(#_) { --ai-col: 760px; align-items: center; }
+#hub-shell #view-ai .piw-shell > *:not(#_):not(#_):not(#_) { width: min(100%, var(--ai-col)); }
+#hub-shell #view-ai .piw-shell > .piw-timeline-wrap:not(#_):not(#_):not(#_) { width: 100%; }
+#hub-shell #view-ai .piw-head:not(#_):not(#_):not(#_) { border-bottom: 0; }
+#hub-shell #view-ai .piw-turn:not(#_):not(#_):not(#_) { max-width: var(--ai-col); }
+#hub-shell #view-ai .piw-timeline > .piw-turn:first-child:not(#_):not(#_):not(#_) { margin-top: var(--space-2); }
+#hub-shell #view-ai #pi-work .piw-bubble:not(#_):not(#_):not(#_) { border-radius: var(--radius-chat); background: var(--interactive); padding: var(--space-3) var(--space-4); }
+#hub-shell #view-ai #pi-work .piw-approval-seat:not(#_):not(#_):not(#_) { width: min(100%, var(--ai-col)); }
+
+/* Input card */
+#hub-shell #view-ai .piw-composer:not(#_):not(#_):not(#_) { width: min(100%, var(--ai-col)); gap: var(--space-3); margin: 0 auto var(--space-5); padding: var(--space-4) var(--space-4) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-chat); background: var(--content-surface); box-shadow: none; }
+#hub-shell #view-ai .piw-composer:focus-within:not(#_):not(#_):not(#_) { border-color: var(--line-strong); }
+#hub-shell #view-ai .piw-composer #pi-work-prompt:not(#_):not(#_):not(#_) { min-height: 56px; padding: 0 var(--space-1); border: 0; background: transparent; box-shadow: none; font-size: var(--type-body); line-height: 1.7; }
+#hub-shell #view-ai .piw-shell.is-new .piw-composer #pi-work-prompt:not(#_):not(#_):not(#_) { min-height: 88px; }
+#hub-shell #view-ai .piw-composer-bar:not(#_):not(#_):not(#_) { gap: var(--space-2); }
+#hub-shell #view-ai .piw-composer .piw-chip:not(#_):not(#_):not(#_) { min-height: 30px; padding: 0 var(--space-3); border-radius: var(--radius-pill); background: transparent; box-shadow: inset 0 0 0 1px var(--line); color: var(--muted); font-size: var(--type-caption); font-weight: var(--weight-regular); }
+#hub-shell #view-ai .piw-composer .piw-chip:hover:not(:disabled):not(#_):not(#_):not(#_) { background: var(--interactive); color: var(--text); }
+#hub-shell #view-ai .piw-composer .piw-chip.is-attention:not(#_):not(#_):not(#_) { background: transparent; box-shadow: inset 0 0 0 1px var(--emphasis); color: var(--text); }
+#hub-shell #view-ai .piw-composer .piw-popover .piw-chip:not(#_):not(#_):not(#_) { border-radius: var(--radius-sm); }
+
+/* Empty state: greeting and card centred in the column (header and the second folder button are gone). */
+#hub-shell #view-ai .piw-shell.is-new:not(#_):not(#_):not(#_) { justify-content: center; padding-bottom: 10vh; }
+#hub-shell #view-ai .piw-shell.is-new > .piw-head:not(#_):not(#_):not(#_) { display: none; }
+#hub-shell #view-ai .piw-shell.is-new .piw-empty:not(#_):not(#_):not(#_) { padding: 0; }
+#hub-shell #view-ai .piw-shell.is-new .piw-empty strong:not(#_):not(#_):not(#_) { margin: 0 0 var(--space-5); font-size: var(--type-title1); font-weight: var(--weight-bold); line-height: 1.4; }
+#hub-shell #view-ai .piw-shell.is-new .piw-empty > span:not(#_):not(#_):not(#_) { display: none; }
+#hub-shell #view-ai .piw-shell.is-new .piw-composer:not(#_):not(#_):not(#_) { margin-bottom: 0; }
+#hub-shell #view-ai .piw-shell.is-new .piw-empty-recent:not(#_):not(#_):not(#_) { max-width: var(--ai-col); margin-top: var(--space-5); }
+#hub-shell #view-ai .piw-finished:not(#_):not(#_):not(#_) { border-top: 0; margin-bottom: var(--space-5); }
+
+/* ---- Right rail AI (2026-11-07): one header row, history as a popover, centered icon when empty,
+   composer with the send button inside the input and one non-wrapping chip row. Rail host only. ---- */
+.piw-empty-icon { display: none; width: 48px; height: 48px; flex: none; }
+#view-ai .piw-shell.is-new .piw-empty-icon { width: 48px; height: 48px; }
+#rail-ai-workspace-host { position: relative; }
+#rail-ai-workspace-host .piw-head { display: none; }
+#hub-shell .rail-activity-heading:has(> .rail-ai-conv:not([hidden])) { display: flex; min-width: 0; align-items: center; gap: var(--space-2); }
+#hub-shell .rail-activity-heading > .rail-view-name { flex: none; }
+.rail-ai-conv { display: flex; min-width: 0; flex: 1 1 auto; align-items: center; gap: var(--space-2); color: var(--muted); font-size: var(--type-caption); }
+.rail-ai-conv[hidden] { display: none; }
+.rail-ai-conv > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rail-ai-conv > .piw-dot[hidden] { display: none; }
+#hub-shell .rail-activity-actions .btn-icon:not([hidden]) { display: inline-flex; width: 28px; height: 28px; align-items: center; justify-content: center; padding: 0; }
+#hub-shell .rail-activity-actions .btn-icon .ic { width: 16px; height: 16px; }
+
+/* History opens over the conversation instead of taking a row. */
+#rail-ai-workspace-host.history-open .harness-history { position: absolute; top: var(--space-1); right: var(--space-2); left: var(--space-2); z-index: 20; display: flex; max-height: min(420px, 70%); flex-direction: column; gap: var(--space-2); padding: var(--space-2); overflow-y: auto; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--panel); box-shadow: var(--shadow-sm); }
+#rail-ai-workspace-host .harness-history h3 { display: none; }
+#rail-ai-workspace-host .piw-history-item { display: grid; min-width: 0; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: var(--space-2); padding: var(--space-1) var(--space-2); font-size: var(--type-caption); }
+#rail-ai-workspace-host .piw-history-title { display: block; overflow: hidden; font-size: var(--type-caption); text-overflow: ellipsis; white-space: nowrap; }
+#rail-ai-workspace-host .piw-history-time, #rail-ai-workspace-host .piw-history-badge { color: var(--muted); font-size: var(--type-caption); white-space: nowrap; }
+
+/* Empty: only an icon, centered. */
+#rail-ai-workspace-host .piw-timeline { display: flex; flex-direction: column; }
+#rail-ai-workspace-host .piw-empty { flex: 1; align-items: center; justify-content: center; padding: var(--space-4); }
+#rail-ai-workspace-host .piw-empty > :not(.piw-empty-icon) { display: none; }
+#rail-ai-workspace-host .piw-empty .piw-empty-icon { display: block; width: 40px; height: 40px; fill: none; stroke: var(--muted); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; opacity: .6; }
+#rail-ai-workspace-host .piw-latest { padding: var(--space-1) var(--space-2); font-size: var(--type-caption); }
+
+/* Composer: input with the send button in its bottom-right corner, one chip row below. */
+#rail-ai-workspace-host .piw-composer { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--space-1); padding: var(--space-2); }
+#rail-ai-workspace-host .piw-composer #pi-work-prompt { grid-area: 1 / 1 / 2 / -1; min-height: calc(2 * 1.6em + var(--space-2)); padding: var(--space-1) 36px var(--space-1) var(--space-1); }
+#rail-ai-workspace-host .piw-composer #pi-work-draft-limit { grid-area: 2 / 1 / 3 / -1; }
+#rail-ai-workspace-host .piw-composer-bar { display: contents; }
+#rail-ai-workspace-host .piw-composer-bar > #pi-work-composer-workspace { grid-area: 3 / 1; }
+#rail-ai-workspace-host .piw-composer-bar > .piw-pop { position: static; min-width: 0; grid-row: 3; }
+#rail-ai-workspace-host .piw-composer-bar > .piw-pop:has(#pi-work-model-chip) { grid-column: 2; }
+#rail-ai-workspace-host .piw-composer-bar > .piw-pop:has(#pi-work-perm-chip) { grid-column: 3; }
+#rail-ai-workspace-host .piw-composer .piw-chip { min-height: 28px; min-width: 0; max-width: 100%; padding: 0 var(--space-2); font-size: var(--type-caption); }
+#rail-ai-workspace-host .piw-composer .piw-pop > .piw-chip { width: 100%; justify-content: flex-start; }
+#rail-ai-workspace-host .piw-composer .piw-chip > span:not(.piw-caret) { max-width: none; flex: 0 1 auto; }
+#rail-ai-workspace-host .piw-composer .piw-caret { margin-left: auto; }
+#rail-ai-workspace-host .piw-composer #pi-work-composer-workspace > span { max-width: 80px; }
+#rail-ai-workspace-host .piw-composer .piw-send, #rail-ai-workspace-host .piw-composer .piw-stop { grid-area: 1 / 3; align-self: end; justify-self: end; width: 28px; height: 28px; min-height: 28px; margin: 0 var(--space-1) var(--space-1) 0; padding: 0; border: 0; border-radius: 50%; background: var(--ds-btn-primary-bg); color: var(--ds-btn-primary-fg); }
+#rail-ai-workspace-host .piw-composer .piw-send:disabled { background: var(--interactive); color: var(--muted); opacity: 1; }
+#rail-ai-workspace-host .piw-composer .piw-stop:not([hidden]) { margin-right: 36px; }
+#rail-ai-workspace-host .piw-composer .piw-send[hidden], #rail-ai-workspace-host .piw-composer .piw-stop[hidden] { display: none; }
+#rail-ai-workspace-host .piw-composer .piw-popover { right: 0; left: 0; width: auto; bottom: calc(100% + var(--space-1)); }

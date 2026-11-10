@@ -3,8 +3,6 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { createMarketGames } from "./market-games.mjs";
-import { createGamesPage } from "./games-page.mjs";
-import { gamesTreeModel, renderGamesTree } from "./games-tree.mjs";
 
 const { JSDOM } = createRequire(new URL("../../../package.json", import.meta.url))("jsdom");
 const read = (name) => readFileSync(new URL(name, import.meta.url), "utf8");
@@ -38,29 +36,11 @@ test("market game category lists the store games, opens an in-app detail, and bu
   assert.match(host.textContent, /読み込めませんでした/);
 });
 
-test("the games view keeps the library only: no store routes, and the store root is not a body route", () => {
-  const { document, host } = fresh();
-  const page = createGamesPage({ document, host, deps: { asset() {}, launch() {}, remove() {}, add() {} } });
-  assert.equal(page.setStore, undefined);
-  page.setLocal([{ id: 1, title: "Local", executablePath: "C:/a.exe" }]);
-  page.go({ page: "store" });
-  assert.deepEqual(page.route(), { page: "library" });
-  assert.match(host.textContent, /Local/);
-  page.go({ page: "store-game", slug: "alpha" });
-  assert.deepEqual(page.route(), { page: "library" });
-  page.go({ page: "game", id: "1" });
-  assert.ok(host.querySelector('.games-detail[data-kind="local"]'));
-});
-
-test("the tree's ストア row is an entry that hands off to the market, never to the games body", () => {
-  const { document, host } = fresh();
-  const gone = [];
-  renderGamesTree({ document, host, model: gamesTreeModel({ installed: [] }), route: { page: "library" }, onGo: (r) => gone.push(r.page) });
-  [...host.querySelectorAll("button")].find((b) => b.textContent === "ストア").click();
-  assert.deepEqual(gone, ["store"]);
+test("the games rail entry hands off to the market; the games view and its tree are gone", () => {
   const app = read("app.js");
-  assert.match(app, /target\.page === "store" \? openMarketGames\(\) : gamesPage\.go\(target\)/);
   assert.match(app, /function openMarketGames\(\) \{[\s\S]*?data-view="market"[\s\S]*?data-shop-tab="games"/);
+  assert.match(app, /if \(view === "games"\) \{ openMarketGames\(\); return; \}/);
+  assert.doesNotMatch(app, /games-tree\.mjs|games-page\.mjs|gamesColumn|gamesPage/);
 });
 
 test("the market has a ゲーム tab and panel; games stay on the existing read; the buy path is the Web market", () => {

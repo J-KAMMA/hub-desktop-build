@@ -32,7 +32,8 @@ test('a row has title, summary, meta and a thumbnail as the last child (right si
   const row = renderArticleRow(dom(), items[0], options);
   assert.equal(row.querySelector('.ar-title').textContent, '一つ目');
   assert.equal(row.querySelector('.ar-summary').textContent, '要約');
-  assert.equal(row.querySelector('.ar-meta').textContent, '蒼井 · 3日前 · #Hub');
+  assert.equal(row.querySelector('.ar-meta').firstChild.textContent, '蒼井 · 3日前');
+  assert.equal(row.querySelector('.ar-meta .post-tag').textContent, '#Hub');
   assert.ok(row.lastElementChild.classList.contains('ar-thumb'));
   assert.ok(!row.classList.contains('card') && !row.classList.contains('result-card'));
   assert.equal(row.getAttribute('role'), 'listitem');

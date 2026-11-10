@@ -3,6 +3,7 @@
 // 画像は許可された出どころだけ（createCoverMedia が検査し、読めなければ題を組んだ表紙にする）。新しい読み取りは足さない。
 // 空の状態：題 20/800・本文 15 muted・ボタンは多くて1つ（36px の副ボタン）・記号の円盤なし。
 import { createCoverMedia } from './media-image.mjs';
+import { articleReadingMinutes } from './article-reading.mjs';
 
 const el = (document, tag, className, text) => {
   const node = document.createElement(tag);
@@ -23,6 +24,8 @@ export function articleRowModel(article, { relTime = () => '' } = {}) {
     thumbnailUrl: typeof article?.thumbnailUrl === 'string' ? article.thumbnailUrl : '',
     author: text(article?.authorName) || text(article?.author),
     when: relTime(article?.createdAt ?? article?.publishedAt) || '',
+    // 読了時間：一覧が本文を持たないときは出さない（作らない）。
+    reading: (() => { const given = Number(article?.readingMinutes); const minutes = given > 0 ? Math.ceil(given) : typeof article?.body === 'string' ? articleReadingMinutes(article.body) : 0; return minutes > 0 ? `約${minutes}分` : ''; })(),
     tag: tags[0] ? tags[0].trim() : '',
     coverLabel: tags[0] ? tags[0].trim() : Array.from(title)[0] || '記事',
   };
@@ -44,8 +47,13 @@ export function renderArticleRow(document, article, { hubAsset, hubOrigin = '', 
   const body = el(document, 'div', 'ar-body');
   body.append(el(document, 'strong', 'ar-title', view.title));
   if (view.summary) body.append(el(document, 'p', 'ar-summary', view.summary));
-  const meta = [view.author, view.when, view.tag ? `#${view.tag}` : ''].filter(Boolean).join(' · ');
-  if (meta) body.append(el(document, 'p', 'ar-meta', meta));
+  // 2026-11-05 所有者「ポスト以外もこの形式」：タグは時刻の横の小さな札。
+  const meta = [view.author, view.when, view.reading].filter(Boolean).join(' · ');
+  if (meta || view.tag) {
+    const line = el(document, 'p', 'ar-meta', meta);
+    if (view.tag) line.append(el(document, 'span', 'post-tag', `#${view.tag}`));
+    body.append(line);
+  }
   const thumb = createCoverMedia(document, { url: view.thumbnailUrl, title: view.title, fallbackLabel: view.coverLabel, hubAsset, hubOrigin, ratio: '3 / 2', className: 'ar-thumb' });
   row.append(body, thumb);
   if (view.id && onOpen) {

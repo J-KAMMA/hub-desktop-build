@@ -1,0 +1,12 @@
+/* 左の列の通知から開く一覧。色・寸法は意味のあるトークンだけ。 */
+.notif-pop { position: fixed; z-index: 40; width: 320px; max-height: 70vh; overflow-y: auto; padding: var(--space-1); border: 1px solid var(--divider); border-radius: var(--radius-md); background: var(--panel); box-shadow: var(--shadow-float); }
+.notif-pop[hidden] { display: none; }
+.notif-pop-row, .notif-pop-all { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--space-2); width: 100%; min-height: 44px; padding: var(--space-2); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text); text-align: left; cursor: pointer; }
+.notif-pop-row:hover, .notif-pop-all:hover { background: var(--interactive); }
+.notif-pop-row:focus-visible, .notif-pop-all:focus-visible { outline: 2px solid var(--emphasis); outline-offset: -2px; }
+.notif-pop-title { font-weight: var(--weight-bold); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.notif-pop-row.unread .notif-pop-title::before { content: "● "; color: var(--emphasis); }
+.notif-pop-text { grid-column: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: var(--type-subhead); }
+.notif-pop-time { grid-row: 1; grid-column: 2; color: var(--muted); font-size: var(--type-caption); }
+.notif-pop-note { margin: 0; padding: var(--space-3); color: var(--muted); }
+.notif-pop-all { display: block; border-top: 1px solid var(--divider); border-radius: 0 0 var(--radius-sm) var(--radius-sm); text-align: center; font-weight: var(--weight-bold); }

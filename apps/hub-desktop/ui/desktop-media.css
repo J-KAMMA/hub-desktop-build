@@ -16,9 +16,9 @@
 #hub-shell .vh-avatar { width: 32px; height: 32px; background: var(--interactive); color: var(--text); font-size: var(--type-subhead); font-weight: var(--weight-bold); }
 #hub-shell .vh-row-title { font-size: var(--type-title3); line-height: var(--lh-title3); font-weight: var(--weight-bold); font-feature-settings: "palt"; }
 #hub-shell .vh-home { gap: var(--space-7); }
-/* 絞り込みの札は 1 行のチップ（選ぶと反転）。 */
+/* 絞り込みの札は 1 行のチップ（選ぶと線の輪）。 */
 #hub-shell .video-filter, #hub-shell .video-category { min-height: 28px; padding: 0 var(--space-3); border-radius: var(--radius-pill); font-size: var(--type-subhead); font-weight: var(--weight-bold); }
-#hub-shell .video-filter.on, #hub-shell .video-category.on { background: var(--text); border-color: var(--text); color: var(--bg); }
+#hub-shell .video-filter.on, #hub-shell .video-category.on { background: transparent; border-color: var(--emphasis); color: var(--text); }
 /* 読み込み中：完成形と同じ寸法の骨組み */
 #hub-shell .vh-skeleton { display: grid; gap: var(--space-2); margin: 0; padding: 0; }
 #hub-shell .vh-skeleton-frame { aspect-ratio: 16 / 9; border-radius: var(--radius-md); }
@@ -56,3 +56,23 @@
 @media (min-width: 1600px) {
   #hub-shell .video-watch-layout { grid-template-columns: minmax(0, 1fr) minmax(300px, 402px); gap: var(--space-7); }
 }
+
+/* ---- コミュニティ・本・音楽（外部作品）の一覧を note の寸法に合わせる（2026-11-04、記事の札と同じ配置）。
+   札は縦の列：絵が上（コミュニティは横長 231×121、本は 2:3 の表紙、音楽は正方形）・角なし、その下に題（本文の大きさ・太字・2行まで）、
+   補足は淡色の小さな字。説明は出さない。絵が無い札も同じ高さの空の面を置いて、列を揃える。 ---- */
+@media (min-width: 601px) {
+  #hub-shell :is(#community-results, #books-results, #music-results):not(#_) { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--ds-space-7) var(--ds-space-4); margin: 0; padding: var(--ds-space-4) 0; }
+  #hub-shell #books-results:not(#_) { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  #hub-shell #music-results:not(#_) { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+}
+#hub-shell :is(#community-results, #books-results, #music-results) > .result-card:not(#_) { display: flex; flex-direction: column; align-items: stretch; gap: var(--ds-space-3); min-width: 0; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+#hub-shell :is(#community-results, #books-results, #music-results) > .result-card.is-link:hover:not(#_) { background: transparent; }
+#hub-shell :is(#community-results, #books-results, #music-results) > .result-card.is-link:hover > strong:not(#_) { text-decoration: underline; text-underline-offset: 3px; }
+#hub-shell :is(#community-results, #books-results, #music-results) > .result-card > .result-media:not(#_),
+#hub-shell :is(#community-results, #books-results, #music-results) > .result-card:not(:has(> .result-media))::before { order: -1; box-sizing: border-box; width: 100%; margin: 0; aspect-ratio: 231 / 121; border-radius: 0; background: var(--interactive); }
+#hub-shell :is(#community-results, #books-results, #music-results) > .result-card:not(:has(> .result-media))::before { content: ""; display: block; }
+#hub-shell #books-results > .result-card > .result-media:not(#_), #hub-shell #books-results > .result-card:not(:has(> .result-media)):not(#_)::before { aspect-ratio: 2 / 3; }
+#hub-shell #music-results > .result-card > .result-media:not(#_), #hub-shell #music-results > .result-card:not(:has(> .result-media)):not(#_)::before { aspect-ratio: 1 / 1; }
+#hub-shell :is(#community-results, #books-results, #music-results) > .result-card > strong:not(#_) { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; font-size: var(--type-body); line-height: 1.5; font-weight: var(--weight-bold); overflow-wrap: anywhere; }
+#hub-shell :is(#community-results, #books-results, #music-results) > .result-card > p:not(.meta):not(#_) { display: none; }
+#hub-shell :is(#community-results, #books-results, #music-results) > .result-card > .meta:not(#_) { margin: 0; color: var(--muted); font-size: var(--type-caption); line-height: var(--lh-caption); }

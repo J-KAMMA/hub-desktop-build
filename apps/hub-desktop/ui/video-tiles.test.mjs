@@ -48,7 +48,7 @@ test('empty states are quiet: a title, a body, at most one button, no icon', () 
   for (const [name, spec] of Object.entries(VIDEO_EMPTY)) {
     const box = createVideoEmpty(document, spec, { onAction: () => {} });
     assert.equal(box.querySelector('.vt-empty-title').textContent, spec.title, name);
-    assert.equal(box.querySelector('.vt-empty-body').textContent, spec.body, name);
+    assert.equal(box.querySelector('.vt-empty-body')?.textContent ?? box.title, spec.body, name);
     assert.ok(box.querySelectorAll('button').length <= 1, name);
     assert.equal(box.querySelector('svg, img, .empty-icon, .state-icon'), null, name);
     assert.equal(box.getAttribute('role'), 'status');

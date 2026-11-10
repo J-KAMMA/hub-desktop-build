@@ -21,6 +21,7 @@ mod remote;
 pub(crate) mod store;
 pub mod pi;
 mod proxy;
+pub(crate) mod market;
 
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -87,8 +88,12 @@ struct Plan {
 }
 
 fn plan_for(connection: &Connection) -> Result<Plan, &'static str> {
+    plan_with(connection, &OsKeys)
+}
+
+fn plan_with(connection: &Connection, keys: &dyn store::KeyStore) -> Result<Plan, &'static str> {
     let base = http::base_url(connection.kind, connection.base_url.as_deref())?;
-    let key = store::KeyStore::get(&OsKeys, &connection.id)?;
+    let key = keys.get(&connection.id)?;
     if key.is_none() && store::needs_key(connection.kind, &base) {
         return Err("byok_key_missing");
     }
@@ -245,6 +250,93 @@ async fn stream_api(plan: &Plan, model: &str, messages: &[ChatMessage], mut emit
     }
     flush(&mut pending, true, &mut flushed);
     Ok(())
+}
+
+/// Connection and model a feature inside the app may name (translation): the connection is
+/// enabled and usable (has a key, or needs none), the model name is valid. Returns
+/// `(connection name, model)`. A missing model falls back to the connection's default.
+pub(crate) fn feature_choice(settings: &std::path::Path, id: &str, model: Option<&str>) -> Result<(String, String), &'static str> {
+    let file = store::load(settings);
+    let connection = file.connections.iter().find(|c| c.id == id).ok_or("byok_connection_not_found")?;
+    if !connection.enabled {
+        return Err("byok_disabled");
+    }
+    let usable = connection.has_key
+        || http::base_url(connection.kind, connection.base_url.as_deref()).is_ok_and(|base| !store::needs_key(connection.kind, &base));
+    if !usable {
+        return Err("byok_key_missing");
+    }
+    let model = model.map(str::trim).filter(|m| !m.is_empty()).map(str::to_owned)
+        .or_else(|| connection.default_model.clone())
+        .ok_or("byok_invalid_request")?;
+    if !http::valid_model(connection.kind, &model) {
+        return Err("byok_invalid_request");
+    }
+    Ok((connection.name.clone(), model))
+}
+
+/// Puts a system prompt into a request body in the provider's own shape.
+pub(crate) fn with_system(kind: Kind, body: &mut Value, system: &str) {
+    match kind {
+        Kind::Anthropic => body["system"] = json!(system),
+        Kind::Google => body["systemInstruction"] = json!({"parts": [{"text": system}]}),
+        Kind::Openai | Kind::OpenaiCompatible => {
+            if let Some(messages) = body.get_mut("messages").and_then(Value::as_array_mut) {
+                messages.insert(0, json!({"role": "system", "content": system}));
+            }
+        }
+    }
+}
+
+/// One request inside the app (translation): a system prompt, one user text, the whole reply as a
+/// string. Same endpoint policy, key handling and error codes as chat. Neither prompt nor reply is
+/// stored or logged, and the key never leaves this module. The connection must be enabled.
+pub(crate) async fn complete_once(
+    settings: &std::path::Path, keys: &(dyn store::KeyStore + Sync), connection_id: &str, model: &str,
+    system: &str, user: &str, max_tokens: u32, timeout: Duration,
+) -> Result<String, &'static str> {
+    let file = store::load(settings);
+    let connection = file.connections.iter().find(|c| c.id == connection_id).ok_or("byok_connection_not_found")?;
+    if !connection.enabled {
+        return Err("byok_disabled");
+    }
+    if !http::valid_model(connection.kind, model) {
+        return Err("byok_invalid_request");
+    }
+    let plan = plan_with(connection, keys)?;
+    let messages = [ChatMessage { role: "user".into(), content: user.to_owned() }];
+    let (url, mut body) = chat_request(&plan, model, &messages, true, Some(max_tokens));
+    with_system(plan.kind, &mut body, system);
+    let request = authorize(&plan, client(&plan.base, None)?.post(url).json(&body))?;
+    let run = async {
+        let mut response = request.send().await.map_err(|e| send_error(&e))?;
+        if !response.status().is_success() {
+            return Err(failure(response).await);
+        }
+        let (mut sse, mut out, mut done) = (http::SseBuffer::default(), String::new(), false);
+        while !done {
+            let chunk = match response.chunk().await {
+                Err(_) => return Err("byok_connection_lost"),
+                Ok(chunk) => chunk,
+            };
+            let Some(chunk) = chunk else { break };
+            for data in sse.push(&chunk)? {
+                match parse_event(plan.kind, &data) {
+                    Event::Text(t) => {
+                        out.push_str(&t);
+                        if out.len() > MAX_OUTPUT {
+                            return Err("byok_response_too_large");
+                        }
+                    }
+                    Event::Done => done = true,
+                    Event::Failed(code) => return Err(code),
+                    Event::Skip => {}
+                }
+            }
+        }
+        Ok(out)
+    };
+    tokio::time::timeout(timeout, run).await.map_err(|_| "byok_timeout")?
 }
 
 // ------------------------------------------------------------------ commands

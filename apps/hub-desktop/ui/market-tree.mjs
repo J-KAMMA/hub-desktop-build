@@ -1,6 +1,6 @@
 // マーケットの内側左列の木（2026-11-03、旦那様の決定：列は木で、押しても列は変わらない）。
-// 根は2つ：マーケット（すべて・デジタル・グッズ・チケット・ゲーム）/ 自分（カート・購入済み・注文、出品者なら出品中/売上）。
-// 枝は曲がり線でぶらさがる（games-tree と同じ class：sidebar-tree / sidebar-tree-root / sidebar-tree-children / is-tree-first / is-tree-last）。
+// 根は2つ：マーケット（すべて・デジタル・グッズ・チケット・ゲーム）/ 自分（カート・ライブラリ・注文、出品者なら出品中/売上）。
+// 枝は曲がり線でぶらさがる（フィードの木と同じ class：sidebar-tree / sidebar-tree-root / sidebar-tree-children / is-tree-first / is-tree-last）。
 // 行を押すと onGo(route) を呼ぶだけで列は作り直さない。選択中の行とカートの数だけ select / setCount で付け替える。
 // 根の行は子の先頭へ行くだけで、自分では選ばれない（選択は葉だけ）。
 import { CATEGORIES } from './market-model.mjs';
@@ -18,14 +18,21 @@ const ICONS = {
   me: 'M12 11.5a3.4 3.4 0 1 0 0-6.8 3.4 3.4 0 0 0 0 6.8ZM5.5 19.5a6.5 6.5 0 0 1 13 0',
   cart: 'M3.5 5h2.2l1.9 9.5h9.3l1.6-7H7M10 19a1 1 0 1 0 0 .01M17 19a1 1 0 1 0 0 .01',
   purchased: 'M5 12.5 9.5 17 19 7.5',
+  library: 'M5 4.5h3v15H5zM10 4.5h3v15h-3zM15.2 5.3l2.9-.8 3.7 14.5-2.9.8z',
   orders: 'M7 4.5h10a1 1 0 0 1 1 1V20l-3-1.8-3 1.8-3-1.8L6 20V5.5a1 1 0 0 1 1-1ZM9 9h6M9 12.5h6',
   selling: 'M5 19V11M12 19V5M19 19v-6',
   listings: 'M5 6h14M5 12h14M5 18h9',
   sell: 'M12 19V6M7 10.5 12 5.5l5 5M5 19h14',
+  api: 'M8.5 7 4 12l4.5 5M15.5 7 20 12l-4.5 5M13.5 5l-3 14',
+  stock: 'M4 8 12 4l8 4v8l-8 4-8-4ZM4 8l8 4 8-4M12 12v8',
+  shipping: 'M3 6.5h11v9.5H3ZM14 9.5h3.8l3.2 3.2V16h-7M7 18.5a1.5 1.5 0 1 0 0 .01M17.5 18.5a1.5 1.5 0 1 0 0 .01',
+  sort: 'M7.5 4.5v15M4.5 16.5l3 3 3-3M16.5 19.5v-15M13.5 7.5l3-3 3 3',
 };
 
 export const sameMarketRoute = (a, b) => Boolean(a && b) && a.page === b.page && String(a.category ?? '') === String(b.category ?? '');
 export const marketRouteKey = route => `${route.page}${route.category ? `:${route.category}` : ''}`;
+
+export function marketIcon(document, name) { return icon(document, name); }
 
 function icon(document, name) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -39,11 +46,13 @@ function icon(document, name) {
 }
 
 /** 木の定義。sells：出品者として使っているか（既存の販売者の面が使えるときだけ true）。cartCount：カートの点数。 */
-export function marketTreeModel({ sells = false, canList = false, cartCount = 0 } = {}) {
+/** apiMarket：APIの窓口（api-market-view.mjs）を木に出すか。app.js が onGo の page 'api' を扱うまで false のまま（patch-notes-api-market.md）。 */
+export function marketTreeModel({ sells = false, canList = false, cartCount = 0, apiMarket = false } = {}) {
   const market = CATEGORIES.map(({ key, label }) => ({ label, icon: key, route: { page: 'browse', category: key } }));
+  if (apiMarket) market.push({ label: 'APIの窓口', icon: 'api', route: { page: 'api' } });
   const mine = [
     { label: 'カート', icon: 'cart', route: { page: 'cart' }, count: Math.max(0, Math.trunc(Number(cartCount) || 0)), countKey: 'cart' },
-    { label: '購入済み', icon: 'purchased', route: { page: 'purchased' } },
+    { label: 'ライブラリ', icon: 'library', route: { page: 'purchased' } },
     { label: '注文', icon: 'orders', route: { page: 'orders' } },
     ...(canList ? [{ label: '出品する', icon: 'sell', route: { page: 'sell' } }] : []),
     ...(sells ? [{ label: '出品中/売上', icon: 'selling', route: { page: 'selling' } }, { label: '出品・チケット', icon: 'listings', route: { page: 'listings' } }] : []),

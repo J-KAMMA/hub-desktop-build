@@ -37,7 +37,7 @@ pub const OFFLINE_GRACE_HOURS: i64 = 72;
 /// これだけ検証できていない曲は tombstone が無くても消す（6.5）。
 pub const PURGE_UNVERIFIED_DAYS: i64 = 30;
 
-const MAX_JSON_BYTES: usize = 512 * 1024;
+pub(crate) const MAX_JSON_BYTES: usize = 512 * 1024;
 const NET_LOG_CAP: usize = 500;
 
 type Check<T> = Result<T, &'static str>;
@@ -226,7 +226,7 @@ fn entry_key(origin: &str, track_id: &str) -> String {
     format!("{}/{}", origin_key(origin), track_id)
 }
 
-fn write_atomic(path: &Path, bytes: &[u8]) -> Check<()> {
+pub(crate) fn write_atomic(path: &Path, bytes: &[u8]) -> Check<()> {
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent).map_err(|_| "cache_write")?;
     }
@@ -248,7 +248,7 @@ impl MediaCache {
         Self::open_with_log(storage_path, log)
     }
 
-    fn open_with_log(storage_path: &str, log: Arc<Mutex<Vec<String>>>) -> Check<Self> {
+    pub(crate) fn open_with_log(storage_path: &str, log: Arc<Mutex<Vec<String>>>) -> Check<Self> {
         let root = PathBuf::from(storage_path).join("media-cache");
         std::fs::create_dir_all(root.join("tracks")).map_err(|_| "cache_unavailable")?;
         std::fs::create_dir_all(root.join("keysets")).map_err(|_| "cache_unavailable")?;
@@ -269,7 +269,7 @@ impl MediaCache {
 
     // ---- 通信先の記録（段階1の試験用の口） ----
 
-    fn log_request(&self, url: &str) {
+    pub(crate) fn log_request(&self, url: &str) {
         let mut log = self.log.lock().unwrap_or_else(|p| p.into_inner());
         if log.len() >= NET_LOG_CAP {
             log.remove(0);
@@ -538,6 +538,11 @@ impl MediaCache {
             std::fs::remove_dir_all(&tracks).map_err(|_| "cache_delete_failed")?;
         }
         std::fs::create_dir_all(&tracks).map_err(|_| "cache_delete_failed")?;
+        // 端末どうしの受け渡しで得た写し（media_swarm）も同じボタンで消す。
+        let peer = self.root.join("peer");
+        if peer.exists() {
+            std::fs::remove_dir_all(&peer).map_err(|_| "cache_delete_failed")?;
+        }
         self.save_index(&Index::default())
     }
 
@@ -590,7 +595,7 @@ impl MediaCache {
 // 元 Hub との通信
 // ---------------------------------------------------------------------------
 
-async fn get<S: MediaSource>(
+pub(crate) async fn get<S: MediaSource>(
     source: &S,
     cache: &MediaCache,
     url: &str,
@@ -601,13 +606,13 @@ async fn get<S: MediaSource>(
     source.get(url, range, max_bytes).await.ok()
 }
 
-fn json_body(reply: &Reply) -> Option<Value> {
+pub(crate) fn json_body(reply: &Reply) -> Option<Value> {
     serde_json::from_slice(&reply.body).ok()
 }
 
 /// origin の鍵集合を返す。未固定なら取得して固定（TOFU）、`refresh` なら固定済みの鍵で署名された
 /// 更新だけを受け入れる。固定済みの鍵で検証できなければその origin の P2P を止める（元 HTTP は続く）。
-async fn ensure_keyset<S: MediaSource>(
+pub(crate) async fn ensure_keyset<S: MediaSource>(
     source: &S,
     cache: &MediaCache,
     origin: &str,
@@ -838,7 +843,7 @@ pub struct MaintainReport {
 }
 
 /// 失効一覧を `after=<seq>` の差分で読み、検証できた tombstone を適用する。
-async fn poll_revocations<S: MediaSource>(
+pub(crate) async fn poll_revocations<S: MediaSource>(
     source: &S,
     cache: &MediaCache,
     origin: &str,
@@ -943,6 +948,33 @@ pub(crate) async fn command_maintain(storage_path: &str) -> Result<MaintainRepor
     let cache = MediaCache::open(storage_path).map_err(String::from)?;
     let source = HttpSource::new().map_err(String::from)?;
     Ok(maintain(&source, &cache, Utc::now()).await)
+}
+
+/// 確認書を取り、固定済みの鍵集合で検査して返す（作者の宣言を作る前の読み取り。公開 GET のみ）。
+pub(crate) async fn command_attestation(storage_path: &str, origin: &str, track_id: &str) -> Result<Value, String> {
+    if crate::media_manifest::track_uuid(track_id).as_deref() != Some(track_id) {
+        return Err("media_unavailable:track_id".into());
+    }
+    let cache = MediaCache::open(storage_path).map_err(String::from)?;
+    let source = HttpSource::new().map_err(String::from)?;
+    let now = Utc::now();
+    let url = format!("{origin}/music/api/p2p/v1/tracks/{track_id}/attestation");
+    let reply = get(&source, &cache, &url, None, MAX_JSON_BYTES)
+        .await
+        .filter(|r| r.status == 200)
+        .ok_or("media_unavailable:attestation")?;
+    let raw = json_body(&reply).ok_or("media_unavailable:attestation_invalid")?;
+    let mut keys = ensure_keyset(&source, &cache, origin, now, false).await.map_err(|_| "media_unavailable:keyset")?;
+    let mut result = crate::media_manifest::verify_attestation(&keys, &raw, now);
+    if result == Err("attestation_unknown_key") {
+        keys = ensure_keyset(&source, &cache, origin, now, true).await.map_err(|_| "media_unavailable:keyset")?;
+        result = crate::media_manifest::verify_attestation(&keys, &raw, now);
+    }
+    let att = result.map_err(|code| format!("media_unavailable:{code}"))?;
+    if att.track_id != track_id {
+        return Err("media_unavailable:attestation_track".into());
+    }
+    Ok(raw)
 }
 
 /// 試験用の口: メディア層が今まで送った要求の宛先。

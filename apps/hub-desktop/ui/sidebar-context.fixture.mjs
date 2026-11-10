@@ -6,7 +6,6 @@ import * as media from "./sidebar-media.mjs";
 import { musicTreeModel, renderMusicTree } from "./music-tree.mjs";
 import { videoTreeModel, renderVideoTree } from "./video-tree.mjs";
 import { articleTreeModel, renderArticleTree } from "./article-tree.mjs";
-import { gamesTreeModel, renderGamesTree } from "./games-tree.mjs";
 import { marketTreeModel, renderMarketTree } from "./market-tree.mjs";
 import { researchTreeModel, renderResearchTree } from "./research-tree.mjs";
 import { createProfileBody } from "./profile-view.mjs";
@@ -66,11 +65,11 @@ export function fixture({ projects = [], width = 1280, registered = true } = {})
   document.querySelector("#profile-posts").replaceChildren(profileBody.root);
   const api = new Function("document", "matchMedia", "state", "calls", "projects", "media", "registered", "hubSidebar", "musicTreeModel", "renderMusicTree", "trees", `
     const { sidebarIcon, channelAvatar, createSidebarRemote } = media;
-    const { videoTreeModel, renderVideoTree, articleTreeModel, renderArticleTree, gamesTreeModel, renderGamesTree, researchTreeModel, renderResearchTree, marketTreeModel, renderMarketTree } = trees;
+    const { videoTreeModel, renderVideoTree, articleTreeModel, renderArticleTree, researchTreeModel, renderResearchTree, marketTreeModel, renderMarketTree } = trees;
     const marketBrowse = null, marketView = { tree: null, sells: false };
     const hideVideoChannel = () => {}, renderVideoStudio = () => ({}), createNativeVideoApi = () => ({}), viewScroller = () => null;
-    const gamesView = { entries: [], tree: null }, gamesPage = { route: () => ({ page: "library" }), go: (target) => calls.push(["games", target.page]) };
-    const appendSidebarMine = () => {};
+    const appendSidebarMine = () => {}, communitySectionItems = () => [];
+    const visibleSection = (doc) => [...doc.querySelectorAll("#view-settings [data-settings-panel]")].find((panel) => !panel.hidden)?.dataset.settingsPanel ?? null;
     const nativeSidebar = null, homeAccountEpoch = 1, appsOpen = false, nativeSidebarId = () => 0;
     const detailReturn = { view: "feed" }, detailBack = () => calls.push(["back"]);
     let sidebarCollapsedForRail = false;
@@ -83,7 +82,9 @@ export function fixture({ projects = [], width = 1280, registered = true } = {})
     let musicSideMode = null;
     const openMusicSideMode = (mode) => calls.push(["musicMode", mode]), syncMusicSidePanel = () => {};
     const selectFeedTab = (key) => calls.push(["feedTab", key]), feedTabKey = () => "recommended";
+    const feedTabEntries = () => state.feedTabEntries ?? [["recommended", "おすすめ"], ["following", "フォロー中"], ["popular", "人気"]].map(([key, label]) => ({ key, label, selected: false })), loadFeedTabLists = () => {};
     const openDetail = (name, ids) => calls.push(["detail", name, ...ids]);
+    const THREAD_SORTS = [["recommended", "おすすめ"], ["mine", "参加中・追跡中"], ["popular", "人気"]], COMMUNITY_SORTS = [["recommended", "おすすめ"], ["popular", "人気"], ["joined", "参加中"]];
     const readingLabels = () => [], renderReadingCatalog = () => {}, loadCatalog = () => {};
     const renderVideoChips = () => {}, renderMusicChips = () => {}, renderFeedChips = () => {}, renderReadingChips = () => {}, videoSearchState = null;
     const messagesData = state.messagesData ?? null, activeConversationId = state.activeConversationId ?? null;
@@ -93,7 +94,7 @@ export function fixture({ projects = [], width = 1280, registered = true } = {})
     const hubAsset = (img, url) => { img.src = "https://hub.invalid" + url; };
     const desktopAccount = { state: registered ? "registered" : "anonymous" };
     const communitiesHost = document.createElement("div"), navCommunities = { setCurrent() {}, refresh: async () => {
-      if (state.currentView !== "feed") { communitiesHost.replaceChildren(); communitiesHost.hidden = true; return; }
+      if (!["feed", "community"].includes(state.currentView)) { communitiesHost.replaceChildren(); communitiesHost.hidden = true; return; }
       // 参加中のコミュニティ3件と「すべて見る」（nav-communities.mjs が描く行と同じ class）。
       communitiesHost.replaceChildren(...["設計", "音楽", "写真", "すべて見る"].map((name, index) => {
         const button = document.createElement("button");
@@ -108,9 +109,9 @@ export function fixture({ projects = [], width = 1280, registered = true } = {})
     const sidebarContext = document.querySelector("#sidebar-context");
     const messagesSide = document.querySelector(".messages-side"), messagesLayout = document.querySelector(".messages-layout"), mailListCol = document.querySelector(".mail-list-col"), mailLayoutNode = document.querySelector(".mail-layout");
     ${tables.replace(/\bdetailTrail\b/g, "state.detailTrail")}
-    ${column.replace(/\bcurrentView\b/g, "state.currentView").replace(/\bdetailTrail\b/g, "state.detailTrail").replace(/\b(messagesData|activeConversationId)\b/g, "state.$1")}
+    ${column.replace(/\bcurrentView\b/g, "state.currentView").replace(/(?<!")\b(communitySort|threadSort)\b/g, "state.$1").replace(/\bdetailTrail\b/g, "state.detailTrail").replace(/\b(messagesData|activeConversationId)\b/g, "state.$1")}
     return { renderSidebarContext, placeMessagesSide, sidebarRemote };
-  `)(document, matchMedia, state, calls, projects, media, registered, hubSidebar, musicTreeModel, renderMusicTree, { videoTreeModel, renderVideoTree, articleTreeModel, renderArticleTree, gamesTreeModel, renderGamesTree, researchTreeModel, renderResearchTree, marketTreeModel, renderMarketTree });
+  `)(document, matchMedia, state, calls, projects, media, registered, hubSidebar, musicTreeModel, renderMusicTree, { videoTreeModel, renderVideoTree, articleTreeModel, renderArticleTree, researchTreeModel, renderResearchTree, marketTreeModel, renderMarketTree });
   const shell = document.querySelector(".app-shell");
   const show = (view) => { state.currentView = view; calls.length = 0; api.renderSidebarContext(view); };
   const items = () => [...document.querySelectorAll("#sidebar-context .sidebar-context-item, #sidebar-context .sidebar-switch > button")];
@@ -119,6 +120,6 @@ export function fixture({ projects = [], width = 1280, registered = true } = {})
   return { dom, document, shell, calls, state, api, show, items, labels, headings, railViews };
 }
 
-export const WITH_CONTENT = ["feed", "notifications", "messages", "videos", "music", "articles", "research", "market", "settings", "purchased", "lists", "bookmarks", "profile"];
-export const EMPTY = ["home", "ranking", "services", "node", "compute", "books", "search", "contacts", "hubpedia", "community", "threads"];
+export const WITH_CONTENT = ["feed", "notifications", "messages", "videos", "music", "articles", "research", "market", "settings", "purchased", "lists", "bookmarks", "profile", "community", "threads"];
+export const EMPTY = ["home", "ranking", "services", "node", "compute", "books", "search", "contacts", "hubpedia"];
 export { source, css, html };

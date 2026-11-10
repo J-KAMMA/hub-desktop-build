@@ -46,6 +46,8 @@ pub fn resource_path(resource: &str) -> Option<&'static str> {
         "games_store" => Some("/api/games/store"),
         "books" => Some("/api/books"),
         "market" => Some("/api/listings"),
+        // AI market, slice 1 (2026-11-04): public listings of third-party AI endpoints. Read only.
+        "ai_market" => Some("/api/market/ai-endpoints"),
         "market_tickets" => Some("/api/market/tickets"),
         "distributed_posts" => Some("/api/distributed/resources?kind=post&limit=30"),
         "rankings" => Some("/api/token-rankings"),
@@ -93,6 +95,13 @@ pub fn client_path(name: &str) -> Option<&'static str> {
         "federated_feed" => Some("/api/federation/recommendations"),
         // 自分が送った他のハブの人へのフォローと、その状態（pending / accepted / rejected）。
         "remote_follows" => Some("/api/client/federation/follows"),
+        // 右列・左列のスレッド／グループの順位（サーバー計算。docs/hub-groups/DESIGN.md「2. 順位」）。続きは cursor で取る。
+        "thread_rankings_recommended" => Some("/api/client/thread-rankings?mode=recommended&limit=20"),
+        "thread_rankings_mine" => Some("/api/client/thread-rankings?mode=mine&limit=20"),
+        "thread_rankings_popular" => Some("/api/client/thread-rankings?mode=popular&limit=20&window=week"),
+        "community_rankings_recommended" => Some("/api/client/community-rankings?mode=recommended&limit=20"),
+        "community_rankings_joined" => Some("/api/client/community-rankings?mode=joined&limit=20"),
+        "community_rankings_popular" => Some("/api/client/community-rankings?mode=popular&limit=20&window=week"),
         _ => None,
     }
 }
@@ -113,6 +122,10 @@ fn detail_path(name: &str) -> Option<(&'static str, bool)> {
         "research_pdfs" => Some(("/api/client/research/{a}/pdfs", true)),
         // viewerが効く面（接続済みなら個人化・未接続でも公開分は読める）
         "post" => Some(("/api/client/posts/{a}", true)),
+        // 統合投稿の読み（docs/hub-unified-post/API.md 4）。place と kind はここで検査して組む。
+        "posts_place" => Some(("/api/client/posts?place={a}&kind={b}&cursor={c}&limit={d}", true)),
+        "post_replies" => Some(("/api/client/posts/{a}/replies?cursor={b}&limit={c}", true)),
+        "post_revisions" => Some(("/api/client/posts/{a}/revisions", true)),
         "community" => Some(("/api/client/communities/{a}", true)),
         "community_access_management_page" => Some(("/api/client/communities/{a}/access-management?kind={b}&offset={c}", true)),
         "community_membership_requests" => Some(("/api/client/communities/{a}/membership-requests", true)),
@@ -126,6 +139,13 @@ fn detail_path(name: &str) -> Option<(&'static str, bool)> {
         "community_appeal" => Some(("/api/client/communities/{a}/appeals/{b}", true)),
         "community_appeal_history" => Some(("/api/client/communities/{a}/my-appeals", true)),
         "community_members" => Some(("/api/client/communities/{a}/members", true)),
+        "community_holding" => Some(("/api/client/communities/{a}/holding", true)),
+        // コミュニティとコンテンツのつながり。種類と識別子は community_content_path が閉じた形だけ通す。
+        "community_content" => Some(("/api/client/community-content?communityId={a}&type={b}", true)),
+        "community_content_page" => Some(("/api/client/community-content?communityId={a}&type={b}&cursor={c}", true)),
+        "community_content_mine" => Some(("/api/client/community-content/mine", true)),
+        "community_content_threads" => Some(("/api/client/community-content/threads?contentType={a}&contentId={b}", true)),
+        "thread_content_card" => Some(("/api/client/community-content/thread-card?threadId={a}", true)),
         "community_guide_reviews_page" => Some(("/api/client/communities/{a}/guides/proposals/{b}/reviews?offset={c}", true)),
         "community_guide_proposals" => Some(("/api/client/communities/{a}/guides/proposals", true)),
         "community_guide_proposals_page" => Some(("/api/client/communities/{a}/guides/proposals?offset={b}", true)),
@@ -145,6 +165,7 @@ fn detail_path(name: &str) -> Option<(&'static str, bool)> {
         "community_governance_mutation_context" => Some(("/api/client/communities/{a}/governance/proposals/{b}/context", true)),
         "community_onboarding" => Some(("/api/client/communities/{a}/onboarding", true)),
         // 1コミュニティ=1本の投稿ストリーム（チャンネルは無い）。kind は雑談/共同ページ/質問/募集の絞り込み。
+        "community_channels" => Some(("/api/client/communities/{a}/channels", true)),
         "community_posts" => Some(("/api/client/communities/{a}/posts", true)),
         "community_posts_page" => Some(("/api/client/communities/{a}/posts?cursor={b}", true)),
         "community_posts_kind" => Some(("/api/client/communities/{a}/posts?kind={b}", true)),
@@ -357,7 +378,45 @@ fn community_stream_path(template: &str, ids: &[String]) -> Result<Option<String
     Ok(Some(match url.query() { Some(query) => format!("{}?{}", url.path(), query), None => url.path().to_owned() }))
 }
 
+/// コミュニティに載せたコンテンツの一覧・つながったスレッド。種類は閉じた集合、識別子は英数と - _ だけ。
+fn community_content_path(template: &'static str, ids: &[String]) -> Result<String, String> {
+    const TYPES: [&str; 4] = ["post", "article", "video", "music"];
+    const THREAD_TYPES: [&str; 3] = ["article", "video", "music"];
+    let want = |count: usize| if ids.len() == count { Ok(()) } else { Err("識別子の個数が不正です".to_owned()) };
+    match template {
+        "/api/client/community-content/mine" => { want(0)?; Ok(template.to_owned()) }
+        "/api/client/community-content?communityId={a}&type={b}" | "/api/client/community-content?communityId={a}&type={b}&cursor={c}" => {
+            let paged = template.ends_with("{c}");
+            want(if paged { 3 } else { 2 })?;
+            let community = discussion_id(Some(&ids[0]))?;
+            if !TYPES.contains(&ids[1].as_str()) { return Err("種類が不正です".to_owned()); }
+            let mut path = format!("/api/client/community-content?communityId={community}&type={}", ids[1]);
+            if paged {
+                let cursor = &ids[2];
+                if cursor.is_empty() || cursor.len() > 256 || !cursor.bytes().all(|c| c.is_ascii_alphanumeric() || matches!(c, b'-' | b'_' | b'.' | b'~' | b':')) {
+                    return Err("ページ指定が不正です".to_owned());
+                }
+                path.push_str("&cursor=");
+                path.push_str(cursor);
+            }
+            Ok(path)
+        }
+        "/api/client/community-content/threads?contentType={a}&contentId={b}" => {
+            want(2)?;
+            if !THREAD_TYPES.contains(&ids[0].as_str()) { return Err("種類が不正です".to_owned()); }
+            Ok(format!("/api/client/community-content/threads?contentType={}&contentId={}", ids[0], discussion_id(Some(&ids[1]))?))
+        }
+        "/api/client/community-content/thread-card?threadId={a}" => {
+            want(1)?;
+            Ok(format!("/api/client/community-content/thread-card?threadId={}", discussion_id(Some(&ids[0]))?))
+        }
+        _ => Err("対象の指定が正しくありません".to_owned()),
+    }
+}
+
 fn fill_path(template: &'static str, ids: &[String]) -> Result<String, String> {
+    if unified_posts::is_template(template) { return unified_posts::read_path(template, ids); }
+    if template.starts_with("/api/client/community-content") { return community_content_path(template, ids); }
     if template == "/api/research/discovery" && !ids.is_empty() {
         return Err("識別子の個数が不正です".to_owned());
     }
@@ -709,16 +768,32 @@ fn conversation_query(raw: Option<&str>) -> Option<String> {
     }
 }
 
+/// 順位の続き（keyset cursor）。サーバーが返した不透明な文字列をそのまま戻すだけなので、形だけ確かめる。
+fn ranking_cursor(name: &str, raw: Option<&str>) -> Result<Option<String>, String> {
+    let Some(raw) = raw else { return Ok(None) };
+    if !(name.starts_with("thread_rankings_") || name.starts_with("community_rankings_")) { return Ok(None); }
+    let cursor = raw.trim();
+    if cursor.is_empty() { return Ok(None); }
+    if cursor.len() > 260 || !cursor.chars().all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | ':' | '.' | '|' | '-')) {
+        return Err("カーソルが正しくありません".to_owned());
+    }
+    Ok(Some(cursor.to_owned()))
+}
+
 pub async fn fetch_client(
     base: &str,
     name: &str,
     conversation: Option<&str>,
+    cursor: Option<&str>,
 ) -> Result<serde_json::Value, String> {
     let path = client_path(name).ok_or_else(|| "この機能は許可されていません".to_owned())?;
     let mut url = reqwest::Url::parse(&format!("{}{}", base.trim_end_matches('/'), path))
         .map_err(|_| "ハブの接続先が正しくありません".to_owned())?;
     if let Some(id) = conversation_query(conversation) {
         url.query_pairs_mut().append_pair("conversation", &id);
+    }
+    if let Some(cursor) = ranking_cursor(name, cursor)? {
+        url.query_pairs_mut().append_pair("cursor", &cursor);
     }
     let assertion = crate::desktop_account::assertion_if_registered(base)
         .await?
@@ -1391,6 +1466,26 @@ fn community_preferences_action(action: &str, target: Option<&str>, options: Opt
     Ok((reqwest::Method::PATCH,format!("/api/client/communities/{community}/notifications"),serde_json::Value::Object(body)))
 }
 
+/// 保有の表示（2026-11-08）。{"optIn":bool}（本人の切替）か {"assetId":string|null}（管理者の設定）のどちらか1つだけ。
+/// 資産IDの形はここで閉じて検査する（サーバーも許可リストで再検査する）。
+fn community_holding_action(target: Option<&str>, options: Option<&serde_json::Value>) -> Result<(reqwest::Method, String, serde_json::Value), String> {
+    let invalid=|| "保有表示の入力を確認してください".to_owned();
+    let community=discussion_id(target)?;
+    let values=options.and_then(serde_json::Value::as_object).ok_or_else(invalid)?;
+    if values.len()!=1 {return Err(invalid());}
+    let body=if let Some(value)=values.get("optIn") {
+        serde_json::json!({"optIn":value.as_bool().ok_or_else(invalid)?})
+    } else if let Some(value)=values.get("assetId") {
+        if value.is_null() { serde_json::json!({"assetId":null}) } else {
+            let id=value.as_str().ok_or_else(invalid)?;
+            let valid=id.len()<=127 && id.ends_with("/native") && id.bytes().all(|b| b.is_ascii_alphanumeric() || matches!(b,b':'|b'.'|b'_'|b'-'|b'/'));
+            if !valid {return Err(invalid());}
+            serde_json::json!({"assetId":id})
+        }
+    } else {return Err(invalid());};
+    Ok((reqwest::Method::PUT,format!("/api/client/communities/{community}/holding"),body))
+}
+
 const ARTICLE_PUBLICATION_MAX_REQUEST_BYTES: usize = 768 * 1024;
 const ARTICLE_PUBLICATION_MAX_RECEIPT_BYTES: usize = 64 * 1024;
 const ARTICLE_PUBLICATION_UNKNOWN: &str = "article_publication_unknown";
@@ -1742,10 +1837,15 @@ fn action_request(
         if text.is_some()||request_id.is_some() {return Err("固定の入力項目を使ってください".into());}
         return community_preferences_action(action,target,options);
     }
+    if action=="community_holding_set" {
+        if text.is_some()||request_id.is_some() {return Err("固定の入力項目を使ってください".into());}
+        return community_holding_action(target,options);
+    }
     if is_playlist_action(action) {
         if text.is_some() || request_id.is_some() { return Err("固定の入力項目を使ってください".into()); }
         return playlist_action(action,target,options);
     }
+    if unified_posts::is_action(action) { return unified_posts::action(action, target, text, request_id, options); }
     if action=="music_post_create" {
         if text.is_some()||request_id.is_some(){return Err("固定の入力項目を使ってください".into());}
         return music_post_action(target,options);
@@ -2203,6 +2303,19 @@ fn action_request(
         )),
         // コミュニティの参加・退出。joined は action 名で固定するので
         // 窓が真偽を組み立てることはない。
+        // コンテンツをコミュニティに載せる・外す・そのコンテンツのスレッドを開く。
+        "community_content_link" | "community_content_unlink" | "community_content_thread_open" => {
+            let community = discussion_id(target.as_deref())?;
+            let values = options.and_then(serde_json::Value::as_object).ok_or("対象がありません")?;
+            let thread = action == "community_content_thread_open";
+            let kind = values.get("contentType").and_then(serde_json::Value::as_str)
+                .filter(|value| if thread { ["article", "video", "music"].contains(value) } else { ["post", "article", "video", "music"].contains(value) })
+                .ok_or("種類が不正です")?;
+            let content = discussion_id(values.get("contentId").and_then(serde_json::Value::as_str))?;
+            let method = if action == "community_content_unlink" { reqwest::Method::DELETE } else { reqwest::Method::POST };
+            let path = if thread { "/api/client/community-content/threads" } else { "/api/client/community-content" };
+            Ok((method, path.to_owned(), serde_json::json!({ "communityId": community, "contentType": kind, "contentId": content })))
+        }
         "community_join" | "community_leave" => Ok((
             reqwest::Method::POST,
             fill_path(
@@ -2319,6 +2432,22 @@ fn action_request(
             )?,
             serde_json::json!({}),
         )),
+        // チャンネルの名前・並び・表示（モデレーターだけ。サーバーが役割を確かめる）。形は閉じた2種類だけ通す。
+        "community_channel_settings" => {
+            let values = options.and_then(serde_json::Value::as_object).ok_or("チャンネルの指定が正しくありません")?;
+            let kind_ok = |value: &serde_json::Value| value.as_str().is_some_and(|kind| ["chat", "question", "party"].contains(&kind));
+            let body = if let Some(order) = values.get("order") {
+                let list = order.as_array().filter(|list| list.len() == 3 && list.iter().all(kind_ok)).ok_or("並び順が正しくありません")?;
+                serde_json::json!({ "order": list })
+            } else {
+                let kind = values.get("kind").filter(|value| kind_ok(value)).ok_or("チャンネルの指定が正しくありません")?;
+                let mut body = serde_json::json!({ "kind": kind });
+                if let Some(name) = values.get("name") { body["name"] = name.as_str().filter(|name| !name.is_empty() && name.chars().count() <= 24).ok_or("名前が正しくありません")?.into(); }
+                if let Some(hidden) = values.get("hidden") { body["hidden"] = hidden.as_bool().ok_or("表示の指定が正しくありません")?.into(); }
+                body
+            };
+            Ok((reqwest::Method::PATCH, fill_path("/api/client/communities/{a}/channels", &[target.clone().ok_or("コミュニティの指定が正しくありません")?])?, body))
+        }
         // ピン留めはモデレーター操作。action 名で ON/OFF を固定する。
         "community_post_pin" | "community_post_unpin" => Ok((
             reqwest::Method::PATCH,
@@ -4025,6 +4154,20 @@ mod tests {
     }
 
     #[test]
+    fn community_channel_settings_pass_only_the_closed_shapes() {
+        let path=|name:&str,ids:&[&str]|fill_path(detail_path(name).unwrap().0,&ids.iter().map(|id|id.to_string()).collect::<Vec<_>>());
+        assert_eq!(path("community_channels",&["c-1"]).unwrap(),"/api/client/communities/c-1/channels");
+        let (method,p,body)=action_request("community_channel_settings",Some("c-1"),None,None,Some(&serde_json::json!({"kind":"chat","name":"雑談2","hidden":false}))).unwrap();
+        assert_eq!(method,reqwest::Method::PATCH);assert_eq!(p,"/api/client/communities/c-1/channels");
+        assert_eq!(body,serde_json::json!({"kind":"chat","name":"雑談2","hidden":false}));
+        let (_,_,body)=action_request("community_channel_settings",Some("c-1"),None,None,Some(&serde_json::json!({"order":["party","chat","question"],"extra":1}))).unwrap();
+        assert_eq!(body,serde_json::json!({"order":["party","chat","question"]}));
+        for bad in [serde_json::json!({}),serde_json::json!({"kind":"guide"}),serde_json::json!({"kind":"chat","name":""}),serde_json::json!({"order":["chat"]}),serde_json::json!({"order":["chat","chat","x"]}),serde_json::json!({"kind":"chat","hidden":"y"})] {
+            assert!(action_request("community_channel_settings",Some("c-1"),None,None,Some(&bad)).is_err(),"{bad}");
+        }
+    }
+
+    #[test]
     fn community_post_verbs_write_to_posts_and_never_to_channels() {
         let id="11111111-2222-3333-4444-555555555555";
         let (method,path,body)=action_request("community_post",Some("c-1"),Some("本文"),Some(id),Some(&serde_json::json!({"kind":"question","channelId":"ignored"}))).unwrap();
@@ -4218,6 +4361,26 @@ mod tests {
 
     #[test]
     fn client_paths_are_a_closed_allowlist_and_queries_are_shape_checked() {
+        // 統合投稿の読み：固定の名前、place は固定語＋形を確かめた ID、kind は列挙。
+        let ok = |n: &str, ids: &[&str]| fill_path(detail_path(n).unwrap().0, &ids.iter().map(|s| s.to_string()).collect::<Vec<_>>());
+        assert_eq!(ok("posts_place", &["timeline"]).unwrap(), "/api/client/posts?place=timeline");
+        assert_eq!(ok("posts_place", &["thread:t-1", "article", "c_1.x", "20"]).unwrap(), "/api/client/posts?place=thread%3At-1&kind=article&cursor=c_1.x&limit=20");
+        assert_eq!(ok("posts_place", &["channel:c1:ch1", "", "", ""]).unwrap(), "/api/client/posts?place=channel%3Ac1%3Ach1");
+        assert_eq!(ok("posts_place", &["profile:abc_1"]).unwrap(), "/api/client/posts?place=profile%3Aabc_1");
+        assert_eq!(ok("post_revisions", &["p-1"]).unwrap(), "/api/client/posts/p-1/revisions");
+        assert_eq!(ok("post_replies", &["p-1", "", "5"]).unwrap(), "/api/client/posts/p-1/replies?limit=5");
+        assert!(detail_path("posts_all").is_none());
+        for bad in ["timeline/../x", "timeline:x", "thread:a/b", "thread:a:b", "thread:..", "thread:a%2Fb", "thread:../x", "channel:a:b:c", "channel:c1:ch1:x", "channel:a", "profile:a b", "profile:a\nb", "profile:a.b", "Timeline", "", "thread:", "community:c1", "thread:a&x=1"] {
+            assert!(ok("posts_place", &[bad]).is_err(), "{bad}");
+        }
+        for bad in ["thread:a?x", "x", "Post", "paper "] { assert!(ok("posts_place", &["timeline", bad]).is_err(), "{bad}"); }
+        for bad in ["a b", "a&b=1", "%2F", "x".repeat(513).as_str()] { assert!(ok("posts_place", &["timeline", "", bad]).is_err()); }
+        for bad in ["0", "51", "-1", "05", "a", "1.5"] { assert!(ok("posts_place", &["timeline", "", "", bad]).is_err(), "{bad}"); }
+        for bad in ["../x", "a:b", "a%2Fb", "a/b", "a?b", ""] {
+            assert!(ok("post_revisions", &[bad]).is_err(), "{bad}");
+            assert!(ok("post_replies", &[bad]).is_err(), "{bad}");
+        }
+        assert!(ok("posts_place", &["timeline", "", "", "", "x"]).is_err());
         assert_eq!(client_path("me"), Some("/api/client/me"));
         assert_eq!(client_path("me_summary"), Some("/api/client/me?posts=0"));
         assert_eq!(client_path("notifications"), Some("/api/client/notifications"));
@@ -4226,6 +4389,13 @@ mod tests {
         assert_eq!(client_path("federated_feed"), Some("/api/federation/recommendations"));
         assert_eq!(client_path("contacts"), Some("/api/client/contacts"));
         assert_eq!(client_path("remote_follows"), Some("/api/client/federation/follows"));
+        assert_eq!(client_path("thread_rankings_mine"), Some("/api/client/thread-rankings?mode=mine&limit=20"));
+        assert_eq!(client_path("community_rankings_popular"), Some("/api/client/community-rankings?mode=popular&limit=20&window=week"));
+        assert_eq!(client_path("thread_rankings_joined"), None);
+        assert_eq!(client_path("community_rankings_mine"), None);
+        assert_eq!(ranking_cursor("thread_rankings_popular", Some("12|abc_1")), Ok(Some("12|abc_1".to_owned())));
+        assert_eq!(ranking_cursor("thread_rankings_popular", Some("a&mode=x")).is_err(), true);
+        assert_eq!(ranking_cursor("conversations", Some("a&b")), Ok(None));
         assert_eq!(client_path("wallet"), Some("/api/client/wallet"));
         assert_eq!(client_path("lists"), Some("/api/lists"));
         assert_eq!(client_path("services"), Some("/api/platform/developer/services"));
@@ -4241,6 +4411,83 @@ mod tests {
 
     #[test]
     fn client_actions_are_a_closed_set_with_checked_shapes() {
+        // 統合投稿の書き込み：固定の動詞、Rust が本文を組み、未知の型・ID・項目は拒否。
+        let post = |a: &str, tg: Option<&str>, o: serde_json::Value| action_request(a, tg, None, Some("req-1"), Some(&o));
+        let (m, p, b) = post("create_post_v2", None, serde_json::json!({"place":"channel:c1:ch1","body":"こんにちは","attachments":[{"type":"image","refId":"img_1","meta":{"alt":"a"}},{"type":"link","refId":"https://example.com/x"},{"type":"reference","refId":"r1","meta":{"doi":"10.1/x"}}]})).unwrap();
+        assert_eq!((m, p.as_str()), (reqwest::Method::POST, "/api/client/posts"));
+        assert_eq!(b["requestId"], "req-1");
+        assert_eq!(b["attachments"].as_array().unwrap().len(), 3);
+        assert!(b.get("kind").is_none());
+        let bad_creates = [
+            serde_json::json!({"place":"timeline","kind":"paper"}),
+            serde_json::json!({"place":"timeline","extra":1}),
+            serde_json::json!({"place":"profile:abc"}),
+            serde_json::json!({"place":"timeline/../x"}),
+            serde_json::json!({"place":"thread:a/b"}),
+            serde_json::json!({"place":"channel:a:b:c"}),
+            serde_json::json!({"place":"timeline","bodyFormat":"html"}),
+            serde_json::json!({"place":"timeline","visibility":"private"}),
+            serde_json::json!({"place":"timeline","licence":"gpl"}),
+            serde_json::json!({"place":"timeline","rating":3}),
+            serde_json::json!({"place":"timeline","body":"あ".repeat(200_001)}),
+            serde_json::json!({"place":"timeline","replyToPostId":"../x"}),
+            serde_json::json!({"place":"timeline","replyToPostId":"a:b"}),
+            serde_json::json!({"place":"timeline","gateId":"a%2Fb"}),
+            serde_json::json!({"place":"timeline","attachments":[{"type":"script","refId":"a"}]}),
+            serde_json::json!({"place":"timeline","attachments":[{"type":"image","refId":"../x"}]}),
+            serde_json::json!({"place":"timeline","attachments":[{"type":"image","refId":"a:b"}]}),
+            serde_json::json!({"place":"timeline","attachments":[{"type":"image","refId":"a%2Fb"}]}),
+            serde_json::json!({"place":"timeline","attachments":[{"type":"image","refId":"a","url":"x"}]}),
+            serde_json::json!({"place":"timeline","attachments":[{"type":"audio","refId":"a","gateId":"g1"}]}),
+            serde_json::json!({"place":"timeline","attachments":[{"type":"audio","refId":"a","downloadPolicy":"entitled"}]}),
+            serde_json::json!({"place":"timeline","attachments":[{"type":"link","refId":"http://example.com"}]}),
+            serde_json::json!({"place":"timeline","attachments":[{"type":"link","refId":"javascript:alert(1)"}]}),
+            serde_json::json!({"place":"timeline","attachments":[{"type":"reference","refId":"r1"}]}),
+            serde_json::json!({"place":"timeline","attachments":[{"type":"embed","refId":"e","meta":{"embedKind":"x"}}]}),
+            serde_json::json!({"place":"timeline","attachments":[{"type":"external_video","refId":"v","meta":{"provider":"vimeo"}}]}),
+            serde_json::json!({"place":"timeline","attachments":vec![serde_json::json!({"type":"image","refId":"a"});201]}),
+            serde_json::json!({"place":"timeline","pollOptions":["a"]}),
+        ];
+        for o in bad_creates { assert!(post("create_post_v2", None, o.clone()).is_err(), "{o}"); }
+        assert!(action_request("create_post_v2", None, None, None, Some(&serde_json::json!({"place":"timeline"}))).is_err());
+        assert!(action_request("create_post_v2", None, None, Some("bad id"), Some(&serde_json::json!({"place":"timeline"}))).is_err());
+        assert!(action_request("create_post_v2", Some("p"), None, Some("r"), Some(&serde_json::json!({"place":"timeline"}))).is_err());
+        assert!(action_request("create_post_v2", None, Some("text"), Some("r"), Some(&serde_json::json!({"place":"timeline"}))).is_err());
+        // 本文が大きすぎる（添付で 1 MiB を超える）。
+        let fat = serde_json::json!({"place":"timeline","body":"あ".repeat(200_000),"attachments":(0..200).map(|_| serde_json::json!({"type":"reference","refId":"r","meta":{"citation":"あ".repeat(1000)}})).collect::<Vec<_>>()});
+        assert!(post("create_post_v2", None, fat).is_err());
+        let (m, p, b) = post("edit_post_v2", Some("p-1"), serde_json::json!({"expectedRevision":2,"body":"x","title":null})).unwrap();
+        assert_eq!((m, p.as_str()), (reqwest::Method::PATCH, "/api/client/posts/p-1"));
+        assert_eq!(b["expectedRevision"], 2);
+        for (t, o) in [(Some("../p"), serde_json::json!({"expectedRevision":1})), (Some("a:b"), serde_json::json!({"expectedRevision":1})), (Some("p"), serde_json::json!({})), (Some("p"), serde_json::json!({"expectedRevision":0})), (Some("p"), serde_json::json!({"expectedRevision":1,"place":"timeline"})), (Some("p"), serde_json::json!({"expectedRevision":1,"kind":"paper"}))] {
+            assert!(post("edit_post_v2", t, o.clone()).is_err(), "{o}");
+        }
+        let (m, p, _) = action_request("delete_post_v2", Some("p-1"), None, None, None).unwrap();
+        assert_eq!((m, p.as_str()), (reqwest::Method::DELETE, "/api/client/posts/p-1"));
+        assert!(action_request("delete_post_v2", Some("p%2F1"), None, None, None).is_err());
+        assert!(action_request("delete_post_v2", Some("../p"), None, None, None).is_err());
+        let w = serde_json::json!({"statement":"取り下げます","signature":"abc_-","keyId":"did:key:z6Mk#z6Mk"});
+        let (_, p, b) = post("withdraw_paper", Some("p-1"), w.clone()).unwrap();
+        assert_eq!(p, "/api/client/posts/p-1/withdraw");
+        assert_eq!(b["keyId"], "did:key:z6Mk#z6Mk");
+        let mut w2 = w.clone(); w2["signature"] = "a b".into(); assert!(post("withdraw_paper", Some("p-1"), w2).is_err());
+        let mut w3 = w.clone(); w3["x"] = 1.into(); assert!(post("withdraw_paper", Some("p-1"), w3).is_err());
+        for o in [serde_json::json!({"action":"like","on":true}), serde_json::json!({"action":"save","on":false}), serde_json::json!({"action":"vote","optionOrdinal":1}), serde_json::json!({"action":"rate","rating":null}), serde_json::json!({"action":"rate","rating":5})] {
+            let (_, p, b) = action_request("react_post", Some("p-1"), None, None, Some(&o)).unwrap();
+            assert_eq!(p, "/api/client/posts/p-1/reactions");
+            assert_eq!(b, o);
+        }
+        for o in [serde_json::json!({"action":"delete","on":true}), serde_json::json!({"action":"like"}), serde_json::json!({"action":"like","on":true,"x":1}), serde_json::json!({"action":"vote","optionOrdinal":10}), serde_json::json!({"action":"rate","rating":6}), serde_json::json!({"action":"rate"})] {
+            assert!(action_request("react_post", Some("p-1"), None, None, Some(&o)).is_err(), "{o}");
+        }
+        let (_, p, b) = post("report_post_v2", Some("p-1"), serde_json::json!({"reason":"spam","detail":"d"})).unwrap();
+        assert_eq!(p, "/api/client/posts/p-1/report");
+        assert_eq!(b["requestId"], "req-1");
+        assert!(post("report_post_v2", Some("p-1"), serde_json::json!({"reason":"Spam!"})).is_err());
+        assert!(post("report_post_v2", Some("p-1"), serde_json::json!({"reason":"spam","x":1})).is_err());
+        assert!(post("report_post_v2", Some("p-1"), serde_json::json!({"reason":"spam","detail":"あ".repeat(1001)})).is_err());
+        // 旧い名前は消していない（L5 で消す）。
+        assert!(action_request("delete_post", Some("p-1"), None, None, None).is_ok());
         // 許可した操作だけが、許可した形の本文になる。
         let (method, path, body) = action_request("read_all_notifications", None, None, None, None).unwrap();
         assert_eq!(method, reqwest::Method::POST);
@@ -5062,6 +5309,33 @@ mod community_native_tests {
     }
 
     #[test]
+    fn community_content_paths_and_actions_are_bounded_and_fixed() {
+        let ids = |values: &[&str]| values.iter().map(|value| value.to_string()).collect::<Vec<_>>();
+        let (template, viewer) = detail_path("community_content").unwrap();
+        assert!(viewer);
+        assert_eq!(fill_path(template, &ids(&["c1", "article"])).unwrap(), "/api/client/community-content?communityId=c1&type=article");
+        for bad in [ids(&["c1", "other"]), ids(&["c1&x=1", "post"]), ids(&["../c1", "post"]), ids(&["c1"])] { assert!(fill_path(template, &bad).is_err()); }
+        let paged = detail_path("community_content_page").unwrap().0;
+        assert_eq!(fill_path(paged, &ids(&["c1", "video", "2026-11-02T00:00:00.000Z~v_1"])).unwrap(), "/api/client/community-content?communityId=c1&type=video&cursor=2026-11-02T00:00:00.000Z~v_1");
+        for bad in ["", "a&b=1", "a b", "a/b"] { assert!(fill_path(paged, &ids(&["c1", "video", bad])).is_err()); }
+        let threads = detail_path("community_content_threads").unwrap().0;
+        assert_eq!(fill_path(threads, &ids(&["music", "m1"])).unwrap(), "/api/client/community-content/threads?contentType=music&contentId=m1");
+        assert!(fill_path(threads, &ids(&["post", "p1"])).is_err());
+        assert_eq!(fill_path(detail_path("community_content_mine").unwrap().0, &[]).unwrap(), "/api/client/community-content/mine");
+        assert!(fill_path(detail_path("thread_content_card").unwrap().0, &ids(&["t1?x"])).is_err());
+        let options = serde_json::json!({"contentType":"article","contentId":"a1","url":"https://other.invalid/"});
+        let (method, path, body) = action_request("community_content_link", Some("c1"), None, None, Some(&options)).unwrap();
+        assert_eq!((method, path.as_str()), (reqwest::Method::POST, "/api/client/community-content"));
+        assert_eq!(body, serde_json::json!({"communityId":"c1","contentType":"article","contentId":"a1"}));
+        assert_eq!(action_request("community_content_unlink", Some("c1"), None, None, Some(&options)).unwrap().0, reqwest::Method::DELETE);
+        let (_, thread_path, _) = action_request("community_content_thread_open", Some("c1"), None, None, Some(&options)).unwrap();
+        assert_eq!(thread_path, "/api/client/community-content/threads");
+        let post = serde_json::json!({"contentType":"post","contentId":"p1"});
+        assert!(action_request("community_content_thread_open", Some("c1"), None, None, Some(&post)).is_err());
+        assert!(action_request("community_content_link", Some("c1/x"), None, None, Some(&options)).is_err());
+    }
+
+    #[test]
     fn community_guide_read_paths_are_bounded_and_fixed() {
         for (name,ids,expected) in [
             ("community_guides_page",vec!["c1".to_owned(),"20".to_owned()],"/api/client/communities/c1/guides?offset=20"),
@@ -5257,6 +5531,7 @@ mod community_native_tests {
         assert!(action_request("community_member_owner",Some("c-1"),None,Some(OP),Some(&options)).is_err());
         assert!(action_request("community_channel_create",Some("c-1"),None,None,Some(&options)).is_err());
         assert_eq!(detail_path("community_members"),Some(("/api/client/communities/{a}/members",true)));
+        assert_eq!(detail_path("community_holding"),Some(("/api/client/communities/{a}/holding",true)));
         assert!(path_segment(Some("scheduled:00000000-0000-4000-8000-000000000001")).is_ok());
         assert!(path_segment(Some("scheduled:../../outside")).is_err());
     }
@@ -5684,6 +5959,17 @@ mod playlist_item_detail_tests {
         }
         assert!(community_preferences_action("read_all_community_channels",Some("c"),Some(&options)).is_err());
         for bad in [serde_json::json!({"owner":"p"}),serde_json::json!(null),serde_json::json!([])] {assert!(community_preferences_action("read_all_community_channels",Some("c"),Some(&bad)).is_err());}
+    }
+    #[test]
+    fn community_holding_action_allows_only_an_opt_in_switch_or_a_native_asset_id() {
+        let ok=|v:serde_json::Value|action_request("community_holding_set",Some("c1"),None,None,Some(&v));
+        let (method,path,body)=ok(serde_json::json!({"optIn":true})).unwrap();
+        assert_eq!(method,reqwest::Method::PUT);assert_eq!(path,"/api/client/communities/c1/holding");assert_eq!(body,serde_json::json!({"optIn":true}));
+        assert_eq!(ok(serde_json::json!({"assetId":"bip122:000000000019d6689c085ae165831e93/native"})).unwrap().2["assetId"],"bip122:000000000019d6689c085ae165831e93/native");
+        assert_eq!(ok(serde_json::json!({"assetId":null})).unwrap().2,serde_json::json!({"assetId":null}));
+        for bad in [serde_json::json!({}),serde_json::json!({"optIn":"yes"}),serde_json::json!({"optIn":true,"assetId":null}),serde_json::json!({"assetId":"../x"}),serde_json::json!({"assetId":"a/b?c=1/native"}),serde_json::json!({"address":"bc1q"}),serde_json::json!(null)] {assert!(ok(bad).is_err());}
+        assert!(action_request("community_holding_set",Some("c 1"),None,None,Some(&serde_json::json!({"optIn":true}))).is_err());
+        assert!(action_request("community_holding_set",Some("c1"),Some("x"),None,Some(&serde_json::json!({"optIn":true}))).is_err());
     }
     #[test]
     fn community_preferences_native_boolean_array_and_identifier_bounds() {
@@ -7464,5 +7750,287 @@ mod video_engagement_wire_tests {
         assert!(action_request("attribution_remove",Some("music"),None,None,Some(&serde_json::json!({"productId":"p"}))).is_err());
         assert!(action_request("attribution_remove",Some("market"),None,None,Some(&serde_json::json!({"productId":"../p"}))).is_err());
         assert_eq!(client_path("attribution_music"),Some("/api/client/attribution/music"));
+    }
+}
+
+// 統合投稿（docs/hub-unified-post/API.md 4）。読みは固定の名前、書きは固定の動詞。
+// 窓の入力は本文へ素通しせず、ここで1項目ずつ検査して組み直す。
+// 旧 create_post / edit_post / delete_post / report_post は UI が使っているため、
+// 移行のあいだ新しい書き込みは *_v2 の名で受ける（L5 で旧を消して改名する）。
+mod unified_posts {
+    use serde_json::{json, Map, Value};
+    type Act = Result<(reqwest::Method, String, Value), String>;
+    const BAD: &str = "投稿の指定が正しくありません";
+    const MAX_BODY_BYTES: usize = 1024 * 1024;
+    const KINDS: [&str; 5] = ["post", "article", "music", "video", "paper"];
+    const FORMATS: [&str; 3] = ["plain", "markdown", "latex"];
+    const LICENCES: [&str; 9] = ["arr", "cc-by-4.0", "cc-by-sa-4.0", "cc-by-nc-4.0", "cc-by-nc-sa-4.0", "cc-by-nd-4.0", "cc-by-nc-nd-4.0", "cc0-1.0", "hub-distribution-only"];
+    const ATTACHMENT_TYPES: [&str; 9] = ["image", "file", "audio", "video", "external_video", "poll", "reference", "link", "embed"];
+    const EMBED_KINDS: [&str; 9] = ["hubpedia", "listing", "repo", "game", "book", "ai_endpoint", "ticket", "research_project", "post"];
+
+    fn err<T>() -> Result<T, String> { Err(BAD.to_owned()) }
+    fn bad() -> String { BAD.to_owned() }
+    pub(super) fn id(raw: &str) -> Result<String, String> {
+        if !raw.is_empty() && raw.len() <= 128 && raw.bytes().all(|c| c.is_ascii_alphanumeric() || c == b'-' || c == b'_') { Ok(raw.to_owned()) } else { err() }
+    }
+    fn handle(raw: &str) -> Result<String, String> {
+        if !raw.is_empty() && raw.len() <= 32 && raw.bytes().all(|c| c.is_ascii_alphanumeric() || c == b'_') { Ok(raw.to_owned()) } else { err() }
+    }
+    /// timeline | thread:{id} | channel:{id}:{id} | profile:{handle}（profile は読みだけ）。
+    pub(super) fn place(raw: &str, allow_profile: bool) -> Result<String, String> {
+        let parts: Vec<&str> = raw.split(':').collect();
+        match parts.as_slice() {
+            ["timeline"] => {}
+            ["thread", a] => { id(a)?; }
+            ["channel", a, b] => { id(a)?; id(b)?; }
+            ["profile", h] if allow_profile => { handle(h)?; }
+            _ => return err(),
+        }
+        Ok(raw.to_owned())
+    }
+    fn cursor(raw: &str) -> Result<String, String> {
+        if !raw.is_empty() && raw.len() <= 512 && raw.bytes().all(|c| c.is_ascii_alphanumeric() || matches!(c, b'_' | b'.' | b'~' | b'-')) { Ok(raw.to_owned()) } else { err() }
+    }
+    fn limit(raw: &str) -> Result<String, String> {
+        raw.parse::<u32>().ok().filter(|n| (1..=50).contains(n) && n.to_string() == raw).map(|n| n.to_string()).ok_or_else(bad)
+    }
+    fn query(path: &str, pairs: &[(&str, &str)]) -> String {
+        let mut url = reqwest::Url::parse("https://hub.invalid/").unwrap();
+        url.set_path(path);
+        { let mut q = url.query_pairs_mut(); for (k, v) in pairs { if !v.is_empty() { q.append_pair(k, v); } } }
+        match url.query() { Some(q) => format!("{}?{}", url.path(), q), None => url.path().to_owned() }
+    }
+    // 既存の "post"（/api/client/posts/{a}）は path_segment（予約投稿の ID も通る）のまま残す。
+    pub(super) fn is_template(template: &str) -> bool {
+        matches!(template, "/api/client/posts?place={a}&kind={b}&cursor={c}&limit={d}" | "/api/client/posts/{a}/replies?cursor={b}&limit={c}" | "/api/client/posts/{a}/revisions")
+    }
+    /// ids は呼び出し順。空文字は省略（任意項目）。
+    pub(super) fn read_path(template: &str, ids: &[String]) -> Result<String, String> {
+        let get = |i: usize| ids.get(i).map(String::as_str).unwrap_or("");
+        match template {
+            "/api/client/posts?place={a}&kind={b}&cursor={c}&limit={d}" => {
+                if ids.is_empty() || ids.len() > 4 { return err(); }
+                let p = place(get(0), true)?;
+                let kind = if get(1).is_empty() { "" } else if KINDS.contains(&get(1)) { get(1) } else { return err() };
+                let c = if get(2).is_empty() { String::new() } else { cursor(get(2))? };
+                let l = if get(3).is_empty() { String::new() } else { limit(get(3))? };
+                Ok(query("/api/client/posts", &[("place", &p), ("kind", kind), ("cursor", &c), ("limit", &l)]))
+            }
+            "/api/client/posts/{a}" | "/api/client/posts/{a}/revisions" => {
+                if ids.len() != 1 { return err(); }
+                Ok(template.replace("{a}", &id(get(0))?))
+            }
+            "/api/client/posts/{a}/replies?cursor={b}&limit={c}" => {
+                if ids.is_empty() || ids.len() > 3 { return err(); }
+                let c = if get(1).is_empty() { String::new() } else { cursor(get(1))? };
+                let l = if get(2).is_empty() { String::new() } else { limit(get(2))? };
+                Ok(query(&format!("/api/client/posts/{}/replies", id(get(0))?), &[("cursor", &c), ("limit", &l)]))
+            }
+            _ => err(),
+        }
+    }
+
+    fn only(m: &Map<String, Value>, allowed: &[&str]) -> Result<(), String> {
+        if m.keys().all(|k| allowed.contains(&k.as_str())) { Ok(()) } else { err() }
+    }
+    fn request_id(raw: Option<&str>) -> Result<String, String> {
+        raw.filter(|r| !r.is_empty() && r.len() <= 128 && r.bytes().all(|c| c.is_ascii_alphanumeric() || c == b'-' || c == b'_')).map(str::to_owned).ok_or_else(bad)
+    }
+    fn text(v: &Value, max_chars: usize, min_chars: usize) -> Result<String, String> {
+        let s = v.as_str().ok_or_else(bad)?;
+        let n = s.chars().count();
+        if n < min_chars || n > max_chars || s.chars().any(|c| c.is_control() && !matches!(c, '\n' | '\t')) { return err(); }
+        Ok(s.to_owned())
+    }
+    fn choice(v: &Value, set: &[&str]) -> Result<String, String> {
+        v.as_str().filter(|s| set.contains(s)).map(str::to_owned).ok_or_else(bad)
+    }
+    fn instant(v: &Value) -> Result<String, String> {
+        let s = v.as_str().ok_or_else(bad)?;
+        if s.len() > 40 || chrono::DateTime::parse_from_rfc3339(s).is_err() { return err(); }
+        Ok(s.to_owned())
+    }
+    fn https_url(s: &str) -> Result<String, String> {
+        if s.len() > 2000 || s.chars().any(|c| c.is_control() || c.is_whitespace()) { return err(); }
+        let u = reqwest::Url::parse(s).map_err(|_| bad())?;
+        if u.scheme() != "https" || u.host_str().is_none() || !u.username().is_empty() || u.password().is_some() { return err(); }
+        Ok(s.to_owned())
+    }
+    fn attachment(v: &Value) -> Result<Value, String> {
+        let m = v.as_object().ok_or_else(bad)?;
+        only(m, &["type", "refId", "meta", "licence", "downloadPolicy", "gateId"])?;
+        let ty = choice(m.get("type").ok_or_else(bad)?, &ATTACHMENT_TYPES)?;
+        let ref_raw = m.get("refId").and_then(Value::as_str).ok_or_else(bad)?;
+        let ref_id = if ty == "link" { https_url(ref_raw)? } else { id(ref_raw)? };
+        let mut out = Map::new();
+        out.insert("type".into(), ty.clone().into());
+        out.insert("refId".into(), ref_id.into());
+        let meta_in = match m.get("meta") { None | Some(Value::Null) => None, Some(x) => Some(x.as_object().ok_or_else(bad)?) };
+        let mut meta = Map::new();
+        let allowed: &[&str] = match ty.as_str() {
+            "image" => &["alt"], "file" => &["name"], "external_video" => &["provider"], "poll" => &["closesAt"],
+            "reference" => &["citation", "doi", "url"], "link" => &["title"], "embed" => &["embedKind"], _ => &[],
+        };
+        if let Some(mi) = meta_in {
+            only(mi, allowed)?;
+            for (k, x) in mi {
+                let val = match (ty.as_str(), k.as_str()) {
+                    ("image", "alt") => text(x, 500, 0)?,
+                    ("file", "name") => text(x, 200, 1)?,
+                    ("external_video", "provider") => choice(x, &["youtube"])?,
+                    ("poll", "closesAt") => instant(x)?,
+                    ("reference", "citation") => text(x, 1000, 1)?,
+                    ("reference", "doi") => text(x, 200, 1)?,
+                    ("reference", "url") => https_url(x.as_str().ok_or_else(bad)?)?,
+                    ("link", "title") => text(x, 300, 1)?,
+                    ("embed", "embedKind") => choice(x, &EMBED_KINDS)?,
+                    _ => return err(),
+                };
+                meta.insert(k.clone(), val.into());
+            }
+        }
+        if (ty == "reference" && meta.is_empty()) || (ty == "embed" && !meta.contains_key("embedKind")) || (ty == "external_video" && !meta.contains_key("provider")) { return err(); }
+        if !meta.is_empty() { out.insert("meta".into(), Value::Object(meta)); }
+        if let Some(x) = m.get("licence").filter(|x| !x.is_null()) { out.insert("licence".into(), choice(x, &LICENCES)?.into()); }
+        let mut policy = "none".to_owned();
+        if let Some(x) = m.get("downloadPolicy") { policy = choice(x, &["none", "entitled", "anyone"])?; out.insert("downloadPolicy".into(), policy.clone().into()); }
+        match m.get("gateId") {
+            None | Some(Value::Null) => {}
+            Some(x) => {
+                if ty == "audio" { return err(); }
+                out.insert("gateId".into(), id(x.as_str().ok_or_else(bad)?)?.into());
+            }
+        }
+        if ty == "audio" && policy == "entitled" { return err(); }
+        Ok(Value::Object(out))
+    }
+    fn attachments(v: &Value) -> Result<Value, String> {
+        let a = v.as_array().filter(|a| a.len() <= 200).ok_or_else(bad)?;
+        Ok(Value::Array(a.iter().map(attachment).collect::<Result<Vec<_>, _>>()?))
+    }
+    fn poll_options(v: &Value) -> Result<Value, String> {
+        let a = v.as_array().filter(|a| (2..=10).contains(&a.len())).ok_or_else(bad)?;
+        Ok(Value::Array(a.iter().map(|x| text(x, 200, 1).map(Value::from)).collect::<Result<Vec<_>, _>>()?))
+    }
+    /// 作成と編集に共通の項目。null を許す項目だけ null のまま通す。
+    fn common(m: &Map<String, Value>, out: &mut Map<String, Value>) -> Result<(), String> {
+        for (k, v) in m {
+            let val: Value = match k.as_str() {
+                "title" => if v.is_null() { Value::Null } else { text(v, 300, 1)?.into() },
+                "body" => text(v, 200_000, 0)?.into(),
+                "summary" => if v.is_null() { Value::Null } else { text(v, 2000, 0)?.into() },
+                "bodyFormat" => choice(v, &FORMATS)?.into(),
+                "licence" => if v.is_null() { Value::Null } else { choice(v, &LICENCES)?.into() },
+                "sensitive" => v.as_bool().ok_or_else(bad)?.into(),
+                "visibility" => choice(v, &["public", "followers"])?.into(),
+                "attachments" => attachments(v)?,
+                "pollOptions" => poll_options(v)?,
+                _ => continue,
+            };
+            out.insert(k.clone(), val);
+        }
+        Ok(())
+    }
+    fn finish(method: reqwest::Method, path: String, body: Value) -> Act {
+        if serde_json::to_vec(&body).map_err(|_| bad())?.len() > MAX_BODY_BYTES { return Err("投稿が大きすぎます".to_owned()); }
+        Ok((method, path, body))
+    }
+    fn target_id(target: Option<&str>) -> Result<String, String> {
+        let t = target.ok_or_else(bad)?;
+        if t.trim() != t { return err(); }
+        id(t)
+    }
+    pub(super) fn is_action(a: &str) -> bool {
+        matches!(a, "create_post_v2" | "edit_post_v2" | "delete_post_v2" | "withdraw_paper" | "react_post" | "report_post_v2")
+    }
+    pub(super) fn action(a: &str, target: Option<&str>, txt: Option<&str>, rid: Option<&str>, options: Option<&Value>) -> Act {
+        if txt.is_some() { return Err("固定の入力項目を使ってください".to_owned()); }
+        let opts = match options { None => None, Some(v) => Some(v.as_object().ok_or_else(bad)?) };
+        match a {
+            "create_post_v2" => {
+                if target.is_some() { return err(); }
+                let m = opts.ok_or_else(bad)?;
+                only(m, &["place", "title", "body", "bodyFormat", "summary", "licence", "language", "sensitive", "visibility", "scheduledAt", "draft", "replyToPostId", "quoteOfPostId", "repostOfPostId", "rating", "gateId", "attachments", "pollOptions"])?;
+                let mut out = Map::new();
+                out.insert("requestId".into(), request_id(rid)?.into());
+                let p = m.get("place").and_then(Value::as_str).ok_or_else(bad)?;
+                out.insert("place".into(), place(p, false)?.into());
+                common(m, &mut out)?;
+                if let Some(x) = m.get("language").filter(|x| !x.is_null()) {
+                    let s = x.as_str().filter(|s| !s.is_empty() && s.len() <= 35 && s.bytes().all(|c| c.is_ascii_alphanumeric() || c == b'-')).ok_or_else(bad)?;
+                    out.insert("language".into(), s.into());
+                }
+                if let Some(x) = m.get("scheduledAt").filter(|x| !x.is_null()) { out.insert("scheduledAt".into(), instant(x)?.into()); }
+                if let Some(x) = m.get("draft") { out.insert("draft".into(), x.as_bool().ok_or_else(bad)?.into()); }
+                for k in ["replyToPostId", "quoteOfPostId", "repostOfPostId", "gateId"] {
+                    if let Some(x) = m.get(k).filter(|x| !x.is_null()) { out.insert(k.into(), id(x.as_str().ok_or_else(bad)?)?.into()); }
+                }
+                if let Some(x) = m.get("rating").filter(|x| !x.is_null()) {
+                    if !m.get("replyToPostId").is_some_and(|r| !r.is_null()) { return err(); }
+                    out.insert("rating".into(), x.as_u64().filter(|n| (1..=5).contains(n)).ok_or_else(bad)?.into());
+                }
+                finish(reqwest::Method::POST, "/api/client/posts".into(), Value::Object(out))
+            }
+            "edit_post_v2" => {
+                let pid = target_id(target)?;
+                let m = opts.ok_or_else(bad)?;
+                only(m, &["expectedRevision", "title", "body", "bodyFormat", "summary", "licence", "sensitive", "visibility", "attachments", "pollOptions"])?;
+                let mut out = Map::new();
+                out.insert("requestId".into(), request_id(rid)?.into());
+                let rev = m.get("expectedRevision").and_then(Value::as_u64).filter(|n| (1..=9_007_199_254_740_991).contains(n)).ok_or_else(bad)?;
+                out.insert("expectedRevision".into(), rev.into());
+                common(m, &mut out)?;
+                finish(reqwest::Method::PATCH, format!("/api/client/posts/{pid}"), Value::Object(out))
+            }
+            "delete_post_v2" => {
+                if opts.is_some() || rid.is_some() { return err(); }
+                finish(reqwest::Method::DELETE, format!("/api/client/posts/{}", target_id(target)?), json!({}))
+            }
+            "withdraw_paper" => {
+                let pid = target_id(target)?;
+                let m = opts.ok_or_else(bad)?;
+                only(m, &["statement", "signature", "keyId"])?;
+                let statement = text(m.get("statement").ok_or_else(bad)?, 5000, 1)?;
+                let sig = m.get("signature").and_then(Value::as_str).filter(|s| !s.is_empty() && s.len() <= 512 && s.bytes().all(|c| c.is_ascii_alphanumeric() || c == b'-' || c == b'_')).ok_or_else(bad)?;
+                let key = m.get("keyId").and_then(Value::as_str).filter(|s| !s.is_empty() && s.len() <= 512 && s.bytes().all(|c| c.is_ascii_alphanumeric() || matches!(c, b':' | b'#' | b'-' | b'_' | b'.'))).ok_or_else(bad)?;
+                finish(reqwest::Method::POST, format!("/api/client/posts/{pid}/withdraw"), json!({"requestId": request_id(rid)?, "statement": statement, "signature": sig, "keyId": key}))
+            }
+            "react_post" => {
+                let pid = target_id(target)?;
+                if rid.is_some() { return err(); }
+                let m = opts.ok_or_else(bad)?;
+                let act = choice(m.get("action").ok_or_else(bad)?, &["like", "save", "vote", "rate"])?;
+                let body = match act.as_str() {
+                    "like" | "save" => {
+                        only(m, &["action", "on"])?;
+                        json!({"action": act, "on": m.get("on").and_then(Value::as_bool).ok_or_else(bad)?})
+                    }
+                    "vote" => {
+                        only(m, &["action", "optionOrdinal"])?;
+                        json!({"action": act, "optionOrdinal": m.get("optionOrdinal").and_then(Value::as_u64).filter(|n| *n <= 9).ok_or_else(bad)?})
+                    }
+                    _ => {
+                        only(m, &["action", "rating"])?;
+                        let r: Value = match m.get("rating") {
+                            Some(Value::Null) => Value::Null,
+                            Some(x) => x.as_u64().filter(|n| (1..=5).contains(n)).ok_or_else(bad)?.into(),
+                            None => return err(),
+                        };
+                        json!({"action": act, "rating": r})
+                    }
+                };
+                finish(reqwest::Method::POST, format!("/api/client/posts/{pid}/reactions"), body)
+            }
+            "report_post_v2" => {
+                let pid = target_id(target)?;
+                let m = opts.ok_or_else(bad)?;
+                only(m, &["reason", "detail"])?;
+                let reason = m.get("reason").and_then(Value::as_str).filter(|s| !s.is_empty() && s.len() <= 64 && s.bytes().all(|c| c.is_ascii_lowercase() || c == b'_' || c == b'-')).ok_or_else(bad)?;
+                let mut body = json!({"requestId": request_id(rid)?, "reason": reason});
+                if let Some(x) = m.get("detail").filter(|x| !x.is_null()) { body["detail"] = text(x, 1000, 0)?.into(); }
+                finish(reqwest::Method::POST, format!("/api/client/posts/{pid}/report"), body)
+            }
+            _ => err(),
+        }
     }
 }

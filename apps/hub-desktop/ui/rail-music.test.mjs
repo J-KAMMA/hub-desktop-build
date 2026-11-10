@@ -17,12 +17,16 @@ function fixture(t,extra={}){
  const tracks=Array.from({length:12},(_,i)=>track('aaaaaaaa-aaaa-4aaa-8aaa-'+String(i).padStart(12,'0'),'Hub '+i,'H','Album H'));
  let ytPlaying=null;const ytListeners=new Set();
  const ctl={};let seq=0;
+ const engine={track:null,queue:[],paused:true,currentTime:0,duration:0};const engineListeners=new Set();
+ const notifyEngine=()=>{for(const f of engineListeners)f();};
+ ctl.engine=engine;ctl.notifyEngine=notifyEngine;
  const nav=createRailNav();
  const deps={
   getTracks:()=>tracks,getWorks:()=>[ytWork],isHubOriginalWork:w=>String(w.id).startsWith('music:'),empty:()=>document.createElement('p'),
   loadCatalog:async query=>{calls.push(['search',query]);return{tracks:[track('bbbbbbbb-bbbb-4bbb-8bbb-000000000001','Found','Q','')],works:[ytWork]};},
-  playTrack:(...args)=>{calls.push(['play',...args]);return true;},enqueue:x=>calls.push(['enqueue',x]),
-  youtube:{play:(work,panel)=>{calls.push(['yt',work.id,panel.id]);ytPlaying=work.id;panel.hidden=false;for(const f of ytListeners)f();return true;},stop:()=>{ytPlaying=null;for(const f of ytListeners)f();},isPlaying:id=>ytPlaying===id,subscribe:f=>{ytListeners.add(f);return()=>ytListeners.delete(f);}},
+  playTrack:(...args)=>{calls.push(['play',...args]);return true;},
+  player:{state:()=>({...engine,hasPrev:engine.queue.indexOf(engine.track)>0,hasNext:engine.track!==null&&engine.queue.indexOf(engine.track)<engine.queue.length-1}),subscribe:f=>{engineListeners.add(f);return()=>engineListeners.delete(f);},toggle:()=>calls.push(['toggle']),prev:()=>calls.push(['prev']),next:()=>calls.push(['next']),seek:s=>calls.push(['seek',s])},enqueue:x=>calls.push(['enqueue',x]),
+  youtube:{play:(work,panel)=>{calls.push(['yt',work.id,panel.id]);ytPlaying=work.id;panel.hidden=false;for(const f of ytListeners)f();return true;},stop:()=>{ytPlaying=null;for(const f of ytListeners)f();},isPlaying:id=>ytPlaying===id,active:()=>ytPlaying,subscribe:f=>{ytListeners.add(f);return()=>ytListeners.delete(f);}},
   nav:{visit:route=>nav.visit('music','k'+(++seq),{route})},
   posts:({host,work})=>{calls.push(['posts',work.id]);const node=document.createElement('section');node.className='video-posts';host.append(node);return{destroy(){calls.push(['posts-destroy'])}};},
   report:({host,work,open})=>{calls.push(['report',work.id,open]);return null;},
@@ -69,17 +73,47 @@ test('tapping a Hub track plays it through the shared engine in place; the row h
  assert.equal(more.hubMusicWork.id,'music:'+f.tracks[0].id);
  assert.deepEqual(f.central,[]);
 });
-test('tapping a YouTube row plays it in the rail frame at once and shows the posts below it',t=>{
+test('tapping a YouTube row plays it in the rail frame and stays on the list; the card follows and can close it',t=>{
  const f=fixture(t);f.rail.showList();
  const row=[...f.host.querySelectorAll('.rail-music-item')].find(item=>item.textContent.includes('Outside'));
  row.querySelector('.rail-item').click();
  assert.deepEqual(f.calls.find(c=>c[0]==='yt'),['yt','yt-1','rail-music-yt']);
  assert.equal(f.yt.hidden,false);
- assert.deepEqual(f.calls.find(c=>c[0]==='posts'),['posts','yt-1']);
- const page=f.host.querySelector('.rail-music-work');
- assert.ok(page.querySelector('.rail-music-work-posts .video-posts'),'posts sit under the player');
- assert.ok(page.querySelector('.music-more'),'the work heading has the ⋯ menu');
+ assert.equal(f.host.querySelector('.rail-music-work'),null,'stays on the list');
+ assert.ok(f.host.querySelector('.rail-player.is-video'));
+ assert.equal(f.host.querySelector('.rp-title').textContent,'Outside');
+ assert.ok([...f.host.querySelectorAll('.rail-music-item')].find(item=>item.textContent.includes('Outside')).classList.contains('is-current'));
+ assert.ok(row.querySelector('.music-more'),'the row keeps its ⋯ menu');
+ f.host.querySelector('.rp-play').click();
+ assert.equal(f.host.querySelector('.rail-player.is-video'),null);
  assert.deepEqual(f.central,[]);
+});
+test('the now-playing card is idle with the first track, then follows the shared engine live',t=>{
+ const f=fixture(t);f.rail.showList();
+ const card=f.host.querySelector('.rail-player');assert.ok(card.classList.contains('is-idle'));assert.equal(card.querySelector('.rp-title').textContent,'Hub 0');
+ assert.ok(card.querySelector('.rp-play svg'),'svg icon, not a glyph');
+ card.querySelector('.rp-play').click();
+ const play=f.calls.find(c=>c[0]==='play');assert.equal(play[1].title,'Hub 0');
+ const queue=f.tracks.slice(0,3).map(x=>({...x}));
+ Object.assign(f.ctl.engine,{track:queue[1],queue,paused:false,currentTime:30,duration:120});f.ctl.notifyEngine();
+ assert.equal(card.querySelector('.rp-title').textContent,'Hub 1');
+ assert.equal(card.querySelector('.rp-cur').textContent,'0:30');assert.equal(card.querySelector('.rp-dur').textContent,'2:00');
+ assert.equal(card.querySelector('.rp-bar').value,'30');
+ assert.equal(card.querySelector('.rp-play').getAttribute('aria-label'),'一時停止');
+ assert.deepEqual([...f.host.querySelectorAll('.rail-music-next .rail-item-head strong')].map(n=>n.textContent),['Hub 2']);
+ assert.ok(f.host.querySelector('.rail-music-next h3').textContent==='次に再生');
+ assert.ok([...f.host.querySelectorAll('.rail-music-item.is-current')].some(r=>r.dataset.key==='t:'+queue[1].id));
+ card.querySelector('.rp-play').click();assert.equal(f.calls.at(-1)[0],'toggle');
+ const [prev,,next,qbtn]=card.querySelectorAll('.rp-btn');
+ prev.click();assert.equal(f.calls.at(-1)[0],'prev');next.click();assert.equal(f.calls.at(-1)[0],'next');
+ const bar=card.querySelector('.rp-bar');bar.value='60';bar.dispatchEvent(new f.dom.window.Event('change'));assert.deepEqual(f.calls.at(-1),['seek',60]);
+ qbtn.click();assert.equal(f.host.querySelector('.rail-music-next').hidden,true,'queue toggle hides the next-up section');
+ card.querySelector('.rp-artist').click();assert.deepEqual(f.calls.find(c=>c[0]==='collection'),['collection','artist','H','']);
+});
+test('leaving the list stops listening to the shared engine',t=>{
+ const f=fixture(t);f.rail.showList();f.rail.show({type:'artist',name:'H'});
+ const before=f.calls.length;f.ctl.notifyEngine();assert.equal(f.calls.length,before);
+ assert.equal(f.host.querySelector('.rail-player'),null);
 });
 test('a Hub work in the rail shows its license, the download notice and the posts; leaving disposes the posts',t=>{
  const f=fixture(t);

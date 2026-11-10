@@ -35,7 +35,8 @@ export const railTrackOf = (work) => (typeof work?.id === 'string' && HUB_TRACK.
  *  loadCatalog(query) -> {tracks, works}          検索（music_tracks と hub_resource music）
  *  isHubOriginalWork(work)
  *  playTrack(track, queue) / enqueue(track)       共有の再生エンジン
- *  youtube: {play(work, panel), stop(), isPlaying(workId), subscribe(fn)}   共有の YouTube 枠
+ *  player: {state(), subscribe(fn), toggle(), prev(), next(), seek(seconds)}   共有の音声エンジンの状態（任意。あれば一覧の先頭に再生カード）
+ *  youtube: {play(work, panel), stop(), isPlaying(workId), active(), subscribe(fn)}   共有の YouTube 枠
  *  collection({host, kind, name, artist, actions, isCurrent})   アーティスト／アルバムの頁
  *  library({host, actions, isCurrent}) / playlists({host, actions, isCurrent})
  *  posts({host, work, isCurrent}) / report({host, work, isCurrent, open}) / download(work)   作品の下に出すポスト・報告・ダウンロード
@@ -90,14 +91,17 @@ export function createRailMusic({ document, host, ytHost, deps, hubAsset = null 
     return line;
   }
 
-  // 1曲1行：押すとその場で再生（公開曲は音声、YouTube は右列の枠）。⋯ に曲の操作が入る。アーティストへの移動は作品の見出しの名前から。
+  // 1曲1行：48px の絵・題・アーティスト。押すとその場で再生（公開曲は音声、YouTube は右列の枠）して一覧に留まる。⋯ に曲の操作。
+  const rowKey = (work) => { const t = railTrackOf(work) ?? (work.kind === 'track' ? work : null); return t ? `t:${t.id}` : `w:${work.id ?? ''}`; };
   function itemRow(work, queue) {
     const item = el(document, 'div', 'rail-music-item');
+    item.dataset.key = rowKey(work);
     const track = railTrackOf(work) ?? (work.kind === 'track' ? work : null);
     const open = track
       ? () => void deps.playTrack(track, queue.map((entry) => railTrackOf(entry) ?? entry))
-      : () => go({ type: 'work', work, autoplay: true });
-    item.append(railRow(document, { title: work.title || '楽曲', text: work.artist || '', avatar: railAvatar(document, { icon: 'music' }), onOpen: open }));
+      : () => { if (youtubeSource(work)) { if (deps.youtube.play(work, ytHost)) lastYoutube = work; } else go({ type: 'work', work, autoplay: true }); };
+    const art = createArtwork(document, work, { hubAsset, className: 'mw-art rail-music-art' });
+    item.append(railRow(document, { title: work.title || '楽曲', text: work.artist || '', avatar: art, onOpen: open }));
     const more = musicMenuButton(document, track && !HUB_TRACK.test(String(work.id ?? '')) ? { ...track, id: `music:${track.id}` } : work, { className: 'rail-music-detail' });
     item.append(more);
     return item;
@@ -122,13 +126,148 @@ export function createRailMusic({ document, host, ytHost, deps, hubAsset = null 
     return { nodes: out, empty: !hub.length && !external.length, hub, external };
   }
 
+  const SVG = 'http://www.w3.org/2000/svg';
+  const ICONS = {
+    prev: ['M6 5h2v14H6zM20 5v14L9 12z', true], next: ['M16 5h2v14h-2zM4 5v14l11-7z', true],
+    play: ['M8 5v14l11-7z', true], pause: ['M7 5h4v14H7zM13 5h4v14h-4z', true],
+    queue: ['M4 7h11M4 12h11M4 17h7M18 13v7l4-3.5z', false],
+  };
+  function icon(name) {
+    const svg = document.createElementNS(SVG, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('aria-hidden', 'true'); svg.setAttribute('class', `rp-icon rp-icon-${name}`);
+    const path = document.createElementNS(SVG, 'path');
+    path.setAttribute('d', ICONS[name][0]);
+    if (!ICONS[name][1]) path.setAttribute('class', 'is-stroke');
+    svg.append(path);
+    return svg;
+  }
+  const clock = (value) => {
+    const total = Number.isFinite(value) && value > 0 ? Math.round(value) : 0;
+    return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+  };
+  const roundButton = (name, label, onClick, className = '') => {
+    const node = el(document, 'button', `rp-btn ${className}`.trim());
+    node.type = 'button'; node.setAttribute('aria-label', label); node.title = label; node.onclick = onClick;
+    node.append(icon(name));
+    return node;
+  };
+  const setIcon = (node, name) => { node.replaceChildren(icon(name)); };
+
+  let queueOpen = true;
+  let lastYoutube = null;
+  let syncPlayer = null;
+
+  // 再生中のカード：大きな絵・題・アーティスト・シークバー・操作。共有エンジンの状態に合わせて差分だけ更新する。
+  function playerCard(tracks, onQueueToggle) {
+    const player = deps.player;
+    const card = el(document, 'section', 'rail-player');
+    card.setAttribute('aria-label', '再生中');
+    const art = el(document, 'div', 'rp-art');
+    const meta = el(document, 'div', 'rp-meta');
+    const title = el(document, 'strong', 'rp-title');
+    const artist = el(document, 'button', 'rp-artist rail-music-link');
+    artist.type = 'button';
+    meta.append(title, artist);
+    const seek = el(document, 'div', 'rp-seek');
+    const cur = el(document, 'span', 'rp-time rp-cur', '0:00'), total = el(document, 'span', 'rp-time rp-dur', '0:00');
+    const bar = el(document, 'input', 'rp-bar');
+    bar.type = 'range'; bar.min = '0'; bar.max = '100'; bar.step = '1'; bar.value = '0'; bar.setAttribute('aria-label', '再生位置');
+    seek.append(cur, bar, total);
+    const prev = roundButton('prev', '前の曲', () => player.prev());
+    const toggle = roundButton('play', '再生', () => {}, 'rp-play');
+    const next = roundButton('next', '次の曲', () => player.next());
+    const queueBtn = roundButton('queue', '次に再生', () => { queueOpen = !queueOpen; queueBtn.setAttribute('aria-pressed', String(queueOpen)); onQueueToggle(); });
+    queueBtn.setAttribute('aria-pressed', String(queueOpen));
+    const controls = el(document, 'div', 'rp-controls');
+    controls.append(prev, toggle, next, queueBtn);
+    card.append(art, meta, seek, controls);
+    let dragging = false, shownKey = null, shownArtist = '', current = null;
+    bar.addEventListener('pointerdown', () => { dragging = true; });
+    bar.addEventListener('pointerup', () => { dragging = false; });
+    bar.addEventListener('input', () => { cur.textContent = clock(Number(bar.value)); });
+    bar.addEventListener('change', () => { dragging = false; if (!bar.disabled) player.seek(Number(bar.value)); });
+    artist.onclick = () => { if (shownArtist) go({ type: 'artist', name: shownArtist.slice(0, 128) }); };
+    toggle.onclick = () => {
+      if (current?.kind === 'youtube') deps.youtube.stop();
+      else if (current?.kind === 'engine') player.toggle();
+      else if (current?.work) void deps.playTrack(railTrackOf(current.work) ?? current.work, tracks.map((t) => railTrackOf(t) ?? t));
+    };
+    function update() {
+      const ytId = deps.youtube.active?.() ?? null;
+      let kind = 'idle', work = null, state = null;
+      if (ytId !== null) {
+        kind = 'youtube';
+        work = lastYoutube?.id === ytId ? lastYoutube : deps.getWorks().find((w) => w.id === ytId) ?? { id: ytId, title: '', artist: '' };
+      } else {
+        state = player.state();
+        if (state.track) { kind = 'engine'; work = state.track; } else work = tracks[0] ?? null;
+      }
+      current = { kind, work };
+      const key = `${kind}:${work?.id ?? ''}`;
+      if (key !== shownKey) {
+        shownKey = key;
+        art.replaceChildren(createArtwork(document, work ?? {}, { hubAsset, className: 'mw-art rp-cover' }));
+        title.textContent = work?.title || (work ? '楽曲' : '');
+        shownArtist = typeof work?.artist === 'string' ? work.artist.trim() : '';
+        artist.textContent = shownArtist; artist.hidden = !shownArtist;
+        artist.setAttribute('aria-label', `${shownArtist}のアーティストを右列で開く`);
+      }
+      card.classList.toggle('is-video', kind === 'youtube');
+      card.classList.toggle('is-idle', kind === 'idle');
+      const playing = kind === 'youtube' || (kind === 'engine' && !state.paused);
+      setIcon(toggle, playing ? 'pause' : 'play');
+      toggle.setAttribute('aria-label', kind === 'youtube' ? '再生を閉じる' : playing ? '一時停止' : '再生');
+      toggle.disabled = !work;
+      prev.disabled = kind !== 'engine' || !state.hasPrev;
+      next.disabled = kind !== 'engine' || !state.hasNext;
+      seek.hidden = kind === 'youtube';
+      bar.disabled = kind !== 'engine' || !(state.duration > 0);
+      if (kind === 'engine') {
+        bar.max = String(state.duration > 0 ? state.duration : 100);
+        if (!dragging) { bar.value = String(Math.min(state.currentTime, state.duration || 100)); cur.textContent = clock(state.currentTime); }
+        total.textContent = clock(state.duration);
+        bar.style.setProperty('--rp-fill', `${state.duration > 0 ? Math.min(100, (state.currentTime / state.duration) * 100) : 0}%`);
+      } else { bar.value = '0'; cur.textContent = '0:00'; total.textContent = '0:00'; bar.style.setProperty('--rp-fill', '0%'); }
+      return state;
+    }
+    return { card, update };
+  }
+
   function showList() {
     const tracks = deps.getTracks(), works = deps.getWorks();
     const quick = el(document, 'div', 'rail-music-quick');
     quick.append(button(document, 'お気に入り', () => go({ type: 'library' }), 'rail-music-chip'),
       button(document, 'プレイリスト', () => go({ type: 'playlists' }), 'rail-music-chip'));
     const body = sections(tracks, works, { moreRoute: { type: 'all' } });
-    host.replaceChildren(searchForm(), quick, ...(body.empty ? [deps.empty()] : body.nodes));
+    const rest = body.empty ? [deps.empty()] : body.nodes;
+    if (!deps.player) { host.replaceChildren(searchForm(), quick, ...rest); return; }
+    const hubFirst = [...tracks.map(trackItem), ...works.filter((w) => deps.isHubOriginalWork(w))];
+    const queueSlot = el(document, 'div', 'rail-music-next');
+    let queueSeen = null;
+    const markCurrent = (state) => {
+      const ytId = deps.youtube.active?.() ?? null;
+      for (const row of host.querySelectorAll('.rail-music-item')) {
+        const key = row.dataset.key ?? '';
+        const on = ytId === null ? Boolean(state?.track) && key === `t:${state.track.id}` : key === `w:${ytId}`;
+        row.classList.toggle('is-current', on);
+      }
+    };
+    const paintQueue = (state) => {
+      const at = state?.track ? state.queue.findIndex((t) => t.id === state.track.id) : -1;
+      const list = at >= 0 ? state.queue.slice(at + 1, at + 9) : [];
+      const sig = `${queueOpen}|${list.map((t) => t.id).join(',')}`;
+      if (sig === queueSeen) return;
+      queueSeen = sig;
+      queueSlot.hidden = !queueOpen || !list.length;
+      queueSlot.replaceChildren(...(queueOpen && list.length ? [heading('次に再生'), ...list.map((t) => itemRow(trackItem(t), state.queue))] : []));
+    };
+    const view = playerCard(hubFirst, () => { queueSeen = null; sync(); });
+    function sync() { const state = view.update(); paintQueue(state); markCurrent(state); }
+    host.replaceChildren(view.card, searchForm(), quick, queueSlot, ...rest);
+    const stopPlayer = deps.player.subscribe(sync), stopYoutube = deps.youtube.subscribe(sync);
+    unsubscribe = () => { stopPlayer?.(); stopYoutube?.(); syncPlayer = null; };
+    syncPlayer = sync;
+    sync();
   }
 
   async function showSearch(r) {
@@ -250,12 +389,14 @@ export function createRailMusic({ document, host, ytHost, deps, hubAsset = null 
     // 曲のポスト（music_posts の読み取り）と、外部作品の報告。ポストは枠の下に出す。
     const postsSlot = el(document, 'div', 'rail-music-work-posts');
     const reportSlot = el(document, 'div', 'rail-music-work-report');
-    page.append(postsSlot, reportSlot);
+    const talkSlot = el(document, 'div', 'rail-music-work-talk');
+    page.append(postsSlot, talkSlot, reportSlot);
     host.replaceChildren(page);
     const isCurrent = () => mine === turn;
     const posts = deps.posts?.({ host: postsSlot, work, isCurrent });
+    const talk = deps.talk?.({ host: talkSlot, work, isCurrent });
     const report = deps.report?.({ host: reportSlot, work, isCurrent, open: r.report === true });
-    disposeRoute = () => { posts?.destroy?.(); report?.destroy?.(); };
+    disposeRoute = () => { posts?.destroy?.(); talk?.dispose?.(); report?.destroy?.(); };
     paint();
     if (source) unsubscribe = deps.youtube.subscribe(paint);
     if (r.autoplay && source && !deps.youtube.isPlaying(work.id ?? null)) { r.autoplay = false; deps.youtube.play(work, ytHost); }
@@ -282,6 +423,10 @@ export function createRailMusic({ document, host, ytHost, deps, hubAsset = null 
     /** 裏の読み込みが終わった。掘り下げの途中なら触らない。 */
     refresh: () => { if (route.type === 'list') show(route); },
     route: () => route,
+    /** 右列に再生中のカードがある（app.js の旧い再生札は出さない）。 */
+    hasPlayer: () => Boolean(deps.player),
+    /** 共有エンジンの状態が変わった。一覧のカードを更新する。 */
+    syncPlayer: () => { syncPlayer?.(); },
     /** YouTube の枠が右列に置かれていて、いま見えている。 */
     hostsYoutube: () => Boolean(ytHost?.isConnected && !ytHost.hidden),
     destroy: reset,

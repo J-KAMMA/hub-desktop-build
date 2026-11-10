@@ -33,3 +33,42 @@
 .rail-music-yt { margin: var(--space-2) var(--space-3); }
 .rail-music-yt[hidden] { display: none; }
 .rail-music-yt .yt-player-slot { min-width: 200px; min-height: 200px; }
+
+/* 再生カード：大きな正方形の絵・題・アーティスト・シークバー・操作。金は使わず、塗りは本文色と面だけ。 */
+.rail-player { display: grid; gap: var(--space-3); padding: var(--space-3) var(--space-4) var(--space-2); }
+.rp-art { display: grid; place-items: center; }
+.rp-art .rp-cover { width: 100%; max-width: 280px; aspect-ratio: 1 / 1; height: auto; border-radius: var(--radius-lg); font-size: var(--type-display); box-shadow: var(--elevation-2); }
+.rail-player.is-video .rp-art { display: none; }
+.rail-player.is-idle .rp-cover { opacity: .72; }
+.rp-meta { display: grid; gap: 2px; min-width: 0; text-align: center; }
+.rp-title { overflow: hidden; font-size: var(--type-title3); font-weight: var(--weight-bold); line-height: var(--lh-subhead); white-space: nowrap; text-overflow: ellipsis; }
+.rp-artist { justify-self: center; max-width: 100%; overflow: hidden; font-size: var(--type-subhead); white-space: nowrap; text-overflow: ellipsis; }
+.rp-seek { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--space-2); }
+.rp-seek[hidden] { display: none; }
+.rp-time { min-width: 3ch; color: var(--muted); font-size: var(--type-caption); font-variant-numeric: tabular-nums; }
+.rp-dur { text-align: right; }
+.rp-bar { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; margin: 0; border-radius: var(--radius-xs); background: linear-gradient(to right, var(--text) var(--rp-fill, 0%), var(--fill-subtle-active) var(--rp-fill, 0%)); cursor: pointer; }
+.rp-bar:disabled { cursor: default; opacity: .5; }
+.rp-bar::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; border-radius: 50%; background: var(--text); opacity: 0; transition: opacity .12s; }
+.rp-bar:hover::-webkit-slider-thumb, .rp-bar:focus-visible::-webkit-slider-thumb { opacity: 1; }
+.rp-bar:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 4px; }
+.rp-controls { display: flex; align-items: center; justify-content: center; gap: var(--space-4); }
+.rp-btn { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--text); cursor: pointer; }
+.rp-btn:hover:not(:disabled) { background: var(--fill-subtle-hover); }
+.rp-btn:disabled { opacity: .35; cursor: default; }
+.rp-btn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.rp-btn .rp-icon { width: 22px; height: 22px; fill: currentColor; }
+.rp-icon .is-stroke { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.rp-icon-queue { fill: none; }
+.rp-btn[aria-pressed="true"] .rp-icon-queue { color: var(--emphasis); }
+.rp-btn.rp-play { width: 52px; height: 52px; background: var(--text); color: var(--panel); }
+.rp-btn.rp-play:hover:not(:disabled) { background: var(--text); opacity: .86; }
+.rp-btn.rp-play .rp-icon { width: 26px; height: 26px; }
+/* 行：48px の絵。いま流れている行は左に細い線（金は線だけ）と薄い面。 */
+.rail-view .rail-music-item .rail-item.rail-row { grid-template-columns: 48px minmax(0, 1fr); align-items: center; gap: var(--space-3); padding-block: var(--space-2); text-align: left; }
+.rail-music-art { width: 48px; height: 48px; border-radius: var(--radius-xs); font-size: var(--type-body); }
+.rail-music-item { border-radius: var(--radius-sm); }
+.rail-music-item.is-current { background: var(--fill-subtle); box-shadow: inset 2px 0 0 var(--emphasis); }
+.rail-music-item.is-current .rail-item-head strong { font-weight: var(--weight-bold); }
+.rail-music-next[hidden] { display: none; }
+.rail-music-item .rail-item-text, .rp-artist { font-weight: normal; }

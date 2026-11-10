@@ -12,7 +12,6 @@
 
 .mh { display: grid; gap: var(--space-6); }
 .mh-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-3); }
-#hub-shell .view .mh-greeting { margin: 0; color: var(--muted); font-size: var(--type-subhead); line-height: var(--lh-subhead); font-weight: var(--weight-regular); }
 #hub-shell .view .mh-search { display: flex; align-items: center; gap: var(--space-2); box-sizing: border-box; height: var(--control-h); min-height: 0; padding: 0 var(--space-1) 0 var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-pill); background: var(--interactive); }
 #hub-shell .view .mh-search input[type="search"] { box-sizing: border-box; width: 240px; max-width: 46vw; height: calc(var(--control-h) - 2px); min-height: 0; padding-block: 0; border: 0; outline: 0; background: none; color: var(--text); font: inherit; font-size: var(--type-subhead); }
 #hub-shell .view .mh-search .head-action { box-sizing: border-box; height: calc(var(--control-h) - 2px); min-height: 0; padding-block: 0; }
@@ -107,7 +106,6 @@
 /* ===== 音楽ホーム：検索欄と横の棚（2026-11-02、Spotify のデスクトップ版の配置を参考。色・記号・名前は写さない） ===== */
 .mh { gap: var(--space-5); }
 .mh-head { display: grid; gap: var(--space-2); }
-.mh-head .mh-greeting { order: -1; }
 #hub-shell .view .mh-search { position: relative; width: 100%; max-width: 480px; padding: 0 var(--space-3) 0 var(--space-4); border-radius: var(--radius-pill); background: var(--surface-sunken); }
 #hub-shell .view .mh-search input[type="search"] { flex: 1; width: auto; max-width: none; }
 .mh-search-go { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--muted); cursor: pointer; }
@@ -134,3 +132,31 @@
 #music-player:not([hidden]) ~ .yt-now-bar { bottom: 72px; }
 .app-shell:has(#music-player:not([hidden])) .view.on { padding-bottom: 96px; }
 .mh-head { padding-top: var(--space-3); }
+
+#hub-shell .view .mh-search[hidden] { display: none; }
+
+/* ===== 音楽ホームの棚：大きな見出し＋「すべて再生」＋前へ・次へ。曲の棚は縦4段の列を横に送る（2026-11-05、YouTube Music の配置を参考。色・記号・名前は写さない） ===== */
+.mh { gap: var(--space-7); }
+.mh-shelf { gap: var(--space-3); }
+.mh-shelf-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-width: 0; }
+.mh-shelf-title { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: var(--type-title1); line-height: var(--lh-title1); }
+.mh-shelf-tools { display: flex; flex: none; align-items: center; gap: var(--space-2); }
+.mh-play-all { box-sizing: border-box; min-height: var(--control-h); padding: 0 var(--space-4); border: 1px solid var(--line-strong); border-radius: var(--radius-pill); background: none; color: var(--text); font-size: var(--type-subhead); font-weight: var(--weight-bold); cursor: pointer; }
+.mh-play-all:hover { background: var(--fill-subtle-hover); }
+.mh-pager-btn { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 1px solid var(--line-strong); border-radius: 50%; background: none; color: var(--text); cursor: pointer; }
+.mh-pager-btn:hover { background: var(--fill-subtle-hover); }
+.mh-play-all:focus-visible, .mh-pager-btn:focus-visible, .mh-song-open:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.mh-chevron-icon { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.mh-pager { display: grid; grid-template-rows: repeat(4, auto); grid-auto-flow: column; grid-auto-columns: calc((100% - var(--space-6)) / 2); column-gap: var(--space-6); overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; min-width: 0; }
+.mh-pager::-webkit-scrollbar { display: none; }
+.mh-song { position: relative; display: flex; align-items: center; min-width: 0; border-radius: var(--radius-sm); scroll-snap-align: start; }
+.mh-song:hover, .mh-song:focus-within { background: var(--fill-subtle-hover); }
+.mh-song-open { display: flex; flex: 1; align-items: center; gap: var(--space-3); min-width: 0; padding: var(--space-1) var(--space-2); border: 0; border-radius: var(--radius-sm); background: none; color: var(--text); text-align: left; cursor: pointer; }
+.mh-song .mw-art-tile { border-radius: var(--radius-xs); }
+.mh-song-copy { display: grid; flex: 1; min-width: 0; }
+.mh-song-title, .mh-song-meta { display: block; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.mh-song-title { font-size: var(--type-body); line-height: var(--lh-subhead); font-weight: var(--weight-bold); }
+.mh-song-meta { color: var(--muted); font-size: var(--type-subhead); line-height: var(--lh-subhead); }
+.mh-song-more { margin-right: var(--space-2); opacity: 0; }
+.mh-song:hover .mh-song-more, .mh-song:focus-within .mh-song-more, .mh-song-more:focus-visible { opacity: 1; }

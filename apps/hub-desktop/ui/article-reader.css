@@ -55,3 +55,31 @@ button.article-author-name:focus-visible{outline:2px solid var(--focus-ring);out
 .article-comment .meta{margin:0 0 var(--space-1)}
 .article-comment-body{margin:0;font-size:var(--type-subhead);line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere}
 @media (max-width:640px){.article-title{font-size:var(--type-title2)}.article-reader-body,.article-reader-body .detail-p,.article-reader-body .detail-list{font-size:var(--type-body)}}
+
+
+/* 2026-11-05 所有者「よさそう」: AI 画面の作法を広げる
+   読む画面：本文は中央の 720px の列。区切り線の代わりに余白、コメント欄は大きな丸いカード。 */
+.article-reader:not(#_) { --measure-reading: 720px; }
+.article-byline:not(#_) { border: 0; padding-inline: 0; }
+.article-engagement:not(#_) { border-top: 0; margin-top: var(--space-8, 64px); padding-top: 0; }
+.article-comment:not(#_) { border-top: 0; padding: var(--space-3) 0; }
+.article-comment-input:not(#_) { border: 1px solid var(--line); border-radius: var(--radius-chat); padding: var(--space-4); background: var(--content-surface); }
+.article-comment-input:focus-visible { outline: 1px solid var(--emphasis); outline-offset: 0; }
+.article-cover:not(#_) { border-radius: var(--radius-chat); }
+/* 2026-11-05 記事仕上げ: 見出し帯と関連項目の線を外して余白にする。コメント入力は大きな丸いカード（詳細度で勝たせる）。 */
+#hub-shell #view-detail .view-head:not(#_):not(#_) { border-bottom: 0; }
+#hub-shell #view-detail .research-related-projects:not(#_):not(#_) { border-top: 0; padding: var(--space-6) var(--space-4) 0; }
+#hub-shell #view-detail .article-comment-input:not(#_):not(#_) { border-radius: var(--radius-chat); padding: var(--space-4); background: var(--content-surface); min-height: 96px; resize: none; }
+#hub-shell #view-detail .article-comment-input:focus:not(#_):not(#_) { border-color: var(--line-strong); outline: 0; }
+
+/* 2026-11-07 所有者「記事のUIがかすすぎる」：読む画面の段と行を数で決める。
+   段：題 26/32（--type-display）＞ 要約 17（--type-title2・淡色）＞ 本文 16 ＞ メタ 12。上の「記事」の帯は題より小さく淡くする。
+   行：本文は全角 38 字（16px × 38em = 608px 以内、基準 34〜40）、行の高さ 1.9、段落の間 1.4em、見出しの前 2.2em。 */
+#hub-shell #view-detail:has(.article-reader) > .view-head > h2:not(#_):not(#_) { color: var(--muted); font-size: var(--type-body); line-height: var(--lh-body); font-weight: var(--weight-regular); letter-spacing: 0; }
+.article-reader .article-title:not(#_) { margin-bottom: var(--space-3); font-size: var(--type-display); line-height: var(--lh-display); font-weight: var(--weight-heavy); letter-spacing: var(--ds-tracking-large); }
+.article-reader .article-lead:not(#_) { -webkit-line-clamp: 3; margin-bottom: var(--space-4); font-size: var(--type-title2); line-height: 1.7; }
+.article-reader .article-byline:not(#_) { margin-bottom: var(--space-2); padding-block: var(--space-3); }
+.article-reader .article-reader-body:not(#_) { max-width: 38em; margin-top: var(--space-5); line-height: 1.9; }
+.article-reader .article-reader-body .detail-p:not(#_), .article-reader .article-reader-body .detail-list:not(#_), .article-reader .article-reader-body .detail-quote:not(#_) { margin-bottom: 1.4em; line-height: 1.9; }
+.article-reader .article-reader-body .detail-h:not(#_) { margin-top: 2.2em; margin-bottom: .7em; }
+.article-reader .article-reader-body h3.detail-h:not(#_) { line-height: 1.5; }

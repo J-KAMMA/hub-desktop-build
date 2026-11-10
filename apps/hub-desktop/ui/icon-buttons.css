@@ -1,0 +1,67 @@
+/* 補助の絵ボタンを全部同じ寸法にする（所有者 2026-11-09：「揃えないと変じゃね」）。
+   寸法は tokens.css の --icon-btn の1か所だけ。対象を足すときは下の2つの一覧へ足し、icon-buttons.test.mjs の一覧にも足す。
+   最後に読み込み、:not(#_) の重ねで先の指定（shadcn-base.css など）に勝つ。 */
+body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .window-control,
+body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .app-toolbar .toolbar-button,
+body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .rb-button,
+body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .rail-activity-actions .btn-icon,
+body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .uc-tool[aria-label="閉じる"],
+body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .yt-dock-close,
+body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .media-lightbox-close,
+body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .community-composer-panel-close,
+body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) #browser-find-close {
+  box-sizing: border-box;
+  place-items: center;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex: none;
+  width: var(--icon-btn);
+  min-width: var(--icon-btn);
+  height: var(--icon-btn);
+  min-height: var(--icon-btn);
+  padding: 0;
+  border-radius: var(--icon-btn-radius);
+  line-height: 1;
+}
+body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .window-control svg,
+body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .app-toolbar .toolbar-button svg,
+body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .rb-button svg,
+body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .rail-activity-actions .btn-icon svg,
+body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .uc-tool[aria-label="閉じる"] svg,
+body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .yt-dock-close svg,
+body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .media-lightbox-close svg,
+body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .community-composer-panel-close svg,
+body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) #browser-find-close svg {
+  width: var(--icon-btn-glyph);
+  height: var(--icon-btn-glyph);
+  stroke-width: var(--icon-btn-stroke);
+}
+/* 文字の「×」で作っているもの。絵と同じ大きさに見える字の大きさ。 */
+body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .yt-dock-close,
+body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .media-lightbox-close {
+  font-size: calc(var(--icon-btn-glyph) * 1.25);
+}
+/* メニュー（左列の開閉）は幅だけ左列に合わせる。高さと絵は他と同じ。 */
+body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) #rail-expand-toggle.toolbar-button {
+  width: var(--rail-w);
+  min-width: var(--rail-w);
+}
+/* 並んだ群の間は同じ間隔。 */
+body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.window-controls, .toolbar-navigation, .rail-history-nav, .rail-activity-actions) {
+  gap: var(--icon-btn-gap);
+}
+/* 窓の閉じるは Windows と同じく、触れると危険色（色は token）。 */
+body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .window-control.window-control-close:hover {
+  background: var(--danger);
+  color: var(--action-text);
+}
+/* 当たり判定：見た目は 32、押せる範囲は 44。隣にボタンが無い × だけに付ける。 */
+body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .uc-tool[aria-label="閉じる"]::before,
+body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .yt-dock-close::before,
+body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .community-composer-panel-close::before,
+body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) #browser-find-close::before {
+  content: "";
+  position: absolute;
+  inset: calc((var(--icon-btn) - var(--icon-btn-hit)) / 2);
+}

@@ -44,7 +44,7 @@ export function railIcon(document, name) {
 }
 
 // app.js の relTime と同じ区切り。テストで時刻を固定できるよう now を受ける。
-export function railRelativeTime(value, now = Date.now()) {
+export function railRelativeTime(value, now = Date.now(), options = {}) {
   const then = Date.parse(value);
   if (!Number.isFinite(then)) return "";
   const minutes = Math.round((now - then) / 60000);
@@ -54,7 +54,10 @@ export function railRelativeTime(value, now = Date.now()) {
   if (hours < 24) return `${hours}時間前`;
   const days = Math.round(hours / 24);
   if (days < 7) return `${days}日前`;
-  return new Date(then).toLocaleDateString("ja-JP", { year: "numeric", month: "short", day: "numeric" });
+  if (options.absolute) return new Date(then).toLocaleDateString("ja-JP", { year: "numeric", month: "short", day: "numeric" });
+  if (days < 30) return `${Math.floor(days / 7)}週間前`;
+  if (days < 365) return `${Math.floor(days / 30)}か月前`;
+  return `${Math.floor(days / 365)}年前`;
 }
 
 export const railCount = (value) => (Number.isSafeInteger(value) && value > 0 ? (value > 99 ? "99+" : String(value)) : "");
@@ -295,4 +298,21 @@ export function railNowPlaying(document, { track, paused, controls }) {
   }
   card.append(top, row);
   return card;
+}
+
+// メール：受信箱の1通ごとに送り主・件名・時刻。未読（受信で未開封）は点。本文は右で読む／中央のメールで開く。
+export function railMailRows(document, data, { relTime, onOpen }) {
+  const items = (Array.isArray(data?.messages) ? data.messages : []).filter((item) => item?.id).slice(0, 30);
+  if (!items.length) return [railState(document, "empty", { title: "メールはありません", detail: "届くとここに並びます。" })];
+  return items.map((item) => {
+    const inbound = item.direction === "inbound";
+    const who = inbound ? item.sender : `宛先: ${item.recipient}`;
+    const row = railRow(document, {
+      title: who || "（差出人なし）", text: item.subject || "（件名なし）", at: item.createdAt, relTime,
+      unread: inbound && !item.readAt, avatar: railAvatar(document, { icon: "message" }),
+      onOpen() { onOpen(item, this); },
+    });
+    row.setAttribute("aria-expanded", "false");
+    return row;
+  });
 }

@@ -5,6 +5,8 @@ import vm from 'node:vm';
 import {JSDOM} from 'jsdom';
 import {appendContentShare,contentShareReference} from './content-share-contract.mjs';
 import {renderContentReferenceLinks} from './content-reference-links.mjs';
+import { addBaitRow, confirmLeave } from './outbound-link.mjs';
+import { detectBait } from './bait-warning.mjs';
 
 const source=readFileSync(new URL('./app.js',import.meta.url),'utf8');
 function actual(signature){const start=source.indexOf(signature),end=source.indexOf('\n}',start);assert.ok(start>=0&&end>start,signature);return source.slice(start,end+2);}
@@ -18,7 +20,7 @@ function fixture(t){
  const dom=new JSDOM('<main></main>',{url:'https://fixture.invalid/'}),calls=[],details=[],notices=[];
  const f={dom,calls,details,notices,origin,originRead:null,editedBody:null,browsers:[]};
  const ctx=vm.createContext({document:dom.window.document,URL,URLSearchParams,Event:dom.window.Event,setTimeout:()=>0,
-  contentShareReference,renderContentReferenceLinks,
+  contentShareReference,renderContentReferenceLinks,addBaitRow,confirmLeave,detectBait,attachTranslateAction(){},localTranslator:{},
   desktopAccountLoaded:true,desktopAccount:{state:'registered',deviceId:'device-a',keyThumbprint:'synthetic-a'},homeAccountEpoch:{},selfProfileId:'viewer',
   paintAvatar(){},relTime:()=> 'now',icon:()=> '<svg></svg>',friendlyError:String,
   showNotice:message=>notices.push(message),openDetail:(name,ids,options)=>details.push({name,ids:Array.from(ids),title:options.title}),

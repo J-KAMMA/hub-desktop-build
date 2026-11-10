@@ -13,7 +13,7 @@
 
 /* ---- 行：投稿（フィード・プロフィール・詳細の返信）と通知 ---- */
 /* feed-list の ID は 16 進の色に見える綴りなので、色の検査に掛からないよう先頭の f を \66 と書く。 */
-#hub-shell :is(#view-feed #\66 eed-list, #view-profile #profile-posts, #view-notifications #notifications-list, #view-detail #detail-content, #view-feed .social-stream-list) {
+#hub-shell :is(#view-feed #\66 eed-list, #view-profile #profile-posts, #view-notifications #notifications-list, #view-detail #detail-content, #view-feed .social-stream-list, #view-threads #threads-results, #rail-timeline .rail-tl-list) {
   & .post {
     position: relative;
     display: grid;
@@ -31,7 +31,7 @@
     transition: background-color var(--dur-fast) var(--ease-out);
   }
   & .post:hover { background: var(--content-surface-hover); }
-  & .post:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+  & .post:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring); outline-offset: calc(-1 * var(--focus-ring-width)); }
   & .post.detail-primary-post { cursor: default; }
   & .post.detail-primary-post:hover { background: transparent; }
 
@@ -151,7 +151,7 @@
     background: var(--interactive);
   }
   & .post-images img { display: block; border: 0; border-radius: 0; cursor: zoom-in; }
-  & .post-images img:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+  & .post-images img:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring); outline-offset: calc(-1 * var(--focus-ring-width)); }
   & .post-images--1 img { width: auto; height: auto; max-width: 100%; max-height: 510px; object-fit: contain; }
   & .post-images:is(.post-images--2, .post-images--3, .post-images--4) {
     width: min(100%, 560px);
@@ -210,6 +210,11 @@
   & .post-actions .is-reposted { color: var(--positive-text); }
   & .post-actions .is-saved { color: var(--text); }
   & .post-repost-wrap > .post-action { width: auto; height: 36px; }
+  /* 2026-11-05 所有者「インスタグラムの並び」：左に寄せて詰め、保存だけ右端。記号は大きく、色は本文と同じ。 */
+  & .post-actions { justify-content: flex-start; gap: var(--space-1); max-width: none; }
+  & .post-actions > .post-action:last-child { margin-left: auto; }
+  & .post-action { color: var(--text); font-weight: var(--weight-bold); }
+  & .post-action svg { width: 22px; height: 22px; }
 
   /* 「…」：編集・削除・報告はここへ。行の右上に重ね、普段は薄く、hover と焦点で出す */
   & .post-more-wrap { position: absolute; top: 6px; right: 8px; }
@@ -775,3 +780,410 @@ dialog.media-lightbox .media-lightbox-count[hidden] { display: none; }
 }
 #hub-shell .post .post-reply-to a { color: var(--accent-link); text-decoration: none; cursor: pointer; }
 #hub-shell .post .post-reply-to a:hover { text-decoration: underline; }
+
+
+/* 2026-11-05 所有者「よさそう」: AI 画面の作法を広げる
+   メッセージ：区切り線を外し、会話は 760px の中央の列。左の一覧は枠なしの行で、ホバーと選択は丸い面。
+   入力欄は大きな丸いカード、自分の発言は右の柔らかい吹き出し。 */
+#hub-shell #view-messages > :is(.view-head, .page-header):not(#_):not(#_) { border-bottom: 0; }
+#hub-shell #view-messages .messages-side:not(#_):not(#_) { border-right: 0; padding: 0 var(--space-2); }
+#hub-shell #view-messages .conversation:not(#_):not(#_) { height: 64px; padding: 0 var(--space-3); border-bottom: 0; border-radius: var(--radius-md); }
+#hub-shell #view-messages .messages-thread:not(#_):not(#_) { display: flex; flex-direction: column; align-items: center; }
+#hub-shell #view-messages .messages-thread > :is(#thread-state, #thread-list, #thread-form, p.meta[role="status"]):not(#_):not(#_) { box-sizing: border-box; width: 100%; max-width: 760px; }
+#hub-shell #view-messages .messages-thread > #thread-list:not(#_):not(#_) { min-height: 0; overflow-y: auto; }
+#hub-shell #view-messages .messages-thread > #thread-state:not(#_):not(#_) { border-bottom: 0; }
+#hub-shell #view-messages .bubble:not(#_):not(#_) { border-radius: var(--radius-chat); padding: var(--space-2) var(--space-4); }
+#hub-shell #view-messages .bubble-row:not(.own) .bubble:not(#_):not(#_) { background: transparent; padding-inline: 0; }
+#hub-shell #view-messages .bubble-row.own .bubble:not(#_):not(#_) { background: var(--interactive); }
+#hub-shell #view-messages #thread-form:not(#_):not(#_) { margin: 0 auto var(--space-4); padding: var(--space-2) var(--space-3); border: 1px solid var(--sc-field); border-radius: var(--sc-radius-md); background: var(--content-surface); width: calc(100% - 2 * var(--space-4)); max-width: 760px; }
+#hub-shell #view-messages #thread-form #thread-input:not(#_):not(#_) { border: 0; background: transparent; padding-inline: var(--space-2); }
+#hub-shell #view-messages #thread-form:focus-within:not(#_):not(#_) { border-color: var(--sc-ring); }
+#hub-shell #view-messages #thread-form > button[type="submit"]:not(#_):not(#_) { border-radius: var(--radius-pill); }
+
+/* 2026-11-05 所有者「ポストとかをカード感増して特別感を感じるように」：投稿を1枚ずつの札にする。
+   角は --radius-chat、面は少し持ち上げる。光沢は付けない（同日「全体のカードで光沢はなし」）。札と札は余白で分ける。 */
+#hub-shell #view-feed [id="feed-list"]:not(#_) { display: flex; flex-direction: column; gap: var(--space-2); padding-top: var(--space-2); }
+#hub-shell #view-feed [id="feed-list"] .post:not(#_):not(#_) {
+  padding: var(--space-3) var(--space-3) var(--space-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-chat);
+  background: var(--panel);
+  box-shadow: none;
+}
+/* 2026-11-05 メッセージ仕上げ: 写真は吹き出しの中で控えめな大きさ、入力欄の焦点は外側のカードに出す。送信は丸い記号ボタン。 */
+#hub-shell #view-messages .bubble .post-images img:not(#_):not(#_) { display: block; height: auto; width: 280px; max-width: 100%; max-height: 280px; border-radius: var(--radius-md); object-fit: cover; }
+#hub-shell #view-messages #thread-form #thread-input:focus:not(#_):not(#_), #hub-shell #view-messages #thread-form #thread-input:focus-visible:not(#_):not(#_) { outline: 0; box-shadow: none; }
+#hub-shell #view-messages #thread-form .dm-send:not(#_):not(#_) { flex: none; width: var(--control-h-lg); padding: 0; display: inline-grid; place-items: center; }
+#hub-shell #view-messages #thread-form .dm-send svg:not(#_):not(#_) { width: 18px; height: 18px; }
+#hub-shell #view-messages .messages-thread > #thread-list:not(#_):not(#_) { padding-bottom: var(--space-4); }
+/* 2026-11-05 所有者「もっと余白をなくして」：札の中も詰める（本文と操作行の間、操作行の高さ）。 */
+#hub-shell #view-feed [id="feed-list"] .post:not(#_):not(#_) .post-actions { margin-top: 0; }
+#hub-shell #view-feed [id="feed-list"] .post:not(#_):not(#_) .post-action { height: 32px; min-height: 32px; }
+/* 2026-11-05 所有者「タグもカード感を出して特別に」：投稿と記事のタグを小さな札にする。光沢なし、細い線と少し持ち上げた面。 */
+#hub-shell :is(.post-tags, .article-tags):not(#_) { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+#hub-shell .post-tag:not(#_):not(#_) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface-raised);
+  color: var(--text);
+  font-size: var(--ds-type-meta-size);
+  font-weight: var(--weight-bold);
+  box-shadow: none;
+}
+#hub-shell .post-tag:not(#_):not(#_):hover { border-color: var(--line-strong); background: var(--selected); }
+/* 頭の行（名前・@・時刻）の横に置くタグは一段小さく、1行に収める。 */
+#hub-shell .post-head .post-tags:not(#_):not(#_) { display: inline-flex; flex-wrap: nowrap; min-width: 0; margin: 0 0 0 var(--space-1); overflow: hidden; }
+#hub-shell .post-head .post-tag:not(#_):not(#_):not(#_) { min-height: 20px; padding: 0 var(--space-2); white-space: nowrap; }
+/* 記事の一覧と読む画面でも、タグは日時の横に小さな札で並べる。 */
+#hub-shell :is(.ar-meta, .article-byline-facts):not(#_) { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
+#hub-shell :is(.ar-meta, .article-byline-facts) :is(.post-tags, .article-tags):not(#_):not(#_) { display: inline-flex; flex-wrap: nowrap; margin: 0; }
+#hub-shell :is(.ar-meta, .article-byline-facts) .post-tag:not(#_):not(#_):not(#_) { min-height: 20px; padding: 0 var(--space-2); white-space: nowrap; }
+
+/* 2026-11-06 所有者「スレッドであったほうがいいかも」：会話の連結線。親の顔の下から直接の返信の顔まで、2px の細い線。
+   見た目だけ（返信関係は「返信先 @handle」の文が伝える）。クラスは thread-lines.mjs が付ける。左の列には引かない。
+   ::after は失敗時の文（action-error）が使うので、その間だけ線を出さない。 */
+#hub-shell .post:is(.has-thread-next, .has-thread-prev) {
+  --thread-x: calc(var(--space-4) + 19px);
+  --thread-pad: var(--space-3);
+}
+#hub-shell .post.has-thread-prev:not(.action-error)::before,
+#hub-shell .post.has-thread-next:not(.action-error)::after {
+  content: "";
+  position: absolute;
+  left: var(--thread-x);
+  width: 2px;
+  background: var(--line-strong);
+  border-radius: var(--radius-pill);
+  pointer-events: none;
+}
+#hub-shell .post.has-thread-prev:not(.action-error)::before { top: 0; height: calc(var(--thread-pad) - 4px); }
+#hub-shell .post.has-thread-next:not(.action-error)::after { top: calc(var(--thread-pad) + 44px); bottom: 0; }
+#hub-shell .post.has-thread-next:not(.detail-primary-post) { border-bottom-color: transparent; }
+/* 詳細・プロフィールの行は下に 1px の仕切りがある。つながる行の仕切りは消し、線をその分まで伸ばす。 */
+#hub-shell .post.has-thread-next:not(.detail-primary-post)::after { bottom: -1px; }
+
+/* フィードの札：連投（同じ書き手の直接の返信）は札を隙間なしで重ね、線で結ぶ。 */
+#hub-shell #view-feed [id="feed-list"] .post.has-thread-next:not(#_):not(#_) {
+  --thread-x: calc(var(--space-3) + 19px);
+  margin-bottom: calc(-1 * var(--space-2));
+  border-bottom-width: 0;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+#hub-shell #view-feed [id="feed-list"] .post.has-thread-prev:not(#_):not(#_) {
+  --thread-x: calc(var(--space-3) + 19px);
+  border-top-width: 0;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+#hub-shell #view-feed [id="feed-list"] .post.has-thread-next:not(#_):not(#_)::after { bottom: 0; }
+#hub-shell :is(#view-detail #detail-content, #view-profile #profile-posts) .post.has-thread-next:not(.detail-primary-post):not(#_):not(#_) { border-bottom-color: transparent; }
+
+/* 2026-11-06 所有者「…あれなくね」：投稿の「…」は hover を待たず常に見せる（控えめな色のまま）。 */
+#hub-shell .post .post-more:not(#_):not(#_) { opacity: 1; }
+
+/* 2026-11-06 所有者「スレッドの中こそポストと同じUIに」：スレッド・コミュニティ・レビュー・コメントの行（post-row.mjs）。 */
+#hub-shell .post-row .post-rating { color: var(--text); font-size: var(--type-caption); letter-spacing: 1px; white-space: nowrap; }
+#hub-shell .post-row .post-row-meta { white-space: nowrap; }
+#hub-shell .post-row .post-body-text { margin: 0; }
+#hub-shell #threads-results .thread-list-card .post-body { color: var(--muted); font-size: var(--type-subhead); }
+
+/* 2026-11-06 所有者「Xのポストみたいなデザインにしよ」：投稿は札ではなく、区切り線で分けた行にする（X の並び）。
+   操作は 返信・リポスト・いいね・（翻訳）・保存・共有 の順に、行の幅いっぱいへ等間隔。札の角・枠・間隔はやめる。 */
+#hub-shell #view-feed [id=feed-list]:not(#_):not(#_) { gap: 0; padding-top: 0; }
+#hub-shell #view-feed [id=feed-list] .post:not(#_):not(#_):not(#_) {
+  padding: var(--space-3) var(--space-4) var(--space-1);
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+#hub-shell #view-feed [id=feed-list] .post:not(#_):not(#_):not(#_):hover { background: var(--fill-subtle); }
+#hub-shell .post .post-actions:not(#_):not(#_):not(#_) { justify-content: space-between; gap: 0; max-width: 440px; }
+#hub-shell .post .post-actions > *:not(#_):not(#_) { order: 4; margin-left: 0; }
+#hub-shell .post .post-actions > [aria-label=返信]:not(#_):not(#_) { order: 1; }
+#hub-shell .post .post-actions > .post-repost-wrap:not(#_):not(#_) { order: 2; }
+#hub-shell .post .post-actions > [aria-label=いいね]:not(#_):not(#_) { order: 3; }
+#hub-shell .post .post-actions > [aria-label=ブックマーク]:not(#_):not(#_) { order: 5; }
+#hub-shell .post .post-actions > [aria-label=共有]:not(#_):not(#_) { order: 6; }
+#hub-shell .post .post-action:not(#_):not(#_):not(#_) { color: var(--muted); font-weight: var(--ds-weight-text); }
+
+/* 2026-11-06 所有者「スレッド一覧が読みにくい」：スレッドの行は区切り線の行（X・Reddit の並び）。題を1行目（最大2行）、板の名前・返信数・時刻を2行目の薄い字に置く。
+   丸い頭字・件数の行・本文の上のチップはやめ、並びと分類は左の列の行にする。大きな見出しは読み上げ用に残して見せない。 */
+#hub-shell #view-threads > .view-head > h2:not(#_):not(#_) { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+#hub-shell #view-threads > .view-head:not(#_):not(#_) { justify-content: flex-end; padding-inline: var(--space-4); }
+#hub-shell :is(#view-threads, #view-community):not(#_):not(#_) { padding-inline: 0; }
+#hub-shell #view-threads #threads-state:empty { display: none; }
+#hub-shell :is(#threads-results, .rail-tl-list) .thread-row {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+#hub-shell :is(#threads-results, .rail-tl-list) .thread-row:hover { background: var(--content-surface-hover); }
+#hub-shell :is(#threads-results, .rail-tl-list) .thread-row:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring); outline-offset: calc(-1 * var(--focus-ring-width)); }
+#hub-shell :is(#threads-results, .rail-tl-list) .thread-row-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  color: var(--text);
+  font-size: var(--type-reading);
+  font-weight: var(--weight-bold);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+#hub-shell :is(#threads-results, .rail-tl-list) .thread-row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--muted);
+  font-size: var(--type-subhead);
+  line-height: 20px;
+}
+#hub-shell :is(#threads-results, .rail-tl-list) .thread-row-tag {
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--interactive);
+  color: var(--muted);
+}
+
+/* 2026-11-07 所有者「コミュニティも同じに」：スレッドと同じ区切り線の行。左に集まりの顔、右に名前（太字）と薄い2行目。 */
+#hub-shell #view-community > .view-head > h2:not(#_):not(#_) { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+#hub-shell #view-community > .view-head:not(#_):not(#_) { justify-content: flex-end; padding-inline: var(--space-4); }
+#hub-shell #view-community #community-state:empty { display: none; }
+#hub-shell #community-results:not(#_):not(#_) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-4);
+  align-items: stretch;
+  padding: var(--space-4);
+}
+#hub-shell #community-results .community-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--content-surface);
+  box-shadow: none;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+#hub-shell #community-results .community-card:hover { background: var(--content-surface-hover); border-color: var(--line-strong); }
+#hub-shell #community-results .community-card:active { background: var(--interactive); }
+#hub-shell #community-results .community-card:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring); outline-offset: var(--focus-ring-offset); }
+#hub-shell #community-results .community-card-icon[data-tint="1"] { --avatar-bg: var(--avatar-1); --avatar-fg: var(--avatar-1-text); }
+#hub-shell #community-results .community-card-icon[data-tint="2"] { --avatar-bg: var(--avatar-2); --avatar-fg: var(--avatar-2-text); }
+#hub-shell #community-results .community-card-icon[data-tint="3"] { --avatar-bg: var(--avatar-3); --avatar-fg: var(--avatar-3-text); }
+#hub-shell #community-results .community-card-icon[data-tint="4"] { --avatar-bg: var(--avatar-4); --avatar-fg: var(--avatar-4-text); }
+#hub-shell #community-results .community-card-icon[data-tint="5"] { --avatar-bg: var(--avatar-5); --avatar-fg: var(--avatar-5-text); }
+#hub-shell #community-results .community-card-icon[data-tint="6"] { --avatar-bg: var(--avatar-6); --avatar-fg: var(--avatar-6-text); }
+#hub-shell #community-results .community-card-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--avatar-bg, var(--interactive));
+  color: var(--avatar-fg, var(--text));
+  font-size: var(--type-reading);
+  font-weight: var(--weight-bold);
+  line-height: 1;
+}
+#hub-shell #community-results .community-card-icon.has-image { background: var(--interactive); }
+#hub-shell #community-results .community-card-icon img { width: 100%; height: 100%; object-fit: cover; }
+#hub-shell #community-results .community-card-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+#hub-shell #community-results .community-card-title { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+#hub-shell #community-results .community-card-name {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: var(--type-reading);
+  font-weight: var(--weight-bold);
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#hub-shell #community-results .community-card-lock { display: inline-flex; flex: none; color: var(--muted); }
+#hub-shell #community-results .community-card-lock svg { width: 14px; height: 14px; }
+#hub-shell #community-results .community-card-desc {
+  overflow: hidden;
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--type-subhead);
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#hub-shell #community-results .community-card-desc:empty { display: none; }
+#hub-shell #community-results .community-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  color: var(--muted);
+  font-size: var(--type-caption);
+  line-height: 1.5;
+}
+#hub-shell #community-results .community-card-meta { display: flex; align-items: center; gap: var(--space-1); min-width: 0; overflow: hidden; white-space: nowrap; }
+#hub-shell #community-results .community-card-meta svg { flex: none; width: 12px; height: 12px; }
+#hub-shell #community-results .community-card-meta > span + span { margin-left: var(--space-2); }
+#hub-shell #community-results .community-card-badge {
+  flex: none;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--interactive);
+  color: var(--text);
+}
+/* 上の細い行：作成と「招待から参加」は小さな操作にする。招待の入力は開いたときだけ下へ重ねる。 */
+#hub-shell #view-community .view-head-actions { position: relative; display: flex; align-items: center; gap: var(--space-2); }
+#hub-shell #view-community .view-head-actions > .community-invite {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+#hub-shell #view-community .view-head-actions > .community-invite > summary {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  color: var(--muted);
+  font-size: var(--type-caption);
+  cursor: pointer;
+  list-style: none;
+}
+#hub-shell #view-community .view-head-actions > .community-invite > summary::-webkit-details-marker { display: none; }
+#hub-shell #view-community .view-head-actions > .community-invite > summary:hover { background: var(--content-surface-hover); color: var(--text); }
+#hub-shell #view-community .view-head-actions > .community-invite[open] {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: 5;
+  width: min(360px, 90vw);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--content-surface);
+}
+#hub-shell #view-community .view-head-actions > .community-invite[open] > summary { margin-bottom: var(--space-2); }
+/* 2026-11-07 操作の手間の測定：投稿の操作ボタンの的を 44px 以上に。記号の大きさと見た目はそのまま、
+   行の高さは上下の負の余白で元に近く保つ。 */
+#hub-shell .post .post-actions:not(#_):not(#_):not(#_):not(#_) { position: relative; margin-block: -6px; }
+#hub-shell .post .post-action:not(#_):not(#_):not(#_):not(#_) { min-width: 44px; min-height: 44px; height: 44px; }
+
+/* 2026-11-07 所有者：タイムラインの頭の行は「⋯」だけで 52px と線を取っていた。線と余白を畳み、「⋯」だけの細い行（28px）にする。
+   「⋯」を内容の右上に浮かせると最初の投稿の「…」と重なったので、浮かせず行の中に置く（どの幅でも行と重ならない）。題は読み上げ用に残す。 */
+#hub-shell #view-feed > .page-header:not(#_):not(#_):not(#_):not(#_) {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: var(--control-h);
+  min-height: var(--control-h);
+  max-height: var(--control-h);
+  padding: 0 var(--ds-page-inset);
+  border: 0;
+}
+#hub-shell #view-feed > .page-header > .page-title:not(#_):not(#_) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+#hub-shell #view-feed > .page-header > .page-actions:not(#_):not(#_) {
+  position: static;
+  margin: 0;
+}
+
+/* 2026-11-08 所有者「スレッドとかのUIちゃんとしてほしい」：一覧・右列・詳細の見出しで同じ2行目。文ではなく印と数。種類は静かな字、解決済みだけ色の印。 */
+#hub-shell .thread-row-meta > :is(.thread-row-type, .thread-row-count, .thread-row-solved, .thread-row-flag, .thread-row-when) { display: inline-flex; align-items: center; gap: var(--space-1); white-space: nowrap; }
+#hub-shell .thread-row-meta > * + *::before { content: "·"; margin-inline-end: var(--space-1); color: var(--muted); }
+#hub-shell .thread-row-meta .ic { width: 14px; height: 14px; flex: none; }
+#hub-shell .thread-row-meta .thread-row-solved { color: var(--positive-text); }
+#hub-shell .thread-row-meta .thread-row-solved::before { display: none; }
+#hub-shell .thread-row-meta > .thread-row-solved { gap: var(--space-1); }
+#hub-shell .rail-tl-list .thread-row { padding-inline: var(--space-3); }
+#hub-shell .rail-tl-list .thread-row-title { font-size: var(--type-body); }
+
+/* スレッド詳細：見出しは枠にせず区切り線だけ。本文の行はフィードと同じ行。 */
+#hub-shell #view-detail .thread-head.card:not(#_):not(#_) { padding: var(--space-3) var(--space-4); border: 0; border-bottom: 1px solid var(--divider); border-radius: 0; background: transparent; box-shadow: none; }
+#hub-shell #view-detail .thread-head-row > h3:not(#_) { font-size: var(--type-reading); line-height: 1.4; }
+#hub-shell #view-detail .thread-head .thread-head-meta { margin-block-start: var(--space-1); }
+#hub-shell #view-detail .thread-reader > [role=status]:not(#_):not(#_) { padding: var(--space-1) var(--space-4); }
+#hub-shell #view-detail .thread-post.is-best { background-image: linear-gradient(var(--positive-text), var(--positive-text)); background-size: 2px 100%; background-repeat: no-repeat; background-position: left top; }
+#hub-shell .thread-best-badge { display: inline-flex; align-items: center; gap: var(--space-1); align-self: flex-start; color: var(--positive-text); font-size: var(--type-subhead); line-height: 20px; }
+#hub-shell .thread-best-badge .ic { width: 14px; height: 14px; }
+
+/* 返信欄は下に付いたままの1行（長くなれば伸びる）。言語は畳み、Ctrl+Enter で送る。 */
+#hub-shell #view-detail .thread-composer { position: sticky; bottom: 0; z-index: 2; display: grid; gap: var(--space-1); padding: var(--space-2) var(--space-4); border-top: 1px solid var(--divider); background: var(--content-surface); }
+#hub-shell .thread-composer-row { display: flex; align-items: flex-end; gap: var(--space-2); min-width: 0; }
+#hub-shell .thread-composer-row > textarea { flex: 1; min-width: 0; min-height: 44px; max-height: 160px; resize: none; }
+#hub-shell .thread-composer-row > .approve { flex: none; min-height: 44px; }
+#hub-shell .thread-composer-options { position: relative; flex: none; }
+#hub-shell .thread-composer-options > summary { display: inline-flex; align-items: center; min-height: 44px; padding-inline: var(--space-2); color: var(--muted); font-size: var(--type-subhead); cursor: pointer; list-style: none; }
+#hub-shell .thread-composer-options > summary::-webkit-details-marker { display: none; }
+#hub-shell .thread-composer-options-body { position: absolute; bottom: 100%; right: 0; display: grid; gap: var(--space-2); min-width: 220px; padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--content-surface); }
+#hub-shell .thread-head-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); color: var(--muted); font-size: var(--type-subhead); line-height: 20px; }
+#hub-shell #view-detail details.thread-knowledge.card:not(#_):not(#_) { padding: var(--space-2) var(--space-4); border: 0; border-bottom: 1px solid var(--divider); border-radius: 0; background: transparent; box-shadow: none; }
+#hub-shell #view-detail details.thread-knowledge > summary { min-height: 44px; display: flex; align-items: center; color: var(--muted); font-size: var(--type-subhead); cursor: pointer; }
+
+/* 2026-11-08 スレッド詳細：見出し「スレッド」は見せない（読み上げ用に残す。.view .page-title と同じ規則）。左列の長い行は2行まで折り返し、列の外へ出さない。ベストアンサーは左の細線（肯定色）。 */
+#hub-shell #view-detail #detail-title:not(#_):not(#_) { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+/* スレッドの詳細：題は読み上げ専用なので、中身のない題の段（高さ 52）も畳み、スレッドの頭を本文の上端から始める。 */
+#hub-shell #view-detail:has(> #detail-content > .thread-head) > .view-head:not(#_):not(#_) { height: 0; min-height: 0; padding-block: 0; border-block: 0; overflow: visible; }
+#hub-shell #sidebar-context .sidebar-context-item:not(:has(> span)):not(#_):not(#_) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; min-width: 0; height: auto; overflow: hidden; white-space: normal; overflow-wrap: anywhere; text-overflow: ellipsis; text-align: left; }
+#hub-shell #view-detail .thread-post.is-best:not(#_):not(#_) { box-shadow: inset 3px 0 0 var(--positive-text); background-image: none; }
+
+/* 2026-11-08 コミュニティの中：題の段は畳み（チャンネル名は細い帯に）、書き込み欄は下に付いたまま、メンバーは枠なしの行。 */
+#hub-shell #view-detail:has(> #detail-content > .community-bar) > .view-head:not(#_):not(#_) { height: 0; min-height: 0; padding-block: 0; border-block: 0; overflow: visible; }
+#hub-shell #view-detail:has(> #detail-content > .community-bar) #detail-title:not(#_):not(#_) { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+#hub-shell .community-bar:not(#_) { position: sticky; top: 0; z-index: 3; min-height: 44px; background: var(--content-surface); }
+#hub-shell .community-chat-main { display: flex; flex-direction: column; min-height: calc(100vh - 220px); }
+#hub-shell .community-chat-main > .community-chat-scroll:not(#_) { flex: 1 1 auto; max-height: none; overflow: visible; }
+#hub-shell .community-chat-main > .community-composer:not(#_) { position: sticky; bottom: 0; z-index: 2; margin: 0; padding: var(--space-2) var(--space-2); border: 0; border-top: 1px solid var(--divider); border-radius: 0; background: var(--content-surface); }
+#hub-shell .community-chat-main > .community-composer .community-composer-row { align-items: flex-end; }
+#hub-shell .community-chat-main > .community-composer .community-composer-input { min-height: 44px; }
+#hub-shell .community-chat-main > .community-composer :is(.community-composer-plus, .community-composer-send) { width: 44px; height: 44px; }
+#hub-shell .community-chat-main > .meta:empty { display: none; }
+#hub-shell .community-member-controls .member-row:not(#_) { display: grid; grid-template-columns: 40px minmax(0, 1fr); column-gap: var(--space-3); align-items: start; padding: var(--space-3) var(--space-2); border: 0; border-bottom: 1px solid var(--divider); border-radius: 0; background: transparent; box-shadow: none; }
+#hub-shell .community-member-controls .member-row > :not(.member-avatar) { grid-column: 2; min-width: 0; margin: 0; }
+#hub-shell .community-member-controls .member-avatar { grid-column: 1; grid-row: 1 / span 2; display: grid; place-items: center; width: 40px; height: 40px; border-radius: var(--radius-pill); background: var(--interactive); color: var(--text); font-size: var(--type-body); }
+#hub-shell .community-member-controls .member-row > h3 { font-size: var(--type-body); line-height: 20px; font-weight: var(--weight-strong, 600); }
+#hub-shell .community-member-controls .member-row > .meta { font-size: var(--type-subhead); line-height: 20px; color: var(--muted); }
+#hub-shell .community-member-controls .member-row details { padding: 0; border: 0; background: transparent; box-shadow: none; }
+#hub-shell .community-member-controls .member-row details > summary { min-height: 44px; display: flex; align-items: center; color: var(--muted); font-size: var(--type-subhead); cursor: pointer; }
+#hub-shell .community-content { gap: 0; }
+#hub-shell .community-content-item.card:not(#_):not(#_) { padding: var(--space-3) var(--space-2); border: 0; border-bottom: 1px solid var(--divider); border-radius: 0; background: transparent; box-shadow: none; }
+#hub-shell .community-content-item .community-content-title { min-height: 24px; font-size: var(--type-body); line-height: 20px; font-weight: var(--weight-strong, 600); }
+#hub-shell .community-content-item .meta { font-size: var(--type-subhead); line-height: 20px; color: var(--muted); }
+#hub-shell .community-content-item .community-content-remove:not(#_) { inset-block-start: 0; inset-inline-end: 0; min-width: 44px; min-height: 44px; background: transparent; }

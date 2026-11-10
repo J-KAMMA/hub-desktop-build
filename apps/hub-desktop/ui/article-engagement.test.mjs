@@ -23,7 +23,9 @@ test('コメントは形の合うものだけを通し、本文はタグとし�
   const root = renderCommentList(doc, page, { relTime: () => '1分前' });
   assert.equal(root.querySelector('img'), null);
   assert.equal(root.querySelector('.article-comment-body').textContent, '<img src=x onerror=alert(1)>');
-  assert.match(root.textContent, /太郎 @taro · 1分前/);
+  assert.match(root.querySelector('.post-head').textContent, /太郎@taro1分前/);
+  assert.equal(root.querySelector('.article-comment').classList.contains('post'), true);
+  assert.equal(root.querySelector('.post-rating'), null);
   assert.match(root.querySelector('h3').textContent, /コメント 2件/);
 });
 
@@ -99,4 +101,17 @@ test('自分の記事かどうかは両方のハンドルがそろって一致�
   assert.equal(isOwnArticle({ handle: 'kamma' }, null), false);
   assert.equal(isOwnArticle(null, 'kamma'), false);
   assert.equal(isOwnArticle({ handle: '' }, ''), false);
+});
+
+test('評価付きのコメントは時刻の横に星を出し、範囲外の評価は捨てる', () => {
+  const page = parseCommentPage({ comments: [
+    { id: 'a', body: '良い', rating: 5, author: { displayName: 'A' } },
+    { id: 'b', body: '変', rating: 9, author: { displayName: 'B' } },
+  ] });
+  const root = renderCommentList(doc, page, { relTime: () => '今', rowOptions: { menuFor: (c) => (c.id === 'a' ? [['報告', () => {}]] : []) } });
+  const rows = root.querySelectorAll('.article-comment');
+  assert.equal(rows[0].querySelector('.post-rating').textContent, '★★★★★');
+  assert.equal(rows[1].querySelector('.post-rating'), null);
+  assert.equal(rows[0].querySelectorAll('.post-more-menu button').length, 1);
+  assert.equal(rows[1].querySelector('.post-more'), null);
 });

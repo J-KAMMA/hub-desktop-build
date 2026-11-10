@@ -466,6 +466,70 @@ pub fn parse_stored_manifest(keys: &KeySet, raw: &Value) -> Check<Manifest> {
 }
 
 // ---------------------------------------------------------------------------
+// 確認書（期限なし。docs/hub-p2p-redesign/DESIGN.md §9, §10.1）
+// ---------------------------------------------------------------------------
+
+pub const ATTESTATION_TYPE: &str = "hub.music.attestation";
+/// Music 側の署名対象は `"<domain>\n" + 正準JSON`。
+pub const ATTESTATION_DOMAIN: &str = "hub.music.attestation.v1\n";
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Attestation {
+    pub v: u64,
+    #[serde(rename = "type")]
+    pub kind: String,
+    pub track_id: String,
+    pub revision: u64,
+    pub piece_size: u64,
+    pub pieces: Vec<String>,
+    pub issued_at: String,
+    pub kid: String,
+    pub signature: String,
+}
+
+impl Attestation {
+    /// 断片が一覧の SHA-256 と合うか（最後の断片以外は pieceSize 丁度）。
+    pub fn verify_piece(&self, index: usize, bytes: &[u8]) -> bool {
+        let Some(expected) = self.pieces.get(index) else { return false };
+        let full = bytes.len() as u64 == self.piece_size;
+        let last = index + 1 == self.pieces.len() && !bytes.is_empty() && bytes.len() as u64 <= self.piece_size;
+        (full || last) && sha256_hex(bytes) == *expected
+    }
+}
+
+/// 固定済みの鍵集合で確認書を検査する。期限は無く、鍵の有効期間は発行時点で判定する。
+pub fn verify_attestation(keys: &KeySet, raw: &Value, now: DateTime<Utc>) -> Check<Attestation> {
+    let att: Attestation = serde_json::from_value(raw.clone()).map_err(|_| "attestation_malformed")?;
+    if att.v != 1 || att.kind != ATTESTATION_TYPE {
+        return Err("attestation_malformed");
+    }
+    let key = keys.key(&att.kid).ok_or("attestation_unknown_key")?;
+    let issued = parse_time(&att.issued_at)?;
+    if !key.valid_at(issued) {
+        return Err("attestation_key_not_valid");
+    }
+    if issued > now + Duration::seconds(CLOCK_SKEW_SECONDS) {
+        return Err("attestation_from_future");
+    }
+    let payload = signed_payload(ATTESTATION_DOMAIN, raw, "signature")?;
+    let verifying = key.verifying_key().ok_or("attestation_unknown_key")?;
+    if !verify_ed25519(&verifying, &payload, &att.signature) {
+        return Err("attestation_bad_signature");
+    }
+    if track_uuid(&att.track_id).as_deref() != Some(att.track_id.as_str())
+        || att.revision < 1
+        || att.piece_size != CHUNK_SIZE
+        || att.pieces.is_empty()
+        || att.pieces.len() as u64 > MAX_TRACK_BYTES.div_ceil(CHUNK_SIZE)
+        || !att.pieces.iter().all(|piece| is_hex64(piece))
+    {
+        return Err("attestation_shape");
+    }
+    Ok(att)
+}
+
+// ---------------------------------------------------------------------------
 // tombstone と表
 // ---------------------------------------------------------------------------
 
@@ -654,6 +718,17 @@ pub(crate) mod testkit {
             "keyId": KEY_ID, "signature": ""
         });
         let signature = sign(TOMBSTONE_DOMAIN, key, body.clone(), "signature");
+        body["signature"] = Value::String(signature);
+        body
+    }
+
+    pub fn attestation(track: &str, revision: u64, pieces: &[&[u8]], key: &SigningKey) -> Value {
+        let mut body = json!({
+            "v": 1, "type": ATTESTATION_TYPE, "trackId": track, "revision": revision,
+            "pieceSize": CHUNK_SIZE, "pieces": pieces.iter().map(|p| sha256_hex(p)).collect::<Vec<_>>(),
+            "issuedAt": "2026-10-12T03:00:00.000Z", "kid": KEY_ID, "signature": ""
+        });
+        let signature = sign(ATTESTATION_DOMAIN, key, body.clone(), "signature");
         body["signature"] = Value::String(signature);
         body
     }

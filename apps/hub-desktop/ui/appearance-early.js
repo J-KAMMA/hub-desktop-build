@@ -2,8 +2,8 @@
 // 規則は appearance.mjs の applyAppearance / loadAppearance と同じ。変えるときは両方と appearance.test.mjs を揃える。
 (function () {
   var TEMPLATE_KEY = 'hub.desktop.template', APPEARANCE_KEY = 'hub.desktop.appearance';
-  var IDS = { light: 'light', dark: 'dark', noir: 'dark', ivory: 'light', midnight: 'dark' };
-  var template = 'noir', crisp = false, textSize = 'normal', density = 'normal', reduce = false, clear = false;
+  var IDS = { paper: 'light', charcoal: 'dark', light: 'light', dark: 'dark', noir: 'dark', ivory: 'light', midnight: 'dark' };
+  var template = 'device', crisp = false, textSize = 'normal', density = 'normal', reduce = false, clear = false;
   var storage = null, old = null, saved = null;
   try { storage = window.localStorage; } catch (e) { /* 保存が読めなければ既定 */ }
   function read(key) { try { return JSON.parse(storage.getItem(key) || 'null'); } catch (e) { return null; } }
@@ -29,7 +29,7 @@
   }
   var dark = true;
   try { dark = window.matchMedia('(prefers-color-scheme: dark)').matches; } catch (e) { /* 既定はダーク */ }
-  var id = template === 'device' ? (dark ? 'dark' : 'light') : template;
+  var id = template === 'device' ? (dark ? 'charcoal' : 'paper') : template;
   var root = document.documentElement;
   root.setAttribute('data-template', id);
   root.setAttribute('data-theme', IDS[id]);

@@ -1,0 +1,26 @@
+.local-translate-btn {
+  display: inline-grid; place-items: center; width: var(--control-h); height: var(--control-h);
+  padding: 0; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text-meta); cursor: pointer;
+}
+.local-translate-btn:hover { background: var(--content-surface-hover); color: var(--emphasis); }
+.local-translate-btn:focus-visible { outline: 2px solid var(--emphasis); outline-offset: 1px; }
+.local-translate-btn[data-state="busy"], .local-translate-btn[data-state="done"] { color: var(--emphasis); }
+.local-translate-status { margin-inline-start: 6px; font-size: var(--type-caption); color: var(--text-meta); }
+.local-translate-btn[data-state="error"] + .local-translate-status { color: var(--danger-text); }
+.local-translate-panel { display: grid; gap: 12px; }
+.local-translate-panel .lt-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.local-translate-panel .lt-licence { border: 1px solid var(--divider); border-radius: var(--radius-md); padding: 12px; font-size: var(--type-footnote); }
+.local-translate-panel progress { width: 100%; }
+.local-translate-get { margin-inline-start: 6px; padding: 2px 10px; border: 1px solid var(--divider); border-radius: var(--radius-sm); background: transparent; color: var(--emphasis); font-size: var(--type-caption); cursor: pointer; }
+.local-translate-panel .lt-family { display: grid; gap: 8px; padding-block: 8px; border-top: 1px solid var(--divider); }
+.local-translate-panel h3 { margin: 0; font-size: var(--type-subhead); }
+.local-translate-host { position: relative; display: inline-flex; align-items: center; }
+.local-translate-host .local-translate-btn { width: 32px; height: 32px; }
+.local-translate-host .local-translate-status { position: absolute; top: 100%; inset-inline-start: 0; margin: 0; white-space: nowrap; z-index: 1; }
+.local-translate-host .local-translate-status:empty { display: none; }
+.local-translate-host .local-translate-get { position: absolute; top: 100%; inset-inline-start: 0; margin-top: 18px; white-space: nowrap; z-index: 1; }
+.local-translate-row { display: flex; align-items: center; margin-block: var(--space-1); }
+.local-translate-label { margin-inline-start: 6px; padding: 0 6px; border: 1px solid var(--divider); border-radius: var(--radius-sm); font-size: var(--type-caption); color: var(--text-meta); white-space: nowrap; }
+.local-translate-label[hidden] { display: none; }
+.local-translate-host .local-translate-label { position: absolute; top: 100%; inset-inline-start: 0; margin: 18px 0 0; z-index: 1; }
+.local-translate-panel .lt-api select, .local-translate-panel .lt-api input[type="text"] { max-width: 100%; }

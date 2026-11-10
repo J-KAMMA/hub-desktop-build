@@ -22,11 +22,11 @@ async function removeAiConnections(invoke) {
 
 /** 消せる種類。順番は画面の並びと実行の順。 */
 export const LOCAL_DATA_KINDS = Object.freeze([
-  { key: 'history', label: '閲覧履歴', desc: 'アプリ内ブラウザで見たページの一覧とダウンロードの記録です。前回のタブも開き直さなくなります。',
+  { key: 'history', label: '閲覧履歴', desc: 'ページとダウンロードの記録。前回のタブも開き直しません。',
     run: (invoke) => invoke('browser_clear_browsing_data', { kinds: ['history', 'downloads_history'] }) },
   { key: 'cookies', label: 'Cookie とサイトデータ', desc: 'ログイン中のサイトからはログアウトされます。',
     run: (invoke) => invoke('browser_clear_browsing_data', { kinds: ['cookies', 'site_storage'] }) },
-  { key: 'cache', label: 'キャッシュ', desc: 'サイトの一時ファイルです。次に開くと、また読み込みます。',
+  { key: 'cache', label: 'キャッシュ', desc: '次に開くとまた読み込みます。',
     run: (invoke) => invoke('browser_clear_browsing_data', { kinds: ['cache'] }) },
   { key: 'ai', label: 'AIの作業記録', desc: 'AIとの作業の会話・添付した画像・作業の一覧と、開発CLIの実行記録です。実行中の作業は残ります。',
     run: (invoke) => invoke('pi_work_delete_all') },

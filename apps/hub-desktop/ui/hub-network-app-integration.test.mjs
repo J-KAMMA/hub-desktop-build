@@ -46,7 +46,7 @@ test('actual app startup isolates remote Hub authorization failures and actor in
       if (name==='hub_social_stream') return {version:1,filter:args.filter,scope:args.scope,viewerId:'viewer',signedIn:true,items:[{kind:'thread',id:'synthetic-thread',createdAt:stamp,origin:'https://synthetic.invalid',payload:{id:'synthetic-thread',title:'Synthetic thread',boardKey:'board',postCount:3,threadType:'discussion',status:'open',updatedAt:stamp}}],hasMore:false,nextCursor:null,failures:[]};
       if (name==='hub_feed') return {posts:[],signedIn:true,hasMore:false};
       if (name==='music_tracks') return {tracks:[],works:[]};
-      if (['dev_history','dev_agents','list_games','pi_work_list'].includes(name)) return [];
+      if (['dev_history','dev_agents','pi_work_list'].includes(name)) return [];
       if (['workspace','dev_workspace'].includes(name)) return '';
       if (name==='dev_active_run') return null;
       throw Error('synthetic_unavailable');

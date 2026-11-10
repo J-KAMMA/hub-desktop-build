@@ -5,8 +5,8 @@ import { fixture, settle, source } from "./sidebar-context.fixture.mjs";
 // フィードの木の行を押しても列は入れ替わらない（2026-11-02、所有者の指定）。
 // ブックマークとリストの画面は同じ作りの木（根は「ブックマーク」「リスト」）。
 const roots = (f) => [...f.document.querySelectorAll("#sidebar-context .sidebar-tree-root")].map((node) => node.textContent);
-const current = (f) => [...f.document.querySelectorAll("#sidebar-context [aria-current]")].map((node) => node.textContent);
-const byText = (f, text) => [...f.document.querySelectorAll("#sidebar-context .sidebar-context-item")].find((node) => node.textContent.includes(text));
+const current = (f) => [...f.document.querySelectorAll("#sidebar-context [aria-current]")].map((node) => node.textContent || node.getAttribute("aria-label"));
+const byText = (f, text) => [...f.document.querySelectorAll("#sidebar-context .sidebar-context-item, #sidebar-context .sidebar-tree-tool")].find((node) => node.textContent.includes(text) || node.getAttribute("aria-label") === text);
 const FEED_ROOTS = ["フィード", "スレッド", "コミュニティ"];
 // 木の行が押す「アイコンの列」の行き先（app.js の railGo と同じ探し方）。押された回数を数える。
 const railTarget = (f, view) => f.document.querySelector(`.icon-rail [data-view="${view}"], #primary-nav [data-view="${view}"], .account-nav [data-view="${view}"]`);
@@ -33,21 +33,17 @@ test("clicking a tag in the feed tree keeps the feed tree and marks the tag curr
   f.dom.window.close();
 });
 
-test("clicking a list in the feed tree keeps the feed tree and marks the list current", async () => {
+test("the feed kinds are the first rows of the フィード branch and pick a kind (2026-11-06)", async () => {
   const f = await feedWithTree();
-  byText(f, "友だち").click();
-  assert.deepEqual(f.calls.filter(([kind]) => kind === "detail"), [["detail", "list", "list-1"]]);
-  f.state.currentView = "detail";
-  f.state.detailTrail = [{ name: "list", ids: ["list-1"] }];
-  f.api.renderSidebarContext("detail");
-  await settle();
-  assert.deepEqual(roots(f), FEED_ROOTS);
-  assert.deepEqual(current(f), ["友だち2"]);
+  const rows = [...f.document.querySelectorAll("#sidebar-context .sidebar-tree-children")[0].querySelectorAll(".sidebar-context-item")];
+  assert.deepEqual(rows.slice(0, 3).map((node) => node.dataset.feedTab), ["recommended", "following", "popular"]);
+  rows[1].click();
+  assert.deepEqual(f.calls.filter(([kind]) => kind === "feedTab"), [["feedTab", "following"]]);
   f.dom.window.close();
 });
 
-test("話題を探す, すべて見る, 探す・作る and コミュニティを探す open their view with the feed tree still in place", async () => {
-  for (const [label, view] of [["話題を探す", "search"], ["すべて見る", "lists"], ["探す・作る", "threads"], ["コミュニティを探す", "community"]]) {
+test("リスト and the スレッド / コミュニティ roots open their view with the feed tree still in place", async () => {
+  for (const [label, view] of [["リスト", "lists"], ["スレッド", "threads"], ["コミュニティ", "community"]]) {
     const f = await feedWithTree();
     const hits = watch(f, view);
     byText(f, label).click();
@@ -67,13 +63,13 @@ test("a joined community row also keeps the feed tree (the row marks the owner b
 
 test("navigating from the icon rail restores the normal context for that view", async () => {
   const f = await feedWithTree();
-  byText(f, "話題を探す").click();
-  f.show("search");
+  byText(f, "スレッド").click();
+  f.show("threads");
   assert.deepEqual(roots(f), FEED_ROOTS);
   // ユーザーがアイコンの列を直接押す（木の行ではない）。
-  railTarget(f, "search").click();
-  f.show("search");
-  assert.deepEqual(roots(f), [], "the search view gets its own column again");
+  railTarget(f, "threads").click();
+  f.show("threads");
+  assert.deepEqual(roots(f), FEED_ROOTS, "the threads list keeps the three-root tree wherever it is opened from (2026-11-07)");
   f.dom.window.close();
 });
 

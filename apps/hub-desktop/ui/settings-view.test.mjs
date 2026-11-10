@@ -12,7 +12,7 @@ test('every nav item has a panel and selecting switches panel, aria-current and 
   const dom=page(),document=dom.window.document,seen=[];
   const nav=createSettingsNav({document,onSelect:s=>seen.push(s)});
   const items=[...document.querySelectorAll('#view-settings .inner-nav-item')].map(i=>i.dataset.settingsSec);
-  assert.deepEqual(items,['account','appearance','notifications','privacy','ai','wallet','browser','device','advanced','app-info']);
+  assert.deepEqual(items,['notifications','appearance','privacy','account','ai','wallet','browser','device','advanced']);
   for(const id of items)assert.ok(document.querySelector(`[data-settings-panel="${id}"]`),id);
   for(const id of items){
     document.querySelector(`[data-settings-sec="${id}"]`).click();

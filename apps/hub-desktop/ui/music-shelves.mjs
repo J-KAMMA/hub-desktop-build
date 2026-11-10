@@ -15,10 +15,10 @@ export const SHELVES = Object.freeze([
 
 /** 棚の空のときの一行（静かな文言）。 */
 export const SHELF_EMPTY = Object.freeze({
-  recent: 'まだ再生した曲はありません。',
-  recommended: 'おすすめはまだありません。',
-  new: '新しい公開曲はまだありません。',
-  youtube: 'YouTube Music の曲は見つかりませんでした。',
+  recent: '再生した曲はありません',
+  recommended: 'おすすめはありません',
+  new: '新着はありません',
+  youtube: '曲が見つかりません',
 });
 
 // Hub の公開曲は track の id（uuid）と作品の id（music:uuid）で同じ曲を指す。同じ鍵にそろえる。

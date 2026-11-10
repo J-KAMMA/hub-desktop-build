@@ -32,7 +32,10 @@ export function emptyFor({ mode = 'home', failed = false, filtered = false } = {
 export function createVideoEmpty(document, spec, { onAction = null } = {}) {
   const box = el(document, 'div', 'vt-empty');
   box.setAttribute('role', 'status');
-  box.append(el(document, 'strong', 'vt-empty-title', spec.title), el(document, 'p', 'vt-empty-body', spec.body));
+  box.append(el(document, 'strong', 'vt-empty-title', spec.title));
+  // 説明は字で見せない：短い一言だけ残し、長い文・生のエラーはtitle属性へ。
+  if (spec.body && String(spec.body).length <= 12) box.append(el(document, 'p', 'vt-empty-body', spec.body));
+  else if (spec.body) box.title = String(spec.body);
   if (spec.action && typeof onAction === 'function') {
     const button = el(document, 'button', 'vt-empty-action', spec.action);
     button.type = 'button';

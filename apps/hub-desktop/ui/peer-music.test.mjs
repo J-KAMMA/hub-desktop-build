@@ -96,19 +96,19 @@ test('the home shelf names the origin host, plays on click, and a failing peer l
   assert.equal(shelf.dataset.shelf, 'recommended');
   const cards = [...shelf.querySelectorAll('.mh-peer-card')];
   assert.equal(cards.length, 1);
-  assert.equal(cards[0].querySelector('.mh-card-origin').textContent, 'peer.example');
-  cards[0].querySelector('.mh-card-open').click();
+  assert.match(cards[0].querySelector('.mh-song-meta').textContent, /peer.example/);
+  cards[0].querySelector('.mh-song-open').click();
   const external = [...home.element.querySelectorAll('.mh-shelf[data-shelf="youtube"] .mh-peer-card')].find(card => /peer.example/.test(card.textContent));
   assert.ok(external, 'a YouTube-only peer work is on the YouTube Music shelf, tagged with its host');
-  assert.equal(external.querySelector('.mh-card-origin').textContent, 'peer.example');
-  external.querySelector('.mh-card-play').click();
+  assert.match(external.querySelector('.mh-song-meta').textContent, /peer.example$/);
+  external.querySelector('.mh-song-open').click();
   assert.deepEqual(played, [TRACK, 'w1']);
   home.destroy();
 
   const broken = make({ peers: async () => { throw Error('down'); } });
   await broken.refresh();
   assert.equal(broken.element.querySelector('.mh-peer-card'), null);
-  assert.equal(broken.element.querySelectorAll('.mh-shelf[data-shelf="youtube"] .mh-card').length, 1); // the own work is unaffected
+  assert.equal(broken.element.querySelectorAll('.mh-shelf[data-shelf="youtube"] .mh-song').length, 1); // the own work is unaffected
   broken.destroy();
 
   const none = make({});

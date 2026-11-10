@@ -42,7 +42,8 @@ test('the articles screen uses the shared page header and grid layout', () => {
   assert.ok(header);
   assert.equal(header.querySelector('.page-title').textContent, '記事');
   assert.ok(header.querySelector('.page-actions'));
-  assert.ok(header.querySelector('#articles-create-toggle').classList.contains('btn-primary'));
+  const write = header.querySelector('#articles-create-toggle');
+  assert.ok(write.classList.contains('icon-button') && write.getAttribute('aria-label') === '書く', 'write is an icon button (2026-11-04)');
 });
 
 test('the videos screen uses the shared page header and grid layout', () => {
@@ -210,7 +211,7 @@ test('the menu button is the first interactive control of the toolbar and is not
   const order = [...toolbar.querySelectorAll('.toolbar-navigation > button')].map((button) => button.id);
   assert.deepEqual(order.slice(0, 3), ['rail-expand-toggle', 'toolbar-back', 'toolbar-forward']);
   const destinations = [...document.querySelectorAll('.icon-rail .icon-nav-item')].map((item) => item.dataset.view);
-  assert.deepEqual(destinations, ['feed', 'notifications', 'messages', 'articles', 'videos', 'music', 'games', 'research', 'market', 'browser', 'ai', 'profile', 'settings']);
+  assert.deepEqual(destinations, ['feed', 'notifications', 'messages', 'videos', 'music', 'articles', 'market', 'browser', 'ai', 'profile', 'settings']);
 });
 
 test('the menu cell follows the rail width so it sits above the rail icons', () => {

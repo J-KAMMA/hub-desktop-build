@@ -31,7 +31,8 @@
 #hub-shell .profile-stat { display: inline-flex; align-items: baseline; gap: 0.25em; line-height: var(--lh-body); }
 #hub-shell button.profile-stat { min-height: 0; height: auto; padding: 0; border: 0; border-radius: 0; background: none; color: inherit; font: inherit; line-height: var(--lh-body); cursor: pointer; }
 #hub-shell button.profile-stat:hover { text-decoration: underline; }
-#hub-shell button.profile-stat:focus-visible, #hub-shell .profile-tab:focus-visible, #hub-shell .profile-row:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+#hub-shell button.profile-stat:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring); outline-offset: var(--focus-ring-offset); }
+#hub-shell .profile-tab:focus-visible, #hub-shell .profile-row:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring); outline-offset: calc(-1 * var(--focus-ring-width)); } /* 内側：タブ帯・行は全幅で外輪が切れる */
 
 #hub-shell .profile-tabs {
   position: sticky;
@@ -76,7 +77,7 @@
 #hub-shell .profile-tab-count { font-size: var(--type-caption); font-weight: var(--weight-regular); color: var(--muted); font-variant-numeric: tabular-nums; }
 
 #hub-shell .profile-panel { display: grid; gap: 0; }
-#hub-shell .profile-panel > .empty-state { margin: var(--space-7) var(--space-4); }
+#hub-shell .profile-panel > .empty-state { margin: var(--space-7) auto; }
 #hub-shell .profile-pinned { border-bottom: 1px solid var(--line); }
 #hub-shell .profile-pinned-label { margin: var(--space-3) var(--space-4) 0; font-size: var(--type-caption); font-weight: var(--weight-bold); color: var(--muted); }
 #hub-shell .profile-row {

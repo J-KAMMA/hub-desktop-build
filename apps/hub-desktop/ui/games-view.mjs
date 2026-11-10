@@ -54,7 +54,9 @@ function el(document, tag, className, text) {
 
 function stateBlock(document, title, body, retry) {
   const panel = el(document, "div", "state-panel");
-  panel.append(el(document, "p", "state-title", title), el(document, "p", "state-body", body));
+  panel.append(el(document, "p", "state-title", title));
+  if (body && String(body).length <= 12) panel.append(el(document, "p", "state-body", body));
+  else if (body) panel.title = String(body);
   if (retry) {
     const button = el(document, "button", "btn btn-secondary state-action", "もう一度読み込む");
     button.type = "button";
@@ -113,26 +115,4 @@ export function renderStoreLoading(document, target) {
 
 export function renderStoreError(document, target, message, retry) {
   target.replaceChildren(stateBlock(document, "ゲームを読み込めませんでした", message, retry));
-}
-
-/** このPCのゲーム（invoke("games") の行）。起動と登録解除だけ。 */
-export function renderLocalGames(document, target, entries, { launch, remove }) {
-  if (!entries.length) {
-    target.replaceChildren(el(document, "p", "games-local-empty", "このPCに登録したゲームはありません。「ゲームを追加」から実行ファイルを選ぶと、ここから起動できます。"));
-    return;
-  }
-  target.replaceChildren(...entries.map((entry) => {
-    const row = el(document, "div", "games-local-row");
-    row.dataset.gameId = String(entry.id);
-    const text = el(document, "div", "games-local-text");
-    text.append(el(document, "strong", "games-title", entry.title), el(document, "span", "games-meta", entry.executablePath ?? ""));
-    const play = el(document, "button", "btn btn-primary", "このPCで起動");
-    play.type = "button";
-    play.onclick = () => launch(entry, play);
-    const del = el(document, "button", "btn btn-ghost", "削除");
-    del.type = "button";
-    del.onclick = () => remove(entry, del);
-    row.append(text, play, del);
-    return row;
-  }));
 }

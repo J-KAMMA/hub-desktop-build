@@ -9,11 +9,11 @@ const dir = new URL('./', import.meta.url);
 const read = (name) => readFileSync(new URL(name, dir), 'utf8');
 const strip = (css) => css.replace(/\/\*[\s\S]*?\*\//g, '');
 
-test('font-weight literals are only 400, 700, 800 (DESIGN-SYSTEM §2: never 500, 600 or 650)', () => {
+test('font-weight literals are only 400, 500, 600, 700, 800 (macOS HIG 2026-11-05 allows 500 and 600)', () => {
   const bad = [];
   for (const file of readdirSync(dir).filter((f) => f.endsWith('.css'))) {
     for (const m of strip(read(file)).matchAll(/font-weight\s*:\s*(\d+)\b/g)) {
-      if (![400, 700, 800].includes(Number(m[1]))) bad.push(`${file}: ${m[1]}`);
+      if (![400, 500, 600, 700, 800].includes(Number(m[1]))) bad.push(`${file}: ${m[1]}`);
     }
   }
   assert.deepEqual(bad, []);
@@ -23,9 +23,12 @@ test('shape-tokens.css mirrors the Web shape tokens and carries no color', () =>
   const css = strip(read('shape-tokens.css'));
   assert.doesNotMatch(css, /[:\s(,]#[0-9a-f]{3,8}(?![\w-])|rgba?\(|hsla?\(/i);
   const want = {
-    '--tap-height': '36px', '--tap-height-coarse': '44px', '--focus-ring-width': '2px', '--focus-ring-offset': '2px',
+    '--tap-height': '36px', '--tap-height-coarse': '44px',
     '--edge-fade': '24px', '--state-max': '400px', '--state-icon': '40px', '--state-icon-disc': '64px',
   };
+  // 2026-11-05（macOS HIG、所有者承認）: デスクトップの焦点の輪は 3px・オフセット 1px。Web は 2px・2px のまま。
+  assert.match(css, /--focus-ring-width:\s*3px;/);
+  assert.match(css, /--focus-ring-offset:\s*1px;/);
   let web = null;
   try { web = read('../../hub/app/v2/v2-tokens.css'); } catch { /* the Web tree may be absent */ }
   for (const [name, value] of Object.entries(want)) {
@@ -35,21 +38,22 @@ test('shape-tokens.css mirrors the Web shape tokens and carries no color', () =>
   }
 });
 
-test('type ramp sizes, leading and weights follow the unified design system (13/16 · 15/20 · 17/28 · 20/24 · 23/28 · 31/36; 400 · 700 · 800)', () => {
+test('type ramp sizes, leading and weights follow the unified design system (macOS HIG 2026-11-05: 11/14 · 12/16 · 13/18 · 15/20 · 16/28 · 17/22 · 22/28 · 26/32; 400 · 500 · 600 · 700)', () => {
   const tokens = strip(read('tokens.css'));
   const shape = strip(read('shape-tokens.css'));
-  const ds = [['--ds-type-meta-size', '13px'], ['--ds-type-meta-leading', '16px'], ['--ds-type-body-size', '15px'], ['--ds-type-body-leading', '20px'],
-    ['--ds-type-reading-size', '17px'], ['--ds-type-reading-leading', '28px'], ['--ds-type-title-size', '20px'], ['--ds-type-title-leading', '24px'],
-    ['--ds-type-name-size', '23px'], ['--ds-type-name-leading', '28px'], ['--ds-type-article-size', '31px'], ['--ds-type-article-leading', '36px'],
-    ['--ds-weight-text', '400'], ['--ds-weight-strong', '700'], ['--ds-weight-heavy', '800']];
+  // 2026-11-06 所有者「視認性が低い、字が薄い」：本文・補足・注記の段を 1px ずつ上げた（13/18→14/20、12/16→13/18、11/14→12/16）。
+  const ds = [['--ds-type-caption-size', '12px'], ['--ds-type-caption-leading', '16px'], ['--ds-type-meta-size', '13px'], ['--ds-type-meta-leading', '18px'],
+    ['--ds-type-body-size', '14px'], ['--ds-type-body-leading', '20px'], ['--ds-type-title3-size', '15px'], ['--ds-type-title3-leading', '20px'],
+    ['--ds-type-reading-size', '16px'], ['--ds-type-reading-leading', '28px'], ['--ds-type-title-size', '17px'], ['--ds-type-title-leading', '22px'],
+    ['--ds-type-name-size', '22px'], ['--ds-type-name-leading', '28px'], ['--ds-type-article-size', '26px'], ['--ds-type-article-leading', '32px'],
+    ['--ds-weight-text', '400'], ['--ds-weight-medium', '500'], ['--ds-weight-semibold', '600'], ['--ds-weight-strong', '600'], ['--ds-weight-heavy', '700']];
   for (const [name, value] of ds) assert.ok(tokens.includes(name + ': ' + value + ';'), name);
   const alias = [['--type-display', '--ds-type-article-size'], ['--type-title1', '--ds-type-name-size'], ['--type-title2', '--ds-type-title-size'],
-    ['--type-title3', '--ds-type-title-size'], ['--type-headline', '--ds-type-reading-size'], ['--type-body', '--ds-type-body-size'],
-    ['--type-callout', '--ds-type-body-size'], ['--type-subhead', '--ds-type-meta-size'], ['--type-caption', '--ds-type-meta-size'],
-    ['--type-footnote', '--ds-type-meta-size'], ['--lh-body', '--ds-type-body-leading'], ['--lh-subhead', '--ds-type-meta-leading'],
-    ['--lh-caption', '--ds-type-meta-leading'], ['--lh-title2', '--ds-type-title-leading'], ['--lh-headline', '--ds-type-reading-leading']];
+    ['--type-title3', '--ds-type-title3-size'], ['--type-headline', '--ds-type-body-size'], ['--type-body', '--ds-type-body-size'],
+    ['--type-callout', '--ds-type-meta-size'], ['--type-subhead', '--ds-type-meta-size'], ['--type-caption', '--ds-type-caption-size'],
+    ['--type-footnote', '--ds-type-caption-size'], ['--lh-body', '--ds-type-body-leading'], ['--lh-subhead', '--ds-type-meta-leading'],
+    ['--lh-caption', '--ds-type-caption-leading'], ['--lh-title2', '--ds-type-title-leading'], ['--lh-headline', '--ds-type-body-leading']];
   for (const [name, target] of alias) assert.ok(tokens.includes(name + ': var(' + target + ');'), name);
-  assert.doesNotMatch(tokens, /--weight-(medium|semibold):/, 'no 500 or 600 weight tokens');
   assert.ok(shape.includes('--lh-callout: 20px;'));
   assert.ok(shape.includes('--type-title2-weight: var(--weight-bold)'));
   assert.ok(shape.includes('--type-callout-weight: var(--weight-bold)'));
@@ -60,7 +64,7 @@ test('spacing, radius and nav tokens are the unified scale and the retired text 
   const space = ['4px', '8px', '12px', '16px', '20px', '24px', '32px', '48px'];
   space.forEach((value, i) => assert.ok(tokens.includes('--ds-space-' + (i + 1) + ': ' + value + ';'), '--ds-space-' + (i + 1)));
   space.forEach((_, i) => assert.ok(tokens.includes('--space-' + (i + 1) + ': var(--ds-space-' + (i + 1) + ');'), '--space-' + (i + 1)));
-  for (const [name, value] of [['card', '16px'], ['callout', '12px'], ['input', '8px'], ['tile-video', '12px'], ['tile-music', '8px'], ['badge', '4px'], ['pill', '999px']]) {
+  for (const [name, value] of [['card', '10px'], ['callout', '10px'], ['input', '6px'], ['tile-video', '10px'], ['tile-music', '8px'], ['badge', '4px'], ['sheet', '12px'], ['pill', '999px']]) {
     assert.ok(tokens.includes('--ds-radius-' + name + ': ' + value + ';'), name);
   }
   const sources = readdirSync(dir).filter((f) => /\.(css|mjs|js)$/.test(f) && !f.endsWith('.test.mjs') && f !== 'tokens.css');

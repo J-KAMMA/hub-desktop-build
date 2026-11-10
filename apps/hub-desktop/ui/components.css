@@ -208,3 +208,6 @@
 
 /* A skeleton is on screen: its words go to screen readers only (no "loading" text beside the bones). */
 #hub-shell #view-feed:has(.skeleton-post) #feed-state:not(.warning) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* 記号だけの札も同じ高さの丸にそろえる */
+#hub-shell .mk-chip.is-icon:not(#_):not(#_) { width: var(--btn-h-sm); height: var(--btn-h-sm); padding: 0; }

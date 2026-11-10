@@ -26,8 +26,7 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  /* ブラウザのタブの列は自分の段を持つ（細くする・検索）ので題は出さない。 */
-  #hub-shell.browser-active .sidebar > .brand { display: none; }
+  /* ブラウザのタブの列も、ほかの画面と同じ題の段（高さ 44）の下から始まる（2026-11-06 所有者「ブラウザのときだけ左列の位置が違う」）。 */
 
   #hub-shell .sidebar > #sidebar-context { gap: 1px; padding: 0 var(--space-2) var(--space-3); }
   #hub-shell #sidebar-context .nav-group {
@@ -322,5 +321,4 @@
 #hub-shell #sidebar-context .nav-community-all { color: var(--muted); }
 #hub-shell #sidebar-context .nav-community .nav-badge { margin-left: auto; }
 /* 開いているコミュニティの下の 投稿 / メンバー / 設定。 */
-#hub-shell #sidebar-context .nav-community-sub { display: flex; align-items: center; padding-left: calc(var(--ds-space-3) + 20px + var(--ds-space-3)); color: var(--muted); }
 #hub-shell #sidebar-context .nav-community-sub[aria-current="page"] { color: var(--text); }

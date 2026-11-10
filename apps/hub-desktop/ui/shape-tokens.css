@@ -24,8 +24,8 @@
   --tap-close: 28px;
   --tap-close-glyph: 18px;
   --tap-icon: 20px;
-  --focus-ring-width: 2px;
-  --focus-ring-offset: 2px;
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 1px;
 
   /* 端のぼかし（タブ列・横の棚）。 */
   --edge-fade: 24px;

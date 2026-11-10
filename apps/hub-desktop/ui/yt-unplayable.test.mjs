@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { JSDOM } from 'jsdom';
-import { createYouTubeDock, UNPLAYABLE_NOTE } from './yt-dock.mjs';
-import { createUnplayableStore, filterVideos, filterWorks, filterResource, filterInvoke, isUnplayableCode, UNPLAYABLE_KEY, MAX_UNPLAYABLE, UNPLAYABLE_TTL_MS, setUnplayableStore } from './yt-unplayable.mjs';
+import { createYouTubeDock, UNPLAYABLE_NOTE, TRANSIENT_NOTE } from './yt-dock.mjs';
+import { createUnplayableStore, filterVideos, filterWorks, filterResource, filterInvoke, isUnplayableCode, isTransientCode, UNPLAYABLE_KEY, MAX_UNPLAYABLE, UNPLAYABLE_TTL_MS, setUnplayableStore } from './yt-unplayable.mjs';
 import { buildShelves } from './music-shelves.mjs';
 import { normalizeEntries } from './music-artist-album.mjs';
 import { createRelatedList } from './video-home.mjs';
@@ -14,9 +14,13 @@ const work = (id, vid) => ({ id, title: id, services: vid ? [{ provider: 'youtub
 const hubVideo = { id: 'h1', provider: 'hub', title: 'own' };
 const hubWork = { id: 'music:11111111-1111-4111-8111-111111111111', title: 'own', services: [] };
 
-test('only 100/101/150/152/153 are unplayable codes', () => {
-  for (const c of [100, 101, 150, 152, 153, '101']) assert.equal(isUnplayableCode(c), true);
-  for (const c of [2, 5, 0, 1, 154, null, undefined]) assert.equal(isUnplayableCode(c), false);
+// 2026-11-05：152/153 は埋め込み側の設定の失敗で、覚えると再生できる曲まで一覧から消えた。
+test('only 100/101/150 are remembered as unplayable; 152/153 are transient', () => {
+  for (const c of [100, 101, 150, '101']) assert.equal(isUnplayableCode(c), true);
+  for (const c of [2, 5, 0, 1, 152, 153, 154, null, undefined]) assert.equal(isUnplayableCode(c), false);
+  for (const c of [152, 153, '153']) assert.equal(isTransientCode(c), true);
+  for (const c of [100, 101, 150, 2]) assert.equal(isTransientCode(c), false);
+  assert.equal(UNPLAYABLE_KEY, 'hub.desktop.ytUnplayable.v2');
 });
 
 test('store persists, survives reload, expires after 30 days, caps at 2000 oldest-first', () => {
@@ -92,9 +96,25 @@ test('onError after an explicit play stops the embed, remembers the id, shows a 
   f.dom.window.close();
 });
 
-test('non-error codes are ignored; the five unplayable codes all fail', () => {
+test('non-error codes are ignored; the three unplayable codes are remembered', () => {
   for (const code of [2, 5]) { const f = fixture(); f.dock.play({ key: 'music:a', id: BAD, slot: f.slot }); error(f, code); assert.equal(f.store.has(BAD), false); f.dom.window.close(); }
-  for (const code of [100, 101, 150, 152, 153]) { const f = fixture(); f.dock.play({ key: 'music:a', id: BAD, slot: f.slot }); error(f, code); assert.equal(f.store.has(BAD), true, String(code)); f.dom.window.close(); }
+  for (const code of [100, 101, 150]) { const f = fixture(); f.dock.play({ key: 'music:a', id: BAD, slot: f.slot }); error(f, code); assert.equal(f.store.has(BAD), true, String(code)); f.dom.window.close(); }
+});
+
+test('152/153 stop this play with a short note but never remove the track; a queue skips on', () => {
+  for (const code of [152, 153]) {
+    const f = fixture(); const removed = [];
+    f.store.subscribe(id => removed.push(id));
+    f.dock.play({ key: 'music:a', id: BAD, slot: f.slot }); error(f, code);
+    assert.equal(f.store.has(BAD), false, String(code)); assert.deepEqual(removed, []);
+    assert.equal(f.dock.element.querySelector('.yt-dock-note').textContent, TRANSIENT_NOTE);
+    f.dom.window.close();
+  }
+  const f = fixture(); const skipped = [];
+  f.dock.play({ key: 'video:a', id: BAD, slot: f.slot, quiet: true, onUnplayable: id => skipped.push(id) });
+  error(f, 153);
+  assert.deepEqual(skipped, [BAD]); assert.equal(f.store.has(BAD), false);
+  f.dom.window.close();
 });
 
 test('a queue or shelf play is silent: no notice, embed stopped, skip callback runs', () => {

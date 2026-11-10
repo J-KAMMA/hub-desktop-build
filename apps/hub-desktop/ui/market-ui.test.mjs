@@ -6,7 +6,7 @@ import { CATEGORIES, SORTS, cartEstimate, normalizeProduct, normalizeTicket, pri
 import { marketTreeModel, renderMarketTree, marketRouteKey } from './market-tree.mjs';
 import { createMarketBrowse, renderTile } from './market-browse.mjs';
 import { createMarketProductPage, buyableInApp, webPathFor } from './market-product.mjs';
-import { createOrdersList, renderCart, renderPurchased, renderWebRows, WEB_ROWS } from './market-me.mjs';
+import { createLibrary, createOrdersList, LIBRARY_KINDS, renderCart, renderPurchased, renderWebRows, WEB_ROWS } from './market-me.mjs';
 
 const read = name => readFileSync(new URL(name, import.meta.url), 'utf8');
 const dom = html => { const d = new JSDOM(html, { url: 'http://localhost' }); return d.window.document; };
@@ -34,7 +34,7 @@ function mountBrowse(t, overrides = {}) {
   const browse = createMarketBrowse({ document, host: document.getElementById('host'), deps, debounceMs: 0 });
   return { document, calls, browse, deps };
 }
-const titles = document => [...document.querySelectorAll('.mk-tile .mk-tile-title')].map(n => n.textContent);
+const titles = document => [...document.querySelectorAll('.mk-tile .mk-tile-title, .mk-event .mk-event-title')].map(n => n.textContent);
 
 // ---------- 木 ----------
 test('tree: two roots, the market categories (from CATEGORIES) and the personal pages', () => {
@@ -45,7 +45,7 @@ test('tree: two roots, the market categories (from CATEGORIES) and the personal 
   assert.deepEqual(tree.roots().map(n => n.textContent), ['マーケット', '自分']);
   assert.deepEqual([...host.querySelectorAll('.sidebar-tree')[0].querySelectorAll('.sidebar-tree-children .sidebar-item-label')].map(n => n.textContent), ['すべて', 'デジタル', 'グッズ', 'チケット', 'ゲーム']);
   assert.deepEqual(CATEGORIES.map(c => c.label), ['すべて', 'デジタル', 'グッズ', 'チケット', 'ゲーム']);
-  assert.deepEqual([...host.querySelectorAll('.sidebar-tree')[1].querySelectorAll('.sidebar-tree-children .sidebar-item-label')].map(n => n.textContent), ['カート', '購入済み', '注文']);
+  assert.deepEqual([...host.querySelectorAll('.sidebar-tree')[1].querySelectorAll('.sidebar-tree-children .sidebar-item-label')].map(n => n.textContent), ['カート', 'ライブラリ', '注文']);
   assert.equal(host.querySelector('.sidebar-tree-count').textContent, '3');
   // 曲がり線の印
   for (const kids of host.querySelectorAll('.sidebar-tree-children')) {
@@ -90,7 +90,7 @@ test('tree: clicking only reports the route and never rebuilds the column; selec
 // ---------- 一覧 ----------
 test('browse: chips, sort control without 人気, search field; first load shows skeletons in the tile shape', async t => {
   const f = mountBrowse(t);
-  assert.deepEqual([...f.document.querySelectorAll('.mk-chips > .mk-chip')].map(n => n.textContent), ['すべて', 'デジタル', 'グッズ', 'チケット', 'ゲーム']);
+  assert.deepEqual([...f.document.querySelectorAll('.mk-chips > .mk-chip')].map(n => n.getAttribute('aria-label')), []); // 種別は左の列の木だけ（重ねて置かない）
   assert.deepEqual([...f.document.querySelectorAll('.mk-sort option')].map(n => n.textContent), ['新着', '価格の安い順', '価格の高い順']);
   assert.deepEqual(SORTS.map(s => s.key), ['new', 'price_asc', 'price_desc']);
   assert.ok(f.document.querySelector('.mk-search input[type="search"]'));
@@ -136,7 +136,9 @@ test('browse: category chips filter the loaded catalog without another read; tic
   await f.browse.settled();
   assert.equal(f.calls.tickets, 1);
   assert.deepEqual(titles(f.document), ['夜の部']);
-  assert.equal(f.document.querySelector('.mk-tile .mk-tile-price').textContent, '¥3,000〜');
+  assert.equal(f.document.querySelector('.mk-event .mk-event-price').textContent, '¥3,000〜');
+  assert.equal(f.document.querySelector('.mk-event .mk-event-day').textContent, String(new Date('2026-11-03T10:00:00Z').getDate()), 'tickets are dated rows (Eventbrite list), not square tiles');
+  assert.equal(f.document.querySelector('.mk-results .mk-sort').hidden, true, 'count and sort share the results line');
   assert.equal(f.document.querySelector('.mk-sort').hidden, true, 'ticket has no server sort');
   f.browse.setCategory('game');
   assert.equal(f.calls.games, 1);
@@ -344,6 +346,10 @@ test('cart: divider rows with thumbnail, title, price; totals are tabular; 購�
   checkout.click();
   assert.deepEqual(calls, [['qty', 'a', 3], ['remove', 'a'], ['open', 'b'], ['checkout']]);
   assert.match(read('./market-ui.css'), /\.mk-num, #hub-shell #cart-totals \{[^}]*tabular-nums/);
+  // 合計を既存の #cart-summary が持つとき（app.js は showTotals: false）、購入手続きのボタンはその面の1つだけ。
+  renderCart({ document, host: document.getElementById('host'), lines, showTotals: false, deps: { setQuantity() {}, remove() {}, checkout() {} } });
+  assert.equal(document.querySelector('.mk-cart-cta'), null);
+  assert.equal(document.querySelectorAll('.mk-row').length, 2);
 });
 
 test('cart: locked cart disables edits and checkout; empty cart is a quiet state with one button', () => {
@@ -378,7 +384,8 @@ test('purchased: paid orders as divider rows; digital goods point to the Web dow
   renderPurchased({ document, host: document.getElementById('host'), receipts, deps: orderDeps(calls) });
   const rows = [...document.querySelectorAll('.mk-row')];
   assert.deepEqual(rows.map(r => r.dataset.id), ['o1', 'o2']);
-  assert.match(rows[0].textContent, /猫のTシャツ.*×2.*2,700 JPYC.*支払い済み.*発送済み.*JP123/);
+  assert.match(rows[0].querySelector('.mk-order-head').textContent, /注文日.*2026.*合計2,700 JPYC/);
+  assert.match(rows[0].textContent, /猫のTシャツ.*×2.*支払い済み.*発送済み.*JP123/);
   const dl = [...rows[1].querySelectorAll('.mk-btn')].find(n => n.textContent.startsWith('ダウンロード'));
   dl.click();
   rows[0].querySelector('.mk-btn').click();
@@ -461,7 +468,7 @@ test('browse: 在庫あり and 送料無料 are toggle chips in the same style, 
   f.browse.show('all');
   await f.browse.settled();
   const toggles = [...f.document.querySelectorAll('.mk-toggle')];
-  assert.deepEqual(toggles.map(n => n.textContent), ['在庫あり', '送料無料']);
+  assert.deepEqual(toggles.map(n => n.getAttribute('aria-label')), ['在庫あり', '送料無料']);
   assert.ok(toggles.every(n => n.classList.contains('mk-chip') && n.getAttribute('aria-pressed') === 'false'));
   toggles[0].click();
   await f.browse.settled();
@@ -481,7 +488,7 @@ test('tree: 出品する is offered to every signed-in user, after 注文 and be
   const host = document.getElementById('col');
   const gone = [];
   const tree = renderMarketTree({ document, host, model: marketTreeModel({ canList: true, sells: true }), route: { page: 'cart' }, onGo: r => gone.push(marketRouteKey(r)) });
-  assert.deepEqual([...host.querySelectorAll('.sidebar-tree')[1].querySelectorAll('.sidebar-item-label')].map(n => n.textContent), ['自分', 'カート', '購入済み', '注文', '出品する', '出品中/売上', '出品・チケット']);
+  assert.deepEqual([...host.querySelectorAll('.sidebar-tree')[1].querySelectorAll('.sidebar-item-label')].map(n => n.textContent), ['自分', 'カート', 'ライブラリ', '注文', '出品する', '出品中/売上', '出品・チケット']);
   tree.rows().find(r => r.textContent === '出品する').click();
   assert.deepEqual(gone, ['sell']);
   tree.rows().find(r => r.textContent === '出品・チケット').click();
@@ -496,4 +503,39 @@ test('cart rows keep the per-line shipping wording as a muted line', () => {
   const lines = [line('a', { shippingJpyc: 0 }), line('b', { shippingJpyc: 300 }), line('c', { shippingJpyc: null })];
   renderCart({ document, host: document.getElementById('host'), lines, deps: { setQuantity() {}, remove() {}, checkout() {} } });
   assert.deepEqual([...document.querySelectorAll('.mk-row-shipping')].map(n => n.textContent), ['送料無料', '送料 300 JPYC', '送料は注文時に確認']);
+});
+
+test('library: kinds on the left, digital purchases newest first, Web rows for tickets and gated, one goods row', () => {
+  const document = dom('<div id="host"></div>');
+  const calls = [];
+  const deps = { ...orderDeps(calls), openOrders: () => calls.push(['orders']) };
+  const library = createLibrary({ document, host: document.getElementById('host'), deps });
+  library.set({ receipts });
+  assert.deepEqual(LIBRARY_KINDS.map(k => k.label), ['すべて', 'ゲーム', 'デジタル', 'チケット', '限定の中身']);
+  assert.equal(document.querySelector('.mk-library > .mk-lib-kinds + .mk-lib-list') !== null, true);
+  const kinds = () => [...document.querySelectorAll('.mk-lib-kind')];
+  assert.equal(kinds()[0].getAttribute('aria-current'), 'page');
+  assert.equal(kinds().some(k => /API/.test(k.textContent)), false, 'API tab stays hidden until a real channel source exists');
+  // すべて：デジタル（o2）だけ。グッズの注文（o1）は入らない。ゲームはWebの行。
+  assert.deepEqual([...document.querySelectorAll('.mk-lib-rows > .mk-row')].map(r => r.dataset.id), ['o2']);
+  assert.deepEqual([...document.querySelectorAll('.mk-lib-web .mk-row-title-plain')].map(n => n.textContent), ['チケット', '限定の中身']);
+  document.querySelector('.mk-lib-web .mk-btn').click();
+  document.querySelector('.mk-lib-goods').click();
+  assert.deepEqual(calls, [['web', '/v2/market/purchased?kind=tickets'], ['orders']]);
+  kinds().find(k => k.dataset.kind === 'digital').click();
+  assert.deepEqual([...document.querySelectorAll('.mk-lib-rows > .mk-row')].map(r => r.dataset.id), ['o2']);
+  assert.equal(document.querySelector('.mk-lib-kind.on').dataset.kind, 'digital');
+  kinds().find(k => k.dataset.kind === 'games').click();
+  assert.equal(document.querySelectorAll('.mk-lib-rows').length, 0);
+  assert.equal(document.querySelector('.mk-lib-web .mk-row-title-plain').textContent, '購入したゲーム');
+  kinds().find(k => k.dataset.kind === 'gated').click();
+  assert.equal(document.querySelectorAll('.mk-lib-rows').length, 0);
+  assert.equal(document.querySelector('.mk-lib-web .mk-row-title-plain').textContent, '限定の中身');
+  library.set({ receipts: [] });
+  library.select('all');
+  assert.equal(document.querySelector('.mk-empty-title').textContent, 'ライブラリはまだ空です');
+  // 色は意味トークンだけ：選んだ種別は金の細線（面にしない）。
+  const css = read('./market-ui.css');
+  assert.match(css, /\.mk-lib-kind\.on \{[^}]*inset 1px 0 0 var\(--emphasis\)/);
+  assert.doesNotMatch(css.slice(css.indexOf('---- ライブラリ')), /#[0-9a-f]{3,8}\b|rgb\(|background: var\(--emphasis\)/i);
 });

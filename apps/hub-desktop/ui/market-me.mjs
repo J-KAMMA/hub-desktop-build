@@ -1,4 +1,4 @@
-// 「自分」の面（2026-11-03）：カート・購入済み・注文を区切り線の行で出す。枠のカードは使わない。
+// 「自分」の面（2026-11-03）：カート・ライブラリ・注文を区切り線の行で出す。枠のカードは使わない。
 // 数量・削除・配送先の確認・購入手続きは既存の道（app.js の shop.cart / renderCart / #cart-checkout）が持つ。ここは見せ方だけで、
 // 押された操作を deps に返す。invoke / open_external / commerce_* は持たない（テストが固定する）。
 import { cartEstimate, jpyc, normalizeProduct, priceView, shippingText } from './market-model.mjs';
@@ -72,20 +72,27 @@ export function renderCart({ document, host, lines, deps, showTotals = true }) {
     total('送料', sum.unknownShipping ? (sum.shipping ? `${jpyc(sum.shipping)} + 注文時に確認` : '注文時に確認') : sum.shipping ? jpyc(sum.shipping) : '無料');
     total(sum.taxed ? '合計の目安（税込）' : '合計の目安（本体価格）', jpyc(sum.total), 'is-grand');
     nodes.push(totals, el(document, 'p', 'mk-note', '確定額はCommerceが注文時に出します。支払いはウォレットの確認モーダルで承認してから実行されます。'));
+    // 購入手続きのボタンは合計の下に1つだけ（Amazon のカート：小計の直下）。合計を既存の面（#cart-summary）が持つときは、その面のボタンが唯一の入口。
+    const go = el(document, 'div', 'mk-cart-cta');
+    const checkout = button(document, '購入手続きへ', 'mk-btn mk-btn-primary', () => deps.checkout());
+    checkout.disabled = locked;
+    go.append(checkout);
+    nodes.push(go);
   }
-  const go = el(document, 'div', 'mk-cart-cta');
-  const checkout = button(document, '購入手続きへ', 'mk-btn mk-btn-primary', () => deps.checkout());
-  checkout.disabled = locked;
-  go.append(checkout);
-  nodes.push(go);
   host.replaceChildren(...nodes);
 }
 
 const dateText = value => { const date = new Date(value); return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString('ja-JP'); };
 
 function orderRow(document, receipt, deps, { purchased }) {
-  const row = el(document, 'li', 'mk-row');
+  const row = el(document, 'li', 'mk-row mk-order');
   row.dataset.id = receipt.id;
+  // Amazon の注文履歴：行の頭に注文日と合計の帯（小さな見出しと値）。注文番号は出さない（詳細の画面が持つ）。
+  const head = el(document, 'dl', 'mk-order-head');
+  const cell = (label, value) => { if (!value) return; const pair = el(document, 'div', 'mk-order-cell'); pair.append(el(document, 'dt', '', label), el(document, 'dd', 'mk-num', value)); head.append(pair); };
+  cell('注文日', dateText(receipt.createdAt));
+  cell('合計', Number.isFinite(receipt.amountJpyc) ? jpyc(receipt.amountJpyc) : '');
+  if (head.childElementCount) row.append(head);
   const main = el(document, 'div', 'mk-row-main');
   main.append(media(document, { url: receipt.imageUrl, label: receipt.title, alt: '', asset: deps.asset, className: 'mk-media mk-row-thumb' }));
   const text = el(document, 'div', 'mk-row-text');
@@ -93,7 +100,7 @@ function orderRow(document, receipt, deps, { purchased }) {
   title.type = 'button';
   title.addEventListener('click', () => deps.openOrder(receipt.id));
   text.append(title);
-  text.append(el(document, 'span', 'mk-row-meta', [dateText(receipt.createdAt), receipt.quantity > 1 ? `×${receipt.quantity}` : '', Number.isFinite(receipt.amountJpyc) ? jpyc(receipt.amountJpyc) : ''].filter(Boolean).join(' · ')));
+  if (receipt.quantity > 1) text.append(el(document, 'span', 'mk-row-meta', `数量 ×${receipt.quantity}`));
   const status = el(document, 'span', 'mk-row-status');
   status.append(badge(document, deps.statusText(receipt.status)));
   if (receipt.fulfillmentStatus) status.append(badge(document, deps.fulfillmentText?.(receipt.fulfillmentStatus) ?? receipt.fulfillmentStatus));
@@ -184,3 +191,111 @@ export const WEB_ROWS = Object.freeze([
   { label: '本人確認（KYC/KYB）', note: '販売者の本人確認はWeb版Hubで行います。この端末には書類を保存しません。', path: '/v2/market/products/sell' },
   { label: 'デジタル商品の受け取り', note: '購入したデジタル商品のダウンロードはWebのマーケットから。', path: '/v2/market/digital' },
 ]);
+
+// ---------- ライブラリ（2026-11-04、所有者の決定：「購入済み」を「ライブラリ」へ） ----------
+// 買った物を種別のタブで1か所に集める。配置は Steam のライブラリ / Apple Books のライブラリ（左に種別の列、右に一覧）。
+// この端末で読めるものだけを並べる：デジタルは Commerce の注文（shop.orders、端末の資格情報で確かめた写し）。ゲームはWebのゲームのライブラリの行にする。
+// チケット（入場・同行者への分配・定価の出品）と限定の中身は Hub D1 の本人だけの一覧で、この端末にはまだ読む道が無い。再実装せず Web のライブラリの行にする。
+// API（支払いチャネルの残高と閉じる操作）は端末側の読み元がまだ無いので、タブを出さない（偽の一覧は作らない）。
+// グッズはライブラリに入れない。「注文」への行を1つだけ置く。
+export const LIBRARY_KINDS = Object.freeze([
+  { key: 'all', label: 'すべて' }, { key: 'games', label: 'ゲーム' }, { key: 'digital', label: 'デジタル' }, { key: 'tickets', label: 'チケット' }, { key: 'gated', label: '限定の中身' },
+]);
+
+export const LIBRARY_WEB_ROWS = Object.freeze({
+  games: { label: '購入したゲーム', note: '無料で追加したゲームと購入を確認したゲームは、Webのゲームのライブラリに並びます。', path: '/v2/games/library' },
+  tickets: { label: 'チケット', note: '入場画面・同行者への分配・定価での出品は、Webのライブラリで行います。', path: '/v2/market/purchased?kind=tickets' },
+  gated: { label: '限定の中身', note: '開けた限定の投稿・記事はWebのライブラリに並びます。開くたびに、いまの条件で確かめます。', path: '/v2/market/purchased?kind=gated' },
+});
+
+const libraryTime = value => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value < 1e12 ? value * 1000 : value;
+  const time = Date.parse(value);
+  return Number.isNaN(time) ? 0 : time;
+};
+export const isDigitalPurchase = receipt => isPurchased(receipt) && receipt?.fulfillmentType === 'digital';
+
+function libraryWebRow(document, row, openWeb) {
+  const item = el(document, 'li', 'mk-row mk-web-row mk-lib-web');
+  const text = el(document, 'div', 'mk-row-text');
+  text.append(el(document, 'strong', 'mk-row-title-plain', row.label), el(document, 'span', 'mk-row-meta', row.note));
+  const open = button(document, 'Webで開く ↗', 'mk-btn mk-btn-compact', () => openWeb?.(row.path));
+  open.setAttribute('aria-label', `${row.label}をWebで開く`);
+  item.append(text, open);
+  return item;
+}
+
+/**
+ * ライブラリ。deps：orderRow と同じ（statusText / openOrder / openWeb / asset）に加えて openOrders() / browse()。
+ * set({ receipts }) で中身を差し替える。kind を替えても読み直さない。
+ */
+export function createLibrary({ document, host, deps, kind = 'all' }) {
+  const state = { kind: LIBRARY_KINDS.some(k => k.key === kind) ? kind : 'all', receipts: [] };
+  const root = el(document, 'div', 'mk-library');
+  host.replaceChildren(root);
+  const digitalItems = () => state.receipts.filter(isDigitalPurchase);
+  const counts = () => ({ digital: digitalItems().length });
+
+  function kindsColumn() {
+    const nav = el(document, 'nav', 'mk-lib-kinds');
+    nav.setAttribute('aria-label', 'ライブラリの種別');
+    const list = el(document, 'ul', 'mk-lib-kind-list');
+    const known = counts();
+    for (const { key, label } of LIBRARY_KINDS) {
+      const li = el(document, 'li');
+      const item = button(document, '', `mk-lib-kind${state.kind === key ? ' on' : ''}`, () => { state.kind = key; render(); });
+      item.dataset.kind = key;
+      item.append(el(document, 'span', 'mk-lib-kind-label', label));
+      if (Number.isFinite(known[key]) && known[key] > 0) item.append(el(document, 'span', 'mk-lib-kind-count mk-num', String(known[key])));
+      if (state.kind === key) item.setAttribute('aria-current', 'page');
+      li.append(item);
+      list.append(li);
+    }
+    nav.append(list);
+    // グッズは届けた証明が配送の追跡なので、ライブラリではなく注文が持つ。行は1つだけ。
+    const goods = button(document, 'グッズの注文を見る', 'mk-lib-goods mk-link', () => deps.openOrders?.());
+    goods.dataset.kind = 'goods';
+    nav.append(goods);
+    return nav;
+  }
+
+  function listFor(kind) {
+    const rows = [];
+    if (kind === 'all' || kind === 'digital') for (const receipt of digitalItems()) rows.push({ time: libraryTime(receipt.createdAt), node: orderRow(document, receipt, deps, { purchased: true }) });
+    rows.sort((a, b) => b.time - a.time);
+    const web = kind === 'all' ? [LIBRARY_WEB_ROWS.tickets, LIBRARY_WEB_ROWS.gated] : LIBRARY_WEB_ROWS[kind] ? [LIBRARY_WEB_ROWS[kind]] : [];
+    const nodes = [];
+    if (rows.length) {
+      const list = el(document, 'ul', 'mk-rows mk-lib-rows');
+      list.append(...rows.slice(0, PAGE).map(row => row.node));
+      nodes.push(list);
+      if (rows.length > PAGE) nodes.push(el(document, 'p', 'mk-note', `新しい${PAGE}件を表示しています。デジタルの残りは「注文」で見られます。`));
+    } else if (kind === 'all' || kind === 'digital') {
+      const empty = { all: ['ライブラリはまだ空です', 'デジタル商品を買うとここに並びます。'], digital: ['購入したデジタル商品はまだありません', '支払いが済んだデジタル商品の注文がここに並びます。'] }[kind];
+      nodes.push(emptyState(document, { title: empty[0], body: empty[1], actionLabel: 'マーケットを見る', onAction: () => deps.browse?.() }));
+    }
+    if (web.length) {
+      const list = el(document, 'ul', 'mk-rows mk-web-rows');
+      list.append(...web.map(row => libraryWebRow(document, row, deps.openWeb)));
+      nodes.push(list);
+    }
+    return nodes;
+  }
+
+  function render() {
+    const section = el(document, 'section', 'mk-lib-list');
+    section.setAttribute('aria-label', LIBRARY_KINDS.find(k => k.key === state.kind)?.label ?? 'ライブラリ');
+    section.append(...listFor(state.kind));
+    root.replaceChildren(kindsColumn(), section);
+  }
+  render();
+  return {
+    root,
+    set({ receipts } = {}) {
+      if (Array.isArray(receipts)) state.receipts = receipts;
+      render();
+    },
+    select(next) { if (LIBRARY_KINDS.some(k => k.key === next)) { state.kind = next; render(); } },
+    kind: () => state.kind,
+  };
+}

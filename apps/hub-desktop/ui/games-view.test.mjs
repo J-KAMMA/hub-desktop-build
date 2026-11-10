@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import {
   gamePlatformBadge, formatGameReleaseDate, normalizeStoreGames, filterStoreGames,
-  renderStoreGames, renderStoreLoading, renderStoreError, renderLocalGames,
+  renderStoreGames, renderStoreLoading, renderStoreError,
 } from "./games-view.mjs";
 
 const { JSDOM } = createRequire(new URL("../../../package.json", import.meta.url))("jsdom");
@@ -58,28 +58,13 @@ test("empty and error states use state-panel with a secondary retry button", () 
   assert.equal(target.querySelectorAll(".games-skeleton-card").length, 4);
 });
 
-test("local entries render このPCで起動 and 削除 wired to the callbacks", () => {
-  const { document, target } = fresh();
-  const calls = [];
-  renderLocalGames(document, target, [{ id: 7, title: "Local", executablePath: "C:/g/local.exe" }], { launch: (e) => calls.push(["launch", e.id]), remove: (e) => calls.push(["remove", e.id]) });
-  const play = target.querySelector(".btn.btn-primary");
-  assert.equal(play.textContent, "このPCで起動");
-  assert.equal(target.querySelector(".btn.btn-ghost").textContent, "削除");
-  play.click();
-  target.querySelector(".btn.btn-ghost").click();
-  assert.deepEqual(calls, [["launch", 7], ["remove", 7]]);
-  renderLocalGames(document, target, [], { launch() {}, remove() {} });
-  assert.match(target.textContent, /登録したゲームはありません/);
-});
-
-test("#rail-games selects the games view and the view uses shared components", () => {
+test("the games entry (すべて・クイック切替え) opens the market games tab, and no local launcher remains", () => {
   const html = read("index.html");
   const app = read("app.js");
-  assert.match(html, /<button id="rail-games" class="nav-item icon-nav-item" data-view="games"/);
-  assert.match(html, /id="view-games"[\s\S]*class="page-header"[\s\S]*class="layout-grid"/);
-  assert.match(app, /if \(view === "games"\) await loadGamesView\(\)/);
+  assert.match(html, /<button class="nav-item" data-view="games"/);
+  assert.doesNotMatch(html, /id="view-games"|id="games-dialog"|id="game-add"|id="game-state"/);
+  assert.match(app, /if \(view === "games"\) \{ openMarketGames\(\); return; \}/);
   assert.match(app, /\.nav-item\[data-view="\$\{view\}"\]/);
-  assert.match(app, /launch_game/);
-  assert.match(html, /id="games-dialog"/);
+  assert.doesNotMatch(app, /launch_game|remove_game|pick_game_executable|rename_game|loadGamesView/);
   assert.doesNotMatch(read("games-view.css"), /:\s*#[0-9a-fA-F]{3,8}\b|(?:font-size|border-radius)\s*:\s*\d+px/);
 });

@@ -5,6 +5,8 @@ import { createRequire } from 'node:module';
 import { createHash, webcrypto } from 'node:crypto';
 import { createDmController } from './dm-controller.mjs';
 import { createState } from './state-view.mjs';
+import { addBaitRow, confirmLeave } from './outbound-link.mjs';
+import { detectBait } from './bait-warning.mjs';
 
 const { JSDOM } = createRequire(new URL('../../../package.json',import.meta.url))('jsdom');
 const source = readFileSync(new URL('./app.js', import.meta.url), 'utf8');
@@ -83,7 +85,7 @@ function fixture(t, connected = true) {
       blank(){activeConversationId=null;renderThread();},
       state:()=>document.querySelector('#thread-state').textContent};`;
   const parameters = { renderSidebarContext: () => {}, document: f.document, window: f.window, Event: f.window.Event, URL: URLFixture, Blob, TextEncoder, crypto: webcrypto,
-    createDmController, createState, icon: () => '', invoke, articleEditorScope: async () => f.scope, processComposerImage: file => f.process(file), actionButton, emptyState, statePanel,
+    createDmController, createState, addBaitRow, detectBait, icon: () => '', invoke, articleEditorScope: async () => f.scope, processComposerImage: file => f.process(file), actionButton, emptyState, statePanel,
     connectState: detail => emptyState('account', 'Hubへの接続', detail),
     paintAvatar: () => {}, relTime: () => 'synthetic date', navigateFrom: () => {},
     setBadge: (id, value) => { f.document.getElementById(id).textContent = String(value); },
@@ -219,8 +221,7 @@ test('the empty conversation pane uses the shared top-third state panel instead 
   f.api.blank();
   const panel = f.document.querySelector('#thread-list .state-panel');
   assert.ok(panel, 'the right pane uses .state-panel');
-  assert.equal(panel.querySelector('.state-title').textContent, '会話を選んでください');
-  assert.ok(panel.querySelector('.state-body')?.textContent);
+  assert.equal(panel.querySelector('.state-title').textContent, '会話を選択');
   assert.equal(panel.querySelector('.state-action')?.textContent, '新しいメッセージ');
   assert.equal(f.api.state(), '');
   assert.equal(f.api.form.hidden, true);

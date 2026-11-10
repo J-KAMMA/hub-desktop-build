@@ -1,8 +1,18 @@
-// マーケットの一覧（2026-11-03）：検索・種別のチップ・並べ替え・正方形の札の格子。
+// マーケットの一覧（2026-11-03）：検索・種別のチップ・並べ替え・正方形の札の格子（150px から、1280幅で5列。2026-11-04 所有者が密な一覧を選んだ）。
 // 読み込みは app.js が渡す既存の読み（commerce_catalog / market_tickets）だけ。ここは読みを作らない。
 // 続きは「さらに表示」を押したときだけ（先読みしない）。種別はカタログがサーバー側で受けないので、読んだ分から選ぶ。
 import { CATEGORIES, SORTS, categoryLabel, inCategory, isCategory, isSort, matchesQuery, normalizeProduct, normalizeTicket, priceView, KIND_LABEL } from './market-model.mjs';
 import { button, el, emptyState, media, skeletonTile } from './market-dom.mjs';
+import { marketIcon } from './market-tree.mjs';
+
+// 2026-11-04 所有者「全部のボタンをロゴ化」：種別・在庫・送料・並べ替えの字を記号にする。名前は aria-label と title に残す。
+const iconChip = (document, label, name, className, onClick) => {
+  const chip = button(document, '', `${className} is-icon`, onClick);
+  chip.setAttribute('aria-label', label);
+  chip.title = label;
+  chip.append(marketIcon(document, name));
+  return chip;
+};
 
 const SKELETON_COUNT = 8;
 
@@ -26,6 +36,39 @@ export function renderTile(document, item, { onOpen, asset, showKind = false } =
   tile.append(body);
   if (onOpen) tile.addEventListener('click', () => onOpen(item));
   return tile;
+}
+
+const WEEKDAY = ['日', '月', '火', '水', '木', '金', '土'];
+
+/**
+ * チケットの行（Eventbrite の検索結果の配置）：左に日付の札（月・日・曜）、題、日時・会場、主催、右に最安の価格。
+ * 日付が読めないときは札を空にし、行の形は崩さない。
+ */
+export function renderTicketRow(document, item, { onOpen, asset } = {}) {
+  const row = el(document, 'button', 'mk-event');
+  row.type = 'button';
+  row.dataset.id = item.id;
+  row.dataset.kind = item.kind;
+  row.setAttribute('aria-label', `${item.title}の詳細を見る`);
+  const date = new Date(item.startsAt);
+  const valid = Boolean(item.startsAt) && !Number.isNaN(date.getTime());
+  const day = el(document, 'span', 'mk-event-date');
+  day.setAttribute('aria-hidden', 'true');
+  if (valid) {
+    day.append(el(document, 'span', 'mk-event-month', `${date.getMonth() + 1}月`), el(document, 'span', 'mk-event-day mk-num', String(date.getDate())), el(document, 'span', 'mk-event-week', WEEKDAY[date.getDay()]));
+  }
+  row.append(day);
+  const body = el(document, 'span', 'mk-event-body');
+  body.append(el(document, 'span', 'mk-event-title', item.title));
+  const when = valid ? date.toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+  const meta = [when, item.venueName].filter(Boolean).join(' · ');
+  if (meta) body.append(el(document, 'span', 'mk-event-meta', meta));
+  if (item.sellerName && item.sellerName !== item.venueName) body.append(el(document, 'span', 'mk-event-meta', item.sellerName));
+  row.append(body);
+  if (item.images[0]) row.append(media(document, { url: item.images[0], label: item.title, alt: '', asset, className: 'mk-media mk-event-thumb' }));
+  row.append(el(document, 'span', 'mk-event-price mk-num', priceView(item).main));
+  if (onOpen) row.addEventListener('click', () => onOpen(item));
+  return row;
 }
 
 /**
@@ -55,38 +98,50 @@ export function createMarketBrowse({ document, host, deps, debounceMs = 250 }) {
   search.setAttribute('aria-label', 'マーケットを検索');
   searchLabel.append(search);
   const sortLabel = el(document, 'label', 'mk-sort');
-  sortLabel.append(el(document, 'span', 'mk-sort-label', '並べ替え'));
+  const sortMark = el(document, 'span', 'mk-sort-label');
+  sortMark.setAttribute('aria-hidden', 'true');
+  sortMark.append(marketIcon(document, 'sort'));
+  sortLabel.append(sortMark);
   const sort = document.createElement('select');
   sort.setAttribute('aria-label', '並べ替え');
   for (const { key, label } of SORTS) { const option = document.createElement('option'); option.value = key; option.textContent = label; sort.append(option); }
   sortLabel.append(sort);
-  bar.append(searchLabel, sortLabel);
+  bar.append(searchLabel);
 
   const chips = el(document, 'div', 'mk-chips');
   chips.setAttribute('role', 'group');
   chips.setAttribute('aria-label', '種別');
   const chipButtons = new Map();
-  for (const { key, label } of CATEGORIES) {
-    const chip = button(document, label, 'mk-chip', () => api.setCategory(key));
-    chip.dataset.category = key;
-    chipButtons.set(key, chip);
-    chips.append(chip);
-  }
+  // 種別（すべて・デジタル・グッズ…）は左の列の木にある。本文には重ねて置かない（選択の入口を1つにする）。
   // 在庫あり・送料無料：同じ見た目のチップ（押すと入れ替わるスイッチ）。カタログの読みへそのまま渡す。
   const toggles = el(document, 'span', 'mk-toggles');
   const toggleButtons = new Map();
-  for (const [key, label] of [['inStock', '在庫あり'], ['freeShipping', '送料無料']]) {
-    const chip = button(document, label, 'mk-chip mk-toggle', () => { state[key] = !state[key]; syncChrome(); ensureLoaded(); renderBody(); });
+  for (const [key, label, name] of [['inStock', '在庫あり', 'stock'], ['freeShipping', '送料無料', 'shipping']]) {
+    const chip = iconChip(document, label, name, 'mk-chip mk-toggle', () => { state[key] = !state[key]; syncChrome(); ensureLoaded(); renderBody(); });
     chip.dataset.toggle = key;
     toggleButtons.set(key, chip);
     toggles.append(chip);
   }
   chips.append(toggles);
+  // 件数と並べ替えは格子の真上の1行（Etsy の検索結果：左に件数、右に並べ替え）。
+  const results = el(document, 'div', 'mk-results');
   const count = el(document, 'p', 'mk-count');
   count.setAttribute('aria-live', 'polite');
+  results.append(count, sortLabel);
   const body = el(document, 'div', 'mk-body');
-  root.append(bar, chips, count, body);
+  root.append(bar, chips, results, body);
   host.replaceChildren(root);
+
+  /** チケット行と同じ形の骨組み（日付の札・題・日時）。 */
+  const skeletonEvent = () => {
+    const row = el(document, 'div', 'mk-event mk-skeleton');
+    row.setAttribute('aria-hidden', 'true');
+    row.append(el(document, 'span', 'mk-event-date mk-skel'));
+    const lines = el(document, 'span', 'mk-event-body');
+    lines.append(el(document, 'span', 'mk-skel mk-skel-line'), el(document, 'span', 'mk-skel mk-skel-line is-short'));
+    row.append(lines);
+    return row;
+  };
 
   const tileOptions = () => ({ onOpen: deps.openItem, asset: deps.asset, showKind: state.category === 'all' });
 
@@ -122,8 +177,9 @@ export function createMarketBrowse({ document, host, deps, debounceMs = 250 }) {
     const loading = source.status === 'loading' || source.status === 'idle' || (source.status === 'loading-first');
     if (loading) {
       count.textContent = '';
-      const grid = el(document, 'div', 'mk-grid');
-      grid.append(...Array.from({ length: SKELETON_COUNT }, () => skeletonTile(document)));
+      const ticket = state.category === 'ticket';
+      const grid = el(document, 'div', ticket ? 'mk-events' : 'mk-grid');
+      grid.append(...Array.from({ length: ticket ? 4 : SKELETON_COUNT }, () => (ticket ? skeletonEvent() : skeletonTile(document))));
       body.replaceChildren(grid);
       body.setAttribute('aria-busy', 'true');
       return;
@@ -131,7 +187,7 @@ export function createMarketBrowse({ document, host, deps, debounceMs = 250 }) {
     body.removeAttribute('aria-busy');
     if (source.status === 'error') {
       count.textContent = '';
-      body.replaceChildren(emptyState(document, { title: '読み込めませんでした', body: source.message || '接続を確認して、もう一度お試しください。', actionLabel: 'もう一度', onAction: () => api.reload(), role: 'alert' }));
+      body.replaceChildren(emptyState(document, { title: source.message || '読み込めませんでした', iconNode: marketIcon(document, 'store'), actionLabel: 'もう一度', onAction: () => api.reload(), role: 'alert' }));
       return;
     }
     const items = visibleItems();
@@ -146,13 +202,20 @@ export function createMarketBrowse({ document, host, deps, debounceMs = 250 }) {
       }
       const label = categoryLabel(state.category);
       body.replaceChildren(...filterRow(), emptyState(document, state.query
-        ? { title: `「${state.query}」は見つかりません`, body: '別のキーワードを試してください。', actionLabel: '検索を消す', onAction: () => api.setQuery('') }
-        : { title: state.category === 'all' ? '商品はまだありません' : `${label}はまだありません`, body: '販売者が出品すると、ここに表示されます。' }));
+        ? { title: `「${state.query}」は見つかりません`, iconNode: marketIcon(document, 'store'), actionLabel: '検索を消す', onAction: () => api.setQuery('') }
+        : { title: state.category === 'all' ? '商品はまだありません' : `${label}はまだありません`, iconNode: marketIcon(document, 'store') }));
       return;
     }
     count.textContent = `${items.length.toLocaleString('ja-JP')}件${more ? '以上' : ''}`;
-    const grid = el(document, 'div', 'mk-grid');
-    grid.append(...items.map(item => renderTile(document, item, tileOptions())));
+    let grid;
+    if (state.category === 'ticket') {
+      grid = el(document, 'div', 'mk-events');
+      grid.setAttribute('role', 'list');
+      grid.append(...items.map(item => { const row = renderTicketRow(document, item, { onOpen: deps.openItem, asset: deps.asset }); row.setAttribute('role', 'listitem'); return row; }));
+    } else {
+      grid = el(document, 'div', 'mk-grid');
+      grid.append(...items.map(item => renderTile(document, item, tileOptions())));
+    }
     const nodes = [...filterRow(), grid];
     if (more) {
       const row = el(document, 'div', 'mk-more');

@@ -12,7 +12,7 @@ function actual(signature){const start=app.indexOf(signature),end=app.indexOf('\
 function fixture(t){
  const dom=new JSDOM(readFileSync(new URL('index.html',root),'utf8'),{url:'https://synthetic-shell.invalid/'}),document=dom.window.document,calls=[],selections=[];
  const shell=document.querySelector('.app-shell');shell.classList.add('rail-open');
- const ctx=vm.createContext({document,desktopShell:shell,startupTool:null,currentView:'feed',railPreferredView:'search',railView:'search',RAIL_VIEW_KEY:'hub.desktop.railView.v2',RAIL_VIEWS:['browser','posts','search','notifications','messages','music','wallet','ai'],MAIN_RAIL_VIEWS:{feed:'posts'},RAIL_VIEW_NAMES:{browser:'ブラウザ',posts:'投稿',search:'資料・検索',notifications:'通知',messages:'メッセージ',music:'音楽',wallet:'ウォレット',ai:'AI'},railPostsTab:'posts',RAIL_POSTS_TAB_KEY:'rail-posts-tab',loadRail:name=>calls.push(['load',name]),
+ const ctx=vm.createContext({document,desktopShell:shell,railChat:{sync(){}},startupTool:null,currentView:'feed',railPreferredView:'search',railView:'search',RAIL_VIEW_KEY:'hub.desktop.railView.v2',RAIL_VIEWS:['browser','posts','search','notifications','messages','music','video','wallet','ai'],MAIN_RAIL_VIEWS:{feed:'posts'},railVideo:{show(){},release(){}},RAIL_VIEW_NAMES:{browser:'ブラウザ',posts:'タイムライン',search:'資料・検索',notifications:'通知',messages:'メッセージ',music:'音楽',video:'動画',wallet:'ウォレット',ai:'AI'},railMessagesTab:'dm',railPostsTab:'posts',RAIL_POSTS_TAB_KEY:'rail-posts-tab',loadRail:name=>calls.push(['load',name]),
   localStorage:{setItem:(...args)=>calls.push(['save',...args])},saveRailChoice:open=>calls.push(['openChoice',open]),setDesktopRailOpen:open=>{shell.classList.toggle('rail-open',open);ctx.syncRailView();},
   requestAnimationFrame:fn=>fn(),railSearchQuery:document.querySelector('#rail-search-query'),refreshRailActivity:()=>calls.push(['read']),
   updatePiWorkEmptyState(){},paintRailNav(){},syncRailMarkAll(){},legacyPiWorkController:false,matchMedia:()=>({matches:false}),
@@ -26,7 +26,7 @@ function fixture(t){
  // The strip buttons are bound by this exact loop in app.js (not re-implemented here).
  const binding=app.slice(app.lastIndexOf('for (const button of document.querySelectorAll(".rail-view-button")) {'),app.indexOf('\n}',app.indexOf('button.onclick = () => onRailViewButton(')) +2);
  assert.ok(binding.includes('onRailViewButton(button.dataset.railView)'),'strip binding block found');
- vm.runInContext(['function paintRailPostsTabs() {','function selectRailPostsTab(name, { focus = false } = {}) {','function placeRailAiWorkspace() {','function syncRailView() {','function selectRailView(name) {','function onRailViewButton(name) {','function renderRailNowPlaying() {','function railMusicRow(item, onOpen) {','function renderRailMusic() {','function railRow(title, text, at, onOpen) {','function railLoadError(text, retry, showPublicPosts = false) {'].map(actual).join('\n')+'\n'+binding,ctx);
+ vm.runInContext(['function paintRailMessagesTabs() {','function placeRailAiWorkspace() {','function syncRailView() {','function selectRailView(name) {','function onRailViewButton(name) {','function renderRailNowPlaying() {','function railMusicRow(item, onOpen) {','function renderRailMusic() {','function railRow(title, text, at, onOpen) {','function railLoadError(text, retry, showPublicPosts = false) {'].map(actual).join('\n')+'\n'+binding,ctx);
  t.after(()=>dom.window.close());return{dom,document,ctx,calls,selections};
 }
 test('the far-right strip is the only switcher: toggle first, then every destination with a name tooltip',t=>{
@@ -34,8 +34,8 @@ test('the far-right strip is the only switcher: toggle first, then every destina
  const marks=[...document.querySelectorAll('.rail-marks > button')];
  assert.equal(marks[0].id,'rail-activity-toggle');
  const buttons=[...document.querySelectorAll('.rail-marks .rail-view-button')];
- assert.deepEqual(buttons.map(item=>item.dataset.railView),['search','messages','music','posts','notifications','browser','ai','wallet']);
- assert.deepEqual(buttons.map(item=>item.title),['資料・検索','メッセージ','音楽','投稿','通知','ブラウザ','AI','ウォレット']);
+ assert.deepEqual(buttons.map(item=>item.dataset.railView),['notifications','messages','posts','music','video','browser','ai','wallet']);
+ assert.deepEqual(buttons.map(item=>item.title),['通知','メッセージ','タイムライン','音楽','動画','ブラウザ','AI','ウォレット']);
  assert.equal(document.querySelector('#rail-view-title').tagName,'H2');assert.equal(document.querySelector('.rail-activity-head select'),null);
 });
 test('strip buttons mark the current view with aria-pressed and the heading names it',t=>{
@@ -45,7 +45,7 @@ test('strip buttons mark the current view with aria-pressed and the heading name
  assert.deepEqual(pressed,['music']);assert.equal(document.querySelector('#rail-view-title').textContent,'音楽');
  ctx.selectRailView('posts');
  assert.deepEqual([...document.querySelectorAll('.rail-view-button[aria-pressed="true"]')].map(item=>item.dataset.railView),['posts']);
- assert.equal(document.querySelector('#rail-view-title').textContent,'投稿');
+ assert.equal(document.querySelector('#rail-view-title').textContent,'タイムライン');
 });
 test('a strip click opens a collapsed rail on that view; clicking the current view again keeps it open (only the toggle closes)',t=>{
  const {document,ctx,calls}=fixture(t);
@@ -63,7 +63,7 @@ test('real strip click handlers: every button shows exactly its own [data-rail-v
  const {document,ctx}=fixture(t);
  const visible=()=>[...document.querySelectorAll('section.rail-view')].filter(s=>!s.hidden).map(s=>s.dataset.railView);
  const names=[...document.querySelectorAll('.rail-marks .rail-view-button')].map(b=>b.dataset.railView);
- assert.deepEqual(names.slice().sort(),['ai','browser','messages','music','notifications','posts','search','wallet']);
+ assert.deepEqual(names.slice().sort(),['ai','browser','messages','music','notifications','posts','video','wallet']);
  ctx.railPreferredView='music';ctx.syncRailView();assert.deepEqual(visible(),['music'],'default view is the music panel');
  for(const from of ['music','browser',null])for(const name of names){
   if(from)document.querySelector(`.rail-marks .rail-view-button[data-rail-view="${from}"]`).click();
@@ -123,19 +123,14 @@ test('legacy destinations and empty-state alternatives remain reachable without 
  for(const name of ['posts','notifications']){ctx.selectRailView(name);assert.equal(ctx.railView,name);assert.equal(document.querySelector('#rail-view-title').textContent,ctx.RAIL_VIEW_NAMES[name]);assert.equal(document.querySelector(`[data-rail-view="${name}"].rail-view`).hidden,false);assert.equal(ctx.currentView,'feed');}
  ctx.currentView='videos';const error=ctx.railLoadError('Unavailable',()=>{},true);error.querySelectorAll('button')[1].click();assert.equal(ctx.railView,'posts');
 });
-test('the right rail has no separate community button; the posts view carries a community tab',t=>{
- const {document,ctx,calls}=fixture(t);
+test('the right rail has no separate community button; the timeline view carries groups as one of its kinds',t=>{
+ const {document}=fixture(t);
  assert.equal(document.querySelector('.rail-view-button[data-rail-view="community"]'),null);
  assert.equal(document.querySelector('section.rail-view[data-rail-view="community"]'),null);
  const posts=document.querySelector('section.rail-view[data-rail-view="posts"]');
- const tabs=[...posts.querySelectorAll('[role="tab"][data-rail-posts-tab]')];
- assert.deepEqual(tabs.map(tab=>[tab.dataset.railPostsTab,tab.textContent,tab.getAttribute('aria-selected')]),[['posts','投稿','true'],['community','コミュニティ','false']]);
- assert.equal(posts.querySelector('#rail-communities').hidden,true);
- ctx.selectRailView('posts');calls.length=0;
- ctx.selectRailPostsTab('community');
- assert.equal(posts.querySelector('#rail-communities').hidden,false);assert.equal(posts.querySelector('#rail-posts-feed').hidden,true);
- assert.equal(tabs[1].getAttribute('aria-selected'),'true');assert.deepEqual(calls.filter(c=>c[0]==='load'),[['load','posts']]);
- ctx.selectRailPostsTab('posts');assert.equal(posts.querySelector('#rail-posts-feed').hidden,false);
+ assert.ok(posts.querySelector('#rail-timeline'),'timeline mount');
+ assert.equal(posts.querySelector('[data-rail-posts-tab]'),null,'the old two-tab strip is gone');
+ assert.equal(posts.querySelector('#rail-communities'),null);
 });
 test('unknown rail inputs do not change selection or write preferences',t=>{
  const {ctx,calls}=fixture(t);ctx.selectRailView('evil');assert.equal(ctx.railPreferredView,'search');assert.deepEqual(calls,[]);

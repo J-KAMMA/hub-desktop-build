@@ -80,3 +80,33 @@
   #hub-shell .ar-row.ar-featured { flex-direction: column-reverse; align-items: stretch; }
   #hub-shell .ar-row.ar-featured > .ar-thumb { width: 100%; height: auto; aspect-ratio: 3 / 2; }
 }
+
+/* ---- 記事の一覧を note（note.com のトピックの一覧、1280幅で実測 2026-11-04）の寸法に合わせる。配置だけで素材は使わない ----
+   札の格子（980幅で4列、列の間 16px、行の間 32px）。絵は上に横長（231×121 の比）・角なし、その下 12px に題 16px・太字・2行まで、
+   書き手と日付は 12px の淡色。要約は出さない（note の一覧と同じ）。大きな注目の札は置かない。 */
+#hub-shell .ar-home:not(#_) { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--ds-space-7) var(--ds-space-4); margin: 0; padding: var(--ds-space-4) 0; }
+#hub-shell .ar-row:not(#_), #hub-shell .ar-row.ar-featured:not(#_) { flex-direction: column; align-items: stretch; gap: var(--ds-space-3); padding: 0; border: 0; }
+#hub-shell .ar-row.is-link:hover:not(#_) { background: transparent; }
+#hub-shell .ar-row.is-link:hover .ar-title { text-decoration: underline; text-underline-offset: 3px; }
+#hub-shell .ar-row > .ar-thumb:not(#_), #hub-shell .ar-row.ar-featured > .ar-thumb:not(#_) { order: -1; width: 100%; height: auto; aspect-ratio: 231 / 121; border-radius: 0; }
+#hub-shell .ar-body:not(#_), #hub-shell .ar-featured .ar-body:not(#_) { gap: var(--ds-space-2); }
+#hub-shell .ar-title:not(#_), #hub-shell .ar-featured .ar-title:not(#_) { -webkit-line-clamp: 2; font-size: var(--type-body); line-height: 1.5; font-weight: var(--weight-bold); letter-spacing: 0; }
+#hub-shell .ar-summary:not(#_) { display: none; }
+#hub-shell .ar-meta:not(#_) { color: var(--muted); font-size: var(--type-caption); }
+/* 検索は上の欄だけ（2026-11-04）。件数の表示も置かない（失敗の知らせは残す）。 */
+#hub-shell #articles-search, #hub-shell #articles-state:not(.warning) { display: none; }
+
+
+/* 2026-11-05 所有者「よさそう」: AI 画面の作法を広げる */
+#hub-shell #view-articles > :is(.view-head, .page-header):not(#_):not(#_) { border-bottom: 0; }
+
+/* 2026-11-07 所有者「記事のUIがかすすぎる」：一覧の札に要約と読了時間を戻し、字の段を作る。
+   計れる原則だけ：題 17/22 の太字・2行まで（1.5）／要約 14 の淡色・2行まで（行高 1.7）／メタは 12 の淡色1行（書き手・日付・読了・タグ）。
+   絵は 16:9 の枠（角 --radius-md）、札の幅は 240px 以上（1280幅・右列を閉じて3列）、段の間は列の間より広い。 */
+#hub-shell .ar-home:not(#_):not(#_) { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--ds-space-7) var(--ds-space-5); padding: var(--ds-space-5) 0; }
+#hub-shell .ar-row > .ar-thumb:not(#_):not(#_), #hub-shell .ar-row.ar-featured > .ar-thumb:not(#_):not(#_) { aspect-ratio: 16 / 9; border-radius: var(--radius-md); }
+#hub-shell .ar-body:not(#_):not(#_), #hub-shell .ar-featured .ar-body:not(#_):not(#_) { gap: var(--ds-space-2); }
+#hub-shell .ar-title:not(#_):not(#_), #hub-shell .ar-featured .ar-title:not(#_):not(#_) { font-size: var(--type-title2); line-height: 1.5; font-weight: var(--weight-bold); }
+#hub-shell .ar-summary:not(#_):not(#_) { display: -webkit-box; -webkit-line-clamp: 2; color: var(--muted); font-size: var(--type-body); line-height: 1.7; }
+#hub-shell .ar-meta:not(#_):not(#_) { display: flex; flex-wrap: nowrap; align-items: center; gap: var(--ds-space-2); margin-top: var(--ds-space-1); font-size: var(--type-caption); line-height: var(--lh-subhead); }
+#hub-shell .ar-meta .post-tag { flex: none; }

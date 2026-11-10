@@ -4,7 +4,7 @@ import { selectSpotlightPosts } from '../../hub/lib/spotlight-posts.ts';
 import { ROLE_LABELS } from '../../hub/lib/thread-knowledge.ts';
 
 // Native controls use the Web reader's search, reply tree and guide selection.
-export function createThreadReader(document, { thread, posts, viewer, renderPost, state: reading = {}, selection = null, isCurrent = () => true, onBeforeRender = () => {} }) {
+export function createThreadReader(document, { thread, posts, viewer, renderPost, state: reading = {}, selection = null, isCurrent = () => true, onBeforeRender = () => {}, onRendered = () => {} }) {
   const root = document.createElement('section');
   root.className = 'thread-reader';
   root.setAttribute('aria-label', '投稿の閲覧');
@@ -95,10 +95,12 @@ export function createThreadReader(document, { thread, posts, viewer, renderPost
       output.push(card);return output;
     });
     list.replaceChildren(...nodes);
+    onRendered(list);
     if(!nodes.length){const empty = document.createElement('p');empty.className='meta';empty.textContent='条件に合う投稿はありません';list.append(empty);}
     state.textContent = `${selected.length}件 / ${posts.length}件 · ${page+1} / ${pages}ページ${guided ? ' · 評価は正しさの保証ではありません' : ''}`;
     Object.assign(reading, {query:query.value,mode:mode.value,sort:sort.value,author:author.value,score:score.value,role:role.value,from:from.value,to:to.value,source:source.checked,page});
     previous.disabled = page === 0; next.disabled = page + 1 >= pages; pager.hidden = pages === 1;
+    state.hidden = !searching && !guided && pages === 1;
   }
   const refresh = ()=>{stopFocus();selectionStatus.hidden=true;selectionStatus.removeAttribute('role');page=0;render();};
   controls.onsubmit = event=>{event.preventDefault();refresh();};

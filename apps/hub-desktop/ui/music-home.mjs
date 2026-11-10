@@ -1,19 +1,12 @@
 // 音楽のホーム：検索欄と、横に並ぶ4本の棚（最近再生 / おすすめ / 新着 / YouTube Music）。
 // 各棚は1回だけ読み込む（music-shelves.mjs）。続きを読む操作も、無限送りも無い。並びは描き直しても変わらない。
 // Hub のオリジナル曲は Hub の再生経路、外部の曲は YouTube の埋め込みだけ（2026-10-12）。購入の操作は置かない。
-import { createArtwork, youtubeSource } from './music-youtube.mjs';
+import { createArtwork } from './music-youtube.mjs';
 import { peerArtworkWork } from './peer-music.mjs';
-import { createShelfStore, SHELF_EMPTY } from './music-shelves.mjs';
+import { createShelfStore } from './music-shelves.mjs';
 import { musicMenuButton } from './music-track-menu.mjs';
 
 const RECENT_LIMIT = 20;
-
-export function greetingFor(date = new Date()) {
-  const hour = date.getHours();
-  if (hour >= 5 && hour < 11) return 'おはようございます';
-  if (hour >= 11 && hour < 18) return 'こんにちは';
-  return 'こんばんは';
-}
 
 /** このセッションで再生した作品。永続化しない。 */
 export function createMusicHistory(limit = RECENT_LIMIT) {
@@ -28,6 +21,27 @@ export function createMusicHistory(limit = RECENT_LIMIT) {
     list: () => [...entries],
     clear() { entries = []; },
   };
+}
+
+const HUB_WORK_ID = /^music:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
+
+/**
+ * 棚を先頭から順に再生する計画。再生できない曲（埋め込みも Hub の音声も持たない作品、取り込めない他Hubの曲）は飛ばす。
+ * Hub の公開曲は1本の待ち行列に並べる。start は最初に鳴らす曲、tracks は公開曲の待ち行列（200曲まで）。
+ */
+export function planShelfPlayback(entries, { canPlayWork = () => true, canPlayPeer = peer => Boolean(peer?.youtubeId || peer?.audioPath) } = {}) {
+  let start = null;
+  const tracks = [];
+  for (const entry of Array.isArray(entries) ? entries : []) {
+    let playable = null;
+    if (entry?.kind === 'track' && entry.track?.id) { playable = entry; tracks.push(entry.track); }
+    else if (entry?.kind === 'work' && entry.work?.id) {
+      if (HUB_WORK_ID.test(String(entry.work.id))) { const hub = { ...entry.work, id: entry.work.id.slice(6) }; playable = { kind: 'track', track: hub }; tracks.push(hub); }
+      else if (canPlayWork(entry.work)) playable = entry;
+    } else if (entry?.kind === 'peer' && canPlayPeer(entry.peer)) playable = entry;
+    if (playable && !start) start = playable;
+  }
+  return { start, tracks: tracks.slice(0, 200) };
 }
 
 const el = (document, tag, className, text) => {
@@ -70,9 +84,9 @@ export function createMusicHome({ document, host, hubAsset, history, loaders, ac
   let disposed = false;
 
   const head = el(document, 'header', 'mh-head');
-  const greeting = el(document, 'p', 'mh-greeting', greetingFor(now()));
   const form = el(document, 'form', 'mh-search');
   form.setAttribute('role', 'search');
+  form.hidden = true; // 検索は上の欄だけ（2026-11-04）。上の欄の語はこの送信口へ回る。
   const input = el(document, 'input');
   input.type = 'search';
   input.maxLength = 100;
@@ -84,9 +98,8 @@ export function createMusicHome({ document, host, hubAsset, history, loaders, ac
   submit.append(searchIcon(document));
   form.append(input, submit);
   form.onsubmit = event => { event.preventDefault(); actions.search(input.value.trim()); };
-  head.append(form, greeting);
+  head.append(form);
 
-  const playable = entry => entry.kind === 'track' || entry.kind === 'peer' || youtubeSource(entry.work) !== null;
   const open = entry => {
     if (entry.kind === 'track') actions.playTrack(entry.track);
     else if (entry.kind === 'peer') actions.playPeer?.(entry.peer);
@@ -99,61 +112,107 @@ export function createMusicHome({ document, host, hubAsset, history, loaders, ac
   };
   const label = (view, suffix) => `${view.title}${view.artist ? `、${view.artist}` : ''}${suffix}`;
 
-  // 正方形の絵・題・アーティストの札。ホバーで再生ボタン（再生できるものだけ）。
-  function tile(entry, shelfId) {
+  const chevron = (direction) => {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('class', 'mh-chevron-icon');
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', direction < 0 ? 'M15 5 8 12l7 7' : 'm9 5 7 7-7 7');
+    svg.append(path);
+    return svg;
+  };
+
+  // 棚の頭：左に大きな見出し、右に「すべて再生」と前へ・次への丸いボタン。
+  function shelfHead(spec, scroller) {
+    const header = el(document, 'header', 'mh-shelf-head');
+    header.append(el(document, 'h3', 'mh-shelf-title', spec.name));
+    const tools = el(document, 'div', 'mh-shelf-tools');
+    const first = planShelfPlayback(spec.entries, { canPlayWork: actions.canPlayWork }).start;
+    if (first) {
+      const all = el(document, 'button', 'mh-play-all', 'すべて再生');
+      all.type = 'button';
+      all.setAttribute('aria-label', `${spec.name}をすべて再生`);
+      all.onclick = () => { if (actions.playQueue) actions.playQueue(spec.entries); else play(first); };
+      tools.append(all);
+    }
+    const step = direction => {
+      const button = el(document, 'button', 'mh-pager-btn');
+      button.type = 'button';
+      button.setAttribute('aria-label', direction < 0 ? '前へ' : '次へ');
+      button.append(chevron(direction));
+      button.onclick = () => scroller.scrollBy({ left: direction * scroller.clientWidth, behavior: 'smooth' });
+      return button;
+    };
+    tools.append(step(-1), step(1));
+    header.append(tools);
+    return header;
+  }
+
+  // 曲の一行：56px の絵、題、「アーティスト・アルバム」。押すと再生。
+  function songRow(entry) {
     const view = itemView(entry);
-    const node = el(document, 'article', entry.kind === 'peer' ? 'mh-card mh-peer-card' : 'mh-card');
+    const source = entry.kind === 'track' ? entry.track : entry.kind === 'peer' ? entry.peer : entry.work;
+    const album = typeof source?.album === 'string' ? source.album : (typeof source?.album?.title === 'string' ? source.album.title : '');
+    const node = el(document, 'div', entry.kind === 'peer' ? 'mh-song mh-peer-card' : 'mh-song');
     node.dataset.key = view.key;
     node.setAttribute('role', 'listitem');
-    const button = el(document, 'button', 'mh-card-open');
+    const button = el(document, 'button', 'mh-song-open');
     button.type = 'button';
-    button.setAttribute('aria-label', label(view, entry.kind === 'peer' ? `を${view.host}から再生` : 'を開く'));
-    button.append(createArtwork(document, view.artworkSource, { hubAsset, className: 'mw-art mw-art-card' }), el(document, 'strong', 'mh-card-title', view.title), el(document, 'span', 'mh-card-artist', view.artist));
-    if (view.host) button.append(el(document, 'span', 'mh-card-origin meta', view.host));
+    button.setAttribute('aria-label', label(view, entry.kind === 'peer' ? `を${view.host}から再生` : 'を再生'));
+    const copy = el(document, 'span', 'mh-song-copy');
+    copy.append(el(document, 'strong', 'mh-song-title', view.title), el(document, 'span', 'mh-song-meta', [view.artist, album, view.host].filter(Boolean).join('・')));
+    button.append(createArtwork(document, view.artworkSource, { hubAsset, className: 'mw-art mw-art-tile' }), copy);
     button.onclick = () => open(entry);
     node.append(button);
-    if (entry.kind !== 'peer') node.append(musicMenuButton(document, entry.kind === 'track' ? { ...entry.track, id: `music:${entry.track.id}` } : entry.work, { className: 'mh-card-more' }));
-    if (playable(entry)) {
-      const playButton = el(document, 'button', 'mh-card-play', '▶');
-      playButton.type = 'button';
-      playButton.setAttribute('aria-label', `${view.title}を再生`);
-      playButton.onclick = () => play(entry);
-      node.append(playButton);
-    }
+    if (entry.kind !== 'peer') node.append(musicMenuButton(document, entry.kind === 'track' ? { ...entry.track, id: `music:${entry.track.id}` } : entry.work, { className: 'mh-song-more' }));
     return node;
   }
 
+  // 2026-11-05 所有者「列のだけでよくね」：YouTube Music の棚も札ではなく行の列にする。
   function shelf(spec) {
     const section = el(document, 'section', 'mh-shelf');
     section.dataset.shelf = spec.id;
     section.setAttribute('aria-label', spec.name);
-    section.append(el(document, 'h3', 'mh-shelf-title', spec.name));
-    if (spec.entries.length) {
-      const row = el(document, 'div', 'mh-row');
-      row.setAttribute('role', 'list');
-      for (const entry of spec.entries) row.append(tile(entry, spec.id));
-      section.append(row);
-    } else if (store.state.loading || !store.state.loaded) {
-      const row = el(document, 'div', 'mh-row');
-      for (let index = 0; index < 6; index++) row.append(el(document, 'span', 'ds-skeleton mh-skeleton-card'));
-      section.setAttribute('aria-busy', 'true');
-      section.append(row);
-    } else if (spec.id === 'youtube' && store.state.error) {
-      const state = el(document, 'div', 'mh-quiet');
-      state.append(el(document, 'p', 'mh-quiet-line', 'いまは外部作品を読み込めません。'));
-      const retry = el(document, 'button', 'btn btn-secondary state-action', '再試行');
-      retry.type = 'button';
-      retry.onclick = () => void reload();
-      state.append(retry);
-      section.append(state);
-    } else section.append(el(document, 'p', 'mh-quiet-line', SHELF_EMPTY[spec.id]));
+    const scroller = el(document, 'div', 'mh-pager');
+    scroller.setAttribute('role', 'list');
+    for (const entry of spec.entries) scroller.append(songRow(entry));
+    section.append(shelfHead(spec, scroller), scroller);
     return section;
   }
 
+  function loadingShelf() {
+    const section = el(document, 'section', 'mh-shelf');
+    section.setAttribute('aria-busy', 'true');
+    const row = el(document, 'div', 'mh-row');
+    for (let index = 0; index < 6; index++) row.append(el(document, 'span', 'ds-skeleton mh-skeleton-card'));
+    section.append(row);
+    return section;
+  }
+
+  function failedShelf() {
+    const section = el(document, 'section', 'mh-shelf');
+    section.dataset.shelf = 'youtube';
+    const state = el(document, 'div', 'mh-quiet');
+    state.append(el(document, 'p', 'mh-quiet-line', '読み込めません'));
+    const retry = el(document, 'button', 'btn btn-secondary state-action', '再試行');
+    retry.type = 'button';
+    retry.onclick = () => void reload();
+    state.append(retry);
+    section.append(state);
+    return section;
+  }
+
+  // 空の棚は描かない。曲の棚は縦4段の列を横に送る。アルバム・アーティスト型（YouTube Music）は札のまま。
   function paint() {
     if (disposed) return;
-    greeting.textContent = greetingFor(now());
-    root.replaceChildren(head, ...store.shelves(history).map(shelf));
+    const filled = store.shelves(history).filter(spec => spec.entries.length);
+    let body;
+    if (filled.length) body = filled.map(spec => shelf(spec));
+    else if (store.state.loading || !store.state.loaded) body = [loadingShelf()];
+    else if (store.state.error) body = [failedShelf()];
+    else body = [el(document, 'p', 'mh-quiet-line', '曲がまだありません')];
+    root.replaceChildren(head, ...body);
   }
 
   // 読み込み済みなら何もしない（各棚は1回だけ）。入る・戻るたびに呼ばれても読み直さない。

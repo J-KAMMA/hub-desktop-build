@@ -1,6 +1,6 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "main-window",
-  "windows": ["main", "games", "harness", "browser"],
+  "windows": ["main", "harness", "browser"],
   "permissions": ["core:default"]
 }

@@ -33,7 +33,7 @@ export function bindPopover(document, { trigger, panel, onOpen, canOpen = () => 
 
 const providerOf = model => model.includes('/') ? model.slice(0, model.indexOf('/')) : 'その他';
 
-export function createPiModelPicker(document, { input, list, refreshButton, status, invoke, ui = null, groupOf = () => null, privacyOf = () => null, isCurrent = () => true, getContext = () => ({ engine: 'pi', key: 'pi' }) }) {
+export function createPiModelPicker(document, { input, list, refreshButton, status, invoke, ui = null, groupOf = () => null, privacyOf = () => null, market = null, isCurrent = () => true, getContext = () => ({ engine: 'pi', key: 'pi' }) }) {
   let pending = null, destroyed = false, generation = 0, shown = null;
   const popover = ui ? bindPopover(document, { trigger: ui.chip, panel: ui.popover, onOpen: () => { ui.search.value = ''; renderOptions(); ui.search.focus(); } }) : null;
   const syncChip = () => { if (ui) ui.chipLabel.textContent = input.value.trim() || shown?.defaultModel || '既定のモデル'; };
@@ -41,6 +41,29 @@ export function createPiModelPicker(document, { input, list, refreshButton, stat
     input.value = model; input.dispatchEvent(new document.defaultView.Event('input', { bubbles: true }));
     syncChip(); renderOptions(); popover.close(); ui.chip.focus();
   };
+  // AI market (docs/hub-ai-market/DESIGN.md): listed endpoints next to the BYOK and local models, with filters.
+  // Picking one first shows the disclosure; nothing is selected unless the user agrees.
+  function marketNodes(query) {
+    const rows = market.rows(query), active = market.filters();
+    const wrap = document.createElement("div"); wrap.className = "piw-model-group"; wrap.setAttribute("role", "group"); wrap.setAttribute("aria-label", "市場");
+    const heading = document.createElement("p"); heading.className = "piw-model-group-name"; heading.textContent = "市場（他社の窓口）";
+    const bar = document.createElement("div"); bar.className = "piw-model-filters";
+    for (const [key, label] of Object.entries(market.filterLabels)) {
+      const button = document.createElement("button"); button.type = "button"; button.className = "piw-model-filter"; button.textContent = label;
+      button.setAttribute("aria-pressed", String(active.includes(key))); button.dataset.filter = key;
+      button.onclick = () => { market.toggle(key); renderOptions(); }; bar.append(button);
+    }
+    wrap.append(heading, bar);
+    for (const entry of rows) {
+      const node = document.createElement("button"); node.type = "button"; node.className = "piw-model-option"; node.setAttribute("role", "option");
+      node.setAttribute("aria-selected", String(input.value.trim() === entry.ref)); node.dataset.model = entry.ref; node.title = entry.ref;
+      const name = document.createElement("span"); name.textContent = entry.label; const small = document.createElement("small"); small.textContent = entry.group + " · " + entry.detail;
+      node.append(name, small);
+      node.onclick = async () => { if (await market.confirmUse(entry.listing) === true) pick(entry.ref); };
+      wrap.append(node);
+    }
+    return [wrap];
+  }
   function renderOptions() {
     if (!ui) return;
     const query = ui.search.value.trim().toLowerCase(), groups = new Map(), nodes = [];
@@ -61,7 +84,8 @@ export function createPiModelPicker(document, { input, list, refreshButton, stat
       const group = document.createElement('div'); group.className = 'piw-model-group'; group.setAttribute('role', 'group'); group.setAttribute('aria-label', name);
       const heading = document.createElement('p'); heading.className = 'piw-model-group-name'; heading.textContent = name; group.append(heading, ...rows); nodes.push(group);
     }
-    if (query && !groups.size) { const none = document.createElement('p'); none.className = 'meta'; none.textContent = '該当するモデルはありません'; nodes.push(none); }
+    if (market) nodes.push(...marketNodes(query));
+    if (query && !groups.size && !market?.rows(query).length) { const none = document.createElement('p'); none.className = 'meta'; none.textContent = '該当するモデルはありません'; nodes.push(none); }
     ui.options.replaceChildren(...nodes);
   }
   if (ui) { ui.search.addEventListener('input', renderOptions); input.addEventListener('input', syncChip); syncChip(); }

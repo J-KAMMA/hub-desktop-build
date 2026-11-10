@@ -1,9 +1,13 @@
-// 埋め込みで再生できない YouTube の動画ID（IFrame API の onError 101/150/152/153/100）をこの端末に覚え、
+// 埋め込みで再生できない YouTube の動画ID（IFrame API の onError 100/101/150）をこの端末に覚え、
 // 音楽・動画の一覧から外す。Hub 自前の曲・動画（YouTube ではない）には一切触れない。
 import { youtubeVideoId } from './youtube-embed.mjs';
 
-export const UNPLAYABLE_KEY = 'hub.desktop.ytUnplayable';
-export const UNPLAYABLE_CODES = new Set([100, 101, 150, 152, 153]);
+// v2（2026-11-05）：v1 は 152/153 まで覚えて、再生できる曲まで一覧から消していた。旧い一覧は引き継がない。
+export const UNPLAYABLE_KEY = 'hub.desktop.ytUnplayable.v2';
+export const UNPLAYABLE_CODES = new Set([100, 101, 150]);
+// 152/153 は埋め込み側の設定や送り元の問題で、動画そのものの性質ではない。その回は止めるが、覚えない。
+export const TRANSIENT_CODES = new Set([152, 153]);
+export const isTransientCode = (code) => TRANSIENT_CODES.has(Number(code));
 export const MAX_UNPLAYABLE = 2000;
 export const UNPLAYABLE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const ID = /^[A-Za-z0-9_-]{11}$/;

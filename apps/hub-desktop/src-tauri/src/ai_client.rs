@@ -259,16 +259,16 @@ pub async fn video_content(base: &str, token: &str) -> Result<Vec<u8>, String> {
 
 // ---------------------------------------------------------------- 支払い
 
-struct Accepted {
-    raw: Value,
-    network: String,
-    chain_id: u64,
-    asset: String,
-    amount: String,
-    pay_to: String,
-    timeout: i64,
-    domain_name: String,
-    domain_version: String,
+pub(crate) struct Accepted {
+    pub(crate) raw: Value,
+    pub(crate) network: String,
+    pub(crate) chain_id: u64,
+    pub(crate) asset: String,
+    pub(crate) amount: String,
+    pub(crate) pay_to: String,
+    pub(crate) timeout: i64,
+    pub(crate) domain_name: String,
+    pub(crate) domain_version: String,
 }
 
 fn address(value: &Value) -> Option<String> {
@@ -282,7 +282,7 @@ fn address(value: &Value) -> Option<String> {
 /// 402 の accepts 1件を検める。exact の EIP-3009 に必要な項目だけを受け、
 /// それ以外の scheme・壊れた形はここで捨てる。extra.name/version は
 /// EIP-712 ドメインに必須なので無いものは支払えない。
-fn accepted_requirements(value: &Value) -> Result<Accepted, String> {
+pub(crate) fn accepted_requirements(value: &Value) -> Result<Accepted, String> {
     let invalid = || "payment_requirements_invalid".to_owned();
     let obj = value.as_object().ok_or_else(invalid)?;
     if obj.get("scheme").and_then(|s| s.as_str()) != Some("exact") {
@@ -331,7 +331,7 @@ fn accepted_requirements(value: &Value) -> Result<Accepted, String> {
     })
 }
 
-fn hex_nonce() -> String {
+pub(crate) fn hex_nonce() -> String {
     let bytes: [u8; 32] = rand::random();
     let mut out = String::with_capacity(66);
     out.push_str("0x");
@@ -342,7 +342,7 @@ fn hex_nonce() -> String {
 }
 
 /// TransferWithAuthorization の typedData。authorizationTypes と同じ宣言順。
-fn payment_typed_data(req: &Accepted, from: &str, nonce: &str, valid_before: i64) -> Value {
+pub(crate) fn payment_typed_data(req: &Accepted, from: &str, nonce: &str, valid_before: i64) -> Value {
     json!({
         "types": {
             "EIP712Domain": [

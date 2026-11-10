@@ -17,6 +17,7 @@ export function initRailTooltips(document, { delay = 500 } = {}) {
   };
   const show = button => {
     if (!button) return;
+    if (button.getAttribute('aria-expanded') === 'true') { hide(); return; }
     hide(); active = button; tip.textContent = button.getAttribute('aria-label');
     button.removeAttribute('title');
     button.setAttribute('aria-describedby', [button.getAttribute('aria-describedby'), tip.id].filter(Boolean).join(' '));
@@ -35,5 +36,9 @@ export function initRailTooltips(document, { delay = 500 } = {}) {
   const escape = event => { if (event.key === 'Escape') hide(); };
   const listeners = [[rail, 'pointerover', enter], [rail, 'pointerout', leave], [rail, 'focusin', enter], [rail, 'focusout', hide], [rail, 'click', hide], [rail, 'pointerdown', press], [rail, 'mousedown', press], [document, 'keydown', escape], [document, 'scroll', hide, true], [window, 'resize', hide]];
   for (const [target, event, handler, capture] of listeners) target.addEventListener(event, handler, capture);
-  return () => { hide(); tip.remove(); for (const [target, event, handler, capture] of listeners) target.removeEventListener(event, handler, capture); };
+  // 吊り窓が後から開いたとき（読み込みの後など）も、出ているツールチップを引っ込める。
+  const Observer = window.MutationObserver;
+  const watcher = Observer ? new Observer(() => { if (active?.getAttribute('aria-expanded') === 'true') hide(); }) : null;
+  watcher?.observe(rail, { attributes: true, attributeFilter: ['aria-expanded'], subtree: true });
+  return () => { hide(); watcher?.disconnect(); tip.remove(); for (const [target, event, handler, capture] of listeners) target.removeEventListener(event, handler, capture); };
 }

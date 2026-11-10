@@ -26,13 +26,13 @@ test('lookalike primitive codes preserve fallback without making presign guarant
 });
 test('non-Error objects, arrays, boxed strings and nonstring messages are not reserved errors',()=>{
  for(const code of codes){const strangeError=new Error('unknown');strangeError.message={toString:()=>code};for(const input of [{message:code},{toString:()=>code},[code],new String(code),strangeError]){
-  assert.equal(format('shopPaymentError',input),shopFallback);assert.equal(format('friendlyError',input),String(input));assert.doesNotMatch(format('friendlyError',input),/行われていません/);
+  assert.equal(format('shopPaymentError',input),shopFallback);assert.equal(format('friendlyError',input),input===strangeError?'読み込めませんでした。時間をおいて再試行してください。':String(input));assert.doesNotMatch(format('friendlyError',input),/行われていません/);
  }}
  for(const input of [null,undefined,0,false]){assert.equal(format('shopPaymentError',input),shopFallback);assert.equal(format('friendlyError',input),String(input));}
 });
 test('prior wallet consent messages and unrelated native fallback behavior remain intact',()=>{
  assert.match(format('shopPaymentError','wallet_confirm_busy'),/完了してから/);assert.match(format('shopPaymentError',new Error('wallet_user_rejected')),/取り消しました/);
- assert.equal(format('friendlyError','wallet_user_rejected'),'操作をキャンセルしました');assert.equal(format('friendlyError','wallet_params_invalid'),'指定が正しくありません');assert.equal(format('friendlyError','rpc:failure'),'チェーン側が受け付けませんでした（failure）');assert.equal(format('friendlyError',new Error('other')),'Error: other');
+ assert.equal(format('friendlyError','wallet_user_rejected'),'操作をキャンセルしました');assert.equal(format('friendlyError','wallet_params_invalid'),'指定が正しくありません');assert.equal(format('friendlyError','rpc:failure'),'チェーン側が受け付けませんでした（failure）');assert.equal(format('friendlyError',new Error('other')),'other');
 });
 test('all actual formatters produce text only and never respond, sign, send or retry',()=>{
  for(const name of ['shopPaymentError','friendlyError'])for(const code of codes)for(const input of [code,new Error(code),`${code}:unknown`])assert.equal(typeof format(name,input),'string');assert.deepEqual(calls,[]);

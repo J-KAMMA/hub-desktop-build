@@ -51,7 +51,7 @@ test('quoting a post edits the reply draft, never the summary draft; closed thre
   const source=readFileSync(new URL('app.js',import.meta.url),'utf8');
   const code=source.slice(source.indexOf('function renderThreadDetail('),source.indexOf('function renderArticleDetail('));
   const entry={ids:['t1'],knowledge:{open:true}};
-  const ctx=vm.createContext({document,window:dom.window,createThreadReplyTarget,createThreadStateControls,createThreadPostControls,articleEditorScope:()=>null,detailRenderRevision:0,researchAccountGeneration:0,currentView:'detail',detailTrail:[entry],Event:dom.window.Event,LANGUAGE_LABELS:{},REGION_LABELS:{},relTime:()=>'',threadKnowledgeControls,
+  const ctx=vm.createContext({document,createThreadContentCard:()=>({root:document.createElement("div")}),openCommunityContent(){},window:dom.window,createThreadReplyTarget,createThreadStateControls,createThreadPostControls,articleEditorScope:()=>null,detailRenderRevision:0,researchAccountGeneration:0,currentView:'detail',detailTrail:[entry],Event:dom.window.Event,LANGUAGE_LABELS:{},REGION_LABELS:{},relTime:()=>'',threadKnowledgeControls,
     invoke:async()=>initial,researchEditorOptions:()=>({invoke:async()=>initial}),createThreadReader:(_,options)=>{const reader=document.createElement('div');reader.append(options.renderPost({id:'post1',no:1,body:'Original post'}));return reader;},
     threadPostCard:(post,context)=>{const button=document.createElement('button');button.textContent='quote';button.onclick=()=>context.quote(post);const card=document.createElement('article');card.append(button);return card;}});
   vm.runInContext(code,ctx);ctx.renderThreadDetail(target,{thread:{id:'t1',title:'Thread',status:'open',postCount:1},posts:[]},entry);await tick();await tick();

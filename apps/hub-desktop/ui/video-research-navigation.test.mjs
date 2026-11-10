@@ -19,7 +19,7 @@ const tick=()=>new Promise(setImmediate),deferred=()=>{let resolve;const promise
 function fixture(t){
  const dom=new JSDOM('<main></main><p id="status"></p>'),document=dom.window.document,calls=[],controllers=[];
  const f={dom,document,calls,controllers,pending:null,viewer:'viewer-a'};
- const ctx=vm.createContext({document,createVideoPosts,mountVideoPosts:o=>createVideoPosts(document,o),postCard:()=>document.createElement('article'),videoCommentsController:null,researchDetailController:null,communityDetailController:null,
+ const ctx=vm.createContext({document,attachTranslateAction(){},localTranslator:{},createCommunityTalk:()=>({root:document.createElement("div")}),openCommunityThread(){},createVideoPosts,mountVideoPosts:o=>createVideoPosts(document,o),postCard:()=>document.createElement('article'),videoCommentsController:null,researchDetailController:null,communityDetailController:null,
   detailRenderRevision:0,researchAccountGeneration:0,homeAccountEpoch:{},currentView:'detail',detailTrail:[],detailForwardTrail:[],detailReturn:{view:'feed',title:'Feed'},desktopAccount:{state:'registered',deviceId:'device-a'},
   toolbarTrail:[{view:'feed',title:'Feed'},{view:'detail',title:'Video'}],toolbarTrailIndex:1,
   releaseResearchDetail(){},releaseCommunityDetail(){},paintDetailHead(){},detailState:()=>document.querySelector('#status'),detailContent:()=>document.querySelector('main'),skeletonResult:()=>document.createElement('div'),

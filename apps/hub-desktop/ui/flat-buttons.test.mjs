@@ -40,19 +40,22 @@ test("the end of desktop-views.css flattens every button kind once, with high sp
   const block = css.slice(css.indexOf("/* ===== Flat buttons"), css.indexOf("/* ===== リストの画面"));
   assert.ok(block.length > 200);
   assert.match(block, /:is\(button, \[role="button"\], \.btn, \.btn-primary, \.btn-secondary, \.btn-ghost, \.btn-icon, \.approve, \.deny, \.head-action, \.ghost\):not\(#_\):not\(#_\):not\(#_\) \{\s*box-shadow: none;/);
-  assert.match(block, /\.btn-primary, \.approve\):not\(#_\)[^{]*\{\s*border: 1px solid var\(--ds-btn-primary-line\);\s*background: transparent;/);
+  assert.match(block, /\.btn-primary, \.approve\):not\(#_\)[^{]*\{\s*border: 1px solid var\(--ds-btn-primary-line\);\s*background: var\(--ds-btn-primary-bg\);/);
   assert.match(block, /:hover:not\(:disabled\) \{ background: var\(--interactive\)/);
   assert.match(block, /\.btn-ghost, button\.ghost, \.btn-icon\):not\(#_\)[^{]*\{ border: 0; background: transparent; \}/);
   assert.doesNotMatch(block.replace(/\/\*[\s\S]*?\*\//g, ""), /gradient|elevation|--shadow|translateY/);
 });
 
-test("作成 is the standard primary outline button: gold line in 黒金, text-colour line in 白黒, no fill", () => {
+// 2026-11-04（shadcn/ui の土台、所有者承認）: 主ボタンは shadcn の default、中立の平らな塗り。金はどのテンプレートでも塗らない。角は 8（rounded-md）。
+test("作成 is the standard primary button: a flat neutral fill (--text ground, --bg text) in every template, never gold", () => {
   const html = readFileSync(new URL("index.html", dir), "utf8");
   assert.match(html, /<button id="lists-create-toggle" class="approve" type="button">＋作成<\/button>/);
   const tokens = readFileSync(new URL("tokens.css", dir), "utf8");
-  const mono = tokens.slice(tokens.indexOf("--ds-btn-primary-fg: var(--text);"));
-  assert.match(mono, /--ds-btn-primary-fg: var\(--text\);\s*--ds-btn-primary-bg: transparent;\s*--ds-btn-primary-line: var\(--text\);/);
-  assert.match(tokens, /html:is\(\[data-template="noir"\], \[data-template="ivory"\]\) \{\s*--ds-btn-primary-fg: var\(--emphasis\);\s*--ds-btn-primary-bg: transparent;\s*--ds-btn-primary-line: var\(--emphasis\);/);
-  const views = readFileSync(new URL("desktop-views.css", dir), "utf8");
-  assert.match(views, /\.view > :is\(\.view-head, \.page-header\) :is\(\.view-head-actions, \.page-actions\) > :is\(button, \.btn\) \{[^}]*border-radius: var\(--ds-radius-pill\)/);
+  assert.match(tokens, /--ds-btn-primary-fg: var\(--bg\);\s*--ds-btn-primary-bg: var\(--text\);\s*--ds-btn-primary-line: var\(--text\);/);
+  assert.doesNotMatch(tokens.replace(/\/\*[\s\S]*?\*\//g, ""), /--ds-btn-primary-(bg|line|fg): var\(--emphasis\)/);
+  const base = readFileSync(new URL("shadcn-base.css", dir), "utf8");
+  assert.match(base, /:is\(\.btn-primary, \.approve, \.mk-btn-primary\)[^{]*\{\s*border-color: var\(--sc-primary\);\s*background: var\(--sc-primary\);\s*color: var\(--sc-primary-foreground\);/);
+  assert.match(base, /\.mk-btn\):not\(\[role="tab"\]\)[^{]*\{[^}]*border-radius: var\(--sc-radius-md\);/);
+  const index = html.indexOf("shadcn-base.css");
+  assert.ok(index > html.lastIndexOf('rel="stylesheet" href="./account-views.css"'), "shadcn-base.css is the last stylesheet");
 });

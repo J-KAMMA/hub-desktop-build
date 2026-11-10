@@ -882,6 +882,8 @@ if (!thinMode && engine !== "dsh") {
 // Use the SDK lifecycle, but never auto-load workspace or global executable
 // extensions, packages, prompt templates or skills outside Hub's tool gate.
 const contextReserve = Math.min(16384, Math.floor(model.contextWindow / 4));
+// Compact when the prompt passes 70% of the window (owner decision 2026-11-06), not near the limit.
+const compactionReserve = Math.max(contextReserve, model.contextWindow - Math.floor(model.contextWindow * 0.7));
 // Tests may shorten (never lengthen) the first wait.
 function retryBaseDelayMs() {
   const value = Number(process.env.PI_SIDECAR_RETRY_BASE_MS);
@@ -896,7 +898,7 @@ const settingsManager = SettingsManager.inMemory({
   // load, so every image became "[Image omitted]". Hub's image store already validates the
   // type, size and digest of each attachment before it reaches the sidecar.
   images: { autoResize: false },
-  compaction: { enabled: true, reserveTokens: contextReserve, keepRecentTokens: contextReserve },
+  compaction: { enabled: true, reserveTokens: compactionReserve, keepRecentTokens: contextReserve },
 });
 const thinTools = createThinTools({ cwd, callHub, caps, extra: realTools.filter((tool) => THIN_HUB_TOOLS.has(tool.name)) });
 const resourceLoader = new DefaultResourceLoader({

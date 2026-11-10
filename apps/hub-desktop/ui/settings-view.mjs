@@ -48,10 +48,17 @@ export function confirmInline(document, host, { message, yes, no = 'やめる', 
 /** 昔の節の名前から今の節へ。他のコードが古い名前で開いても動くように残す。 */
 export const SECTION_ALIASES = Object.freeze({ identity: 'advanced', about: 'advanced', other: 'advanced' });
 
+/** いま本文に見えている節の名前。検索の結果を出している間は 'search'。 */
+export function visibleSection(document) {
+  return [...document.querySelectorAll('#view-settings [data-settings-panel]')].find((panel) => !panel.hidden)?.dataset.settingsPanel ?? null;
+}
+
 export function createSettingsNav({ document, onSelect = () => {} }) {
   const items = [...document.querySelectorAll('#view-settings .inner-nav-item')];
   const panels = () => [...document.querySelectorAll('#view-settings [data-settings-panel]')];
   let current = null;
+  // 左の列（app.js）が強調を引き直せるよう、節が変わるたびに知らせる。開き方（列・検索・リンク・初期表示）を問わない。
+  function announce() { document.dispatchEvent(new document.defaultView.CustomEvent('hub-settings-section', { detail: { section: visibleSection(document) } })); }
   function show(panelId) {
     for (const panel of panels()) panel.hidden = panel.dataset.settingsPanel !== panelId;
   }
@@ -67,6 +74,7 @@ export function createSettingsNav({ document, onSelect = () => {} }) {
     }
     show(panelId);
     onSelect(panelId);
+    announce();
     if (panelId !== section) document.querySelector(`#view-settings [data-settings-anchor="${section}"]`)?.scrollIntoView?.({ block: 'start' });
     return true;
   }
@@ -74,6 +82,7 @@ export function createSettingsNav({ document, onSelect = () => {} }) {
   function enterSearch() {
     for (const item of items) { item.classList.remove('on'); item.removeAttribute('aria-current'); }
     show('search');
+    announce();
   }
   function leaveSearch() { if (current) select(current); }
   for (const item of items) item.addEventListener('click', () => select(item.dataset.settingsSec));
@@ -210,7 +219,7 @@ export function createCachePanel({ document, invoke }) {
   const usage = make('p', '', 'meta'); usage.setAttribute('role', 'status');
   const confirmHost = make('div');
   const clear = make('button', 'キャッシュを消す', 'deny btn btn-ghost'); clear.type = 'button';
-  element.append(settingHeader(document, { label: '保存した曲のデータ', desc: '他の端末から受け取った曲や、再生のために置いた一時データです。消しても作品は失われず、必要になればまた取得します。', keywords: 'キャッシュ 容量 削除 消す' }),
+  element.append(settingHeader(document, { label: '保存した曲のデータ', desc: '消しても作品は失われません。', keywords: 'キャッシュ 容量 削除 消す' }),
     usage, make('div', undefined, 'actions'), confirmHost);
   element.querySelector('.actions').append(clear);
   async function refresh() {
@@ -237,9 +246,9 @@ export function createBrowserPanel({ document, invoke, storage = null, onWebSear
   const element = make('div', undefined, 'card');
   const toggle = make('input'); toggle.type = 'checkbox'; toggle.disabled = true;
   toggle.setAttribute('role', 'switch');
-  const label = settingRow(document, { label: '広告と追跡を止める', desc: 'すべてのタブに効きます。ページは自動では読み込み直さないので、YouTubeの広告対策は読み込み直すと反映されます。', control: toggle, keywords: '広告 トラッカー ブロック 追跡 プライバシー' });
+  const label = settingRow(document, { label: '広告と追跡を止める', desc: '反映は読み込み直したあと。', control: toggle, keywords: '広告 トラッカー ブロック 追跡 プライバシー' });
   const state = make('p', '', 'meta'); state.setAttribute('role', 'status');
-  element.append(settingHeader(document, { label: 'アプリ内ブラウザ', desc: 'このアプリの中で外のサイトを開くときの設定です。' }), label, state);
+  element.append(settingHeader(document, { label: 'アプリ内ブラウザ' }), label, state);
   const webSearch = createWebSearchSetting({ document, storage, onChange: (id) => onWebSearchChange?.(id) });
   element.append(webSearch.element);
   const valid = (v) => v && typeof v.supported === 'boolean' && typeof v.enabled === 'boolean' && typeof v.ready === 'boolean';
@@ -274,8 +283,8 @@ export function createAboutPanel({ document, invoke, getVersion }) {
     rows.set(key, dd); list.append(dt, dd);
   }
   rows.get('license').textContent = 'AGPL-3.0（ハブ本体）';
-  element.append(settingHeader(document, { label: 'このアプリについて', desc: 'バージョンと、つながっているHubです。', keywords: 'バージョン ライセンス 更新 ビルド' }), list,
-    make('p', 'この版には自動更新の仕組みはありません。新しい版は配布元から入れ直してください。', 'meta'));
+  element.append(settingHeader(document, { label: 'このアプリについて', keywords: 'バージョン ライセンス 更新 ビルド' }), list,
+    make('p', '自動更新はありません。入れ直して更新します。', 'meta'));
   async function refresh() {
     const set = (key, text) => { rows.get(key).textContent = text; };
     try { set('version', String(await getVersion())); } catch { set('version', '不明'); }

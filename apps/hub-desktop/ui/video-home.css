@@ -9,8 +9,8 @@
 #hub-shell .vh-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-4) var(--space-3); align-items: start; }
 
 /* カード：16:9 サムネイル＋チャンネルの丸アイコン */
-#hub-shell .vh-card { display: block; padding: var(--space-1); margin: -6px; border-radius: var(--radius-md); transition: transform .15s ease, background-color .15s ease; }
-#hub-shell .vh-card:hover { background: var(--interactive); transform: translateY(-2px); }
+#hub-shell .vh-card { display: block; padding: var(--space-1); margin: -6px; border-radius: var(--radius-md); transition: background-color .15s ease; }
+#hub-shell .vh-card:hover { background: var(--interactive); }
 #hub-shell .vh-card .video-thumbnail { aspect-ratio: 16 / 9; border-radius: var(--radius-sm); }
 #hub-shell .vh-card .video-thumbnail img { object-fit: cover; }
 #hub-shell .vh-card-body { display: flex; gap: var(--space-2); align-items: flex-start; padding-top: var(--space-2); }

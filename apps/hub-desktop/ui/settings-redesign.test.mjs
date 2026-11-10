@@ -56,7 +56,7 @@ test('every control that existed before the redesign is still in the settings sc
   // 外観
   for(const [name,values] of [['textSize',['normal','large','xlarge']],['density',['normal','roomy']]])
     for(const value of values)one(`input[name="appearance-${name}"][value="${value}"]`);
-  for(const id of ['light','dark','noir','ivory','midnight','device'])one(`button[data-template-choice="${id}"]`);one('.appearance-crisp input');one('.appearance-motion input');one('.appearance-transparency input');
+  for(const id of ['paper','charcoal','light','dark','noir','ivory','midnight','device'])one(`button[data-template-choice="${id}"]`);one('.appearance-crisp input');one('.appearance-motion input');one('.appearance-transparency input');
   assert.ok([...d.querySelectorAll('#settings-appearance button')].some(b=>b.textContent==='標準に戻す'));
   // この端末
   for(const key of ['receive','seed','relayOnly'])one(`[data-media-p2p="${key}"]`);
@@ -77,7 +77,7 @@ test('every control that existed before the redesign is still in the settings sc
 
 test('sections switch and each shows only its own panel',()=>{
   const t=mounted();const ids=[...t.document.querySelectorAll('#view-settings .inner-nav-item')].map(i=>i.dataset.settingsSec);
-  assert.equal(ids.length,10);
+  assert.equal(ids.length,9);
   for(const id of ids){assert.equal(t.nav.select(id),true);assert.equal(visiblePanel(t.document),id);}
   assert.equal(t.nav.select('identity'),true);assert.equal(visiblePanel(t.document),'advanced');
 });
@@ -182,4 +182,25 @@ test('the settings stylesheet uses tokens only and shows rows as label-left, con
   assert.doesNotMatch(css,/#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(|\bwhite\b|\bblack\b/);
   assert.match(css,/\.setting-row\s*\{[^}]*justify-content:\s*space-between/);
   assert.match(css,/\.setting-control\s*\{[^}]*flex:\s*none/);
+});
+
+// 左の列の強調は、本文に見えている節と必ず一致する。開き方（列・検索・リンク・初期表示）を問わない。
+test('the sidebar current row is derived from the visible section, however it was opened',async()=>{
+  const {visibleSection}=await import('./settings-view.mjs');
+  const t=mounted();const d=t.document;
+  const heard=[];d.addEventListener('hub-settings-section',e=>heard.push(e.detail.section));
+  const onRows=()=>[...d.querySelectorAll('#view-settings .inner-nav-item.on')].map(i=>i.dataset.settingsSec).join();
+  assert.equal(visibleSection(d),'account');assert.equal(onRows(),'account');          // 初期表示
+  d.querySelector('#view-settings .inner-nav-item[data-settings-sec="appearance"]').click(); // 本文の列から
+  assert.equal(visibleSection(d),'appearance');assert.equal(onRows(),'appearance');assert.equal(heard.at(-1),'appearance');
+  t.nav.select('privacy');                                                                  // リンク・コードから
+  assert.equal(visibleSection(d),'privacy');assert.equal(onRows(),'privacy');assert.equal(heard.at(-1),'privacy');
+  t.nav.select('about');                                                                    // 古い名前（別名）
+  assert.equal(visibleSection(d),'advanced');assert.equal(onRows(),'advanced');
+  type(t,'表示');await settle();                                                           // 検索中は強調なし、本文は結果
+  assert.equal(visibleSection(d),'search');assert.equal(onRows(),'');assert.equal(heard.at(-1),'search');
+  t.nav.leaveSearch();assert.equal(visibleSection(d),'advanced');assert.equal(onRows(),'advanced');
+  // 左の列は app.js で visibleSection から引き、節が変わるたびに引き直す。
+  assert.match(app,/visibleSection\(document\)/);
+  assert.match(app,/addEventListener\("hub-settings-section",\(\)=>|addEventListener\("hub-settings-section", \(\) =>/);
 });

@@ -29,7 +29,7 @@ test('next/last enqueue, existing movement, current removal, and unknown current
 const source=readFileSync(new URL('./app.js',import.meta.url),'utf8');
 function between(start,end){const a=source.indexOf(start),b=source.indexOf(end,a);assert.ok(a>=0&&b>a);return source.slice(a,b);}
 const functions=between('function musicAudioUrl(', 'function syncMusicPlayerBounds(')
-  +between('function updateMusicControls()', 'document.querySelector("#music-search-web")');
+  +between('function updateMusicControls()', 'for (const tab of ["home", "tracks", "catalog"]) {');
 function fixture(options={}){
   const nodes=new Map(),calls=[],plays=[];
   const node=selector=>{if(!nodes.has(selector))nodes.set(selector,{textContent:'',hidden:true,style:{},setAttribute(){},removeAttribute(){}});return nodes.get(selector);};
@@ -39,7 +39,7 @@ function fixture(options={}){
     hubTrackAudio:{resolve:async({directUrl})=>directUrl,release(){}},
     researchAccountGeneration:0,hubOrigin:options.origin===undefined?'https://hub.jkamma.com':options.origin,musicQueueView:null,
     document:{querySelector:node,addEventListener(){}},URL,Blob,syncMusicPlayerBounds(){},renderMusicTracks(){},renderRailNowPlaying(){},friendlyError:error=>error.message,
-    createProfileAttribution:()=>({}),commerceProofFetcher:()=>null,musicProofFetcher:()=>null,
+    createProfileAttribution:()=>({}),createMusicP2pDeclaration:()=>({ready:()=>null,label:()=>null,run(){}}),commerceProofFetcher:()=>null,musicProofFetcher:()=>null,
     invoke:async(name,args)=>{calls.push({name,args});return options.invoke?.(name,args);}};
   vm.runInNewContext(functions,context);
   return {context,audio,calls,plays,status:()=>node('#music-playback-state').textContent,node,

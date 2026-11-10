@@ -4,6 +4,7 @@ import { faviconImage } from './browser-favicon.mjs';
 import { createBrowserBookmarkBar } from './browser-bookmark-bar.mjs';
 import {createBrowserProtection} from './browser-protection-ui.mjs';
 import {createBrowserAutoplay} from './browser-autoplay-ui.mjs';
+import {createBrowserProtectionSite} from './browser-protection-site-ui.mjs';
 import { initBrowserPanels } from './browser-panels.mjs';
 import { renderBrowserLibrary } from './browser-library.mjs';
 import { renderBrowserPrivacy } from './browser-privacy.mjs';
@@ -11,7 +12,7 @@ import { initBrowserReader } from './browser-reader.mjs';
 import { getWebSearchEngine, setWebSearchEngine, DEFAULT_WEB_SEARCH_ENGINE } from './web-search.mjs';
 import { SEARCH_ENGINES, navigationTarget, addressSuggestions, browserShortcut, pageUrl, filterBrowserTabs, completeDotCom, selectionSearchUrl } from './browser-navigation.mjs';
 
-export function initBrowserWorkspace({ document, window, invoke, icon, enterBrowser, isActive, getView, onAiDraft, onHubSearch, getHubHistory, onHubHistory, onLocalGames = () => {}, metrics = { begin: () => () => {} } }) {
+export function initBrowserWorkspace({ document, window, invoke, icon, enterBrowser, isActive, getView, onAiDraft, onHubSearch, getHubHistory, onHubHistory, metrics = { begin: () => () => {} } }) {
   const $ = selector => document.querySelector(selector);
   const input = $('#browser-url'), menu = $('#browser-menu'), error = $('#browser-error');
   attachAddressSelectAll(input);
@@ -182,8 +183,9 @@ export function initBrowserWorkspace({ document, window, invoke, icon, enterBrow
   $('#browser-navigation').append(protection.button);$('#browser-menu').after(protection.element);
   $('#browser-scheme').onclick = () => { if (!menu.hidden && menuKind === 'site') { menu.hidden = true; return; } showMenu('site'); };
   const autoplay=createBrowserAutoplay({document,invoke,getUrl:()=>active()?.private?null:active()?.url??null,onError:({code})=>report(code)});
-  protection.element.append(autoplay.element);
-  protection.button.addEventListener('click',()=>void autoplay.load());
+  const protectionSite=createBrowserProtectionSite({document,invoke,getUrl:()=>active()?.private?null:active()?.url??null,getTabId:()=>active()?.id??null,onError:({code})=>report(code)});
+  protection.element.append(protectionSite.element,autoplay.element);
+  protection.button.addEventListener('click',()=>{void autoplay.load();void protectionSite.load();});
   bookmarkBarHost?.addEventListener('click',()=>protection.close());
   async function choose(entry, destination = 'current', addressTab = null) {
     if (entry?.kind === 'hub') { hideSuggestions(); input.blur(); await onHubSearch?.(entry.query); return; }
@@ -263,8 +265,6 @@ export function initBrowserWorkspace({ document, window, invoke, icon, enterBrow
     const tab = active();
     if (document.activeElement !== input && !(nativeChrome && nativeDraftTab === tab?.id)) { input.value = tab?.url ?? ''; addressDraftTab = tab?.id ?? null; }
     syncNavigation();
-    const localGames = $('#browser-local-games');
-    if (localGames) localGames.hidden = !isHubGamesUrl(tab?.url);
     for (const id of ['browser-fav', 'browser-ai', 'browser-find']) $(`#${id}`).disabled = !tab?.url;
     $('#browser-reload').disabled = !tab?.url;
     $('#browser-reload').innerHTML = icon(tab?.loading ? 'x' : 'refresh');
@@ -987,7 +987,6 @@ export function initBrowserWorkspace({ document, window, invoke, icon, enterBrow
     finally { aiPending = false; displayActive(); }
   }
   $('#browser-ai').onclick = () => sendToAi();
-  const localGamesButton = $('#browser-local-games'); if (localGamesButton) localGamesButton.onclick = () => onLocalGames();
   window.__TAURI__.event.listen('browser-native-address-edit', event => {
     const p = event.payload;
     if (!p || typeof p !== 'object' || Array.isArray(p) || Reflect.ownKeys(p).length !== 2 || !Object.hasOwn(p, 'tabId') || !Object.hasOwn(p, 'value') || !Number.isSafeInteger(p.tabId) || p.tabId <= 0 || p.tabId !== active()?.id || typeof p.value !== 'string' || p.value.length > 8192 || /[\u0000-\u001f\u007f]/u.test(p.value) || !nativeChrome || !isActive() || getView() !== 'browser' || composing || tabComposing) return;
@@ -1046,13 +1045,4 @@ export function initBrowserWorkspace({ document, window, invoke, icon, enterBrow
   updateProvider(); void refresh();
   const captureNavigationIntent = () => { const focus=focusGeneration,menuTurn=menuGeneration;return()=>focus===focusGeneration&&menuTurn===menuGeneration&&isActive()&&getView()==='browser'&&!composing&&!tabComposing; };
   return { refresh, dispatch, cancelPendingFocus, captureNavigationIntent, syncNavigation, sendToAi, closeAuxiliary:()=>{protection.invalidate();bookmarkBar?.close();} };
-}
-
-// Hub のゲーム一覧（/v2/games）を開いているときだけ、このPCのゲーム起動口を出す。
-const HUB_GAMES_HOSTS = new Set(['hub.jkamma.com', 'localhost:3020', '127.0.0.1:3020']);
-export function isHubGamesUrl(value) {
-  try {
-    const url = new URL(value);
-    return HUB_GAMES_HOSTS.has(url.host) && !url.username && !url.password && /^\/v2\/games(\/|$)/.test(url.pathname);
-  } catch { return false; }
 }

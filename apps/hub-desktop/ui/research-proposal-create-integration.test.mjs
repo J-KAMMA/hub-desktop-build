@@ -7,7 +7,7 @@ import {JSDOM} from 'jsdom';
 import {renderResearchDocument} from './research.mjs';
 const source=readFileSync(new URL('./app.js',import.meta.url),'utf8');
 const fn=name=>{const start=source.indexOf(name),end=source.indexOf('\n}',start)+2;assert.ok(start>=0&&end>start);return source.slice(start,end);};
-const renderer=source.slice(source.indexOf('  research_revision: (target,'),source.indexOf('  post: renderPostDetail,'));
+const renderer=source.slice(source.indexOf('  research_revision: (target,'),source.indexOf('  post: renderPostDetailAny,'));
 assert.ok(renderer.includes('research_document:'));
 const account=source.split('\n').filter(line=>line.startsWith("function invalidateDetailContext(reload=true) {")||line.startsWith("window.addEventListener('hub-account-changed',()=>invalidateDetailContext());")).join('\n');
 assert.ok(account.includes('function invalidateDetailContext(reload=true) {'));

@@ -1,0 +1,33 @@
+/* 字をやめて記号にしたボタン（text-button-icons.mjs）。名前は aria-label と title。 */
+#hub-shell button.is-text-icon, button.is-text-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: var(--ds-chip-h);
+  height: var(--ds-chip-h);
+  min-height: var(--ds-chip-h);
+  padding: 0;
+  font-size: 0;
+  line-height: 0;
+}
+button.is-text-icon .txt-icon-svg {
+  width: var(--ds-icon-size);
+  height: var(--ds-icon-size);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+button.is-text-icon[aria-pressed="true"] { color: var(--text); background: var(--selected); }
+/* 一般的でない記号は名前を添える（2026-11-05）。 */
+#hub-shell button.is-text-icon-labeled, button.is-text-icon-labeled {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: auto;
+  padding: 0 10px 0 8px;
+  font-size: var(--ds-type-meta-size);
+  line-height: 1;
+  white-space: nowrap;
+}

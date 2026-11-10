@@ -26,7 +26,7 @@ test('the market keeps the Commerce catalog and the Web-only market surfaces', (
   assert.match(hubClient, /"market_tickets" => Some\("\/api\/market\/tickets"\)/);
   for (const path of ['/v2/market/digital', '/v2/market/digital?view=articles', '/v2/market/tickets', '/v2/work']) assert.ok(html.includes(`data-market-web="${path}"`), path);
   const rail = [...html.matchAll(/<button class="nav-item icon-nav-item[^"]*" data-view="([a-z]+)"/g)].map((match) => match[1]);
-  assert.ok(rail.indexOf('market') > rail.indexOf('research') && rail.indexOf('market') < rail.indexOf('browser'));
+  assert.ok(rail.indexOf('market') > rail.indexOf('articles') && rail.indexOf('market') < rail.indexOf('browser') && rail.indexOf('browser') < rail.indexOf('ai'));
 });
 
 test('ticket cards show the venue, the date and the lowest yen price, and open the Web market', async () => {

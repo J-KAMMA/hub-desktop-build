@@ -1,5 +1,6 @@
 // AIの接続（自分のAPIキー / インストール済みCLI）を、AI画面のモデル選択と会話に載せる。
 // キーも会話もここには保存しない。呼び出しはRustが事業者へ直接行い、返答は "byok-chat" イベントで届く。
+import { DISCLOSURE_TEXT, marketAllowsContent, marketErrorText, nativeListing, parseMarketRef } from './ai-market.mjs';
 import { runChain, createByokStarter } from './ai-fallback.mjs';
 import { loadRules, resolveChain } from './ai-routing.mjs';
 import { privacyLabel } from './ai-provider-privacy.mjs';
@@ -109,7 +110,7 @@ export function createConnectionModels({ invoke, storage = null }) {
 }
 
 /** One in-memory conversation shown in place of the timeline while an AI connection is chosen. */
-export function createConnectionChat({ document, invoke, listen, host, timeline, onChange = () => {}, routing = null }) {
+export function createConnectionChat({ document, invoke, listen, host, timeline, onChange = () => {}, routing = null, market = null }) {
   const make = (tag, text, className) => {
     const node = document.createElement(tag);
     if (text !== undefined) node.textContent = text;
@@ -182,7 +183,7 @@ export function createConnectionChat({ document, invoke, listen, host, timeline,
   });
 
   return {
-    handles: (ref) => parseRef(ref) !== null,
+    handles: (ref) => parseRef(ref) !== null || (market !== null && parseMarketRef(ref) !== null),
     isBusy: busy,
     isShown: () => !panel.hidden,
     hide() { if (!busy()) show(false); },
@@ -194,6 +195,30 @@ export function createConnectionChat({ document, invoke, listen, host, timeline,
     },
     /** Returns true when the message was accepted (the composer may clear its draft). */
     async send(text, ref, label = '') {
+      const marketTarget = market ? parseMarketRef(ref) : null, content0 = String(text ?? '').trim();
+      if (marketTarget && content0 && !busy()) {
+        // AI market (testnet): a direct call from this device. The native side judges the quote and asks the wallet.
+        const listing = market.listing(marketTarget.id);
+        const allowed = listing ? marketAllowsContent(listing, { private: false }) : { ok: false };
+        note.textContent = `${DISCLOSURE_TEXT}。支払いはテスト用ネットワークで、署名の前に上限額と支払い先を確認します。${MEMORY_NOTE}`;
+        show(true);
+        history.push({ role: 'user', content: content0 });
+        bubble('user', content0);
+        const reply = bubble('assistant', '');
+        current = { id: 'market', node: reply, label };
+        stop.hidden = true;
+        status.textContent = `${label || marketTarget.model} に問い合わせています…`;
+        onChange(true);
+        try {
+          if (!listing || !allowed.ok) throw new Error('market_listing_invalid');
+          const result = await invoke('ai_market_call', { listing: nativeListing(listing), model: marketTarget.model, messages: history.map((m) => ({ ...m })), private: false });
+          reply.textContent = String(result?.text ?? '');
+          finish('', true);
+        } catch (error) {
+          finish(marketErrorText(error), false);
+        }
+        return true;
+      }
       const target = parseRef(ref), content = String(text ?? '').trim();
       if (!target || !content || busy()) return false;
       searching = true;

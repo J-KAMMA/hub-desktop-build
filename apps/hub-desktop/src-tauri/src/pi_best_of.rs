@@ -405,7 +405,7 @@ pub(super) async fn launch_with_script(
     let state = Arc::new(Mutex::new(PiRunState {
         image_receipt_valid: true, image_attachments: Vec::new(), image_context_refs: Vec::new(),
         prompt_image_ids: Vec::new(), reattached_image_ids: Vec::new(), image_request_id: None,
-        fast_check: None,
+        fast_check: None, compaction: None,
         best_of: Some(BestOfState {
             estimate: estimate.clone(),
             phase: "copying".into(),

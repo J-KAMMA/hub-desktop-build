@@ -30,10 +30,10 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--text);
-  font-size: var(--ds-type-title-size);
-  line-height: var(--ds-type-title-leading);
+  font-size: var(--type-display);
+  line-height: var(--lh-display);
   font-weight: var(--ds-weight-heavy);
-  letter-spacing: 0;
+  letter-spacing: var(--ds-tracking-large);
 }
 #hub-shell .view > :is(.view-head, .page-header) > :is(.view-head-actions, .page-actions) {
   display: flex;
@@ -185,7 +185,7 @@
 }
 #hub-shell #composer .composer-audience:hover { background: var(--interactive); }
 #hub-shell #composer .composer-post { margin-left: auto; min-height: var(--ds-btn-h); padding: 0 var(--ds-btn-px); border-radius: var(--ds-radius-pill); font-size: var(--ds-type-body-size); font-weight: var(--ds-weight-strong); }
-#hub-shell #composer .composer-post:disabled { opacity: .5; }
+#hub-shell #composer .composer-post:disabled { opacity: 1; background: transparent; border-color: var(--line-strong); color: var(--muted); }
 
 /* ---- 3. One chip and filter bar ---- */
 #hub-shell .view :is(.chip-row, .segmented, .scopes, .filter-row) {
@@ -543,6 +543,8 @@ html:is([data-template="noir"], [data-template="ivory"]) #hub-shell :is(.btn-pri
   width: calc(100% - 26px);
   margin-left: 26px;
 }
+#hub-shell.apps-active #sidebar-context .sidebar-context-item:not(#_) { width: 100%; margin-left: 0; }
+#hub-shell.apps-active #sidebar-context .sidebar-context-item:not(#_)::before { content: none; }
 #hub-shell #sidebar-context .sidebar-context-item:not(#_)::before,
 #hub-shell #sidebar-context .sidebar-context-item:not(#_):is(.on, [aria-current="true"], [aria-current="page"])::before {
   content: "";
@@ -587,7 +589,6 @@ html:is([data-template="noir"], [data-template="ivory"]) #hub-shell :is(.btn-pri
 #hub-shell #sidebar-context .sidebar-tree-root:not(#_)::after { content: none; }
 #hub-shell #sidebar-context .sidebar-tree-children { display: flex; flex-direction: column; gap: 1px; box-sizing: border-box; width: 100%; padding-left: 30px; }
 #hub-shell #sidebar-context .sidebar-tree-children .nav-communities:not([hidden]) { display: contents; }
-#hub-shell #sidebar-context .sidebar-tree-children .nav-community-all { display: none; }
 #hub-shell #sidebar-context .sidebar-tree .sidebar-tree-children :is(.sidebar-context-item, .sidebar-tree-sub, .sidebar-tree-note):not(#_) {
   position: relative;
   box-sizing: border-box;
@@ -633,8 +634,8 @@ html:is([data-template="noir"], [data-template="ivory"]) #hub-shell :is(.btn-pri
 #hub-shell #sidebar-context .sidebar-tree .sidebar-tree-children .is-tree-first:not(#_)::after { top: -8px; height: calc(50% + 8px); }
 
 /* ===== Flat buttons (2026-11-02, owner-approved) =====
-   No elevation, bevel, gradient or press movement on any button. Primary and secondary are a line only (outline or 1px
-   hairline), ghost and icon buttons have no border, and hover is the flat neutral --interactive surface.
+   No elevation, bevel, gradient or press movement on any button. Primary is a flat neutral fill (shadcn default, 2026-11-04) and secondary a 1px
+   hairline, ghost and icon buttons have no border, and hover is the flat neutral --interactive surface.
    Focus rings (outline on :focus-visible) are untouched. Written once here; the sources carry no button shadow either
    (pinned by flat-buttons.test.mjs). */
 #hub-shell :is(button, [role="button"], .btn, .btn-primary, .btn-secondary, .btn-ghost, .btn-icon, .approve, .deny, .head-action, .ghost):not(#_):not(#_):not(#_) {
@@ -644,14 +645,14 @@ html:is([data-template="noir"], [data-template="ivory"]) #hub-shell :is(.btn-pri
 #hub-shell :is(button, [role="button"], .btn, .approve, .deny, .head-action, .ghost):not(#_):not(#_):not(#_):is(:hover, :active, :focus-visible):not(.video-play) {
   box-shadow: none;
 }
-/* primary: outline pill (gold line in 黒金, text-colour line in 白黒), never filled */
+/* primary: shadcn default (2026-11-04), a flat neutral fill (--text ground, --bg text). Gold never fills. Sizes and states: shadcn-base.css. */
 #hub-shell :is(.btn-primary, .approve):not(#_):not(#_):not(#_) {
   border: 1px solid var(--ds-btn-primary-line);
-  background: transparent;
+  background: var(--ds-btn-primary-bg);
   color: var(--ds-btn-primary-fg);
 }
-#hub-shell :is(.btn-primary, .approve):not(#_):not(#_):not(#_):hover:not(:disabled) { background: var(--interactive); color: var(--ds-btn-primary-fg); opacity: 1; }
-#hub-shell :is(.btn-primary, .approve):not(#_):not(#_):not(#_):active:not(:disabled) { background: var(--interactive-hover); opacity: 1; }
+#hub-shell :is(.btn-primary, .approve):not(#_):not(#_):not(#_):hover:not(:disabled) { background: color-mix(in srgb, var(--ds-btn-primary-bg) 90%, transparent); color: var(--ds-btn-primary-fg); opacity: 1; }
+#hub-shell :is(.btn-primary, .approve):not(#_):not(#_):not(#_):active:not(:disabled) { background: color-mix(in srgb, var(--ds-btn-primary-bg) 80%, transparent); opacity: 1; }
 /* secondary: 1px hairline, never a filled surface */
 #hub-shell :is(.btn-secondary, .deny, .head-action):not(#_):not(#_):not(#_) { border: 1px solid var(--divider); background: transparent; color: var(--text); }
 #hub-shell :is(.btn-secondary, .deny, .head-action):not(#_):not(#_):not(#_):hover:not(:disabled) { background: var(--interactive); }
@@ -706,3 +707,69 @@ html:is([data-template="noir"], [data-template="ivory"]) #hub-shell :is(.btn-pri
 .community-post .post-menu[open] { display: flex; flex-wrap: wrap; gap: var(--ds-space-2); }
 .community-kind-chips, .community-sections { display: flex; flex-wrap: wrap; gap: var(--ds-space-2); margin: var(--ds-space-3) 0; }
 .community-points-list { margin: 0; padding-left: var(--ds-space-5); }
+/* 木の根の行の右端の記号ボタン（探す・一覧）。字の行の代わり（2026-11-04）。面も枠も持たず、押せる所だけ浮く。 */
+#hub-shell #sidebar-context .sidebar-tree-head { display: flex; align-items: center; gap: var(--ds-space-1); width: 100%; }
+#hub-shell #sidebar-context .sidebar-tree-head > .sidebar-tree-root:not(#_) { flex: 1 1 auto; min-width: 0; width: auto; }
+#hub-shell #sidebar-context .sidebar-tree-tool { display: inline-grid; place-items: center; flex: none; width: var(--ds-icon-btn-compact); height: var(--ds-icon-btn-compact); padding: 0; border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--muted); cursor: pointer; }
+#hub-shell #sidebar-context .sidebar-tree-tool:hover { background: var(--interactive); color: var(--text); }
+#hub-shell #sidebar-context .sidebar-tree-tool[aria-current] { color: var(--emphasis); }
+#hub-shell #sidebar-context .sidebar-tree-tool:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+#hub-shell #sidebar-context .sidebar-tree-tool .sidebar-icon { width: var(--ds-icon-size); height: var(--ds-icon-size); }
+
+/* ---- 内側左列を YouTube の左の案内の配置に寄せる（2026-11-04 所有者「内側左列の改善」）。配置だけで素材は使わない ----
+   曲がり線と字下げをやめ、節は区切り線で分ける。根は節の見出し（記号なし・太字・右に「›」）、枝は記号つきの行で見出しと同じ左端に揃える。 */
+#hub-shell #sidebar-context .sidebar-tree-children:not(#_) { padding-left: 0; gap: 2px; }
+#hub-shell #sidebar-context .sidebar-tree .sidebar-tree-children :is(.sidebar-context-item, .sidebar-tree-sub, .sidebar-tree-note):not(#_)::before,
+#hub-shell #sidebar-context .sidebar-tree .sidebar-tree-children :is(.sidebar-context-item, .sidebar-tree-sub, .sidebar-tree-note):not(#_)::after { content: none; }
+#hub-shell #sidebar-context .sidebar-tree .sidebar-tree-children :is(.sidebar-context-item, .sidebar-tree-sub, .sidebar-tree-note):not(#_):not(#_) { width: 100%; margin-left: 0; padding-left: var(--ds-space-3); padding-right: var(--ds-space-3); }
+#hub-shell #sidebar-context .sidebar-tree + .sidebar-tree:not(#_) { margin-top: var(--ds-space-3); padding-top: var(--ds-space-3); border-top: 1px solid var(--line); }
+#hub-shell #sidebar-context .sidebar-tree-root:not(#_) { padding-left: var(--ds-space-3); font-size: var(--ds-type-body-size); }
+#hub-shell #sidebar-context .sidebar-tree-root:not(#_) > .sidebar-icon { display: none; }
+#hub-shell #sidebar-context .sidebar-tree-root:not(#_) .sidebar-item-label { font-weight: var(--ds-weight-strong); }
+#hub-shell #sidebar-context .sidebar-tree-root:not(#_) .sidebar-item-label::after { content: ""; display: inline-block; width: 6px; height: 6px; margin-left: var(--ds-space-2); border-top: 1.5px solid currentColor; border-right: 1.5px solid currentColor; transform: translateY(-2px) rotate(45deg); }
+
+/* すべて：記号つきの行は、記号と名前のあいだに行と同じ間隔（記号は inline のまま字に貼りついていた）。 */
+#hub-shell #sidebar-context > .sidebar-context-item:has(> .sidebar-icon):not(#_):not(#_) { display: flex; align-items: center; gap: var(--space-3); text-align: left; }
+
+/* 2026-11-06 所有者「左列でのツリー線はいらないかも」：左の列の曲がり線と縦の案内線をすべて消す（選択中の印は残す）。 */
+#hub-shell #sidebar-context .sidebar-context-item:not(#_):not(.on):not([aria-current="true"]):not([aria-current="page"])::before,
+#hub-shell #sidebar-context .sidebar-context-item:not(#_)::after,
+#hub-shell #sidebar-context :is(.sidebar-tree-sub, .sidebar-tree-note):not(#_)::before,
+#hub-shell #sidebar-context :is(.sidebar-tree-sub, .sidebar-tree-note):not(#_)::after,
+#sidebar-ai-history .piw-history-project > *:not(#_):not(#_)::before,
+#sidebar-ai-history .piw-history-project > *:not(#_):not(#_)::after { content: none; }
+
+/* 2026-11-06 所有者「左列とか薄い字だと見づらいから濃い字に」：左の列の行は細字をやめ、一段太く・本文色にする。見出しの小さな題も本文色。 */
+#hub-shell #sidebar-context .sidebar-item-label:not(#_):not(#_) { color: var(--text); font-weight: var(--ds-weight-medium); }
+#hub-shell #sidebar-context :is(.sidebar-tree-root, .nav-group, .sidebar-context-title) .sidebar-item-label:not(#_):not(#_) { font-weight: var(--ds-weight-heavy); }
+#hub-shell #sidebar-context :is(.sidebar-context-title, .nav-group-label):not(#_):not(#_) { color: var(--text); }
+
+/* 2026-11-06 所有者「見出しいらなくね」：画面の大きな見出し（タイムライン・記事・動画…）は見せない。左の列で今いる場所は分かる。
+   読み上げのために要素は残し、見た目だけ消す。見出しの行に操作（…など）があれば、その行は細く残る。 */
+#hub-shell .view .page-title:not(#_):not(#_) { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+#hub-shell .view .view-head:not(#_):not(#_) { min-height: 0; padding-top: var(--space-1); padding-bottom: var(--space-1); }
+
+/* 2026-11-06 所有者「左列にフィードが二個書いてある」：左の列の上の小さな題（.brand：フィード・記事を読む・タブ…）は、すぐ下の根の行と重なるので見せない。読み上げ用に要素は残す。 */
+#hub-shell .sidebar > .brand:not(#_):not(#_) { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+#hub-shell .sidebar #sidebar-context:not(#_):not(#_) { padding-top: var(--space-2); }
+/* コミュニティの木の段：参加中 → コミュニティ（1段下げる）→ 中（コミュニティ名の文字と同じ位置）。 */
+#hub-shell #sidebar-context .sidebar-tree .sidebar-tree-children .nav-community:not(.nav-community-all):not(#_):not(#_):not(#_) { padding-left: calc(var(--ds-space-3) + 16px); }
+#hub-shell #sidebar-context .sidebar-tree .sidebar-tree-children .nav-community-sub:not(#_):not(#_):not(#_) { padding-left: calc(var(--ds-space-3) + 16px + 20px + var(--space-2)); }
+
+/* ===== 画面の頭の帯の無駄を取る（2026-11-11 所有者「使いづらいUIを手直しして」） =====
+   題は読み上げ用に残して目には見せないので、帯に何も無い画面がある。 */
+/* 操作もタブも無い頭は、高さも線も持たない（マーケット）。題は読み上げに残る。 */
+#hub-shell .view :is(.view-head, .page-header):not(:has(:is(.view-head-actions, .page-actions, .page-tabs, .view-chip-host) :is(button, a, input, select))):not(#_):not(#_):not(#_):not(#_) {
+  min-height: 0;
+  height: 0;
+  padding-block: 0;
+  border: 0;
+}
+/* 題が見えない頭でも、操作は右端（音楽で左に寄っていた。動画と同じ側に揃える）。 */
+#hub-shell .view :is(.view-head, .page-header) > :is(.view-head-actions, .page-actions):not(#_):not(#_):not(#_):not(#_) { margin-left: auto; }
+/* 選べるチップが1つだけの行は、押しても何も変わらない。並べない（動画の「すべて」）。 */
+#hub-shell .view :is(.view-head, .page-header) > .view-chip-host:not(:has(.sidebar-chip ~ .sidebar-chip)):not(#_):not(#_):not(#_):not(#_) { display: none; }
+/* マーケットの頭にあるのはカートだけ。左の列が開いている間はカートが列にあるので、頭は空になる。 */
+@media (min-width: 861px) {
+  #hub-shell:not(.sidebar-collapsed) #view-market > :is(.view-head, .page-header):not(#_):not(#_):not(#_):not(#_) { min-height: 0; height: 0; padding-block: 0; border: 0; }
+}

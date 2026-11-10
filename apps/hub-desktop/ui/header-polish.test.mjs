@@ -33,7 +33,6 @@ test('header refresh buttons are 32px icon-only buttons with an aria-label and a
     assert.equal(button.textContent.trim(), '', `${id} has no text label`);
     assert.ok(button.querySelector('svg'), id);
   }
-  assert.ok(document.getElementById('feed-sources-toggle').classList.contains('btn-icon'));
   assert.match(rule('#hub-shell .btn-icon:not(#_)'), /width: var\(--ds-icon-btn-compact\)[\s\S]*border: 0[\s\S]*border-radius: 50%[\s\S]*background: transparent/);
   assert.match(css, /\.btn-icon:not\(#_\):hover:not\(:disabled\) \{ background: var\(--interactive\)/);
 });

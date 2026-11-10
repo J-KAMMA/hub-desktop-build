@@ -22,10 +22,10 @@ function fixture(error){
 }
 test('the feed waits after a startup read failure and renders after automatic recovery',async t=>{
   t.mock.timers.enable({apis:['setTimeout']});const f=fixture('network_unavailable');t.after(f.dispose);await f.load();
-  assert.equal(f.feed.list.children[0].title,'Hubへの接続を待っています');f.error=null;
+  assert.equal(f.feed.list.children[0].title,'接続待ち');f.error=null;
   t.mock.timers.tick(1000);await new Promise(setImmediate);
   assert.equal(f.calls.filter(c=>c[0]==='hub_feed').length,2);assert.equal(f.feed.list.children[0].title,'まだ投稿がありません');
-  assert.ok(f.calls.every(c=>['hub_feed','hub_client','hub_resource'].includes(c[0])));
+  assert.ok(f.calls.every(c=>['hub_feed','hub_client','hub_resource','hub_detail'].includes(c[0])));
 });
 test('the feed does not repeat auth failures or retry after leaving the view or switching accounts',async t=>{
   t.mock.timers.enable({apis:['setTimeout']});

@@ -1,0 +1,10 @@
+{
+  "note": "比較の候補。file は --models-dir からの相対名。重みはこのリポジトリに入れず、利用者が各ライセンスを確認して自分で置く。prompt/runtime を変えるだけで別モデルを足せる。",
+  "models": [
+    {"id": "plamo-0.8b", "file": "plamo-3-translate-0.8b-Q4_K_M.gguf", "prompt": "plamo", "runtime": "llama-server"},
+    {"id": "plamo-2b", "file": "plamo-3-translate-2b-Q4_K_M.gguf", "prompt": "plamo", "runtime": "llama-server"},
+    {"id": "madlad-3b", "file": "madlad400-3b-mt-q4_k_m.gguf", "prompt": "madlad", "runtime": "llama-cli"},
+    {"id": "translategemma-4b", "file": "translategemma-4b-it-Q4_K_M.gguf", "prompt": "gemma", "runtime": "llama-server"},
+    {"id": "translategemma-12b", "file": "translategemma-12b-it-Q4_K_M.gguf", "prompt": "gemma", "runtime": "llama-server"}
+  ]
+}

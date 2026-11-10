@@ -5,9 +5,9 @@
 export const TEMPLATES = Object.freeze(["stream", "wide", "reading", "split", "settings", "browser"]);
 
 const BY_VIEW = Object.freeze({
-  home: "stream", feed: "stream", search: "stream", notifications: "stream", profile: "stream", community: "stream",
+  home: "stream", feed: "stream", search: "stream", notifications: "stream", profile: "stream",
   threads: "stream", hubpedia: "stream", research: "stream", contacts: "stream", bookmarks: "stream", lists: "stream",
-  articles: "stream", code: "wide",
+  articles: "wide", code: "wide", community: "stream",
   videos: "wide", music: "wide", market: "wide", purchased: "wide", games: "wide", books: "wide",
   ranking: "wide", services: "wide", compute: "wide", node: "wide", ai: "wide",
   messages: "split", mail: "split",

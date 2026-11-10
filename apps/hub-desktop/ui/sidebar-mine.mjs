@@ -34,9 +34,6 @@ export const MINE_SECTIONS = {
   market: [
     { key: 'market.cart', live: true, title: 'カート', account: false, count: true, empty: { text: 'カートは空です', action: '商品を見る' } },
   ],
-  games: [
-    { key: 'games.library', title: 'ライブラリ', account: false, empty: { text: 'ゲームを追加すると、ここから起動できます', action: 'ゲームを追加' } },
-  ],
   research: [
     { key: 'research.projects', live: true, title: '自分のプロジェクト', account: false, empty: { text: 'プロジェクトはまだありません', action: 'プロジェクトを作る' } },
   ],

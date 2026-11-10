@@ -6,15 +6,21 @@
   --rail-w: 56px;
   /* アドレスバーの幅。窓の中央に置き、左右の群に重ならない範囲へ収める。 */
   --omni-w: max(120px, min(clamp(360px, 46vw, 680px), 100vw - 572px));
-  --window-controls-w: 138px;
+  /* 窓の操作（最小化・最大化・閉じる）は上の帯の右端に置く（2026-11-07 所有者：上の28pxの帯は無駄）。専用の帯は無い（高さ 0）。
+     操作が出る（飾りの無い窓）ときだけ右端（絵ボタン3つ＋間2つ＋余白）を空ける。右列の頭・上の帯の中身はその左に収める。 */
+  --window-strip-h: 0px;
+  --window-controls-w: 0px;
+  --toolbar-height: calc(var(--titlebar-h) + var(--window-strip-h));
 }
+#hub-shell:has(> .window-strip:not([hidden])) { --window-controls-w: calc(var(--icon-btn) * 3 + var(--icon-btn-gap) * 2 + var(--space-2)); }
 #hub-shell.rail-expanded { --rail-w: 208px; }
 
 /* ===== 上の帯（高さ 44） ===== */
 #hub-shell .app-toolbar {
   gap: var(--space-1);
   height: var(--titlebar-h);
-  padding: 0;
+  margin-top: var(--window-strip-h);
+  padding: 0 var(--window-controls-w) 0 0;
   border-bottom: 0;
   background: var(--material-bar-solid);
 }
@@ -42,7 +48,7 @@ html[data-material="mica"] #hub-shell .app-toolbar { background: var(--material-
 }
 #hub-shell .app-toolbar #rail-expand-toggle::before { content: ""; position: absolute; inset: -6px 0; }
 #hub-shell .app-toolbar #rail-expand-toggle:hover { background: var(--interactive); color: var(--text); }
-#hub-shell .app-toolbar #rail-expand-toggle:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+#hub-shell .app-toolbar #rail-expand-toggle:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring); outline-offset: var(--focus-ring-offset); }
 #hub-shell .app-toolbar .toolbar-button:disabled { opacity: .4; }
 /* 重複する検索の押し手は出さない（アドレスバーが常にある）。 */
 #hub-shell .app-toolbar #toolbar-search { display: none; }
@@ -60,13 +66,21 @@ html[data-material="mica"] #hub-shell .app-toolbar { background: var(--material-
 }
 #hub-shell .app-toolbar .toolbar-location > span { display: block; overflow: hidden; text-overflow: ellipsis; }
 
-/* 窓の操作：右端を窓の右端に合わせる（46×44 を 3 つ）。 */
-#hub-shell .app-toolbar .window-controls {
-  flex: none;
+/* 窓の操作：上の帯の右端（46 幅を 3 つ）。右列・アドレスバーより手前に置き、帯の高さに収める。 */
+#hub-shell > .window-strip {
+  position: fixed;
+  z-index: 60;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-end;
+  width: var(--window-controls-w);
   height: var(--titlebar-h);
-  margin: 0 0 0 auto;
+  background: transparent;
 }
-#hub-shell .app-toolbar .window-control { width: 46px; height: var(--titlebar-h); min-height: var(--titlebar-h); }
+#hub-shell > .window-strip[hidden] { display: none; }
+#hub-shell .window-strip .window-controls { flex: none; height: 100%; margin: 0; align-items: center; gap: var(--icon-btn-gap); padding-right: var(--space-2); }
 #hub-shell .app-toolbar #toolbar-rail { margin-right: var(--space-1); }
 
 /* アドレスバー（Hub の検索とブラウザのアドレスを兼ねる）：窓の中央、高さ 32、角は pill。 */
@@ -74,7 +88,7 @@ html[data-material="mica"] #hub-shell .app-toolbar { background: var(--material-
 #hub-shell.browser-active #view-browser #browser-form {
   position: fixed;
   z-index: 41;
-  top: calc((var(--titlebar-h) - var(--control-h)) / 2);
+  top: calc(var(--window-strip-h) + (var(--titlebar-h) - var(--control-h)) / 2);
   left: 50%;
   transform: translateX(-50%);
   width: var(--omni-w);
@@ -103,9 +117,9 @@ html[data-material="mica"] #hub-shell .app-toolbar { background: var(--material-
 #hub-shell.browser-active #view-browser .browser-strip {
   position: fixed;
   z-index: 42;
-  top: 0;
+  top: var(--window-strip-h);
   left: auto;
-  right: calc(var(--window-controls-w) + var(--space-2));
+  right: var(--space-2);
   width: auto;
   height: var(--titlebar-h);
   min-height: 0;
@@ -153,10 +167,11 @@ html[data-material="mica"] #hub-shell .app-toolbar { background: var(--material-
   background: var(--material-bar-solid);
 }
 html[data-material="mica"] #hub-shell .icon-rail { background: var(--material-mica-tint); }
-#hub-shell .icon-rail :is(.icon-rail-main, .icon-rail-bottom) { display: flex; flex-direction: column; align-items: stretch; gap: 2px; width: 100%; }
+#hub-shell .icon-rail :is(.icon-rail-main, .icon-rail-tools, .icon-rail-bottom) { display: flex; flex-direction: column; align-items: stretch; gap: 2px; width: 100%; }
 /* 上の群が余れば縮み、足りなければここだけが縦にスクロールする（下の群は常に見える）。 */
 #hub-shell .icon-rail .icon-rail-main { flex: 1 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; scrollbar-width: none; }
 #hub-shell .icon-rail .icon-rail-main::-webkit-scrollbar { display: none; }
+#hub-shell .icon-rail .icon-rail-tools { flex: none; margin-top: var(--space-2); }
 #hub-shell .icon-rail .icon-rail-bottom { flex: none; margin-top: var(--space-2); padding-top: var(--space-2); border-top: 0; }
 #hub-shell .icon-rail :is(.icon-button, .icon-nav-item):not([hidden]) {
   position: relative;
@@ -195,17 +210,20 @@ html[data-material="mica"] #hub-shell .icon-rail { background: var(--material-mi
 }
 #hub-shell:not(.rail-expanded) .icon-rail :is(.icon-button, .icon-nav-item)::after { display: none; }
 #hub-shell .icon-rail :is(.icon-button, .icon-nav-item):hover { background: var(--interactive); color: var(--text); }
-#hub-shell .icon-rail :is(.icon-nav-item.on, #desktop-apps.current, #desktop-apps[aria-current="page"]) { background: var(--selected); color: var(--text); }
+/* 現在地は記号の塗りつぶしで示す（2026-11-04 所有者が選んだ。X・Instagram と同じ）。後ろの四角は置かない。
+   .ic-body は塗り、.ic-cut は地の色の線で抜き、.ic-hole は地の色で塗って穴にする。 */
+#hub-shell .icon-rail :is(.icon-nav-item.on, #desktop-apps.current, #desktop-apps[aria-current="page"]) { background: transparent; color: var(--text); }
+#hub-shell .icon-rail :is(.icon-nav-item.on, #desktop-apps.current) svg .ic-body { fill: currentColor; fill-opacity: 1; }
+#hub-shell .icon-rail :is(.icon-nav-item.on, #desktop-apps.current) svg .ic-cut { stroke: var(--bg); }
+#hub-shell .icon-rail :is(.icon-nav-item.on, #desktop-apps.current) svg .ic-hole { fill: var(--bg); stroke: var(--bg); }
 #hub-shell.rail-expanded .icon-rail :is(.icon-nav-item.on, #desktop-apps.current)::after { font-weight: var(--ds-weight-strong); }
 #hub-shell.apps-active .icon-rail #desktop-apps { background: var(--interactive); color: var(--text); }
-#hub-shell .icon-rail :is(.icon-button, .icon-nav-item):focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
-/* 黒金: 現在地の記号の線を金にする（塗らない）。 */
-html:is([data-template="noir"], [data-template="ivory"]) #hub-shell .icon-rail :is(.icon-nav-item.on, #desktop-apps.current) svg { color: var(--emphasis); }
+#hub-shell .icon-rail :is(.icon-button, .icon-nav-item):focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring); outline-offset: calc(-1 * var(--focus-ring-width)); /* 内側：rail-main の overflow で外輪が切れる（実測 0px） */ }
 #hub-shell .icon-rail .navigation-group-start { margin-top: var(--space-2); }
 #hub-shell .icon-rail .icon-rail-main > .rail-bottom-start { margin-top: auto; }
 @media (max-height: 679px) {
   #hub-shell .icon-rail :is(.icon-button, .icon-nav-item):not([hidden]) { height: 34px; min-height: 34px; }
-  #hub-shell .icon-rail :is(.icon-rail-main, .icon-rail-bottom) { gap: 0; }
+  #hub-shell .icon-rail :is(.icon-rail-main, .icon-rail-tools, .icon-rail-bottom) { gap: 0; }
 }
 
 /* 自分の顔（プロフィールの項目）。 */
@@ -255,7 +273,7 @@ html:is([data-template="noir"], [data-template="ivory"]) #hub-shell .icon-rail :
 #hub-shell.rail-expanded .icon-rail #desktop-compose::after { flex: 0 1 auto; order: 0; font-weight: var(--ds-weight-strong); }
 #hub-shell .icon-rail #desktop-compose:not([hidden]):hover { background: var(--ds-btn-primary-bg); color: var(--ds-btn-primary-fg); opacity: .88; }
 html:is([data-template="noir"], [data-template="ivory"]) #hub-shell .icon-rail #desktop-compose:not([hidden]):hover { background: var(--interactive); opacity: 1; }
-#hub-shell .icon-rail #desktop-compose:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+#hub-shell .icon-rail #desktop-compose:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring); outline-offset: var(--focus-ring-offset); }
 
 /* ===== 画面のサイドバーと右列の帯 ===== */
 #hub-shell .sidebar { background: var(--material-bar-solid); }
@@ -297,7 +315,7 @@ html[data-material="mica"] #hub-shell:not(.rail-open) .rail-marks { background: 
 }
 #hub-shell .sidebar :is(.nav-item, .sidebar-context-item) svg { width: 18px; height: 18px; }
 #hub-shell .sidebar :is(.nav-item.on, .nav-item[aria-current], .sidebar-context-item[aria-current="true"]) { background: var(--selected); color: var(--text); font-weight: var(--weight-regular); }
-#hub-shell .sidebar :is(.nav-item, .sidebar-context-item):focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+#hub-shell .sidebar :is(.nav-item, .sidebar-context-item):focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring); outline-offset: calc(-1 * var(--focus-ring-width)); /* 内側：primary-nav の overflow で外輪が切れる（実測 0px） */ }
 #hub-shell .sidebar .nav-group,
 #hub-shell #sidebar-context .nav-group { margin: var(--space-6) var(--space-3) var(--space-1); color: var(--muted); font-size: var(--type-subhead); font-weight: var(--weight-regular); letter-spacing: 0; text-transform: none; }
 
@@ -308,7 +326,7 @@ html[data-material="mica"] #hub-shell:not(.rail-open) .rail-marks { background: 
 #hub-shell .rail-wallet-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); min-width: 0; }
 #hub-shell .wallet-network-pill { display: inline-flex; align-items: center; gap: var(--space-2); min-width: 0; max-width: 100%; min-height: var(--control-h); padding: 0 var(--space-3) 0 var(--space-1); border: 1px solid var(--line); border-radius: var(--radius-pill); background: var(--interactive); color: var(--text); font: inherit; font-size: var(--type-subhead); font-weight: var(--weight-regular); cursor: pointer; }
 #hub-shell .wallet-network-pill:hover { background: var(--interactive-hover); }
-#hub-shell .wallet-network-pill:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+#hub-shell .wallet-network-pill:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring); outline-offset: var(--focus-ring-offset); }
 #hub-shell .wallet-chain-mark, #hub-shell .wallet-token-avatar, #hub-shell .wallet-history-icon { display: grid; flex: 0 0 auto; place-items: center; border-radius: 50%; background: var(--selected); color: var(--text); font-size: var(--type-caption); font-weight: var(--weight-bold); line-height: 1; }
 #hub-shell .wallet-network-pill-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #hub-shell .wallet-network-pill-caret { color: var(--muted); font-size: var(--type-caption); }
@@ -345,7 +363,7 @@ html[data-material="mica"] #hub-shell:not(.rail-open) .rail-marks { background: 
 #hub-shell .rail-wallet-action-icon { display: grid; place-items: center; width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 50%; background: var(--interactive); transition: background var(--dur-fast) var(--ease-out), transform var(--dur-press) var(--ease-out), border-color var(--dur-fast) var(--ease-out); }
 #hub-shell .rail-wallet-action-icon svg { width: 22px; height: 22px; }
 #hub-shell .rail-wallet-action:hover:not(:disabled) .rail-wallet-action-icon { background: var(--interactive-hover); }
-#hub-shell .rail-wallet-action:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 4px; border-radius: var(--radius-md); }
+#hub-shell .rail-wallet-action:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring); outline-offset: var(--focus-ring-offset); border-radius: var(--radius-md); }
 #hub-shell .rail-wallet-action[aria-expanded="true"] .rail-wallet-action-icon { background: var(--selected); }
 #hub-shell .rail-wallet-action:disabled { opacity: .45; cursor: not-allowed; }
 #hub-shell .rail-wallet-action.is-done .rail-wallet-action-icon { border-color: var(--emphasis); }
@@ -357,7 +375,7 @@ html[data-material="mica"] #hub-shell:not(.rail-open) .rail-marks { background: 
 #hub-shell .rail-wallet-tab { flex: 1 1 0; min-height: var(--control-h); border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--muted); font: inherit; font-size: var(--type-subhead); font-weight: var(--weight-regular); cursor: pointer; transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
 #hub-shell .rail-wallet-tab:hover { color: var(--text); }
 #hub-shell .rail-wallet-tab.is-selected { background: var(--surface-raised); color: var(--text); box-shadow: 0 0 0 1px var(--line); }
-#hub-shell .rail-wallet-tab:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+#hub-shell .rail-wallet-tab:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring); outline-offset: var(--focus-ring-offset); }
 #hub-shell .rail-wallet-panel.is-entering { animation: rail-wallet-rise var(--dur-fast) var(--ease-out); }
 #hub-shell .rail-wallet-panel[hidden] { display: none; }
 #hub-shell .rail-wallet-panel .wallet-token-heading, #hub-shell .rail-wallet-panel.wallet-history h3 { display: none; }
@@ -384,7 +402,7 @@ html[data-material="mica"] #hub-shell:not(.rail-open) .rail-marks { background: 
    左（画面のサイドバー）→本文、本文→右の列。余白は --pane-gutter 一つ（4px。スクロールバー分の 10px と合わせ、見た目の左右は 14px で同じ）、縁は同じ 1px の --line、
    面は同じ --material-bar-solid。縦スクロールバーは本文の右端に幅を取るので、
    scrollbar-gutter: stable both-edges で左にも同じ幅を空け、本文を常に左右対称に置く。 */
-#hub-shell { --pane-gutter: var(--ds-page-inset); --pane-hairline: 1px solid color-mix(in srgb, var(--line) 75%, transparent); --pane-surface: var(--bg); font-size: var(--type-body); line-height: 1.6; }
+#hub-shell { --pane-gutter: var(--ds-page-inset); --pane-hairline: 1px solid var(--hairline); --pane-surface: var(--bg); font-size: var(--type-body); line-height: 1.6; }
 #hub-shell .workspace-main { scrollbar-gutter: stable both-edges; }
 #hub-shell .view:not(#view-browser):not(#view-ai) { padding-inline: var(--pane-gutter); }
 /* 平らな一枚の地（2026-10-24 所有者「丸くして色変えるの微妙かも」）：本文と右の列は地（--bg）のまま、角丸も色の差も付けない。
@@ -420,12 +438,11 @@ html[data-material="mica"] #hub-shell:not(.rail-open) .rail-marks { background: 
 }
 #hub-shell :is(.workspace-main, .workspace-main *, .rail-body *) { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--text) 16%, transparent) transparent; }
 
-/* Hubの検索欄は窓の中央ではなく中央の列の真上（2026-10-18 所有者「検索バーを左に寄せて」）。
-   位置と幅は app.js の placeBrowserStrip が中央の列を測って --omni-left / --omni-width に入れる。
-   中央がブラウザのとき（#browser-form）は上の規則のまま窓の中央。 */
+/* Hubの検索欄は窓全体の真ん中（2026-11-05 所有者「検索欄は全画面で真ん中にして」。10-18 の「中央の列の真上」を改める）。
+   --omni-left / --omni-width はブラウザの行（#browser-navigation）だけが使う。 */
 #hub-shell .app-toolbar #toolbar-search-form {
-  left: var(--omni-left, calc(50% - var(--omni-w) / 2));
-  width: var(--omni-width, var(--omni-w));
+  left: calc(50% - var(--omni-w) / 2);
+  width: var(--omni-w);
   transform: none;
 }
 
@@ -538,3 +555,37 @@ html[data-material="mica"] #hub-shell:not(.rail-open) .rail-marks { background: 
 #hub-shell #rail-wallet .rail-wallet-send-sheet .wallet-mainnet-warning { margin: 0; font-size: var(--type-caption); line-height: 1.6; color: color-mix(in srgb, var(--text) 62%, transparent); }#hub-shell #rail-wallet .wallet-actions { flex-wrap: nowrap; justify-content: space-evenly; justify-self: stretch; width: auto; max-width: none; }
 #hub-shell #rail-wallet .rail-wallet-send-sheet { border-left: 0; border-right: 0; border-bottom: 0; border-radius: 0; background: none; padding-inline: 0; }
 #hub-shell #rail-wallet .rail-wallet-send-sheet .wallet-mainnet-warning { padding: 0; border: 0; background: none; }
+
+/* 右列の頭（戻る・進む・見出し・更新）を上の帯の高さまで上げる（2026-11-05 所有者）。窓の操作の帯（その上の 28）には掛からない（2026-11-06）。 */
+@media (min-width: 1041px) {
+  #hub-shell.rail-open .rail { grid-row: 1 / span 2; z-index: 31; height: calc(100vh - var(--window-strip-h)); margin-top: var(--window-strip-h); }
+  #hub-shell.rail-open .rail .rail-marks { margin-top: var(--titlebar-h); }
+  #hub-shell.rail-open .rail .rail-activity-head { min-height: var(--titlebar-h); padding-right: max(var(--space-4), calc(var(--window-controls-w) - 48px)); }
+  /* 検索欄・アドレスバーは右列を開いても窓の真ん中のまま、右列の頭に重ならない幅まで縮める（2026-11-05 所有者「ブラウザでも統一」）。
+     ブラウザの右の群（保護・ダウンロード・AI・メニュー、幅 156）は右列のすぐ左へ寄せ、その分も避ける。 */
+  #hub-shell.rail-open { --omni-w: max(120px, min(clamp(360px, 46vw, 680px), 100vw - 572px, 100vw - 2 * (var(--desktop-rail-width, 300px) + var(--space-3)))); }
+  #hub-shell.rail-open.browser-active { --omni-w: max(120px, min(clamp(360px, 46vw, 680px), 100vw - 572px, 100vw - 2 * (var(--desktop-rail-width, 300px) + 156px + var(--space-3)))); }
+  #hub-shell.rail-open.browser-active #view-browser .browser-strip { right: calc(var(--desktop-rail-width, 300px) + var(--space-2)); }
+  #hub-shell.rail-open.browser-active #view-browser #browser-navigation > #browser-form { flex-basis: var(--omni-w); width: var(--omni-w); }
+}
+
+/* 上の帯も左の列と同じ面にする（2026-11-05 所有者「一番上も同じ色の方がいいかも」）。 */
+/* 左の列の面は半透明で本文の地（--bg）に重なって見えるので、帯も同じ重ね方にする。右列の頭も帯と揃える。 */
+#hub-shell .app-toolbar:not(#_):not(#_),
+#hub-shell.rail-open .rail .rail-activity-head:not(#_):not(#_) { background: linear-gradient(var(--material-sidebar), var(--material-sidebar)), var(--bg); }
+html[data-material="mica"] #hub-shell .app-toolbar:not(#_):not(#_):not(#_) { background: var(--material-mica-tint); }
+
+/* 右端の記号の列も外枠として、上の帯・左の列と同じ面にする（2026-11-06 所有者「外枠の色の設定はいってなくね」）。 */
+#hub-shell .rail .rail-marks:not(#_):not(#_) { background: linear-gradient(var(--material-sidebar), var(--material-sidebar)), var(--bg); }
+html[data-material="mica"] #hub-shell .rail .rail-marks:not(#_):not(#_):not(#_) { background: var(--material-mica-tint); }
+html[data-material="mica"] #hub-shell.rail-open .rail .rail-activity-head:not(#_):not(#_):not(#_) { background: var(--material-mica-tint); }
+
+/* 2026-11-06 所有者「外枠の色ついてないけど」：Windows 11 の Mica が効くと外枠が半透明になり、黒い中身と見分けがつかなかった。
+   外枠（上の帯・左の記号列・左の列・右端の記号列・右列の頭）は Mica の有無にかかわらず同じ面で塗る。 */
+html[data-material] #hub-shell :is(.app-toolbar, .icon-rail, .sidebar, .rail .rail-marks):not(#_):not(#_):not(#_):not(#_),
+html[data-material] #hub-shell.rail-open .rail .rail-activity-head:not(#_):not(#_):not(#_):not(#_),
+#hub-shell :is(.icon-rail, .sidebar):not(#_):not(#_):not(#_) { background: linear-gradient(var(--material-sidebar), var(--material-sidebar)), var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; }
+
+/* 2026-11-06 所有者「上のやつの区切りが欲しい」：上の帯の下に細い区切り線（右列の頭の線と同じ高さ・同じ色）。 */
+#hub-shell .app-toolbar:not(#_):not(#_):not(#_):not(#_) { box-shadow: inset 0 -1px 0 var(--line); }
+#hub-shell.rail-open .rail .rail-activity-head:not(#_):not(#_):not(#_):not(#_) { border-bottom: 1px solid var(--line); }

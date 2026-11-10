@@ -121,3 +121,28 @@ test('sparse upload or malformed ACK does not become a successful send; scope gu
   const bad=await rig(t,{invoke:async()=>({message:{id:'unbound'}})});bad.input('body');assert.equal(await bad.controller.send(),false);
   assert.equal(bad.state.operation.status,'unknown');assert.equal(bad.sent.length,0);
 });
+
+// ---- 2026-11-06 所有者「UIが邪魔」：1行から伸びる入力欄、丸い送信、＋のメニュー ----
+test('the composer is one growing line with a round send icon and a ＋ menu (画像 and extra actions); no text 送信/画像 buttons',async t=>{
+  const r=await rig(t),el=r.controller.element,doc=r.dom.window.document;
+  assert.equal(r.controller.textarea.rows,1);
+  const send=el.querySelector('[data-post-action=send]');
+  assert.equal(send.getAttribute('aria-label'),'送信');assert.equal(send.textContent,'');assert.ok(send.querySelector('svg'));
+  const plus=el.querySelector('.community-composer-plus'),menu=el.querySelector('.community-composer-menu');
+  assert.equal(plus.getAttribute('aria-label'),'追加');assert.equal(menu.hidden,true);
+  assert.deepEqual([...el.querySelectorAll('button')].filter(b=>!b.closest('.community-composer-menu')&&!b.hidden&&b.textContent).map(b=>b.textContent),['＋'],'only the ＋ carries text outside the menu');
+  const ran=[];r.controller.addAction('アンケートを作成',()=>ran.push('poll'));
+  plus.click();assert.equal(menu.hidden,false);assert.equal(plus.getAttribute('aria-expanded'),'true');
+  assert.deepEqual([...menu.querySelectorAll('button')].map(b=>b.textContent),['画像','アンケートを作成']);
+  [...menu.querySelectorAll('button')].find(b=>b.textContent==='アンケートを作成').click();
+  assert.deepEqual(ran,['poll']);assert.equal(menu.hidden,true,'running an action closes the menu');
+  plus.click();el.dispatchEvent(new r.dom.window.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert.equal(menu.hidden,true);
+  doc.body.click();
+});
+
+test('Enter sends, Shift+Enter and IME composition do not',async t=>{
+  const r=await rig(t);r.input('こんにちは');
+  const key=(init)=>{const e=new r.dom.window.KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true,...init});r.controller.textarea.dispatchEvent(e);return e;};
+  key({shiftKey:true});key({isComposing:true});await new Promise(resolve=>setImmediate(resolve));assert.equal(r.calls.length,0);
+  const e=key({});assert.equal(e.defaultPrevented,true);await until(()=>r.calls.some(c=>c.name==='hub_client_action'));
+});

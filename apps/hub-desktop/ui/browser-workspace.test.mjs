@@ -903,7 +903,7 @@ test('AI staging classifies changed actor and origin before refusal or error as 
 test('tab rows show a valid PNG favicon, and fall back to the host letter for absent, foreign or oversize icons',async t=>{
  const png='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
  const f=await fixture(t,{tabs:[tab({favicon:png}),tab({id:2,active:false,url:'https://two.example/',favicon:'data:image/svg+xml;base64,PHN2Zy8+'}),tab({id:3,active:false,url:'https://three.example/',favicon:'javascript:alert(1)'}),tab({id:4,active:false,url:'https://four.example/',favicon:'data:image/png;base64,iVBORw0KGgo'+'A'.repeat(50000)}),tab({id:5,active:false,url:'https://five.example/'})]});
- const image=f.el('browser-tab-1').querySelector('.browser-tab-badge img');assert.equal(image.getAttribute('src'),png);assert.equal(image.alt,'');assert.equal(f.el('browser-tab-1').querySelector('.browser-tab-badge').textContent,'');
+ const image=f.el('browser-tab-1').querySelector('.browser-tab-badge img');assert.match(image.getAttribute('src'),/^blob:/);assert.equal(image.alt,'');assert.equal(f.el('browser-tab-1').querySelector('.browser-tab-badge').textContent,'');
  for(const [id,letter] of [[2,'T'],[3,'T'],[4,'F'],[5,'F']])assert.equal(f.el('browser-tab-'+id).querySelector('img'),null),assert.equal(f.el('browser-tab-'+id).querySelector('.browser-tab-badge').textContent,letter);
 });
 

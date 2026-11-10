@@ -46,6 +46,9 @@ export function musicMenuItems(work, deps) {
   // 自分の曲だけ。deps.profileAttribution が文言（無ければ null）と実行を返す（docs/hub-music-attribution/DESIGN.md）。
   const attribution = HUB_TRACK.test(String(work.id ?? '')) ? deps.profileAttribution?.label?.(work) : null;
   if (attribution) items.push('-', { label: attribution, run: () => deps.profileAttribution.run(work) });
+  // 自分の曲の「P2Pで配る」。曲ごとの選択で初期値はオフ（docs/hub-p2p-redesign/DESIGN.md §11）。
+  const p2p = HUB_TRACK.test(String(work.id ?? '')) ? deps.p2p?.label?.(work) : null;
+  if (p2p) items.push(...(attribution ? [] : ['-']), { label: p2p, run: () => deps.p2p.run(work) });
   const links = externalOpenLinks(work);
   if (links.length) items.push('-', ...links.map((link) => ({ label: link.label, run: () => deps.openExternal(link.url) })));
   return items;

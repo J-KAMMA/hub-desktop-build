@@ -129,9 +129,9 @@ test('tabbed views have no title row: the tab row is the header, the title is vi
   // The title stays in the markup for the accessible name; the feed header carries both title and tabs and actions.
   const feed = document.querySelector('#view-feed > .page-header');
   assert.equal(feed.querySelector(':scope > .page-title').textContent, 'タイムライン');
-  assert.ok(feed.querySelector(':scope > .page-actions #feed-sources-toggle'));
+  assert.equal(feed.querySelector('#feed-sources-toggle'), null);
   assert.equal(feed.querySelector('#feed-refresh'), null);
-  assert.ok(feed.querySelector(':scope > #feed-tabs.page-tabs'));
+  assert.equal(feed.querySelector('#feed-tabs'), null);
   // Views without tabs keep one compact title row of at most the header height.
   const plain = block('#hub-shell .view:not(#view-browser):not(#view-ai) > :is(.view-head, .page-header):not(:has(> .page-tabs:not(:empty))) {');
   assert.match(plain, /max-height:\s*var\(--ds-header-h\)/);

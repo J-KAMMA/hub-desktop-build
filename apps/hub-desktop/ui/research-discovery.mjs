@@ -59,7 +59,7 @@ export function appendResearchBacklinks(target,{kind,id,invoke,isCurrent=()=>tru
   let active=true,generation=0,timer,cancelRead;
   const live=token=>active&&token===generation&&root.isConnected&&root.parentNode===target&&isCurrent();
   const node=(tag,text,cls='')=>{const value=document.createElement(tag);value.textContent=text;value.className=cls;return value;};
-  const heading=()=>root.replaceChildren(node('h3',`${labels[kind]??'資料'}に関連するプロジェクト`),node('p','関連プロジェクトで資料・コード・版履歴・変更提案を確認できます。','meta'));
+  const heading=()=>root.replaceChildren(node('h3',`${labels[kind]??'資料'}に関連するプロジェクト`));
   async function retry(){
     const token=++generation;cancelRead?.();clearTimeout(timer);if(!live(token))return;
     root.hidden=false;heading();const status=node('p','関連プロジェクトを確認しています…','meta');status.setAttribute('role','status');root.append(status);root.setAttribute('aria-busy','true');

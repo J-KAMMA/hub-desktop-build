@@ -1,1 +1,4 @@
 src-tauri/target/
+
+# Local agent credentials and model cache (never commit)
+vendor/agent-dir/

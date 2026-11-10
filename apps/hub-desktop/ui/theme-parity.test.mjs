@@ -34,7 +34,8 @@ for (const [theme, id] of [['dark', 'noir'], ['light', 'ivory']]) {
   test(`金（${theme === 'dark' ? '暗 = noir' : '明 = ivory'}）: デスクトップのゴールドは Web と主要な色が同じ`, () => {
     const d = block(desktop, `\[data-template="${id}"\]`);
     const w = block(web, `html\[data-palette="gold-ivory"\]\[data-theme="${theme}"\]`);
-    for (const k of GOLD) assert.equal(d[k], w[k], `gold ${theme} --${k}`);
+    // 2026-11-09 craft A: Desktop ivory の選択行は中立の灰（Web の金の面 #d9c496 をやめ、左の金の1px線で示す）。
+    for (const k of GOLD) { if (id === 'ivory' && k === 'selected') { assert.equal(d[k], '#cdc8bd', 'ivory --selected is neutral'); continue; } assert.equal(d[k], w[k], `gold ${theme} --${k}`); }
     assert.equal(d['accent-base'], w.action, `gold ${theme} action`);
     assert.equal(d['accent-base-hover'], w['action-hover'] ?? d['accent-base-hover'], `gold ${theme} action-hover`);
   });

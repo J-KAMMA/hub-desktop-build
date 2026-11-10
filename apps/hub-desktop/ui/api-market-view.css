@@ -1,0 +1,106 @@
+/* APIの窓口（api-market-view.mjs）。Web の /v2/market/ai と同じ配置：左に絞り込みの列、右に並べ替えと比べられる行、詳細は本文と「使う」の列。
+   配置だけ OpenRouter の models 一覧を写し、見た目は黒金/白黒の意味トークンだけ。生の色は書かない。
+   金（--emphasis）は線・下線・焦点の輪・小さな字だけ。面・札・点には使わない。ボタンは平ら（影・段差・塗りなし）。
+   class はすべて amv- で始め、#hub-shell の中だけに効かせる。幅は器（container）で切り替え、左の列の位置は変えない。 */
+
+#hub-shell .amv { container-type: inline-size; min-width: 0; color: var(--text); font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); }
+#hub-shell .amv button { font: inherit; }
+#hub-shell .amv ul { margin: 0; padding: 0; list-style: none; }
+#hub-shell .amv .amv-num { font-variant-numeric: tabular-nums; }
+#hub-shell .amv-lead { margin: 0; padding: var(--ds-space-3) var(--ds-page-inset); border-bottom: 1px solid var(--line); color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); }
+
+/* ---- 一覧 ---- */
+#hub-shell .amv-layout { --amv-filter-w: 240px; display: grid; grid-template-columns: var(--amv-filter-w) minmax(0, 1fr); align-items: start; }
+#hub-shell .amv-filters { display: grid; min-width: 0; border-right: 1px solid var(--line); padding-bottom: var(--ds-space-6); }
+#hub-shell .amv-search-wrap { padding: var(--ds-space-3) var(--ds-page-inset); border-bottom: 1px solid var(--line); }
+#hub-shell .amv-search { box-sizing: border-box; width: 100%; height: var(--ds-search-h); padding: 0 var(--ds-space-4); border: 1px solid transparent; border-radius: var(--radius-pill); background: var(--interactive); color: var(--text); font: inherit; }
+#hub-shell .amv-search::placeholder { color: var(--muted); }
+#hub-shell .amv-search:focus-visible { outline: 2px solid var(--emphasis); outline-offset: 0; }
+#hub-shell .amv-group { padding: var(--ds-space-3) 0; border-bottom: 1px solid var(--line); }
+#hub-shell .amv-group-title { margin: 0; padding: 0 var(--ds-page-inset) var(--ds-space-2); color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); font-weight: var(--ds-weight-strong); }
+#hub-shell .amv-options { display: grid; }
+#hub-shell .amv-option { display: flex; align-items: center; gap: var(--ds-space-2); width: 100%; min-height: var(--ds-btn-h-compact); padding: 0 var(--ds-page-inset); border: 0; border-left: 2px solid transparent; background: transparent; color: var(--muted); text-align: left; cursor: pointer; }
+#hub-shell .amv-option:hover { background: var(--interactive); color: var(--text); }
+#hub-shell .amv-option:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+#hub-shell .amv-option[aria-pressed="true"] { border-left-color: var(--emphasis); color: var(--text); font-weight: var(--ds-weight-strong); }
+#hub-shell .amv-check { position: relative; flex: none; box-sizing: border-box; width: var(--ds-space-4); height: var(--ds-space-4); border: 1px solid var(--line-strong); border-radius: var(--ds-radius-badge); }
+#hub-shell .amv-option[aria-pressed="true"] .amv-check { border-color: var(--emphasis); }
+#hub-shell .amv-option[aria-pressed="true"] .amv-check::after { content: ""; position: absolute; inset: 3px; border: 1px solid var(--emphasis); border-radius: var(--radius-xs); }
+#hub-shell .amv-help { margin: var(--ds-space-1) 0 0; padding: 0 var(--ds-page-inset); color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); }
+
+#hub-shell .amv-results { min-width: 0; }
+#hub-shell .amv-toolbar { display: flex; align-items: center; justify-content: space-between; gap: var(--ds-space-3); min-height: var(--ds-tabs-h); padding: 0 var(--ds-page-inset); border-bottom: 1px solid var(--line); }
+#hub-shell .amv-count { margin: 0; color: var(--muted); font-size: var(--ds-type-meta-size); font-variant-numeric: tabular-nums; }
+#hub-shell .amv-sorts { display: flex; gap: var(--ds-space-5); min-width: 0; overflow-x: auto; scrollbar-width: none; }
+#hub-shell .amv-sort { box-sizing: border-box; height: var(--ds-tabs-h); padding: 0; border: 0; border-bottom: 4px solid transparent; background: transparent; color: var(--muted); white-space: nowrap; cursor: pointer; }
+#hub-shell .amv-sort:hover { color: var(--text); }
+#hub-shell .amv-sort[aria-pressed="true"] { border-bottom-color: var(--emphasis); color: var(--text); font-weight: var(--ds-weight-strong); }
+#hub-shell .amv-sort:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+
+#hub-shell .amv-head, #hub-shell .amv-row { display: grid; grid-template-columns: minmax(0, 1fr) 84px 84px 80px 112px 40px; column-gap: var(--ds-space-3); padding: var(--ds-space-3) var(--ds-page-inset); }
+#hub-shell .amv-head { padding-block: var(--ds-space-2); border-bottom: 1px solid var(--line); color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); font-weight: var(--ds-weight-strong); }
+#hub-shell .amv-row { box-sizing: border-box; width: 100%; align-items: start; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: var(--text); text-align: left; cursor: pointer; }
+#hub-shell .amv-row:hover { background: var(--interactive); }
+#hub-shell .amv-row:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+#hub-shell .amv-name { display: grid; gap: var(--ds-space-1); min-width: 0; }
+#hub-shell .amv-title { display: flex; align-items: center; gap: var(--ds-space-2); min-width: 0; }
+#hub-shell .amv-title strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: var(--ds-weight-strong); }
+#hub-shell .amv-kind { flex: none; display: inline-flex; align-items: center; height: var(--ds-badge-h); padding: 0 var(--ds-badge-status-px); border: 1px solid var(--ds-badge-status-line); border-radius: var(--ds-radius-badge); color: var(--ds-badge-status-fg); font-size: var(--ds-type-meta-size); line-height: 1; font-weight: var(--ds-weight-text); }
+#hub-shell .amv-meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); }
+#hub-shell .amv-cell { min-width: 0; overflow-wrap: anywhere; }
+#hub-shell .amv-sub { display: block; color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); }
+#hub-shell .amv-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+#hub-shell .amv-empty { padding: var(--ds-space-4) var(--ds-page-inset); }
+#hub-shell .amv-empty-title { margin: 0; font-size: var(--ds-type-title-size); line-height: var(--ds-type-title-leading); font-weight: var(--ds-weight-heavy); }
+
+@container (max-width: 719px) {
+  #hub-shell .amv-layout { grid-template-columns: minmax(0, 1fr); }
+  #hub-shell .amv-filters { border-right: 0; border-bottom: 1px solid var(--line); padding-bottom: 0; }
+  #hub-shell .amv-options { display: flex; flex-wrap: wrap; gap: var(--ds-chip-gap); padding: 0 var(--ds-page-inset); }
+  #hub-shell .amv-option { width: auto; padding: 0 var(--ds-chip-px); border: 1px solid var(--line-strong); border-radius: var(--radius-pill); }
+  #hub-shell .amv-option[aria-pressed="true"] { border-color: var(--emphasis); }
+  #hub-shell .amv-head { display: none; }
+  #hub-shell .amv-row { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: var(--ds-space-1); }
+  #hub-shell .amv-name { grid-column: 1 / -1; }
+  #hub-shell .amv-label { position: static; width: auto; height: auto; overflow: visible; clip: auto; color: var(--muted); font-size: var(--ds-type-meta-size); }
+}
+
+/* ---- 詳細 ---- */
+#hub-shell .amv-detail-head { display: flex; align-items: center; gap: var(--ds-space-3); min-height: var(--ds-header-h); padding: 0 var(--ds-page-inset); border-bottom: 1px solid var(--line); }
+#hub-shell .amv-back { display: inline-grid; place-items: center; flex: none; width: var(--ds-icon-btn); height: var(--ds-icon-btn); padding: 0; border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--text); cursor: pointer; }
+#hub-shell .amv-back:hover { background: var(--interactive); }
+#hub-shell .amv-back:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+#hub-shell .amv-detail-title { min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--ds-type-title-size); line-height: var(--ds-type-title-leading); font-weight: var(--ds-weight-heavy); }
+#hub-shell .amv-detail-body { display: grid; grid-template-columns: minmax(0, var(--ds-col-main)) minmax(0, var(--ds-col-right)); column-gap: var(--ds-col-gap); align-items: start; }
+#hub-shell .amv-detail-main { min-width: 0; }
+#hub-shell .amv-intro { padding: var(--ds-space-3) var(--ds-page-inset); border-bottom: 1px solid var(--line); }
+#hub-shell .amv-purpose { margin: 0; font-size: var(--ds-type-reading-size); line-height: var(--ds-type-reading-leading); overflow-wrap: anywhere; }
+#hub-shell .amv-seller { margin: var(--ds-space-2) 0 0; color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); }
+#hub-shell .amv-sec { padding-bottom: var(--ds-space-3); border-bottom: 1px solid var(--line); }
+#hub-shell .amv-sec-title { margin: 0; padding: var(--ds-space-3) var(--ds-page-inset); font-size: var(--ds-type-title-size); line-height: var(--ds-type-title-leading); font-weight: var(--ds-weight-heavy); }
+#hub-shell .amv-facts { margin: 0; }
+#hub-shell .amv-facts > div { display: grid; grid-template-columns: 160px minmax(0, 1fr); column-gap: var(--ds-space-3); padding: var(--ds-space-2) var(--ds-page-inset); }
+#hub-shell .amv-facts dt { color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-body-leading); }
+#hub-shell .amv-facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+#hub-shell .amv-facts code { font-size: var(--ds-type-meta-size); overflow-wrap: anywhere; }
+#hub-shell .amv-note { margin: var(--ds-space-2) 0 0; padding: 0 var(--ds-page-inset); color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); }
+#hub-shell .amv-link { padding: 0; border: 0; background: transparent; color: var(--text); text-decoration: underline; text-decoration-color: var(--emphasis); text-underline-offset: 3px; cursor: pointer; text-align: left; }
+#hub-shell .amv-link:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+#hub-shell .amv-use { position: sticky; top: 0; display: grid; gap: var(--ds-space-2); min-width: 0; padding-bottom: var(--ds-space-4); border-left: 1px solid var(--line); }
+#hub-shell .amv-use > :not(.amv-sec-title) { margin: 0 var(--ds-page-inset); }
+#hub-shell .amv-use-label, #hub-shell .amv-use-text { color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); }
+#hub-shell .amv-use-text { color: var(--text); }
+#hub-shell .amv-use-max { font-size: var(--ds-type-name-size); line-height: var(--ds-type-name-leading); font-weight: var(--ds-weight-heavy); overflow-wrap: anywhere; }
+#hub-shell .amv-btn { justify-self: start; display: inline-flex; align-items: center; max-width: calc(100% - 2 * var(--ds-page-inset)); height: var(--ds-btn-h); padding: 0 var(--ds-btn-px); border: 1px solid var(--line-strong); border-radius: var(--radius-pill); background: transparent; color: var(--text); font-weight: var(--ds-weight-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+#hub-shell .amv-btn:hover { background: var(--interactive-hover); }
+#hub-shell .amv-btn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+#hub-shell .amv-btn-primary { border-color: var(--emphasis); color: var(--emphasis); }
+
+@container (max-width: 899px) {
+  #hub-shell .amv-detail-body { grid-template-columns: minmax(0, 1fr); }
+  #hub-shell .amv-use { position: static; border-left: 0; border-bottom: 1px solid var(--line); }
+}
+@container (max-width: 479px) {
+  #hub-shell .amv-facts > div { grid-template-columns: minmax(0, 1fr); }
+}

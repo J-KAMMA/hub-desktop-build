@@ -31,16 +31,16 @@
   background: var(--content-surface); color: var(--text); cursor: pointer;
 }
 #view-settings .appearance-choice:hover { background: var(--interactive); }
-#view-settings .appearance-choice:has(input:checked) { border-color: var(--action); background: var(--selected); font-weight: 700; }
+#view-settings .appearance-choice:has(input:checked) { border-color: var(--emphasis); background: transparent; font-weight: 700; }
 /* カラーテンプレートの見本。.template-chip は data-template を持つので、tokens.css のそのテンプレートの色になる（見本の中だけ）。 */
 #view-settings .template-swatches { display: flex; flex-wrap: wrap; gap: var(--space-2, 8px); justify-content: flex-end; }
 #view-settings .template-swatch {
-  display: grid; justify-items: center; gap: var(--space-1, 4px); width: 88px; padding: var(--space-2, 8px) var(--space-1, 4px);
+  display: grid; justify-items: center; align-content: start; gap: var(--space-1, 4px); width: auto; min-width: 88px; padding: var(--space-2, 8px) var(--space-2, 8px);
   border: 0; border-radius: var(--radius-sm, 6px); background: transparent; color: var(--text); font: inherit; cursor: pointer;
 }
 #view-settings .template-swatch:hover { background: var(--interactive); }
 #view-settings .template-swatch:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
-#view-settings .template-name { font-size: var(--type-caption); line-height: 1.3; text-align: center; }
+#view-settings .template-name { font-size: var(--type-caption); line-height: 1.3; text-align: center; text-wrap: nowrap; }
 #view-settings .template-swatch[aria-checked="true"] .template-name { font-weight: 700; }
 #view-settings .template-chip {
   display: grid; grid-template-rows: 1fr auto; align-items: center; justify-items: center; box-sizing: border-box;
@@ -118,6 +118,8 @@ html[data-motion="reduce"] *, html[data-motion="reduce"] *::before, html[data-mo
 #hub-shell #view-settings .setting-header + .setting-row,
 #hub-shell #view-settings .settings-rows > .setting-row:first-child,
 #hub-shell #view-settings .appearance-settings > .setting-row:first-child { border-top: 0; }
+/* 説明は末尾に1〜2字だけ残さない */
+#hub-shell #view-settings :is(.setting-desc, .settings-panel-title + .subtle, .setting-text > .meta) { text-wrap: pretty; }
 #hub-shell #view-settings .setting-text { display: grid; flex: 1 1 auto; gap: 2px; min-width: 0; }
 #hub-shell #view-settings .setting-label { font-size: var(--type-subhead, 13px); font-weight: var(--weight-semibold, 600); line-height: var(--lh-subhead, 1.5); color: var(--text); }
 #hub-shell #view-settings .setting-desc { font-size: var(--type-subhead, 13px); line-height: var(--lh-subhead, 1.5); color: var(--muted); font-weight: var(--weight-regular, 400); }
@@ -214,3 +216,21 @@ html[data-motion="reduce"] *, html[data-motion="reduce"] *::before, html[data-mo
   font-size: var(--type-caption);
   line-height: var(--lh-caption);
 }
+
+
+/* 2026-11-05 所有者「よさそう」: AI 画面の作法を広げる
+   設定：中央の1本の列。枠と区切り線を外し、余白で分ける。 */
+#hub-shell #view-settings > .view-head:not(#_):not(#_) { border-bottom: 0; }
+#hub-shell #view-settings .inner-layout.layout-reading:not(#_):not(#_) { margin-inline: auto; padding-top: var(--space-3); }
+#hub-shell #view-settings :is(.card, fieldset, .appearance-group, .setting-group):not(#_):not(#_):not(#_) { border: 0; background: transparent; box-shadow: none; padding-inline: 0; }
+#hub-shell #view-settings .setting-row:not(#_):not(#_) { border-top: 0; }
+#hub-shell #view-settings .setting-row.is-found:not(#_):not(#_) { border-radius: var(--radius-md); }
+#hub-shell #view-settings .settings-confirm:not(#_):not(#_) { border-radius: var(--radius-chat); }
+#hub-shell #view-settings .settings-search input:not(#_):not(#_) { border: 0; border-radius: var(--radius-pill); background: var(--interactive); }
+#hub-shell #view-settings .settings-result:not(#_):not(#_) { border-radius: var(--radius-md); }
+#hub-shell #view-settings .inner-nav-item:not(#_):not(#_) { border: 0; border-radius: var(--radius-md); }
+#hub-shell #view-settings.view:not(#_):not(#_) { width: min(100%, 720px); max-width: none; margin-inline: auto; }
+#hub-shell #view-settings > .page-header:not(#_):not(#_) { border-bottom: 0; }
+#hub-shell #view-settings .inner-layout.layout-reading:not(#_):not(#_):not(#_) { max-width: none; padding-inline: 0; }
+#hub-shell #view-settings > .page-header:not(#_):not(#_):not(#_) { padding-inline: 0; }
+#hub-shell #view-settings :is(h3, .settings-panel-title):not(#_):not(#_):not(#_) { padding-inline: 0; }

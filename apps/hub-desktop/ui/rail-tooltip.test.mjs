@@ -44,3 +44,16 @@ test('pointer hover waits for the delay; press and leave cancel it',async()=>{
     button.dispatchEvent(new dom.window.MouseEvent('pointerout',{bubbles:true,relatedTarget:document.body}));await wait(80);assert.equal(tip.hidden,true);
   }finally{d();dom.window.close();}
 });
+
+test('a button whose popover is open shows no tooltip, and an open popover retracts a tooltip already shown',async()=>{
+  const dom=new JSDOM('<nav class="icon-rail"><button aria-label="通知">x</button></nav>',{pretendToBeVisual:true});
+  const {document}=dom.window,button=document.querySelector('button'),d=initRailTooltips(document,{delay:0}),tip=document.querySelector('[role="tooltip"]');
+  const wait=ms=>new Promise(r=>setTimeout(r,ms));
+  try{
+    button.dispatchEvent(new dom.window.Event('focusin',{bubbles:true}));assert.equal(tip.hidden,false);
+    button.setAttribute('aria-expanded','true');await wait(20);assert.equal(tip.hidden,true,'opening the popover later retracts it');
+    button.dispatchEvent(new dom.window.Event('focusin',{bubbles:true}));assert.equal(tip.hidden,true,'no tooltip while expanded');
+    button.setAttribute('aria-expanded','false');
+    button.dispatchEvent(new dom.window.Event('focusin',{bubbles:true}));assert.equal(tip.hidden,false);
+  }finally{d();dom.window.close();}
+});

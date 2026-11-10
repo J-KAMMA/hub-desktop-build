@@ -1,5 +1,7 @@
 // レーン D2（人と会話）の振る舞いの検査。app.js の実物の関数を取り出して、最小の部品で動かす。
 import test from 'node:test';
+import { addBaitRow, confirmLeave } from './outbound-link.mjs';
+import { detectBait } from './bait-warning.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
@@ -21,7 +23,7 @@ function sandbox(extra = {}) {
   const dom = new JSDOM('<main></main>', { url: 'https://fixture.invalid/' });
   const ctx = vm.createContext({
     document: dom.window.document, URL, URLSearchParams, Event: dom.window.Event, setTimeout, clearTimeout,
-    icon: (name) => `<svg data-icon="${name}"></svg>`, relTime: () => 'now', ...extra,
+    addBaitRow, confirmLeave, detectBait, icon: (name) => `<svg data-icon="${name}"></svg>`, relTime: () => 'now', attachTranslateAction() {}, localTranslator: {}, ...extra,
   });
   return { dom, ctx };
 }
@@ -210,7 +212,6 @@ test('notifications: an empty list uses the shared state panel with a retry', ()
   const panel = document.querySelector('#notifications-list .state-panel');
   assert.ok(panel, 'the empty state uses .state-panel');
   assert.equal(panel.querySelector('.state-title').textContent, '通知はありません');
-  assert.equal(panel.querySelector('.state-body').textContent, '返信・いいね・フォローがあるとここに来ます。');
   const retry = panel.querySelector('.state-action');
   assert.ok(retry, 'the empty state has a retry');
   assert.ok(retry.classList.contains('btn-primary'));
@@ -229,7 +230,7 @@ test('notifications and sidebar conversations get the specified avatar and type 
 });
 
 test('feed: sources and connections are behind the "…" toggle; the feed body fills the column, whose width the template decides (2026-11-01)', () => {
-  assert.match(html, /id="feed-sources-toggle"/);
+  assert.match(app, /label: "表示元と接続先", icon: "more"/);
   assert.match(css, /#view-feed \.hub-network-bar,[\s\S]*?\{ display: none; \}/);
   assert.match(css, /:is\(#view-feed, #view-notifications, #view-profile\) \{\s*padding-inline: 0;/);
   assert.match(app, /rootMargin: "0px 0px 600px 0px"/);

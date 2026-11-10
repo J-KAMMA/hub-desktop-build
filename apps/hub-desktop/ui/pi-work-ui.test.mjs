@@ -16,6 +16,8 @@ const {createPiPermissionPresets}=await import(new URL('pi-permission-presets.mj
 const {createConnectionChat,createConnectionModels,parseRef}=await import(new URL('byok-chat.mjs',root));
 const connectionPicker=await import(new URL('pi-work-connection.mjs',root));
 const {createPiChanges}=await import(new URL('pi-changes.mjs',root));
+const market=await import(new URL('ai-market.mjs',root));
+const piInterrupted=await import(new URL('pi-work-interrupted.mjs',root));
 const helperUrl=process.env.HUB_AI_HISTORY_FILE?pathToFileURL(process.env.HUB_AI_HISTORY_FILE):new URL('./pi-work-history.mjs',root);
 const {renderPiWorkHistory}=await import(helperUrl);
 const app=readFileSync(process.env.HUB_AI_APP_FILE??new URL('./app.js',root),'utf8');
@@ -25,6 +27,7 @@ const initialize=new Function('deps',`
   const {document,invoke,history,Node,Event,navigator,ResizeObserver,controlMetrics,renderPiWorkHistory,renderPiApproval,createPiModelPicker,createPiChanges,createPiWorkController,createPiWorkDrafts,piWorkDraftLength,hubWorkHistoryEntries,pendingActionsOf,toolCallsOf,piWorkIsTerminal,piWorkStatusLabel,piWorkErrorText}=deps;
   const {createPiPermissionPresets,createConnectionChat,createConnectionModels,parseRef}=deps;
   const {CONNECTION_NOTE,connectionChoices,renderConnectionPicker,syncConnectionModel}=deps;
+  const {createMarketController,normalizeListings,showDisclosure,piInterrupted}=deps;
   const safeStorage=null;
   const railNav={visit(){},handle(){}};
   const WHEN=new Intl.DateTimeFormat('ja-JP');
@@ -38,14 +41,14 @@ const initialize=new Function('deps',`
 `);
 const run=(overrides={})=>({id:'r1',workspace:'C:/work/project',prompt:'依頼1',model:'ollama/model',status:'done',startedAtMs:1,continuation:{available:true},pendingActions:[],toolCalls:[],...overrides});
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
-async function fixture(t,{runs=[run()],workspace='C:/work/project',cli=[],diff=null,workOptions=null}={}){
+async function fixture(t,{runs=[run()],workspace='C:/work/project',cli=[],diff=null,workOptions=null,interrupted=null}={}){
   const dom=new JSDOM(readFileSync(process.env.HUB_AI_HTML_FILE??new URL('index.html',root),'utf8'),{url:'http://fixture.invalid/'}),document=dom.window.document,calls=[];
   dom.window.HTMLElement.prototype.scrollTo=function({top=0}={}){this.scrollTop=top;};dom.window.HTMLElement.prototype.scrollIntoView=function(){};
   document.querySelector('#ai-more').showModal=function(){this.open=true;};
   let selectedWorkspace=workspace,pick=null,startError=null,modelCatalog={models:[]};
-  const invoke=async(command,args)=>{calls.push([command,args]);if(command==='pi_work_diff'&&diff)return diff(args);if(command==='pi_work_list')return runs;if(command==='pi_work_models')return modelCatalog;if(command==='dev_workspace')return selectedWorkspace;if(command==='set_dev_workspace'){selectedWorkspace=args.path;return;}if(command==='pick_dev_workspace'){if(pick)selectedWorkspace=pick;return pick;}if(command==='pi_work_start'){if(startError)throw startError;return run({id:'started',workspace:selectedWorkspace,status:'running',prompt:args.prompt,continuation:{available:false}});}if(command==='pi_work_decide'||command==='pi_work_cancel')return run({id:args.runId??args.id,status:'running'});throw Error('unexpected '+command);};
+  const invoke=async(command,args)=>{calls.push([command,args]);if(command==='pi_work_diff'&&diff)return diff(args);if(command==='pi_work_list')return runs;if(command==='pi_work_interrupted'&&interrupted)return interrupted;if(command==='pi_work_interrupted_dismiss')return;if(command==='pi_work_models')return modelCatalog;if(command==='dev_workspace')return selectedWorkspace;if(command==='set_dev_workspace'){selectedWorkspace=args.path;return;}if(command==='pick_dev_workspace'){if(pick)selectedWorkspace=pick;return pick;}if(command==='pi_work_start'){if(startError)throw startError;return run({id:'started',workspace:selectedWorkspace,status:'running',prompt:args.prompt,continuation:{available:false}});}if(command==='pi_work_decide'||command==='pi_work_cancel')return run({id:args.runId??args.id,status:'running'});throw Error('unexpected '+command);};
   const timers={setInterval:()=>1,clearInterval:()=>{}};
-  const api=initialize({...work,...drafts,...connectionPicker,createPiPermissionPresets,createConnectionChat,createConnectionModels,parseRef,document,invoke,piWorkOptions:workOptions?.(invoke),history:cli,workspace,Node:dom.window.Node,Event:dom.window.Event,navigator:dom.window.navigator,ResizeObserver:class{observe(){}},controlMetrics:createDesktopControlMetrics({now:()=>0}),renderPiWorkHistory,renderPiApproval,createPiModelPicker,createPiChanges,createPiWorkController:options=>work.createPiWorkController({...options,timers})});
+  const api=initialize({piInterrupted,...work,...drafts,...connectionPicker,...market,createPiPermissionPresets,createConnectionChat,createConnectionModels,parseRef,document,invoke,piWorkOptions:workOptions?.(invoke),history:cli,workspace,Node:dom.window.Node,Event:dom.window.Event,navigator:dom.window.navigator,ResizeObserver:class{observe(){}},controlMetrics:createDesktopControlMetrics({now:()=>0}),renderPiWorkHistory,renderPiApproval,createPiModelPicker,createPiChanges,createPiWorkController:options=>work.createPiWorkController({...options,timers})});
   t.after(()=>{api.controller.dispose();dom.window.close();});await flush();
   const el=id=>document.querySelector('#'+id),select=id=>{document.querySelector(`.piw-history-item[data-kind="hub"][data-run-id="${id}"]`).click();};
   return {...api,dom,document,calls,el,select,pick:value=>{pick=value;},failStart:value=>{startError=value;},models:value=>{modelCatalog=value;}};
@@ -219,4 +222,34 @@ test('permission presets are locked while a run is live and the draft check keep
   const f=await fixture(t,{runs:[run({status:'running'})]});await flush();
   assert.equal(f.el('pi-work-perm-lock').hidden,false);assert.equal(f.document.querySelector('#pi-work-perm-popover [data-preset="tools"]').disabled,true);
   f.document.querySelector('#pi-work-perm-popover [data-preset="tools"]').click();assert.equal(f.el('pi-work-allow-exec').checked,false);
+});
+
+test('interrupted sessions get a 中断 badge, show their calls with 再実行/閉じる, and re-run only after the click through resumeRunId',async t=>{
+  const item={runId:'r1',workspace:'C:/work/project',retryAutomatically:[{callId:'c1',name:'hub_read',detail:'a.txt'}],interrupted:[{callId:'c2',name:'hub_write',detail:'b.txt'}],pendingApprovals:[{id:'p1',tool:'hub_exec',summary:'npm test'}]};
+  const f=await fixture(t,{runs:[run({status:'failed'})],interrupted:[item]});await flush();
+  assert.equal(f.document.querySelector('.piw-history-item[data-run-id="r1"] .piw-history-badge').textContent,'中断');
+  f.select('r1');await flush();
+  const panel=f.document.querySelector('.piw-interrupted');assert.ok(panel);
+  assert.deepEqual([...panel.querySelectorAll('li code')].map(n=>n.textContent),['hub_write','hub_read','hub_exec']);
+  assert.equal(panel.querySelector('li[data-kind="approval"] small').textContent,'承認待ち');
+  assert.equal(panel.querySelector('.approve'),null,'no approval control in the interrupted list');
+  assert.equal(f.calls.some(([c])=>c==='pi_work_start'),false,'nothing re-runs by itself');
+  panel.querySelector('.piw-interrupted-rerun').click();await flush();
+  const start=f.calls.find(([c])=>c==='pi_work_start')[1];
+  assert.equal(start.resumeRunId,'r1');assert.equal(start.allowWrite,false);assert.equal(start.allowExec,false);
+});
+
+test('閉じる dismisses an interrupted session without starting anything, and the badge goes away',async t=>{
+  const f=await fixture(t,{runs:[run({status:'failed'})],interrupted:[{runId:'r1',workspace:'C:/work/project',retryAutomatically:[],interrupted:[{callId:'c',name:'hub_write',detail:''}],pendingApprovals:[]}]});await flush();
+  f.select('r1');await flush();
+  f.document.querySelector('.piw-interrupted-dismiss').click();await flush();
+  assert.deepEqual(f.calls.find(([c])=>c==='pi_work_interrupted_dismiss')[1],{runId:'r1'});
+  assert.equal(f.calls.some(([c])=>c==='pi_work_start'),false);
+  assert.equal(f.document.querySelector('.piw-interrupted'),null);assert.equal(f.document.querySelector('.piw-history-badge'),null);
+});
+
+test('a run with compaction shows one muted line and nothing else',async t=>{
+  const f=await fixture(t,{runs:[run({compaction:{phase:'done',count:1,line:'会話を要約しました',tokensBefore:9000,tokensAfter:2000}})]});
+  f.select('r1');await flush();
+  const note=f.document.querySelector('.piw-compaction');assert.equal(note.textContent,'会話を要約しました');assert.ok(note.querySelector('svg'));
 });

@@ -1,3 +1,4 @@
+use crate::browser_tab_rest;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -43,7 +44,7 @@ static HISTORY_WRITE: Mutex<()> = Mutex::new(());
 /// この時間を超えて隠れているタブのwebviewを破棄する（メモリセーバー）。
 /// タブとURLは残るので、選択時に作り直して同じページへ戻る。
 /// HUB_BROWSER_DISCARD_SECS で検証用に短縮できる。
-const DISCARD_AFTER: Duration = Duration::from_secs(300);
+const DISCARD_AFTER: Duration = Duration::from_secs(1800);
 const REAP_INTERVAL: Duration = Duration::from_secs(30);
 
 /// 空きメモリが少ないあいだは、隠れたタブを早めに休ませる（ユーザー決定 2026-10-11）。
@@ -51,6 +52,7 @@ const REAP_INTERVAL: Duration = Duration::from_secs(30);
 const LOW_MEMORY_DISCARD_AFTER: Duration = Duration::from_secs(30);
 const LOW_MEMORY_BYTES: u64 = 3 * 1024 * 1024 * 1024;
 
+#[allow(dead_code)]
 fn discard_after() -> Duration {
     std::env::var("HUB_BROWSER_DISCARD_SECS")
         .ok()
@@ -1047,6 +1049,7 @@ fn activate(app: &AppHandle, id: u64) {
     })
     .unwrap_or_default();
     // 廃棄済みなら作り直してから表示する（生成は遅延で実体化される）。
+    rest_forget(app, id);
     revive_tab(app, id);
     for (tab_id, label) in labels {
         if let Some(webview) = app.get_webview(&label) {
@@ -1377,6 +1380,7 @@ fn tab_is_playing_audio(tab: &Tab) -> bool {
     tab.media.as_ref().and_then(|media| media.playing_audio) == Some(true)
 }
 
+#[allow(dead_code)]
 fn tab_is_stale(tab: &Tab, now: Instant) -> bool {
     tab_can_sleep(tab)
         && !tab_is_playing_audio(tab)
@@ -1388,8 +1392,102 @@ fn tab_is_stale(tab: &Tab, now: Instant) -> bool {
 /// 隠れ続けているタブを探してwebviewを閉じ、タブとURLだけ残す。
 /// アクティブタブと表示中のタブは hidden_since を持たないので対象外。
 fn discard_stale(app: &AppHandle) {
+    use browser_tab_rest::{Facts, RestConfig};
     let now = Instant::now();
-    discard_where(app, |tab| tab_is_stale(tab, now));
+    let ai_tab = crate::browser_ai_control::busy_tab();
+    let downloading = downloads_in_progress();
+    let facts = with_tabs(|state| {
+        state.tabs.iter().map(|tab| Facts {
+            id: tab.id, active: tab.id == state.active, discarded: tab.discarded, private: tab.private, pinned: tab.pinned,
+            playing_audio: tab_is_playing_audio(tab), downloading, ai_in_use: ai_tab == Some(tab.id), unsaved_input: None,
+            hidden_for: tab.hidden_since.map(|since| now.duration_since(since)),
+        }).collect::<Vec<_>>()
+    }).unwrap_or_default();
+    let pressure = available_memory().is_some_and(|bytes| bytes < LOW_MEMORY_BYTES);
+    let mut recorder = RestRecorder::default();
+    // 状態の更新だけを錠の内側で行い、WebView2 への操作は錠を放してから実行する。
+    REST.lock().unwrap_or_else(|e| e.into_inner()).tick(&facts, RestConfig::current(), pressure, &mut recorder);
+    for command in recorder.commands { run_rest_command(app, command); }
+}
+
+static REST: Mutex<std::sync::LazyLock<browser_tab_rest::Rester>> = Mutex::new(std::sync::LazyLock::new(Default::default));
+
+fn downloads_in_progress() -> bool {
+    DOWNLOADS.lock().map(|rows| rows.iter().any(|row| matches!(row.status.as_str(), "choosing" | "active"))).unwrap_or(true)
+}
+
+enum RestCommand { Probe(u64), Suspend(u64), Resume(u64), Discard(u64) }
+#[derive(Default)]
+struct RestRecorder { commands: Vec<RestCommand> }
+impl browser_tab_rest::TabEngine for RestRecorder {
+    fn probe_unsaved_input(&mut self, id: u64) { self.commands.push(RestCommand::Probe(id)); }
+    fn try_suspend(&mut self, id: u64) { self.commands.push(RestCommand::Suspend(id)); }
+    fn resume(&mut self, id: u64) { self.commands.push(RestCommand::Resume(id)); }
+    fn discard(&mut self, id: u64) -> bool { self.commands.push(RestCommand::Discard(id)); true }
+}
+
+/// 表示へ戻る／閉じるタブの休止状態を捨てる。
+fn rest_forget(app: &AppHandle, id: u64) {
+    let mut recorder = RestRecorder::default();
+    REST.lock().unwrap_or_else(|e| e.into_inner()).activated(id, &mut recorder);
+    for command in recorder.commands { run_rest_command(app, command); }
+}
+
+fn run_rest_command(app: &AppHandle, command: RestCommand) {
+    let id = match command { RestCommand::Probe(id) | RestCommand::Suspend(id) | RestCommand::Resume(id) | RestCommand::Discard(id) => id };
+    if let RestCommand::Discard(id) = command {
+        discard_where(app, |tab| tab.id == id && !tab.discarded && tab.hidden_since.is_some());
+        return;
+    }
+    let Some(label) = with_tabs(|state| state.tabs.iter().find(|tab| tab.id == id).map(|tab| tab.label.clone())).flatten() else { return };
+    let Some(webview) = app.get_webview(&label) else { return };
+    rest_webview(&webview, id, command);
+}
+
+/// 入力欄に未保存の内容がありそうなら 1。読めないときも 1（守る側へ倒す）。
+const UNSAVED_INPUT_PROBE: &str = "(()=>{try{for(const e of document.querySelectorAll('input,textarea,select')){if(e.type==='hidden')continue;if(e instanceof HTMLSelectElement){if([...e.options].some(o=>o.selected!==o.defaultSelected))return 1}else if(e.type==='checkbox'||e.type==='radio'){if(e.checked!==e.defaultChecked)return 1}else if(e.value!==e.defaultValue)return 1}const a=document.activeElement;if(a&&a.isContentEditable&&(a.textContent||'').length>0)return 1;return 0}catch(e){return 1}})()";
+
+#[cfg(windows)]
+fn rest_webview(webview: &tauri::Webview, id: u64, command: RestCommand) {
+    use webview2_com::{ExecuteScriptCompletedHandler, TrySuspendCompletedHandler, Microsoft::Web::WebView2::Win32::ICoreWebView2_3};
+    use windows_core::Interface;
+    let _ = webview.with_webview(move |platform| unsafe {
+        let Ok(core) = platform.controller().CoreWebView2() else { return };
+        match command {
+            RestCommand::Probe(_) => {
+                let done = ExecuteScriptCompletedHandler::create(Box::new(move |result, json| {
+                    let dirty = result.ok().map(|_| json.trim() != "0");
+                    REST.lock().unwrap_or_else(|e| e.into_inner()).probe_result(id, dirty);
+                    Ok(())
+                }));
+                if core.ExecuteScript(&windows_core::HSTRING::from(UNSAVED_INPUT_PROBE), &done).is_err() {
+                    REST.lock().unwrap_or_else(|e| e.into_inner()).probe_result(id, None);
+                }
+            }
+            RestCommand::Suspend(_) => {
+                let Ok(core3) = core.cast::<ICoreWebView2_3>() else { return };
+                let done = TrySuspendCompletedHandler::create(Box::new(move |result, ok| {
+                    if result.is_err() || !ok { REST.lock().unwrap_or_else(|e| e.into_inner()).suspend_failed(id); }
+                    Ok(())
+                }));
+                if core3.TrySuspend(&done).is_err() { REST.lock().unwrap_or_else(|e| e.into_inner()).suspend_failed(id); }
+            }
+            RestCommand::Resume(_) => { if let Ok(core3) = core.cast::<ICoreWebView2_3>() { let _ = core3.Resume(); } }
+            RestCommand::Discard(_) => {}
+        }
+    });
+}
+
+#[cfg(not(windows))]
+fn rest_webview(_webview: &tauri::Webview, id: u64, command: RestCommand) {
+    if matches!(command, RestCommand::Probe(_)) { REST.lock().unwrap_or_else(|e| e.into_inner()).probe_result(id, None); }
+}
+
+/// 背景タブを休ませるまでの時間（分）。停止は破棄以下であること。
+#[tauri::command]
+pub fn browser_set_rest_minutes(webview: tauri::Webview, suspend: u64, discard: u64) -> Result<(), String> {
+    rail_from_main(&webview)?;
+    browser_tab_rest::set_minutes(suspend, discard).map_err(str::to_owned)
 }
 
 /// 条件に合うタブのwebviewを閉じて「休止中」にし、休ませた数を返す。
@@ -5001,8 +5099,30 @@ pub(crate) fn initialize_protection() -> Result<(), String> {
         let enabled = protection_preferences::read(&data_dir().ok_or("browser_protection_preferences_unavailable")?.join("browser-protection.json"))?;
         #[cfg(windows)] protection::initialize()?;
         protection::set_enabled(enabled);
+        match protection_preferences::read_sites(&protection_sites_path()?) { Ok(sites) => protection::install_sites(sites), Err(error) => eprintln!("{error}") }
         Ok(())
     }).clone()
+}
+fn protection_sites_path() -> Result<std::path::PathBuf, String> {
+    Ok(data_dir().ok_or("browser_protection_preferences_unavailable")?.join("browser-protection-sites.json"))
+}
+fn protection_sites_value(label: Option<&str>) -> serde_json::Value {
+    serde_json::json!({ "version": 1, "tabBlockedCount": label.map_or(0, protection::tab_blocked_count), "allowedSites": protection::sites() })
+}
+/// Per-site allowances and the blocked count of one tab (read only).
+pub(crate) fn protection_site_status(tab: Option<u64>) -> Result<serde_json::Value, String> {
+    initialize_protection()?;
+    let label = tab.and_then(|id| with_tabs(|state| state.tabs.iter().find(|t| t.id == id).map(|t| t.label.clone())).flatten());
+    Ok(protection_sites_value(label.as_deref()))
+}
+/// Turn blocking off or on for one site. Persist first, then change the running matcher.
+pub(crate) fn set_protection_site(site: &str, allowed: bool, tab: Option<u64>) -> Result<serde_json::Value, String> {
+    let _serial = PROTECTION_WRITE.lock().map_err(|_| "browser_protection_unavailable")?;
+    initialize_protection()?;
+    let next = protection::with_site(site, allowed)?;
+    protection_preferences::write_sites(&protection_sites_path()?, &next)?;
+    protection::install_sites(next);
+    protection_site_status(tab)
 }
 pub(crate) fn protection_status() -> Result<serde_json::Value, String> {
     initialize_protection()?;

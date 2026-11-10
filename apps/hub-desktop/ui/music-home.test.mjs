@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
-import { createMusicHome, createMusicHistory, greetingFor } from './music-home.mjs';
+import { createMusicHome, createMusicHistory, planShelfPlayback } from './music-home.mjs';
 import { buildShelves, createShelfStore, SHELVES } from './music-shelves.mjs';
 import { createMusicYoutubeSession } from './music-youtube.mjs';
 
@@ -37,13 +37,7 @@ function homeFixture(t, loaders = {}) {
   return { document, home, calls, history, counts };
 }
 const shelfTitles = document => [...document.querySelectorAll('.mh-shelf')].map(node => node.querySelector('.mh-shelf-title').textContent);
-const shelfKeys = (document, id) => [...document.querySelectorAll(`.mh-shelf[data-shelf="${id}"] .mh-card`)].map(node => node.dataset.key);
-
-test('greeting follows the hour', () => {
-  assert.equal(greetingFor(new Date(2026, 0, 1, 7)), 'おはようございます');
-  assert.equal(greetingFor(new Date(2026, 0, 1, 13)), 'こんにちは');
-  assert.equal(greetingFor(new Date(2026, 0, 1, 22)), 'こんばんは');
-});
+const shelfKeys = (document, id) => [...document.querySelectorAll(`.mh-shelf[data-shelf="${id}"] .mh-card, .mh-shelf[data-shelf="${id}"] .mh-song`)].map(node => node.dataset.key);
 
 test('history keeps the newest first, de-duplicates and caps', () => {
   const history = createMusicHistory(3);
@@ -53,16 +47,34 @@ test('history keeps the newest first, de-duplicates and caps', () => {
   assert.deepEqual(history.list().map(entry => entry.work.id), ['d', 'a', 'c']);
 });
 
-test('home is a search bar and four shelves in a fixed order, even while empty', async t => {
-  const f = homeFixture(t);
-  assert.deepEqual(shelfTitles(f.document), ['最近再生', 'おすすめ', '新着', 'YouTube Music']);
-  assert.deepEqual(SHELVES.map(shelf => shelf.name), shelfTitles(f.document));
+test('empty shelves are not drawn; with nothing at all there is one short empty state and no greeting', async t => {
+  const f = homeFixture(t, { recommended: async () => [] });
   await f.home.refresh();
-  assert.deepEqual(shelfTitles(f.document), ['最近再生', 'おすすめ', '新着', 'YouTube Music']);
+  assert.equal(f.document.querySelectorAll('.mh-shelf').length, 0);
+  assert.equal(f.document.querySelector('.mh-greeting'), null);
+  assert.equal(f.document.querySelectorAll('.mh-quiet-line').length, 1);
   assert.ok(f.document.querySelector('.mh-head .mh-search input[type="search"]'));
   assert.equal(f.document.querySelector('.mh-hero'), null, 'no hero block');
-  assert.equal(f.document.querySelector('.mh-shelf[data-shelf="recent"] .mh-quiet-line').textContent, 'まだ再生した曲はありません。');
-  assert.equal(f.document.querySelector('.mh-shelf[data-shelf="new"] .mh-quiet-line').tagName, 'P');
+});
+
+test('shelves with items keep the fixed order; every shelf is a list pager (YouTube Music too); each head has すべて再生 and 前へ/次へ', async t => {
+  const f = homeFixture(t, { tracks: () => [track(1)], recommended: async () => [hubWork(2), ...works] });
+  f.history.add({ kind: 'track', track: track(1) });
+  await f.home.refresh();
+  assert.deepEqual(shelfTitles(f.document), ['最近再生', 'おすすめ', '新着', 'YouTube Music']);
+  assert.deepEqual(SHELVES.map(shelf => shelf.name), shelfTitles(f.document));
+  assert.ok(f.document.querySelector('.mh-shelf[data-shelf="new"] .mh-pager .mh-song'));
+  assert.ok(f.document.querySelector('.mh-shelf[data-shelf="youtube"] .mh-pager .mh-song'));
+  assert.equal(f.document.querySelector('.mh-card'), null);
+  for (const section of f.document.querySelectorAll('.mh-shelf')) {
+    assert.equal(section.querySelector('.mh-play-all').textContent, 'すべて再生');
+    assert.deepEqual([...section.querySelectorAll('.mh-pager-btn')].map(button => button.getAttribute('aria-label')), ['前へ', '次へ']);
+  }
+  const row = f.document.querySelector('.mh-shelf[data-shelf="new"] .mh-song');
+  assert.equal(row.querySelector('.mh-song-title').textContent, 'Hub1');
+  assert.equal(row.querySelector('.mh-song-meta').textContent, 'H');
+  f.document.querySelector('.mh-shelf[data-shelf="new"] .mh-play-all').click();
+  assert.deepEqual(f.calls.at(-1), ['track', UUID(1)]);
 });
 
 test('each shelf is loaded once: repeated refresh and repaint never call the loaders again; only reload() does', async t => {
@@ -84,7 +96,7 @@ test('concurrent refreshes share one load, and a failed load can be retried', as
   fail = false;
   [...f.document.querySelectorAll('button')].find(button => button.textContent === '再試行').click();
   await flush(); await flush();
-  assert.equal(f.document.querySelectorAll('.mh-shelf[data-shelf="youtube"] .mh-card').length, 2);
+  assert.equal(f.document.querySelectorAll('.mh-shelf[data-shelf="youtube"] .mh-song').length, 2);
 });
 
 test('the order is stable: a later search that replaces the track list does not reshuffle the shelf', async t => {
@@ -107,18 +119,16 @@ test('a Hub work already on 新着 is not repeated on おすすめ, and external
   assert.equal(f.document.querySelectorAll('.mh-shelf[data-shelf="recommended"] [data-key="work:sample-mw-1"]').length, 0);
 });
 
-test('tiles are square artwork, title and artist; play shows only for playable items; YouTube plays through the work path', async t => {
+test('YouTube Music rows show artwork, title and artist; clicking a row plays through the work path', async t => {
   const f = homeFixture(t);
   await f.home.refresh();
-  const tiles = [...f.document.querySelectorAll('.mh-shelf[data-shelf="youtube"] .mh-card')];
-  assert.equal(tiles.length, 2);
-  assert.ok(tiles[0].querySelector('.mw-art-card'));
-  assert.equal(tiles[0].querySelector('.mh-card-title').textContent, 'Alpha');
-  assert.equal(tiles[0].querySelector('.mh-card-artist').textContent, 'A');
-  assert.ok(tiles[0].querySelector('.mh-card-play'));
-  assert.equal(tiles[1].querySelector('.mh-card-play'), null, 'Spotify only: no in-app play');
-  tiles[0].querySelector('.mh-card-play').click();
-  tiles[1].querySelector('.mh-card-open').click();
+  const rows = [...f.document.querySelectorAll('.mh-shelf[data-shelf="youtube"] .mh-song')];
+  assert.equal(rows.length, 2);
+  assert.ok(rows[0].querySelector('.mw-art-tile'));
+  assert.equal(rows[0].querySelector('.mh-song-title').textContent, 'Alpha');
+  assert.ok(rows[0].querySelector('.mh-song-meta').textContent.startsWith('A'));
+  rows[0].querySelector('.mh-song-open').click();
+  rows[1].querySelector('.mh-song-open').click();
   assert.deepEqual(f.calls, [['play', 'sample-mw-1'], ['play', 'sample-mw-2']]);
   assert.equal(f.document.querySelector('iframe'), null, 'the home never embeds anything itself');
 });
@@ -129,7 +139,7 @@ test('a Hub track tile plays through playTrack; recent shows what the session pl
   f.history.add({ kind: 'track', track: track(2) });
   await f.home.refresh();
   assert.deepEqual(shelfKeys(f.document, 'recent'), [`track:${UUID(2)}`, 'work:sample-mw-1']);
-  f.document.querySelector(`.mh-shelf[data-shelf="new"] [data-key="track:${UUID(1)}"] .mh-card-play`).click();
+  f.document.querySelector(`.mh-shelf[data-shelf="new"] [data-key="track:${UUID(1)}"] .mh-song-open`).click();
   assert.deepEqual(f.calls.at(-1), ['track', UUID(1)]);
 });
 
@@ -137,7 +147,7 @@ test('there is no paging: a shelf is capped at one screenful and no "more" contr
   const many = Array.from({ length: 40 }, (_, index) => ({ id: UUID(index + 1), title: `T${index}`, artist: 'a' }));
   const f = homeFixture(t, { tracks: () => many });
   await f.home.refresh();
-  assert.equal(f.document.querySelectorAll('.mh-shelf[data-shelf="new"] .mh-card').length, 12);
+  assert.equal(f.document.querySelectorAll('.mh-shelf[data-shelf="new"] .mh-song').length, 12);
   assert.equal([...f.document.querySelectorAll('button')].filter(button => /続き|もっと|さらに/.test(button.textContent)).length, 0);
 });
 
@@ -182,7 +192,7 @@ test('the shell has exactly one now-playing bar and one audio element; the new m
 test('every Hub and external tile has a ⋯ menu button for its work; Hub tracks are menu works with the music: id; peers have none', async t => {
   const f = homeFixture(t);
   await f.home.refresh();
-  const tiles = [...f.document.querySelectorAll('.mh-card')];
+  const tiles = [...f.document.querySelectorAll('.mh-card, .mh-song')];
   assert.ok(tiles.length > 0);
   for (const tile of tiles) {
     const more = tile.querySelector('.music-more');
@@ -190,4 +200,29 @@ test('every Hub and external tile has a ⋯ menu button for its work; Hub tracks
     assert.ok(more.hubMusicWork.id, 'carries the work');
     assert.ok(!more.hubMusicWork.id.startsWith('music:music:'));
   }
+});
+
+test('planShelfPlayback skips unplayable entries, queues Hub tracks in order and starts from the first playable', () => {
+  const unplayable = { kind: 'work', work: { id: 'x1', title: 'No embed', services: [] } };
+  const embed = { kind: 'work', work: works[0] };
+  const plan = planShelfPlayback([unplayable, { kind: 'peer', peer: { key: 'k' } }, { kind: 'track', track: track(1) }, embed, { kind: 'work', work: hubWork(2) }], { canPlayWork: work => work.services.some(s => s.provider === 'youtube') });
+  assert.equal(plan.start.kind, 'track');
+  assert.deepEqual(plan.tracks.map(t => t.id), [UUID(1), UUID(2)]);
+  assert.equal(planShelfPlayback([unplayable], { canPlayWork: () => false }).start, null);
+  assert.equal(planShelfPlayback([embed], { canPlayWork: () => true }).start, embed);
+  assert.equal(planShelfPlayback(Array.from({ length: 250 }, (_, i) => ({ kind: 'track', track: track(i + 1) }))).tracks.length, 200);
+});
+
+test('すべて再生 hands the whole shelf to actions.playQueue when provided', async t => {
+  const queues = [];
+  const dom = new JSDOM('<main id="host"></main>', { url: 'http://localhost' });
+  const { document } = dom.window;
+  const home = createMusicHome({ document, host: document.getElementById('host'), hubAsset() {}, history: createMusicHistory(),
+    loaders: { recommended: async () => [hubWork(1), hubWork(2)], favorites: async () => [], tracks: () => [], peers: async () => [] },
+    actions: { playWork() {}, playTrack() {}, search() {}, playQueue: entries => queues.push(entries.map(e => e.kind)) } });
+  t.after(() => { home.destroy(); dom.window.close(); });
+  await home.refresh();
+  document.querySelector('.mh-shelf .mh-play-all').click();
+  assert.equal(queues.length, 1);
+  assert.ok(queues[0].length >= 2);
 });

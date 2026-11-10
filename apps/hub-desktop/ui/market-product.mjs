@@ -52,7 +52,8 @@ export function createMarketProductPage({ document, host, deps }) {
   host.replaceChildren(root);
 
   function gallery(item) {
-    const box = el(document, 'div', 'mk-gallery');
+    // Etsy の商品ページ：小さな絵は大きな絵の左に縦に並ぶ（狭い幅では下に横並び）。
+    const box = el(document, 'div', item.images.length > 1 ? 'mk-gallery has-thumbs' : 'mk-gallery');
     const main = media(document, { url: item.images[imageIndex], label: item.sellerName || item.title, alt: item.title, asset: deps.asset, className: 'mk-media mk-gallery-main' });
     box.append(main);
     if (item.images.length > 1) {
@@ -91,11 +92,6 @@ export function createMarketProductPage({ document, host, deps }) {
   function buyBox(item) {
     const box = el(document, 'section', 'mk-buy');
     box.setAttribute('aria-label', '購入');
-    const price = priceView(item);
-    const priceLine = el(document, 'p', 'mk-price');
-    priceLine.append(el(document, 'strong', 'mk-price-main mk-num', price.main));
-    if (price.sub) priceLine.append(el(document, 'span', 'mk-price-sub', price.sub));
-    box.append(priceLine);
     const actions = el(document, 'div', 'mk-buy-actions');
     if (buyableInApp(item)) {
       const max = Math.min(MAX_QUANTITY, item.raw.stockQuantity);
@@ -162,11 +158,16 @@ export function createMarketProductPage({ document, host, deps }) {
   function render() {
     if (!current) { root.replaceChildren(); return; }
     const item = current;
+    // Etsy の並び：価格 → 題 → 販売者と種別 → 買う箱 → 事実。価格は ctx で変わらないので refresh の対象外。
     const info = el(document, 'div', 'mk-info');
+    const price = priceView(item);
+    const priceLine = el(document, 'p', 'mk-price');
+    priceLine.append(el(document, 'strong', 'mk-price-main mk-num', price.main));
+    if (price.sub) priceLine.append(el(document, 'span', 'mk-price-sub', price.sub));
     const head = el(document, 'div', 'mk-info-head');
-    head.append(badge(document, KIND_LABEL[item.kind]));
     if (item.sellerName) head.append(el(document, 'span', 'mk-info-seller', item.sellerName));
-    info.append(head, el(document, 'h3', 'mk-title', item.title), buyBox(item));
+    head.append(badge(document, KIND_LABEL[item.kind]));
+    info.append(priceLine, el(document, 'h3', 'mk-title', item.title), head, buyBox(item));
     const facts = el(document, 'dl', 'mk-facts');
     for (const [label, value] of factsFor(item)) fact(document, facts, label, value);
     if (facts.childElementCount) info.append(facts);

@@ -1,0 +1,58 @@
+/* 外へ出るリンクの確認と、釣り文句の警告行。色は意味トークンだけ。 */
+.outbound-link__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 100%;
+  margin-block: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  color: var(--text);
+  font-size: var(--type-subhead);
+}
+.outbound-link__title { font-weight: 700; }
+.outbound-link__host { overflow-wrap: anywhere; font-weight: 700; }
+.outbound-link__fact { overflow-wrap: anywhere; color: var(--text-meta); }
+.outbound-link__warning {
+  padding: 4px 8px;
+  border-radius: var(--radius-xs);
+  background: var(--warning-bg);
+  color: var(--warning-text);
+  font-weight: 700;
+}
+.outbound-link__actions { display: flex; gap: 8px; margin-top: 2px; }
+.outbound-link__open,
+.outbound-link__cancel {
+  min-height: 32px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  color: var(--text);
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+.outbound-link__open { border-color: var(--emphasis); }
+.outbound-link__panel :is(a, button):focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+.bait-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-block: 4px;
+  padding: 6px 8px;
+  border-radius: var(--radius-xs);
+  background: var(--warning-bg);
+  color: var(--warning-text);
+  font-size: var(--type-subhead);
+  line-height: 1.4;
+}
+.bait-warning__icon { flex: 0 0 auto; margin-top: 2px; }
+
+.message-bubble__content > p,
+.v2-dm__bubble > p { margin: 0; }

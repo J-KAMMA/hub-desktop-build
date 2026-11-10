@@ -47,3 +47,15 @@
 
 /* 長さの札：媒体の上に載るので、どの型でも読める媒体専用トークン（--action-text は noir で暗く、読めない） */
 #hub-shell #view-videos .video-duration, #hub-shell #video-watch-related .video-duration { background: var(--media-badge-bg); color: var(--media-badge-text); }
+
+/* ---- 動画の格子を note の寸法に合わせる（2026-11-04）：列は 200 以上、行の間 32px・列の間 16px、絵は 16:9 のまま角なし、
+   題は本文の大きさ・太字・2行まで、チャンネルの丸は置かない。ショートの画面（縦の送り）は対象外。 ---- */
+@media (min-width: 601px) {
+  #hub-shell #view-videos :is(.vh-grid, .vt-grid, .vid-channel-grid, #videos-results:not(.vid-shorts-mode)):not(#_) { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--ds-space-7) var(--ds-space-4); }
+}
+#hub-shell #view-videos .vh-card .video-thumbnail:not(#_) { border-radius: 0; }
+#hub-shell #view-videos .vh-card .vh-avatar:not(#_) { display: none; }
+#hub-shell #view-videos .vh-card-body:not(#_) { padding-top: var(--ds-space-3); }
+#hub-shell #view-videos .vh-card .video-card-copy strong:not(#_) { font-weight: var(--weight-bold); }
+#hub-shell #view-videos .vh-card:hover .video-card-copy strong:not(#_) { text-decoration: underline; text-underline-offset: 3px; }
+#hub-shell #view-videos .vh-card .video-card-copy > span:not(#_) { font-size: var(--type-caption); }

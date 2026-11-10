@@ -1,4 +1,5 @@
 /** Site icons arrive from the native side as bounded PNG data URLs; nothing else is ever put in an img src. */
+import { dataImageToBlobUrl } from './blob-image.mjs';
 export const FAVICON_PREFIX = 'data:image/png;base64,';
 export const FAVICON_MAX_BYTES = 32 * 1024;
 const MAX_LENGTH = FAVICON_PREFIX.length + Math.ceil(FAVICON_MAX_BYTES / 3) * 4;
@@ -11,12 +12,14 @@ export function validFavicon(value) {
   return body.startsWith(PNG_HEAD) && body.length % 4 === 0 && /^[A-Za-z0-9+/]+={0,2}$/.test(body);
 }
 
-/** The icon as an <img>, or null when the value is absent or not an acceptable PNG data URL. */
+/** The icon as an <img> (blob: URL made after the PNG shape check; the window CSP has no data:), or null. */
 export function faviconImage(document, value) {
   if (!validFavicon(value)) return null;
+  const blobUrl = dataImageToBlobUrl(value, { maxBytes: FAVICON_MAX_BYTES });
+  if (!blobUrl) return null;
   const image = document.createElement('img');
   image.alt = ''; image.width = 16; image.height = 16; image.decoding = 'async'; image.draggable = false;
-  image.setAttribute('aria-hidden', 'true'); image.src = value;
+  image.setAttribute('aria-hidden', 'true'); image.src = blobUrl;
   return image;
 }
 

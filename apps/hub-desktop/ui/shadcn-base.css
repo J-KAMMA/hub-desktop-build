@@ -1,0 +1,434 @@
+/* shadcn/ui の土台（2026-11-04、所有者承認）。部品の見た目を 1 か所で当てる。最後に読み込む。
+   寸法と状態は shadcn/ui（MIT, https://ui.shadcn.com, https://github.com/shadcn-ui/ui）の new-york-v4 の部品から
+   Tailwind の class を px に直して写した。色は tokens.css の --sc-*（Hub の意味の名前の別名）だけ。
+   Hub の決まりは残す: 影・凸・グラデーションは使わない（flat-buttons）、金は塗らない、字の段は 13/15、太さは 400・700・800。
+   対応表は docs/hub-ui-reference/SHADCN-BASE.md。 */
+
+/* ---- Button（cva buttonVariants） ----
+   基本: gap 8（display は各画面の規則のまま。隠す規則を上書きしない）・角 8（rounded-md）・13px 700・svg 16。default h36 px16、sm h32 px12、lg h40 px24、xs h24 px8、icon 36/32。
+   default=.btn-primary/.approve、outline=.btn-secondary/.deny/.head-action/.mk-btn、ghost=.btn-ghost/button.ghost、
+   destructive=.btn-destructive、link=.btn-link、icon=.btn-icon（icon-sm 32）。 */
+#hub-shell :is(.btn, .approve, .deny, .head-action, button.ghost, .mk-btn):not([role="tab"]):not(#_):not(#_):not(#_):not(#_) {
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  box-sizing: border-box;
+  min-height: var(--sc-h);
+  padding: 0 var(--sc-px);
+  border: 1px solid transparent;
+  border-radius: var(--sc-radius-md);
+  font-size: var(--sc-text);
+  line-height: var(--sc-leading);
+  font-weight: var(--sc-weight);
+  letter-spacing: 0;
+  white-space: nowrap;
+  box-shadow: none;
+  transition: background-color var(--dur-press) var(--ease-out), border-color var(--dur-press) var(--ease-out), color var(--dur-press) var(--ease-out);
+}
+#hub-shell :is(.btn, .approve, .deny, .head-action, button.ghost, .mk-btn, .btn-icon, .chip, .mk-chip, .state-pill, .badge, .segmented):not(#_):not(#_):not(#_):not(#_):not(#_)[hidden] { display: none; }
+#hub-shell :is(.btn, .approve, .deny, .head-action, button.ghost, .mk-btn):not([role="tab"]):not(#_):not(#_):not(#_):not(#_):has(> svg:first-child) { padding-inline: var(--sc-px-sm); }
+#hub-shell :is(.btn, .approve, .deny, .head-action, button.ghost, .mk-btn):not([role="tab"]):not(#_):not(#_):not(#_):not(#_) > svg { flex: none; width: var(--sc-icon); height: var(--sc-icon); }
+#hub-shell :is(.btn-sm, .mk-btn-compact):not(#_):not(#_):not(#_):not(#_) { min-height: var(--sc-h-sm); padding-inline: var(--sc-px-sm); gap: 6px; }
+#hub-shell :is(.btn-lg):not(#_):not(#_):not(#_):not(#_) { min-height: var(--sc-h-lg); padding-inline: var(--sc-px-lg); }
+#hub-shell :is(.btn-xs):not(#_):not(#_):not(#_):not(#_) { min-height: var(--sc-h-xs); padding-inline: var(--sc-px-xs); gap: var(--space-1); font-size: var(--sc-text-xs); line-height: var(--sc-leading-xs); }
+
+/* default: 中立の塗り（--text の面、--bg の字）。hover は primary/90。 */
+#hub-shell :is(.btn-primary, .approve, .mk-btn-primary):not(#_):not(#_):not(#_):not(#_) {
+  border-color: var(--sc-primary);
+  background: var(--sc-primary);
+  color: var(--sc-primary-foreground);
+}
+#hub-shell :is(.btn-primary, .approve, .mk-btn-primary):not(#_):not(#_):not(#_):not(#_):hover:not(:disabled) {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--sc-primary) 90%, transparent);
+  color: var(--sc-primary-foreground);
+  opacity: 1;
+}
+/* outline: 1px の線、地は --sc-background（dark は input/30）。hover は accent。 */
+#hub-shell :is(.btn-secondary, .deny, .head-action, .mk-btn:not(.mk-btn-primary)):not(#_):not(#_):not(#_):not(#_) {
+  border-color: var(--sc-input);
+  background: var(--sc-input-bg);
+  color: var(--sc-foreground);
+}
+#hub-shell :is(.btn-secondary, .deny, .head-action, .mk-btn:not(.mk-btn-primary)):not(#_):not(#_):not(#_):not(#_):hover:not(:disabled) {
+  background: var(--sc-accent);
+  color: var(--sc-accent-foreground);
+}
+/* ghost: 枠も地も無し。hover は accent。 */
+#hub-shell :is(.btn-ghost, button.ghost):not([role="tab"]):not(#_):not(#_):not(#_):not(#_) {
+  border-color: transparent;
+  background: transparent;
+  color: var(--sc-foreground);
+}
+#hub-shell :is(.btn-ghost, button.ghost):not([role="tab"]):not(#_):not(#_):not(#_):not(#_):hover:not(:disabled) {
+  background: var(--sc-accent);
+  color: var(--sc-accent-foreground);
+}
+/* destructive: 危険の色の塗り。link: 下線の文字。 */
+#hub-shell .btn-destructive:not(#_):not(#_):not(#_):not(#_) { border-color: var(--sc-destructive); background: var(--sc-destructive); color: var(--sc-destructive-foreground); }
+#hub-shell .btn-destructive:not(#_):not(#_):not(#_):not(#_):hover:not(:disabled) { background: color-mix(in srgb, var(--sc-destructive) 90%, transparent); }
+#hub-shell .btn-link:not(#_):not(#_):not(#_):not(#_) { min-height: 0; padding: 0; border: 0; background: transparent; color: var(--sc-foreground); text-underline-offset: 4px; }
+#hub-shell .btn-link:not(#_):not(#_):not(#_):not(#_):hover:not(:disabled) { background: transparent; text-decoration: underline; }
+/* 設定の「ログアウト」など危険の操作の文字は危険の色のまま（塗らない）。 */
+#hub-shell :is(#view-settings, #view-cart, #view-order, #view-market) .deny:not(#_):not(#_):not(#_):not(#_) { color: var(--sc-destructive); }
+
+/* icon（icon-sm）: 32 の正方形、角 8、ghost。記号 16〜20。 */
+#hub-shell .btn-icon:not(#_):not(#_):not(#_):not(#_) {
+  width: var(--sc-h-sm);
+  height: var(--sc-h-sm);
+  min-width: var(--sc-h-sm);
+  min-height: var(--sc-h-sm);
+  padding: 0;
+  border: 0;
+  border-radius: var(--sc-radius-md);
+  background: transparent;
+  color: var(--sc-muted-foreground);
+}
+#hub-shell .btn-icon:not(#_):not(#_):not(#_):not(#_):hover:not(:disabled) { background: var(--sc-accent); color: var(--sc-accent-foreground); }
+#hub-shell .app-toolbar .toolbar-button:not(#_):not(#_) { border-radius: var(--sc-radius-md); }
+#hub-shell .app-toolbar .toolbar-button:not(#_):not(#_):hover:not(:disabled) { background: var(--sc-accent); color: var(--sc-accent-foreground); }
+
+/* 無効: opacity 50、押せない。 */
+#hub-shell :is(.btn, .approve, .deny, .head-action, button.ghost, .mk-btn, .btn-icon):not(#_):not(#_):not(#_):not(#_):is(:disabled, [aria-disabled="true"]) { opacity: .5; cursor: not-allowed; }
+
+/* 焦点の輪（全部の部品で同じ）: 線を ring に、外へ 3px の ring/50。shadcn は box-shadow で描くが、Hub は光らせない決まり（tokens.test）なので同じ形を outline で描く。 */
+#hub-shell :is(.btn, .approve, .deny, .head-action, button.ghost, .mk-btn, .btn-icon, .chip, .mk-chip, .segmented > button, [role="tab"]):not(#_):not(#_):not(#_):not(#_):focus-visible {
+  outline: var(--sc-ring-width) solid var(--sc-ring-soft);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* ---- Input / Select（input.tsx・select.tsx の trigger） ----
+   h36・角 8・1px の input の線・px12・地は透明（dark は input/30）・placeholder は muted-foreground。焦点は線を ring、外へ 3px ring/50。 */
+#hub-shell :is(.view, .dialog-shell, .rail, .sidebar) :is(input[type="text"], input[type="search"], input[type="url"], input[type="number"], input[type="email"], input[type="password"], select):not(#_):not(#_):not(#_) {
+  box-sizing: border-box;
+  min-height: var(--sc-h);
+  padding: 0 var(--sc-px-sm);
+  border: 1px solid var(--sc-field);
+  border-radius: var(--sc-radius-md);
+  background: var(--sc-input-bg);
+  color: var(--sc-foreground);
+  font-size: var(--sc-text);
+  box-shadow: none;
+}
+#hub-shell :is(.view, .dialog-shell, .rail) :is(.detail-form, .field, .dialog-shell, .create-form) textarea:not(#_):not(#_):not(#_) {
+  padding: var(--space-2) var(--sc-px-sm);
+  border: 1px solid var(--sc-field);
+  border-radius: var(--sc-radius-md);
+  background: var(--sc-input-bg);
+  font-size: var(--sc-text);
+}
+#hub-shell :is(.view, .dialog-shell, .rail, .sidebar) select:not(#_):not(#_):not(#_):hover { background: var(--sc-input-bg-hover); }
+#hub-shell :is(.view, .dialog-shell, .rail, .sidebar) :is(input, select, textarea)::placeholder { color: var(--sc-muted-foreground); }
+#hub-shell :is(.view, .dialog-shell, .rail, .sidebar) :is(input[type="text"], input[type="search"], input[type="url"], input[type="number"], input[type="email"], input[type="password"], select, textarea):not(#_):not(#_):not(#_):focus-visible {
+  outline: var(--sc-ring-width) solid var(--sc-ring-soft);
+  outline-offset: var(--focus-ring-offset);
+}
+#hub-shell :is(.view, .dialog-shell, .rail, .sidebar) :is(input, select, textarea):not(#_):not(#_):not(#_):disabled { opacity: .5; cursor: not-allowed; }
+/* 市場の検索欄と並べ替え: 同じ入力の形（pill をやめて角 8）。 */
+#hub-shell .mk-search input:not(#_):not(#_):not(#_) { height: var(--sc-h); }
+#hub-shell .mk-sort select:not(#_):not(#_):not(#_) { min-height: var(--sc-h-sm); height: var(--sc-h-sm); }
+/* 一番上の検索欄（command の入力に相当）: 角 8、線は input、焦点は ring/50 の輪。位置と高さは今のまま。 */
+#hub-shell .app-toolbar #toolbar-search-form:not(#_):not(#_) { border-color: var(--sc-field); border-radius: var(--sc-radius-md); background: var(--sc-input-bg); }
+html[data-theme="light"] #hub-shell .app-toolbar #toolbar-search-form:not(#_):not(#_) { background: var(--sc-background); }
+#hub-shell .app-toolbar #toolbar-search-form:not(#_):not(#_):focus-within { outline: var(--sc-ring-width) solid var(--sc-ring); outline-offset: var(--focus-ring-offset); }
+
+/* ---- Tabs（tabs.tsx の default）: 段組の切り替え（.segmented）----
+   list: 地なし・間 4px。trigger: 丸・h28・px8・13px・選択中は地を抜いて線を --emphasis にし字を太くする（塗らない）。
+   見出しの下の .page-tabs は shadcn の line の型（下線 2px）のまま。選択中の下線は金（所有者の決定、現在の項目の線）。 */
+#hub-shell .segmented:not(#_):not(#_):not(#_) {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  box-sizing: border-box;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--sc-muted-foreground);
+}
+#hub-shell .segmented > button:not(#_):not(#_):not(#_):not(#_) {
+  flex: 1 1 auto;
+  height: var(--btn-h-sm);
+  min-height: 0;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--sc-muted-foreground);
+  font-size: var(--sc-text);
+  font-weight: var(--sc-weight);
+}
+#hub-shell .segmented > button:not(#_):not(#_):not(#_):not(#_):hover { background: transparent; color: var(--sc-foreground); }
+#hub-shell .segmented > :is(.on, [aria-pressed="true"], [aria-selected="true"]):not(#_):not(#_):not(#_):not(#_) {
+  border-color: var(--emphasis);
+  background: transparent;
+  color: var(--sc-foreground);
+  font-weight: var(--weight-bold);
+}
+
+/* ---- 絞り込みの札（.chip・.scope・.mk-chip）: Button の secondary・sm（h32・px12・角 8）。選択中は outline の形で、線は選択の線（noir・ivory は金）。 ---- */
+#hub-shell :is(.chip, .scope, .chip-row > button, .scopes > button, .mk-chip):not([role="tab"]):not(#_):not(#_):not(#_):not(#_) {
+  box-sizing: border-box;
+  height: var(--sc-h-sm);
+  min-height: var(--sc-h-sm);
+  padding: 0 var(--sc-px-sm);
+  border: 1px solid transparent;
+  border-radius: var(--sc-radius-md);
+  background: var(--sc-secondary);
+  color: var(--sc-secondary-foreground);
+  font-size: var(--sc-text);
+  font-weight: var(--ds-weight-text);
+}
+#hub-shell :is(.chip, .scope, .chip-row > button, .scopes > button, .mk-chip):not([role="tab"]):not(#_):not(#_):not(#_):not(#_):hover { background: var(--interactive-hover); }
+#hub-shell :is(.chip.on, .scope.on, .chip-row > .on, .scopes > .on, .chip-row > [aria-pressed="true"], .scopes > [aria-pressed="true"], .mk-chip.on, .mk-chip[aria-pressed="true"]):not([role="tab"]):not(#_):not(#_):not(#_):not(#_) {
+  border-color: var(--ds-chip-selected-line);
+  background: var(--sc-background);
+  color: var(--sc-foreground);
+  font-weight: var(--sc-weight);
+}
+#hub-shell .mk-chip.is-icon:not(#_):not(#_):not(#_):not(#_) { width: var(--sc-h-sm); padding: 0; }
+
+.badge { display: inline-flex; }
+/* ---- Badge（badge.tsx）: 丸い札・px8・py2・13px 700・線は透明。secondary は地 secondary、outline は線 border。 ---- */
+#hub-shell :is(.state-pill, .badge):not(#_):not(#_):not(#_) {
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  box-sizing: border-box;
+  width: fit-content;
+  padding: 2px var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--sc-radius-full);
+  background: var(--sc-secondary);
+  color: var(--sc-secondary-foreground);
+  font-size: var(--sc-text-xs);
+  line-height: var(--sc-leading-xs);
+  font-weight: var(--sc-weight);
+  white-space: nowrap;
+}
+#hub-shell .badge-outline:not(#_):not(#_):not(#_) { border-color: var(--sc-border); background: transparent; color: var(--sc-foreground); }
+
+/* ---- Card（card.tsx）: 角 14・1px の border・地 card・字 card-foreground・影なし（Hub は平ら）。中の余白は各画面のまま。
+   低い強さで当てるので、枠を持たない行に決めた画面（設定・リスト）の規則が勝つ。 ---- */
+:where(#hub-shell) .card {
+  border: 1px solid var(--sc-border);
+  border-radius: var(--sc-radius-xl);
+  background: var(--sc-card);
+  color: var(--sc-card-foreground);
+  box-shadow: none;
+}
+
+/* ---- Separator: 1px の border の色。 ---- */
+#hub-shell :is(hr, .separator, [role="separator"]):not(#_) { flex: none; height: 1px; margin: 0; border: 0; background: var(--sc-border); }
+#hub-shell [role="separator"][aria-orientation="vertical"]:not(#_) { width: 1px; height: auto; align-self: stretch; }
+
+/* ---- Dialog（dialog.tsx）: 角 10・1px の border・地 background・p24・影は lg。幕は overlay。見出し 17/700、説明は muted-foreground。 ---- */
+dialog:not(.media-lightbox):not(#_):not(#_) {
+  border: 1px solid var(--sc-border);
+  border-radius: var(--sc-radius-lg);
+  background: var(--sc-background);
+  color: var(--sc-foreground);
+  box-shadow: var(--elevation-2);
+  backdrop-filter: none;
+}
+dialog:not(.media-lightbox):not(#_):not(#_)::backdrop { background: var(--sc-overlay); backdrop-filter: none; }
+dialog:not(.media-lightbox) .dialog-shell:not(#_):not(#_) { padding: var(--space-6); }
+dialog:not(.media-lightbox) .dialog-head:not(#_):not(#_) { background: var(--sc-background); }
+dialog:not(.media-lightbox) .dialog-head h2:not(#_):not(#_) { font-size: var(--ds-type-reading-size); line-height: var(--ds-type-reading-leading); font-weight: var(--ds-weight-strong); letter-spacing: 0; }
+
+/* ---- Tooltip（tooltip.tsx）: 地 foreground・字 background・角 8・px12・py6・13px・枠と影なし。矢印も foreground。 ---- */
+.rail-tooltip:not(#_) {
+  padding: 6px var(--sc-px-sm);
+  border: 0;
+  border-radius: var(--sc-radius-md);
+  background: var(--sc-foreground);
+  color: var(--sc-background);
+  font-size: var(--sc-text-xs);
+  line-height: var(--sc-leading-xs);
+  box-shadow: none;
+}
+.rail-tooltip:not(#_)::before { border: 0; background: var(--sc-foreground); }
+
+/* ---- Sidebar（sidebar.tsx の menu button）: 角 8・p8・gap 8・hover は sidebar-accent。選択中は sidebar-accent の地と 700。
+   行の高さは Hub の木の線（context-tree-lines）に合わせた今のまま。 ---- */
+#hub-shell .sidebar .nav-item:not(#_):not(#_) { gap: var(--space-2); border-radius: var(--sc-radius-md); }
+#hub-shell .sidebar .nav-item:not(#_):not(#_):hover { background: var(--sc-sidebar-accent); color: var(--sc-sidebar-accent-foreground); }
+#hub-shell .sidebar .nav-item.on:not(#_):not(#_) { background: var(--sc-sidebar-accent); color: var(--sc-sidebar-accent-foreground); font-weight: var(--sc-weight); }
+#hub-shell #sidebar-context :is(.sidebar-tree-row, .sidebar-row, .inner-nav-item):not(#_):not(#_) { border-radius: var(--sc-radius-md); }
+
+/* =====================================================================================================
+   macOS の寸法と手触り（2026-11-05、所有者「Appleにも寄せる」）。配色は今のまま（Noir は無彩色の黒白灰、金は線だけ）。
+   Apple の記号・SF Symbols・SF Pro・ロゴは使わない（寸法と動きだけを写す）。値は tokens.css の --ds-* / --sc-* / --material-* だけ。
+   この層は最後に読み込み、画面ごとの 0 角・線だけのボタンを置き換える（2026-11-02 の「線だけのボタン」は 2026-11-05 から外す）。
+   ===================================================================================================== */
+
+/* ---- 窓の材質：左の記号の帯と画面の左列は sidebar material（半透明＋ぼかし。非対応・透明効果オフ・Mica は不透明に戻す）。区切りは 1px の細い線。 ---- */
+#hub-shell :is(.icon-rail, .sidebar):not(#_):not(#_) { background: var(--material-sidebar-solid); }
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  html:not([data-transparency="reduce"]) #hub-shell :is(.icon-rail, .sidebar):not(#_):not(#_) {
+    background: var(--material-sidebar);
+    -webkit-backdrop-filter: var(--blur-bar);
+    backdrop-filter: var(--blur-bar);
+  }
+}
+html[data-material="mica"] #hub-shell :is(.icon-rail, .sidebar):not(#_):not(#_):not(#_) { background: var(--material-mica-tint); -webkit-backdrop-filter: none; backdrop-filter: none; }
+#hub-shell :is(.icon-rail, .sidebar):not(#_):not(#_) { border-right: 1px solid var(--hairline); }
+
+/* ---- 上の帯 52。アドレス欄は 32、角 6。 ---- */
+#hub-shell .app-toolbar:not(#_):not(#_) { height: var(--titlebar-h); }
+#hub-shell .app-toolbar #toolbar-search-form:not(#_):not(#_),
+#hub-shell.browser-active #view-browser #browser-form:not(#_):not(#_) {
+  top: calc(var(--window-strip-h, 0px) + (var(--titlebar-h) - var(--control-h-lg)) / 2);
+  height: var(--control-h-lg);
+  border-radius: var(--radius-sm);
+}
+#hub-shell .app-toolbar #toolbar-search-form:not(#_):not(#_) { border-color: transparent; background: var(--fill-subtle); }
+html[data-theme="light"] #hub-shell .app-toolbar #toolbar-search-form:not(#_):not(#_):not(#_) { background: var(--fill-subtle); }
+#hub-shell .app-toolbar .toolbar-button:not(#_):not(#_) { border-radius: var(--sc-radius-md); }
+
+/* ---- 左の列（Finder・Music の側列）：行 32、左右 8 の内側余白、角 6 の選択の丸い面、節の見出し 11/600 の薄い字。 ---- */
+#hub-shell .sidebar :is(.nav-item, .sidebar-context-item):not(#_):not(#_),
+#hub-shell #sidebar-context .sidebar-context-item.sidebar-nav-row:not(#_):not(#_),
+#hub-shell #sidebar-context .sidebar-context-item.sidebar-channel-row:not(#_):not(#_),
+#hub-shell #sidebar-context .sidebar-heading:not(#_):not(#_) {
+  min-height: var(--row-h-lg);
+  padding-inline: var(--sidebar-inset);
+  gap: var(--ds-space-2);
+  border-radius: var(--sc-radius-md);
+  font-size: var(--type-body);
+  line-height: var(--lh-body);
+  transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+#hub-shell .sidebar :is(.nav-item, .sidebar-context-item):not(#_):not(#_):hover,
+#hub-shell #sidebar-context .sidebar-heading.is-link:not(#_):not(#_):hover { background: var(--fill-subtle); }
+#hub-shell .sidebar :is(.nav-item.on, .nav-item[aria-current], .sidebar-context-item[aria-current="true"], .sidebar-context-item.on):not(#_):not(#_) { background: var(--selected); color: var(--text); font-weight: var(--ds-weight-medium); }
+#hub-shell #sidebar-context .sidebar-heading[aria-current="true"]:not(#_):not(#_) { background: var(--selected); }
+#hub-shell .sidebar :is(.nav-item, .sidebar-context-item):not(#_):not(#_):focus-visible,
+#hub-shell #sidebar-context .sidebar-heading:not(#_):not(#_):focus-visible { outline: var(--sc-ring-width) solid var(--sc-ring); outline-offset: var(--focus-ring-offset); }
+#hub-shell .sidebar :is(.nav-group, .sidebar-context-title):not(#_):not(#_),
+#hub-shell #sidebar-context .nav-group:not(#_):not(#_) {
+  margin: var(--ds-space-4) var(--sidebar-inset) var(--ds-space-1);
+  color: var(--muted);
+  font-size: var(--type-caption);
+  line-height: var(--lh-caption);
+  font-weight: var(--ds-weight-semibold);
+  letter-spacing: 0;
+}
+#hub-shell .icon-rail :is(.icon-button, .icon-nav-item):not(#_):not(#_) { border-radius: var(--sc-radius-md); transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
+#hub-shell .icon-rail :is(.icon-button, .icon-nav-item):not(#_):not(#_):hover { background: var(--fill-subtle); }
+#hub-shell .icon-rail :is(.icon-button, .icon-nav-item):not(#_):not(#_):focus-visible { outline: var(--sc-ring-width) solid var(--sc-ring); outline-offset: var(--focus-ring-offset); }
+
+/* ---- 字：画面の大見出しは Large Title 26/32 の太字（字間を少し詰める）、節の見出しは Title2 17/22 の semibold。 ---- */
+#hub-shell :is(.page-title, .view-head h2, .page-header h1):not(#_):not(#_) { font-size: var(--type-display); line-height: var(--lh-display); font-weight: var(--weight-heavy); letter-spacing: var(--ds-tracking-large); }
+#hub-shell :is(.settings-panel-title, .workspace-main h3.section-title, .state-title):not(#_):not(#_) { font-size: var(--type-title2); line-height: var(--lh-title2); font-weight: var(--ds-weight-semibold); letter-spacing: 0; }
+
+/* ---- 角：サムネイル・カードは 10（Apple Music・App Store）。0 角だった市場・記事・動画・本・コミュニティ・音楽のカードを置き換える。 ---- */
+#hub-shell :is(.mk-media, .mk-grid .mk-media, .ar-thumb, .ar-row > .ar-thumb, .ar-row.ar-featured > .ar-thumb, .games-art, .games-media, .video-thumbnail, .video-player-preview > .video-thumbnail):not(#_):not(#_):not(#_) { border-radius: var(--ds-radius-card); }
+#hub-shell #view-videos .vh-card .video-thumbnail:not(#_):not(#_):not(#_) { border-radius: var(--ds-radius-tile-video); }
+#hub-shell :is(#community-results, #books-results, #music-results) > .result-card:not(#_):not(#_) > :is(.result-media, img):first-child,
+#hub-shell :is(#community-results, #books-results, #music-results) > .result-card:not(#_):not(#_):not(:has(> .result-media))::before { border-radius: var(--ds-radius-card); }
+#hub-shell :is(#ranking-results, #services-results, #shop-results, #articles-results, #hubpedia-results) > :is(.card, .result-card):not(#_):not(#_) { border-radius: var(--ds-radius-card); }
+#hub-shell #video-watch-main :is(.yt-player, .video-player-preview, .vh-native-player, .yt-player-slot):not(#_):not(#_) { border-radius: var(--ds-radius-card); }
+#hub-shell .view :where(.card, .hero-card):not(#_) { border-radius: var(--ds-radius-card); }
+#hub-shell #view-wallet :is(.card, .hero-card, .wallet-card, .wallet-device, .wallet-section, .wallet-tip-settings):not(#_):not(#_) { border-radius: var(--ds-radius-card); }
+#hub-shell #view-settings :is(.card, .hero-card, fieldset, .appearance-group, .setting-group):not(#_):not(#_) { border-radius: var(--ds-radius-card); }
+
+/* ---- 窓・シート・ポップオーバーは角 12、影はここだけ（動く層）。本文の中の面に影は付けない。 ---- */
+dialog:not(.media-lightbox):not(#_):not(#_),
+.shortcuts-dialog:not(#_) { border-radius: var(--sc-radius-sheet); box-shadow: var(--shadow-float); }
+.context-menu:not(#_), #hub-shell :is(.vid-short-sheet, .browser-bookmark-popup, .wallet-network-chooser, [popover], [role="menu"]):not(#_):not(#_) { border-radius: var(--sc-radius-sheet); box-shadow: var(--shadow-float); }
+.context-menu .ds-menu-item:not(#_) { border-radius: var(--sc-radius-md); }
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  html:not([data-transparency="reduce"]) :is(dialog:not(.media-lightbox), .context-menu, .shortcuts-dialog):not(#_) { background: var(--material-sheet); -webkit-backdrop-filter: var(--blur-sheet); backdrop-filter: var(--blur-sheet); }
+}
+#hub-shell :where(.card, .post, .result-card, .mk-tile) { box-shadow: none; }
+
+/* ---- ボタン（macOS の push button）：角 6、高さ 28、副は薄い灰色の塗り（線にしない）、主は中立の塗りで 1 画面に 1 つ。 ---- */
+#hub-shell :is(.btn-secondary, .deny, .head-action, .mk-btn:not(.mk-btn-primary)):not(#_):not(#_):not(#_):not(#_):not(#_) {
+  border-color: transparent;
+  background: var(--fill-subtle);
+  color: var(--sc-foreground);
+}
+#hub-shell :is(.btn-secondary, .deny, .head-action, .mk-btn:not(.mk-btn-primary)):not(#_):not(#_):not(#_):not(#_):not(#_):hover:not(:disabled) { background: var(--fill-subtle-hover); }
+#hub-shell :is(.btn-secondary, .deny, .head-action, .mk-btn:not(.mk-btn-primary)):not(#_):not(#_):not(#_):not(#_):not(#_):active:not(:disabled) { background: var(--fill-subtle-active); }
+#hub-shell :is(.btn-ghost, button.ghost, .btn-icon):not([role="tab"]):not(#_):not(#_):not(#_):not(#_):not(#_):hover:not(:disabled) { background: var(--fill-subtle); }
+#hub-shell :is(.btn-primary, .approve, .mk-btn-primary):not(#_):not(#_):not(#_):not(#_):not(#_):active:not(:disabled) { opacity: .8; }
+#hub-shell :is(.chip, .scope, .chip-row > button, .scopes > button, .mk-chip):not([role="tab"]):not(#_):not(#_):not(#_):not(#_):not(#_) { background: var(--fill-subtle); }
+#hub-shell :is(.chip, .scope, .chip-row > button, .scopes > button, .mk-chip):not([role="tab"]):not(#_):not(#_):not(#_):not(#_):not(#_):hover { background: var(--fill-subtle-hover); }
+#hub-shell :is(.chip.on, .scope.on, .chip-row > .on, .scopes > .on, .mk-chip.on):not([role="tab"]):not(#_):not(#_):not(#_):not(#_):not(#_) { background: transparent; }
+
+/* ---- 動き：hover・選択は 150〜200ms の ease-out、押すと 0.98 に縮む。動きを減らす設定（OS・アプリ内）では動かさない。 ---- */
+#hub-shell :is(.btn, .approve, .deny, .head-action, button.ghost, .mk-btn, .btn-icon, .chip, .scope, .mk-chip):not(#_):not(#_):not(#_):not(#_):not(#_) {
+  transition: background-color var(--dur-press) var(--ease-out), border-color var(--dur-press) var(--ease-out), color var(--dur-press) var(--ease-out), opacity var(--dur-press) var(--ease-out), transform var(--dur-press) var(--ease-out);
+}
+#hub-shell :is(.btn, .approve, .deny, .head-action, button.ghost, .mk-btn, .btn-icon, .chip, .scope, .mk-chip, .icon-nav-item, .nav-item):not(#_):not(#_):not(#_):not(#_):not(#_):active:not(:disabled) { transform: scale(var(--press-scale)); }
+@media (prefers-reduced-motion: reduce) {
+  #hub-shell *:not(#_):not(#_):not(#_), #hub-shell *::before, #hub-shell *::after { transition-duration: 1ms; animation-duration: 1ms; }
+  #hub-shell :is(.btn, .approve, .deny, .head-action, button.ghost, .mk-btn, .btn-icon, .chip, .scope, .mk-chip, .icon-nav-item, .nav-item):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):active:not(:disabled) { transform: none; }
+}
+html[data-motion="reduce"] #hub-shell *:not(#_):not(#_):not(#_), html[data-motion="reduce"] #hub-shell *::before, html[data-motion="reduce"] #hub-shell *::after { transition-duration: 1ms; animation-duration: 1ms; }
+html[data-motion="reduce"] #hub-shell :is(.btn, .approve, .deny, .head-action, button.ghost, .mk-btn, .btn-icon, .chip, .scope, .mk-chip, .icon-nav-item, .nav-item):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):active:not(:disabled) { transform: none; }
+#hub-shell .column-resizer:not(#_):not(#_) { background: transparent; }
+#hub-shell .column-resizer:not(#_):not(#_)::before { width: 1px; left: 50%; background: transparent; }
+#hub-shell .column-resizer:not(#_):not(#_):is(:hover, :focus-visible, .dragging)::before { width: 1px; background: var(--line-strong); }
+/* 列と節のあいだの線は細い線（--hairline）。ライトテンプレートの黒い --line は文字・入力・選択の線に残し、面の区切りには使わない。 */
+#hub-shell .rail:not(#_):not(#_) { border-left-color: var(--hairline); }
+#hub-shell #sidebar-context .sidebar-tree:not(#_):not(#_) { border-top-color: var(--hairline); }
+#hub-shell .view:not(#view-browser):not(#view-ai) > :is(.view-head, .page-header):not(#_) { border-bottom-color: var(--hairline); }
+
+/* =====================================================================================================
+   職人仕上げ A・土台（2026-11-09）: 焦点の輪・選択の線・押した状態・ボタンの高さ・幕。
+   ===================================================================================================== */
+
+/* 焦点の輪は1種類: 2px・offset 2px・テーマごとに --focus-ring の1色。--sc-ring / --sc-ring-soft / --ds-focus-ring は別名。
+   shape-tokens.css の既定（3px・1px）より後ろで上書きする（そちらは別レーンの持ち物）。 */
+:root:root { --focus-ring-width: 2px; --focus-ring-offset: 2px; }
+
+/* 投稿欄は輪を1本だけ: 箱が輪を持ち、中の欄は輪も線の色替えも出さない（3px と 1px の二重にしない）。 */
+:is(.composer, .community-composer, .piw-composer):not(#_):not(#_):not(#_):focus-within {
+  border-color: var(--line);
+  outline: var(--focus-ring-width) solid var(--sc-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+:is(.composer, .community-composer, .piw-composer) :is(textarea, input):not(#_):not(#_):not(#_):not(#_):not(#_):is(:focus, :focus-visible) {
+  border-color: transparent;
+  outline: none;
+  box-shadow: none;
+}
+
+/* 選択中の行は中立の地＋左の金の1px線（黒金の noir と ivory）。金を面に塗らない。 */
+html:is([data-template="noir"], [data-template="ivory"]) #hub-shell :is(
+  .sidebar .nav-item.on, .sidebar .nav-item[aria-current], .sidebar .sidebar-context-item.on, .sidebar .sidebar-context-item[aria-current="true"],
+  #sidebar-context .sidebar-heading[aria-current="true"], .sidebar-tab.is-active, .rail-mark.on, .icon-rail .icon-nav-item.on, .icon-rail #desktop-apps.current,
+  .conversation.active, .mail-item.active, .piw-history-item[aria-current="true"], .quick-switcher-option.on, .rail-view-button[aria-pressed="true"],
+  .music-track.on, .browser-tab-results > .browser-menu-open[aria-selected="true"]
+):not(#_):not(#_):not(#_) { box-shadow: inset 1px 0 0 var(--emphasis); }
+
+/* 押した状態: 地を1段深く、0.98 に縮む、80ms。動きを減らす設定では縮めない。待機中は何も動かない。 */
+#hub-shell :is(
+  .segmented > button, [role="tab"], .sidebar-context-item, .sidebar-tab, .sidebar-tree-row, .sidebar .nav-item, .icon-rail :is(.icon-button, .icon-nav-item),
+  .chip, .scope, .mk-chip, .chip-row > button, .scopes > button, button.ghost, .btn-ghost, .btn-icon,
+  label.setting-row, button.setting-row, a.setting-row, :is(button, a, label).settings-row, button.list-row
+):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):active:not(:disabled) {
+  background: var(--fill-subtle-active);
+  transform: scale(var(--press-scale));
+  transition-duration: var(--dur-pressed);
+}
+@media (prefers-reduced-motion: reduce) {
+  #hub-shell :is(
+    .segmented > button, [role="tab"], .sidebar-context-item, .sidebar-tab, .sidebar-tree-row, .sidebar .nav-item, .icon-rail :is(.icon-button, .icon-nav-item),
+    .chip, .scope, .mk-chip, .chip-row > button, .scopes > button, button.ghost, .btn-ghost, .btn-icon,
+    label.setting-row, button.setting-row, a.setting-row, :is(button, a, label).settings-row, button.list-row
+  ):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):active:not(:disabled) { transform: none; }
+}
+html[data-motion="reduce"] #hub-shell :is(
+  .segmented > button, [role="tab"], .sidebar-context-item, .sidebar-tab, .sidebar-tree-row, .sidebar .nav-item, .icon-rail :is(.icon-button, .icon-nav-item),
+  .chip, .scope, .mk-chip, .chip-row > button, .scopes > button, button.ghost, .btn-ghost, .btn-icon,
+  label.setting-row, button.setting-row, a.setting-row, :is(button, a, label).settings-row, button.list-row
+):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):active:not(:disabled) { transform: none; }
+
+/* ボタンの高さは3段（--btn-h-sm 28・--btn-h-md 36・--btn-h-lg 44）。左列の投稿は 48 をやめて lg。
+   見た目が小さい部品（compact）は、押せる範囲だけ 44 にそろえる。 */
+#hub-shell .icon-rail #desktop-compose:not([hidden]):not(#_):not(#_) { height: var(--btn-h-lg); min-height: var(--btn-h-lg); }
+#hub-shell :is(.btn-sm, .mk-btn-compact):not(#_):not(#_):not(#_) { position: relative; }
+#hub-shell :is(.btn-sm, .mk-btn-compact):not(#_):not(#_):not(#_)::after { content: ""; position: absolute; inset: calc((var(--btn-h-sm) - var(--btn-h-lg)) / 2) 0; }

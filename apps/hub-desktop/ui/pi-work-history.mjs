@@ -48,7 +48,7 @@ function dateBucket(started, now) {
   const days = Math.round((day(now) - day(started)) / 864e5);
   return days <= 0 ? 'today' : days <= 7 ? 'week' : 'older';
 }
-export function renderPiWorkHistory({ document, entries, query = '', selectedId = null, busy = false, onSelect, onDelete = null, openGroups = new Map(), now = new Date(), groupBy = 'folder' }) {
+export function renderPiWorkHistory({ document, entries, query = '', selectedId = null, busy = false, onSelect, onDelete = null, openGroups = new Map(), now = new Date(), groupBy = 'folder', interruptedIds = null }) {
   const all = (Array.isArray(entries) ? entries : []).filter((entry) => object(entry) && ['hub', 'cli'].includes(entry.kind) && object(entry.run) && text(entry.run.id).trim().length > 0);
   const search = text(query).trim().toLocaleLowerCase();
   const groups = new Map();
@@ -110,7 +110,13 @@ export function renderPiWorkHistory({ document, entries, query = '', selectedId 
       title.className = 'piw-history-title'; title.textContent = prompt;
       const time = document.createElement('span');
       time.className = 'piw-history-time'; time.textContent = when(started, now);
-      button.append(dot, title, time);
+      button.append(dot, title);
+      if (entry.kind === 'hub' && interruptedIds?.has(run.id) && text(run.status) !== 'running') {
+        const badge = document.createElement('span');
+        badge.className = 'piw-history-badge'; badge.textContent = '中断';
+        button.append(badge);
+      }
+      button.append(time);
       button.onclick = () => { if (!button.disabled && typeof onSelect === 'function') onSelect(entry); };
       rows.push(button); details.append(button);
       // 選んでいる作業の下にだけ出す。1回目で確認に変わり、2回目で消す。実行中は消せない。

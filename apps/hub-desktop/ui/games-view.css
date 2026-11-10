@@ -1,88 +1,68 @@
-/* ゲーム画面（ライブラリ）と、マーケットのゲームの種別（#market-games、ストアの札）。トークンだけを使う（生の色なし）。枠のカードは使わない：絵が半径を持ち、一覧は線で区切る。 */
-:is(#view-games, #market-games) .games-main { display: grid; gap: var(--ds-space-4); padding-inline: 0; padding-bottom: var(--ds-space-6); }
-:is(#view-games, #market-games) .games-section { padding-inline: var(--ds-page-inset); margin-bottom: var(--space-6); }
-:is(#view-games, #market-games) .games-section > h3,
-:is(#view-games, #market-games) .games-local-head > h3 { margin: 0; font-size: var(--ds-type-title-size); line-height: var(--ds-type-title-leading); font-weight: var(--ds-weight-heavy); color: var(--text); }
-:is(#view-games, #market-games) .games-section > h3 { margin-bottom: var(--space-3); }
-:is(#view-games, #market-games) .games-section-head { display: flex; align-items: center; justify-content: space-between; gap: var(--ds-space-3); padding-block: var(--ds-space-3) 0; }
-:is(#view-games, #market-games) .games-section-title { margin: 0; font-size: var(--ds-type-title-size); line-height: var(--ds-type-title-leading); font-weight: var(--ds-weight-heavy); color: var(--text); }
-:is(#view-games, #market-games) .games-search { min-width: 0; width: 16rem; max-width: 100%; height: var(--control-height); padding-inline: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--interactive); color: var(--text); font: inherit; }
-:is(#view-games, #market-games) .games-search:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
-:is(#view-games, #market-games) .games-status { margin: 0; color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); }
-:is(#view-games, #market-games) .games-status:empty { display: none; }
+/* マーケットのゲームの種別（#market-games、ストアの札）。トークンだけを使う（生の色なし）。枠のカードは使わない：絵が半径を持ち、一覧は線で区切る。 */
+#market-games .games-main { display: grid; gap: var(--ds-space-4); padding-inline: 0; padding-bottom: var(--ds-space-6); }
+#market-games .games-section-title { margin: 0; font-size: var(--ds-type-title-size); line-height: var(--ds-type-title-leading); font-weight: var(--ds-weight-heavy); color: var(--text); }
 
 /* 絵：半径は絵が持つ。画像が無い・読めないときは頭字。 */
-:is(#view-games, #market-games) .games-art { position: relative; display: grid; place-items: center; overflow: hidden; border-radius: var(--radius-md); background: var(--interactive); color: var(--muted); }
-:is(#view-games, #market-games) .games-art-letter { font-size: var(--ds-type-title-size); line-height: var(--ds-type-title-leading); font-weight: var(--ds-weight-heavy); }
-:is(#view-games, #market-games) .games-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-:is(#view-games, #market-games) .games-art::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px var(--media-outline); pointer-events: none; }
-:is(#view-games, #market-games) .games-art-portrait { aspect-ratio: 3 / 4; }
-:is(#view-games, #market-games) .games-art-hero { aspect-ratio: 21 / 9; width: 100%; }
+#market-games .games-art { position: relative; display: grid; place-items: center; overflow: hidden; border-radius: var(--radius-md); background: var(--interactive); color: var(--muted); }
+#market-games .games-art-letter { font-size: var(--ds-type-title-size); line-height: var(--ds-type-title-leading); font-weight: var(--ds-weight-heavy); }
+#market-games .games-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+#market-games .games-art::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px var(--media-outline); pointer-events: none; }
+#market-games .games-art-hero { aspect-ratio: 21 / 9; width: 100%; }
 
-/* ライブラリ：タイルの格子（縦長の絵・題名・補足）。 */
-:is(#view-games, #market-games) .games-library { display: grid; grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); gap: var(--ds-space-5) var(--ds-space-4); padding-block: var(--ds-space-3); }
-:is(#view-games, #market-games) .games-tile { display: grid; align-content: start; gap: var(--ds-space-1); min-width: 0; padding: 0; border: 0; background: transparent; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
-:is(#view-games, #market-games) .games-tile .games-art { margin-bottom: var(--ds-space-2); }
-:is(#view-games, #market-games) .games-tile:hover .games-art { box-shadow: 0 0 0 1px var(--line-strong); }
-:is(#view-games, #market-games) .games-tile:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: var(--radius-md); }
-:is(#view-games, #market-games) .games-tile-title { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); font-weight: var(--ds-weight-strong); }
-:is(#view-games, #market-games) .games-tile-meta { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); }
-:is(#view-games, #market-games) .games-tile-skeleton { pointer-events: none; }
-:is(#view-games, #market-games) .games-tile-skeleton .games-art,
-:is(#view-games, #market-games) .games-skeleton-line { background: linear-gradient(90deg, var(--interactive) 0%, var(--interactive-hover) 50%, var(--interactive) 100%); background-size: 200% 100%; animation: ds-shimmer 1.4s var(--ease-in-out) 6; }
-:is(#view-games, #market-games) .games-skeleton-line { display: block; height: var(--ds-space-3); border-radius: var(--radius-xs); }
-:is(#view-games, #market-games) .games-skeleton-line.is-short { width: 60%; }
 
 /* ストア：横長の絵のカプセル。先頭は大きく。 */
-:is(#view-games, #market-games) .games-capsule { display: flex; flex-direction: column; gap: var(--space-2); padding: 0; border: 0; background: transparent; color: var(--text); font: inherit; text-align: left; cursor: pointer; min-width: 0; }
-:is(#view-games, #market-games) .games-capsule:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: var(--radius-md); }
-:is(#view-games, #market-games) .games-media { position: relative; aspect-ratio: 16 / 9; overflow: hidden; border-radius: var(--radius-md); background: var(--interactive); }
-:is(#view-games, #market-games) .games-media img { display: block; width: 100%; height: 100%; object-fit: cover; }
-:is(#view-games, #market-games) .games-media::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px var(--media-outline); pointer-events: none; }
-:is(#view-games, #market-games) .games-capsule:hover .games-media { box-shadow: 0 0 0 1px var(--line-strong); }
+#market-games .games-capsule { display: flex; flex-direction: column; gap: var(--space-2); padding: 0; border: 0; background: transparent; color: var(--text); font: inherit; text-align: left; cursor: pointer; min-width: 0; }
+#market-games .games-capsule:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: var(--radius-md); }
+#market-games .games-media { position: relative; aspect-ratio: 16 / 9; overflow: hidden; border-radius: var(--radius-md); background: var(--interactive); }
+#market-games .games-media img { display: block; width: 100%; height: 100%; object-fit: cover; }
+#market-games .games-media::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px var(--media-outline); pointer-events: none; }
+#market-games .games-capsule:hover .games-media { box-shadow: 0 0 0 1px var(--line-strong); }
 
-:is(#view-games, #market-games) .games-capsule .games-body { display: grid; gap: var(--space-1); padding: 0; }
-:is(#view-games, #market-games) .games-title { font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); font-weight: var(--ds-weight-strong); color: var(--text); overflow-wrap: anywhere; }
-:is(#view-games, #market-games) .games-summary { margin: 0; color: var(--text); font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); }
-:is(#view-games, #market-games) .games-meta { color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); }
-:is(#view-games, #market-games) .games-badges { display: flex; flex-wrap: wrap; gap: var(--space-1); }
-:is(#view-games, #market-games) .games-badge { padding: 0 6px; border-radius: var(--radius-xs); box-shadow: inset 0 0 0 1px var(--line-strong); color: var(--muted); font-size: var(--ds-type-meta-size); line-height: 20px; }
-:is(#view-games, #market-games) .games-featured { width: 100%; margin-bottom: var(--space-4); }
-:is(#view-games, #market-games) .games-featured .games-media { aspect-ratio: 21 / 9; }
-:is(#view-games, #market-games) .games-featured .games-title { font-size: var(--ds-type-title-size); line-height: var(--ds-type-title-leading); font-weight: var(--ds-weight-heavy); }
-:is(#view-games, #market-games) .games-grid,
-:is(#view-games, #market-games) .games-skeleton { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--ds-space-5) var(--ds-space-4); }
-:is(#view-games, #market-games) .games-skeleton-card { aspect-ratio: 16 / 9; border-radius: var(--radius-md); background: linear-gradient(90deg, var(--interactive) 0%, var(--interactive-hover) 50%, var(--interactive) 100%); background-size: 200% 100%; animation: ds-shimmer 1.4s var(--ease-in-out) 6; }
+#market-games .games-capsule .games-body { display: grid; gap: var(--space-1); padding: 0; }
+#market-games .games-title { font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); font-weight: var(--ds-weight-strong); color: var(--text); overflow-wrap: anywhere; }
+#market-games .games-summary { margin: 0; color: var(--text); font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); }
+#market-games .games-meta { color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); }
+#market-games .games-badges { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+#market-games .games-badge { padding: 0 6px; border-radius: var(--radius-xs); box-shadow: inset 0 0 0 1px var(--line-strong); color: var(--muted); font-size: var(--ds-type-meta-size); line-height: 20px; }
+#market-games .games-featured { width: 100%; margin-bottom: var(--space-4); }
+#market-games .games-featured .games-media { aspect-ratio: 21 / 9; }
+#market-games .games-featured .games-title { font-size: var(--ds-type-title-size); line-height: var(--ds-type-title-leading); font-weight: var(--ds-weight-heavy); }
+#market-games .games-grid,
+#market-games .games-skeleton { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--ds-space-5) var(--ds-space-4); }
+#market-games .games-skeleton-card { aspect-ratio: 16 / 9; border-radius: var(--radius-md); background: linear-gradient(90deg, var(--interactive) 0%, var(--interactive-hover) 50%, var(--interactive) 100%); background-size: 200% 100%; animation: ds-shimmer 1.4s var(--ease-in-out) 6; }
 
-/* このPCのゲーム（行の形）：線で区切る。 */
-:is(#view-games, #market-games) .games-local { display: block; }
-:is(#view-games, #market-games) .games-local-row { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) 0; border-bottom: 1px solid var(--divider); }
-:is(#view-games, #market-games) .games-local-text { flex: 1 1 auto; min-width: 0; display: grid; gap: var(--space-1); }
-:is(#view-games, #market-games) .games-local-text .games-meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-:is(#view-games, #market-games) .games-local-empty { margin: 0; color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); }
 
 /* 静かな空の状態：題 20/800・本文 15 muted・副ボタン 1 つ（36）・丸い飾りなし。 */
-:is(#view-games, #market-games) .state-panel { align-items: flex-start; max-width: none; margin: 0; padding: var(--ds-space-4) 0; gap: var(--ds-space-2); text-align: left; }
-:is(#view-games, #market-games) .state-panel .state-title { color: var(--text); font-size: var(--ds-type-title-size); line-height: var(--ds-type-title-leading); font-weight: var(--ds-weight-heavy); }
-:is(#view-games, #market-games) .state-panel .state-body { max-width: 360px; font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); color: var(--muted); }
-:is(#view-games, #market-games) .state-panel .btn { height: var(--control-h-lg); }
+#market-games .state-panel { align-items: flex-start; max-width: none; margin: 0; padding: var(--ds-space-4) 0; gap: var(--ds-space-2); text-align: left; }
+#market-games .state-panel .state-title { color: var(--text); font-size: var(--ds-type-title-size); line-height: var(--ds-type-title-leading); font-weight: var(--ds-weight-heavy); }
+#market-games .state-panel .state-body { max-width: 360px; font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); color: var(--muted); }
+#market-games .state-panel .btn { height: var(--control-h-lg); }
 
 /* 詳細：戻る・大きな絵・題名と動作・概要・情報の行。 */
-:is(#view-games, #market-games) .games-detail { display: grid; gap: var(--ds-space-4); padding-block: var(--ds-space-3); }
-:is(#view-games, #market-games) .games-back { display: grid; place-items: center; width: var(--control-h-lg); height: var(--control-h-lg); margin-left: calc(var(--ds-space-2) * -1); padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; }
-:is(#view-games, #market-games) .games-back:hover { background: var(--interactive); color: var(--text); }
-:is(#view-games, #market-games) .games-back:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
-:is(#view-games, #market-games) .games-back .sidebar-icon { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-:is(#view-games, #market-games) .games-detail-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--ds-space-3); }
-:is(#view-games, #market-games) .games-detail-titles { display: grid; gap: var(--ds-space-1); min-width: 0; }
-:is(#view-games, #market-games) .games-detail-title { margin: 0; font-size: var(--ds-type-title-size); line-height: var(--ds-type-title-leading); font-weight: var(--ds-weight-heavy); overflow-wrap: anywhere; }
-:is(#view-games, #market-games) .games-detail-meta { margin: 0; color: var(--muted); font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); }
-:is(#view-games, #market-games) .games-actions { display: flex; align-items: center; gap: var(--ds-space-2); }
-:is(#view-games, #market-games) .games-actions .btn { height: var(--control-h-lg); }
-:is(#view-games, #market-games) .games-about { display: grid; gap: var(--ds-space-2); padding-top: var(--ds-space-3); border-top: 1px solid var(--divider); }
-:is(#view-games, #market-games) .games-section-title { margin: 0; }
-:is(#view-games, #market-games) .games-description { margin: 0; max-width: 648px; font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); overflow-wrap: anywhere; }
-:is(#view-games, #market-games) .games-info { margin: 0; }
-:is(#view-games, #market-games) .games-info-row { display: flex; gap: var(--ds-space-4); padding: var(--ds-space-3) 0; border-bottom: 1px solid var(--divider); font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); }
-:is(#view-games, #market-games) .games-info-label { flex: none; width: 96px; margin: 0; color: var(--muted); }
-:is(#view-games, #market-games) .games-info-value { min-width: 0; margin: 0; overflow-wrap: anywhere; }
+#market-games .games-detail { display: grid; gap: var(--ds-space-4); padding-block: var(--ds-space-3); }
+#market-games .games-back { display: grid; place-items: center; width: var(--control-h-lg); height: var(--control-h-lg); margin-left: calc(var(--ds-space-2) * -1); padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; }
+#market-games .games-back:hover { background: var(--interactive); color: var(--text); }
+#market-games .games-back:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
+#market-games .games-back .sidebar-icon { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+#market-games .games-detail-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--ds-space-3); }
+#market-games .games-detail-titles { display: grid; gap: var(--ds-space-1); min-width: 0; }
+#market-games .games-detail-title { margin: 0; font-size: var(--ds-type-title-size); line-height: var(--ds-type-title-leading); font-weight: var(--ds-weight-heavy); overflow-wrap: anywhere; }
+#market-games .games-detail-meta { margin: 0; color: var(--muted); font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); }
+#market-games .games-actions { display: flex; align-items: center; gap: var(--ds-space-2); }
+#market-games .games-actions .btn { height: var(--control-h-lg); }
+#market-games .games-about { display: grid; gap: var(--ds-space-2); padding-top: var(--ds-space-3); border-top: 1px solid var(--divider); }
+#market-games .games-section-title { margin: 0; }
+#market-games .games-description { margin: 0; max-width: 648px; font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); overflow-wrap: anywhere; }
+#market-games .games-info { margin: 0; }
+#market-games .games-info-row { display: flex; gap: var(--ds-space-4); padding: var(--ds-space-3) 0; border-bottom: 1px solid var(--divider); font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); }
+#market-games .games-info-label { flex: none; width: 96px; margin: 0; color: var(--muted); }
+#market-games .games-info-value { min-width: 0; margin: 0; overflow-wrap: anywhere; }
+
+/* ---- ゲームの札を note の寸法に合わせる（2026-11-04）：絵は角なし、題は本文の大きさ・太字・2行まで、補足は淡色の小さな字。
+   ストアの横長の札は 200 以上・行の間 32px・列の間 16px。説明は出さない。 ---- */
+#hub-shell #market-games .games-grid:not(#_) { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--ds-space-7) var(--ds-space-4); }
+#hub-shell #market-games :is(.games-art, .games-media):not(#_) { border-radius: 0; }
+#hub-shell #market-games :is(.games-capsule:not(.games-featured) .games-title):not(#_) { display: -webkit-box; overflow: hidden; white-space: normal; -webkit-box-orient: vertical; -webkit-line-clamp: 2; font-size: var(--type-body); line-height: 1.5; font-weight: var(--weight-bold); }
+#hub-shell #market-games .games-capsule:hover .games-title:not(#_) { text-decoration: underline; text-underline-offset: 3px; }
+#hub-shell #market-games .games-meta:not(#_) { font-size: var(--type-caption); }
+#hub-shell #market-games .games-capsule:hover .games-media:not(#_) { box-shadow: none; }

@@ -1,0 +1,105 @@
+/* コミュニティとコンテンツのつながり（掲載の一覧・「〇〇で話す」・載せ先の選択・スレッドのカード）。色は意味のトークンだけ。 */
+.community-content { display: grid; gap: var(--ds-space-3, 12px); }
+.community-content-item { position: relative; display: grid; gap: 2px; padding: var(--ds-space-3, 12px) var(--ds-space-4, 16px); }
+.community-content-title { justify-self: start; max-width: 100%; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; font-weight: 700; text-align: start; cursor: pointer; }
+.community-content-title:hover { text-decoration: underline; text-underline-offset: 3px; }
+.community-content-title:focus-visible,
+.community-content-remove:focus-visible,
+.community-talk-button:focus-visible,
+.community-thread-card-title:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.community-content-remove { position: absolute; inset-block-start: var(--ds-space-2, 8px); inset-inline-end: var(--ds-space-2, 8px); }
+.community-content-empty { text-align: center; }
+.community-talk { display: grid; gap: var(--ds-space-2, 8px); margin-block: var(--ds-space-4, 16px); }
+.community-talk-actions { display: flex; flex-wrap: wrap; gap: var(--ds-space-2, 8px); }
+.community-picker { display: inline-flex; align-items: center; gap: var(--ds-space-2, 8px); color: var(--muted); }
+.community-picker select { min-width: 0; max-width: 100%; }
+.community-thread-card { display: grid; gap: 2px; margin-block: var(--ds-space-2, 8px); padding-inline-start: var(--ds-space-3, 12px); border-inline-start: 2px solid var(--line-strong); }
+.community-thread-card-title { justify-self: start; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; font-weight: 700; cursor: pointer; }
+
+/* ヘッダーの ⋯ メニュー：主な操作は参加だけ、ほかはここへ。 */
+.community-join-row { align-items: center; }
+.community-more-toggle { list-style: none; cursor: pointer; }
+.community-more-toggle::-webkit-details-marker { display: none; }
+.community-more-list { position: absolute; width: max-content; max-width: min(360px, 86vw); max-height: 70vh; overflow-y: auto; inset-block-start: calc(100% + var(--ds-space-1, 4px)); inset-inline-end: 0; z-index: 5; display: grid; min-width: 220px; padding: var(--ds-space-1, 4px); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--panel); }
+.community-more-item { justify-content: flex-start; width: 100%; text-align: start; white-space: nowrap; }
+
+/* グループの中：チャット（左の列にチャンネル）/ 共有 / メンバー。docs/hub-groups/DESIGN.md「グループの中の分け方」 */
+.community-channels { display: grid; gap: var(--ds-space-1, 4px); min-width: 0; }
+.community-channel-list { display: grid; gap: 2px; }
+.community-channel-row { display: flex; align-items: center; gap: 2px; min-width: 0; }
+.community-channel { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 6px 10px; border: 0; border-radius: var(--radius-sm); background: none; color: var(--muted); font: inherit; font-weight: 700; text-align: start; cursor: pointer; }
+.community-channel:hover { background: var(--interactive); color: var(--text); }
+.community-channel[aria-pressed="true"] { background: var(--interactive); color: var(--text); box-shadow: inset 2px 0 0 var(--emphasis); }
+.community-channel:disabled { opacity: .5; cursor: default; }
+.community-channel-row.is-hidden .community-channel { text-decoration: line-through; }
+.community-channel-tools { display: inline-flex; gap: 0; }
+.community-channel-tool, .community-channel-manage { min-width: 24px; height: 24px; padding: 0; border: 0; border-radius: var(--radius-sm); background: none; color: var(--muted); font: inherit; cursor: pointer; }
+.community-channel-tool:hover, .community-channel-manage:hover { background: var(--interactive); color: var(--text); }
+.community-channel-tool:disabled { opacity: .35; cursor: default; }
+.community-channel-manage { justify-self: start; margin-inline-start: 6px; }
+.community-channel-manage[aria-pressed="true"] { color: var(--text); }
+.community-chat-main { min-width: 0; }
+/* チャットの流れ：新着が下。流れる部分だけが動き、入力欄は下に残る。行は枠を持たず詰めて並べる。 */
+.community-chat-scroll { display: flex; flex-direction: column; max-height: min(60vh, 640px); overflow-y: auto; overscroll-behavior: contain; }
+.community-chat-scroll > .community-post { padding-block: var(--ds-space-2, 8px); background: transparent; border: 0; border-radius: 0; }
+.community-chat-scroll > .community-more { align-self: center; flex: none; }
+.community-shared-kinds { margin-block: var(--ds-space-3, 12px); }
+.community-members { margin-block-start: var(--ds-space-3, 12px); }
+/* 操作行：いいね・返信・共有を左から詰める（最後だけ右へ寄せる規則は投稿の行と同じだが、2つしか無い行で返信が右端に飛ばないよう共有を足した） */
+.community-post .post-actions { justify-content: flex-start; gap: var(--space-1); }
+
+/* スレッドの見出し：題名と主な操作が1行、検索は見出しの中、少ない操作は ⋯ へ。 */
+.thread-head { position: relative; }
+.thread-head-row { display: flex; align-items: center; gap: var(--ds-space-2, 8px); min-width: 0; }
+.thread-head-row > h3 { flex: 1; min-width: 0; margin: 0; overflow-wrap: anywhere; }
+.thread-head-tools { display: inline-flex; align-items: center; gap: var(--ds-space-1, 4px); flex: none; }
+.thread-more { position: relative; }
+.thread-more-list { min-width: 240px; }
+.thread-more-state { display: grid; gap: var(--ds-space-1, 4px); padding: var(--ds-space-2, 8px); border-block-start: 1px solid var(--line); background: transparent; }
+.thread-head > .meta { margin-block: var(--ds-space-1, 4px) 0; }
+.thread-head .thread-head-search { margin: var(--ds-space-2, 8px) 0 0; padding: 0; border: 0; background: transparent; box-shadow: none; }
+.thread-head .thread-head-search .detail-form-row { flex-wrap: nowrap; }
+.thread-head .thread-head-search .detail-form-row > input[type="search"] { flex: 1; min-width: 0; }
+.thread-head .thread-head-search details { margin-block-start: var(--ds-space-1, 4px); }
+.thread-head .thread-head-search details > summary { color: var(--muted); font-size: var(--type-caption); cursor: pointer; }
+
+/* グループの画面の頭：細い1本の帯（サイドバーの行と同じ高さ）。左に今のチャンネル名、右に ⋯（Discord と同じ）。2026-11-06 所有者「UIが邪魔」「見出しっている？」 */
+.community-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--ds-space-3, 12px); min-height: 40px; padding-inline: var(--ds-space-2, 8px); border-bottom: 1px solid var(--divider); }
+.community-bar-title { margin: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--type-body); font-weight: var(--weight-strong, 600); }
+.community-bar > .community-more { position: relative; flex: none; }
+.community-more-about { display: grid; gap: var(--ds-space-1, 4px); padding: var(--ds-space-2, 8px); }
+.community-more-about .detail-p, .community-more-about .meta { margin: 0; }
+.community-more-join { padding: var(--ds-space-2, 8px); }
+.community-more-join:empty { display: none; }
+
+/* 外側の左の列のチャンネル：ほかの行（.sidebar-context-item）と同じ高さ・字。管理（⋯）は同じ列の最後の行。 */
+#hub-shell #sidebar-context .community-channels.is-sidebar { display: flex; flex-direction: column; width: 100%; gap: 0; }
+#hub-shell #sidebar-context .community-channels.is-sidebar .community-channel-list { display: flex; flex-direction: column; gap: 0; }
+#hub-shell #sidebar-context .community-channels.is-sidebar .community-channel-row { display: flex; align-items: center; }
+#hub-shell #sidebar-context .community-channels.is-sidebar :is(.community-channel, .community-channel-manage) { display: flex; align-items: center; justify-content: flex-start; width: 100%; padding-left: calc(var(--ds-space-3) + 20px + var(--ds-space-3)); border: 0; background: transparent; box-shadow: none; color: var(--muted); font: inherit; font-weight: var(--weight-regular, 400); text-align: start; cursor: pointer; }
+#hub-shell #sidebar-context .community-channels.is-sidebar .community-channel-manage { margin: 0; }
+#hub-shell #sidebar-context .community-channels.is-sidebar .community-channel-tools { flex: none; }
+#hub-shell #sidebar-context .community-channels.is-sidebar .community-channel[aria-pressed="true"] { color: var(--text); }
+#hub-shell #sidebar-context .community-channels.is-sidebar .community-channel:hover, #hub-shell #sidebar-context .community-channels.is-sidebar .community-channel-manage:hover { background: var(--interactive); color: var(--text); }
+
+/* 書き込み欄：1行から伸びる入力欄、左に ＋（メニュー）、右に丸い送信。DM と同じ作り。 */
+.community-composer { position: relative; display: grid; gap: var(--ds-space-1, 4px); margin-block-start: var(--ds-space-2, 8px); padding: var(--ds-space-1, 4px) var(--ds-space-2, 8px); border: 1px solid var(--line); border-radius: var(--radius-chat); background: var(--content-surface, var(--panel)); }
+.community-composer:focus-within { border-color: var(--line-strong); }
+.community-composer-row { display: flex; align-items: flex-end; gap: var(--ds-space-2, 8px); }
+.community-composer-input { flex: 1 1 auto; min-width: 0; min-height: 32px; max-height: 160px; padding: 6px var(--ds-space-2, 8px); border: 0 !important; background: transparent !important; color: var(--text); font: inherit; resize: none; outline: 0 !important; box-shadow: none !important; }
+.community-composer-plus, .community-composer-send { display: inline-grid; flex: none; place-items: center; width: 32px; height: 32px; padding: 0; border-radius: var(--radius-pill); }
+.community-composer-plus { border: 1px solid var(--line); background: transparent; color: var(--muted); font: inherit; font-size: var(--type-body); line-height: 1; cursor: pointer; }
+.community-composer-plus:hover { background: var(--interactive); color: var(--text); }
+.community-composer-send svg { width: 16px; height: 16px; }
+.community-composer-menu { position: absolute; inset-block-end: calc(100% + var(--ds-space-1, 4px)); inset-inline-start: 0; z-index: 5; display: grid; min-width: 180px; padding: var(--ds-space-1, 4px); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--panel); }
+.community-composer-menu[hidden] { display: none; }
+.community-composer-item { display: flex; align-items: center; width: 100%; min-height: 36px; padding: 0 var(--ds-space-3, 12px); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text); font: inherit; text-align: start; white-space: nowrap; cursor: pointer; }
+.community-composer-item:hover:not(:disabled) { background: var(--interactive); }
+.community-composer-item:disabled { color: var(--muted); cursor: default; }
+.community-composer-plus:focus-visible, .community-composer-send:focus-visible, .community-composer-item:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.community-composer-panel { position: relative; margin-block-start: var(--ds-space-2, 8px); }
+.community-composer-panel[hidden] { display: none; }
+.community-composer-panel-close { position: absolute; inset-block-start: var(--ds-space-2, 8px); inset-inline-end: var(--ds-space-2, 8px); }
+.community-more-list { gap: 2px; }
+.community-more-item { min-height: 36px; padding-inline: var(--ds-space-3, 12px); border: 0; background: transparent; }
+.community-more-item:hover { background: var(--interactive); }

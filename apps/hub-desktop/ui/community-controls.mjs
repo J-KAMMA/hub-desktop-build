@@ -1,13 +1,17 @@
 import {communityJoinControls} from './community-join.mjs';
+import {holdingBadge, sortByHolding, coinIcon} from './community-holding.mjs';
+import {roleMark} from './role-mark.mjs';
 const make = (document, tag, text, className = '') => { const node = document.createElement(tag); node.textContent = text ?? ''; node.className = className; return node; };
 const field = (document, label, type = 'text', limit = 200) => { const node = document.createElement(type === 'textarea' ? 'textarea' : 'input'); if (type !== 'textarea') node.type = type; node.maxLength = limit; node.placeholder = label; node.setAttribute('aria-label', label); return node; };
 const button = (document, label, fn) => { const node = make(document, 'button', label, 'head-action'); node.type = 'button'; node.onclick = fn; return node; };
 const status = document => { const node = make(document, 'p', '', 'meta'); node.setAttribute('role', 'status'); return node; };
 const errorText = error => error?.message || String(error);
 const folded = (document, title) => { const node = make(document, 'details', '', 'card detail-form'); node.append(make(document, 'summary', title)); return node; };
+// ＋ メニューから開く入力欄。常には見せない（開くまで hidden）。閉じるは記号のボタン。
+const panel = (document, title) => { const node = make(document, 'section', '', 'card detail-form community-composer-panel'); node.hidden = true; const close = make(document, 'button', '✕', 'head-action community-composer-panel-close'); close.type = 'button'; close.setAttribute('aria-label', title + 'を閉じる'); close.title = '閉じる'; close.setAttribute('data-keep-text', ''); close.onclick = () => { node.hidden = true; }; node.append(close); return node; };
 const lock = (node, disabled) => node.querySelectorAll('input,textarea,select,button').forEach(control => { control.disabled = disabled; });
 
-export function communityMemberControls(document, { communityId, members, viewerId, viewerRole, canManage, invoke, refresh, state = {}, confirm = text => window.confirm(text) }) {
+export function communityMemberControls(document, { communityId, members, viewerId, viewerRole, canManage, invoke, refresh, state = {}, holdingAsset = null, confirm = text => window.confirm(text) }) {
   const root = make(document, 'section', '', 'detail-form community-member-controls');
   const query = field(document, 'メンバーを検索', 'search', 100), list = make(document, 'div'), count = status(document);
   state.targets ??= new Map(); state.page ??= 0; query.value = state.query ?? '';
@@ -18,14 +22,20 @@ export function communityMemberControls(document, { communityId, members, viewer
   };
   const render = () => {
     const value = query.value.normalize('NFKC').trim().toLocaleLowerCase();
-    const found = members.filter(member => `${member.displayName} ${member.handle}`.normalize('NFKC').toLocaleLowerCase().includes(value));
+    const matched = members.filter(member => `${member.displayName} ${member.handle}`.normalize('NFKC').toLocaleLowerCase().includes(value));
+    const found = state.byHolding ? sortByHolding(matched) : matched;
     const pages = Math.max(1, Math.ceil(found.length / 20)); state.page = Math.max(0, Math.min(state.page, pages - 1));
     list.replaceChildren(...found.slice(state.page * 20, (state.page + 1) * 20).map(original => {
       if (!state.targets.has(original.id)) state.targets.set(original.id, { note: '', ids: new Map(), busy: false, saved: false });
       const target = state.targets.get(original.id), member = { ...original, ...target.result };
-      const card = make(document, 'article', '', 'card');
-      card.append(make(document, 'h3', member.displayName), make(document, 'p', `@${member.handle} · ${{owner:'オーナー',moderator:'モデレーター',member:'メンバー'}[member.role] ?? 'メンバー'}${member.status === 'muted' ? ' · ミュート中' : member.status === 'banned' ? ' · 参加禁止中' : ''}`, 'meta'));
-      if (member.bio) card.append(make(document, 'p', member.bio, 'detail-p'));
+      const card = make(document, 'article', '', 'member-row');
+      card.append(make(document, 'span', [...(member.displayName || '?')][0], 'member-avatar'));
+      const title = make(document, 'h3', member.displayName), mark = holdingBadge(document, original.holding, coinIcon);
+      if (mark) title.append(' ', mark);
+      const official = roleMark(document, member.role);
+      if (official) title.append(' ', official);
+      card.append(title, make(document, 'p', `@${member.handle} · ${{owner:'オーナー',moderator:'モデレーター',member:'メンバー'}[member.role] ?? 'メンバー'}${member.status === 'muted' ? ' · ミュート中' : member.status === 'banned' ? ' · 参加禁止中' : ''}`, 'meta'));
+      if (member.bio) card.append(make(document, 'p', member.bio, 'meta member-bio'));
       if (target.saved) {
         const note = status(document); note.textContent = target.message; card.append(note);
         if (target.reloadFailed) card.append(button(document, 'メンバー一覧を再読込', async () => {
@@ -66,7 +76,11 @@ export function communityMemberControls(document, { communityId, members, viewer
   };
   const previous = button(document, '前の20人', () => { state.page--; render(); }), next = button(document, '次の20人', () => { state.page++; render(); });
   const pager = make(document, 'div', '', 'detail-form-row'); pager.append(previous, next);
-  query.oninput = () => { state.query = query.value; state.page = 0; render(); }; root.append(query, count, list, pager); render(); return root;
+  query.oninput = () => { state.query = query.value; state.page = 0; render(); };
+  // 保有の多い順（オプトインした人だけが先）。資産のあるコミュニティにだけ出す。
+  const sorter = holdingAsset ? make(document, 'button', '', 'head-action community-holding-sort') : null;
+  if (sorter) { sorter.type = 'button'; sorter.innerHTML = coinIcon(); sorter.title = '保有の多い順'; sorter.setAttribute('aria-label', '保有の多い順'); sorter.setAttribute('aria-pressed', String(Boolean(state.byHolding))); sorter.onclick = () => { state.byHolding = !state.byHolding; state.page = 0; sorter.setAttribute('aria-pressed', String(state.byHolding)); render(); }; }
+  root.append(...[query, sorter, count, list, pager].filter(Boolean)); render(); return root;
 }
 
 export function communityPollCard(document, { options, canVote, invoke, communityId, refresh, now = Date.now() }) {
@@ -92,7 +106,7 @@ export function communityPollCard(document, { options, canVote, invoke, communit
 
 export function communityComposerTools(document, { communityId, invoke, refresh, textarea, kind, hasImages }) {
   const root = make(document, 'section', '', 'detail-form');
-  const poll = folded(document, 'アンケートを作成'), pollForm = make(document, 'form', '', 'detail-form');
+  const poll = panel(document, 'アンケート'), pollForm = make(document, 'form', '', 'detail-form');
   const question = field(document, 'アンケートの質問', 'text', 200), choices = field(document, '選択肢（1行に1つ、2〜10件）', 'textarea', 1010), hours = field(document, '締切までの時間', 'number');
   hours.min = '1'; hours.max = '720'; hours.value = '72'; const pollState = status(document); let pollBusy = false, request = null;
   const create = button(document, 'アンケートを作成', async () => {
@@ -110,7 +124,7 @@ export function communityComposerTools(document, { communityId, invoke, refresh,
     finally { pollBusy = false; lock(poll, false); }
   });
   pollForm.onsubmit = event => { event.preventDefault(); create.click(); }; pollForm.append(question, choices, hours, create, pollState); poll.append(pollForm);
-  const schedule = folded(document, '本文を予約投稿'), scheduleForm = make(document, 'form', '', 'detail-form'), date = field(document, '公開日時', 'datetime-local'), scheduledState = status(document); let scheduling = false, scheduleRequest = null;
+  const schedule = panel(document, '予約投稿'), scheduleForm = make(document, 'form', '', 'detail-form'), date = field(document, '公開日時', 'datetime-local'), scheduledState = status(document); let scheduling = false, scheduleRequest = null;
   const save = button(document, '予約を確認', async () => {
     if (scheduling) return;
     const time = new Date(date.value), content = textarea.value.trim(), messageKind = kind.value;
@@ -130,7 +144,9 @@ export function communityComposerTools(document, { communityId, invoke, refresh,
     });
     preview.append(submit, button(document, '戻る', () => preview.remove())); schedule.querySelector('.card')?.remove(); schedule.append(preview);
   });
-  scheduleForm.onsubmit = event => { event.preventDefault(); save.click(); }; scheduleForm.append(date, save, scheduledState); schedule.append(make(document, 'p', '本文と日時を確認してから予約します。', 'meta'), scheduleForm);
+  scheduleForm.onsubmit = event => { event.preventDefault(); save.click(); }; scheduleForm.append(date, save, scheduledState); schedule.append(scheduleForm);
+  // 開くのは片方だけ。開いたら最初の欄へ。
+  root.openPanel = which => { const open = which === 'schedule' ? schedule : poll, other = open === poll ? schedule : poll; other.hidden = true; open.hidden = !open.hidden; if (!open.hidden) open.querySelector('input,textarea')?.focus?.(); };
   root.append(poll, schedule); return root;
 }
 

@@ -358655,13 +358655,14 @@ Hub execution evidence: ${JSON.stringify({ ...evidence, unreadChangedFiles: [...
       }
     };
     const contextReserve = Math.min(16384, Math.floor(model.contextWindow / 4));
+    const compactionReserve = Math.max(contextReserve, model.contextWindow - Math.floor(model.contextWindow * 0.7));
     const settingsManager = SettingsManager.inMemory({
       retry: { enabled: true, maxRetries: 3, baseDelayMs: retryBaseDelayMs() },
       // Pi 1.x resizes prompt images through a WASM codec that this single-file bundle cannot
       // load, so every image became "[Image omitted]". Hub's image store already validates the
       // type, size and digest of each attachment before it reaches the sidecar.
       images: { autoResize: false },
-      compaction: { enabled: true, reserveTokens: contextReserve, keepRecentTokens: contextReserve }
+      compaction: { enabled: true, reserveTokens: compactionReserve, keepRecentTokens: contextReserve }
     });
     const thinTools = createThinTools({ cwd, callHub, caps, extra: realTools.filter((tool) => THIN_HUB_TOOLS.has(tool.name)) });
     const resourceLoader = new DefaultResourceLoader({

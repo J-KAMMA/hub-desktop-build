@@ -30,14 +30,24 @@ export function createCommunityPostComposer({document,communityId,viewerId,state
   if(!id(communityId,80) || !id(viewerId) || !state || typeof state !== 'object'
     || ![Object.prototype,null].includes(Object.getPrototypeOf(state)) || typeof invoke !== 'function' || typeof getScope !== 'function') throw Error('post_composer_invalid');
   const make = (tag, label, className='') => {const node=document.createElement(tag);node.className=className;if(label!==undefined)node.textContent=label;return node;};
-  const element=make('form',undefined,'card detail-form'), textarea=make('textarea'), kind=make('select'), status=make('p','','meta');
-  textarea.rows=2;textarea.maxLength=2000;textarea.placeholder='メッセージを書く';textarea.setAttribute('aria-label','メッセージ');
+  const element=make('form',undefined,'community-composer'), textarea=make('textarea','','community-composer-input'), kind=make('select'), status=make('p','','meta');
+  textarea.rows=1;textarea.maxLength=2000;textarea.placeholder='メッセージを書く';textarea.setAttribute('aria-label','メッセージ（Enterで送信、Shift+Enterで改行）');textarea.autocomplete='off';
   for(const [value,label] of Object.entries(kinds)){const option=make('option',label);option.value=value;kind.append(option);}kind.setAttribute('aria-label','投稿カテゴリ');
   const replyHint=make('p','','meta'), clearReply=make('button','返信先を解除','head-action');clearReply.type='button';
   const imageInput=make('input');imageInput.type='file';imageInput.accept='image/jpeg,image/png,image/webp';imageInput.multiple=true;imageInput.hidden=true;
-  const images=make('div',undefined,'composer-images'), add=make('button','画像','head-action'), submit=make('button','送信','approve'), recheck=make('button','送信結果を再取得','head-action');
-  add.type=recheck.type='button';submit.type='submit';submit.dataset.postAction='send';recheck.dataset.postAction='recheck';status.setAttribute('role','status');
-  const actions=make('div',undefined,'detail-form-row');actions.append(kind,add,submit);element.append(replyHint,clearReply,textarea,actions,imageInput,images,status,recheck);
+  const images=make('div',undefined,'composer-images'), add=make('button','画像','community-composer-item'), submit=make('button','','approve community-composer-send'), recheck=make('button','送信結果を再取得','head-action');
+  add.type=recheck.type='button';add.setAttribute('role','menuitem');submit.type='submit';submit.setAttribute('aria-label','送信');submit.title='送信';submit.innerHTML='<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 12V3.5M3.5 8 8 3.5 12.5 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';submit.dataset.postAction='send';recheck.dataset.postAction='recheck';status.setAttribute('role','status');
+  const plus=make('button','','community-composer-plus'),menu=make('div',undefined,'community-composer-menu'),actions=make('div',undefined,'community-composer-row');
+  plus.type='button';plus.setAttribute('aria-label','追加');plus.title='追加';plus.setAttribute('aria-haspopup','menu');plus.setAttribute('aria-expanded','false');plus.setAttribute('data-keep-text','');plus.textContent='＋';
+  menu.setAttribute('role','menu');menu.hidden=true;add.setAttribute('data-keep-text','');menu.append(add);
+  const closeMenu=()=>{menu.hidden=true;plus.setAttribute('aria-expanded','false');};
+  const outside=event=>{if(!element.isConnected){document.removeEventListener('click',outside);return;}if(!menu.hidden&&!menu.contains(event.target)&&event.target!==plus)closeMenu();};
+  plus.onclick=()=>{if(plus.disabled)return;menu.hidden=!menu.hidden;plus.setAttribute('aria-expanded',String(!menu.hidden));if(!menu.hidden){document.addEventListener('click',outside);menu.querySelector('button:not(:disabled)')?.focus?.();}};
+  element.addEventListener('keydown',event=>{if(event.key==='Escape'&&!menu.hidden){event.stopPropagation();closeMenu();plus.focus();}});
+  /** Extra actions in the ＋ menu (poll, schedule). Each closes the menu and runs. */
+  const addAction=(label,run)=>{const item=make('button',label,'community-composer-item');item.type='button';item.setAttribute('role','menuitem');item.setAttribute('data-keep-text','');item.onclick=()=>{closeMenu();run();};menu.append(item);return item;};
+  const grow=()=>{textarea.style.height='auto';const h=Math.min(textarea.scrollHeight||0,160);if(h>0)textarea.style.height=h+'px';};
+  actions.append(plus,kind,textarea,submit);element.append(replyHint,clearReply,actions,menu,imageInput,images,status,recheck);
   let disposed=false,invalidated=false,busy=true,initialized=false,scope=null,epoch=0;
   const live=()=>!disposed&&!invalidated&&isCurrent()===true;
   const connected=()=>live()&&element.isConnected;
@@ -72,11 +82,11 @@ export function createCommunityPostComposer({document,communityId,viewerId,state
     if(disposed)return;
     const draft=initialized?state:null,blocked=!connected()||!scope||!draft||busy||['sending','unknown'].includes(draft.operation?.status);
     submit.disabled=blocked||!textarea.value.trim()&&!(draft?.files.length);add.disabled=blocked||(draft?.files.length??0)>=4;
-    textarea.disabled=kind.disabled=clearReply.disabled=blocked;imageInput.disabled=blocked;recheck.disabled=!connected()||busy||draft?.operation?.status!=='unknown';recheck.hidden=draft?.operation?.status!=='unknown';
+    textarea.disabled=kind.disabled=clearReply.disabled=plus.disabled=blocked;imageInput.disabled=blocked;recheck.disabled=!connected()||busy||draft?.operation?.status!=='unknown';recheck.hidden=draft?.operation?.status!=='unknown';
     element.setAttribute('aria-busy',String(busy));replyHint.hidden=clearReply.hidden=!draft?.reply;
     replyHint.textContent=draft?.reply?`返信先: ${draft.reply.label}`:'';
     images.replaceChildren(...(draft?.files??[]).map((file,index)=>{const row=make('span',undefined,'composer-image-frame'),label=make('span',`${file.name} (${file.size} bytes)`),remove=make('button','外す','head-action');
-      remove.type='button';remove.disabled=blocked;remove.onclick=()=>{if(!connected()||busy||state.operation?.status==='unknown')return;state.files.splice(index,1);state.revision++;paint();};row.append(label,remove);return row;}));
+      remove.type='button';remove.disabled=blocked;remove.onclick=()=>{if(!connected()||busy||state.operation?.status==='unknown')return;state.files.splice(index,1);state.revision++;paint();};row.append(label,remove);return row;}));  grow();
   }
   function syncInput(force=false){
     if(!scope||!initialized||invalidated||disposed||!force&&!live()||state.scopeKey!==scope.key||state.viewerId!==viewerId)return;
@@ -84,7 +94,8 @@ export function createCommunityPostComposer({document,communityId,viewerId,state
     if(state.body!==textarea.value||state.kind!==kind.value){state.body=textarea.value;state.kind=kind.value;state.revision++;}
     return true;
   }
-  textarea.oninput=kind.onchange=()=>{syncInput();paint();};
+  textarea.oninput=kind.onchange=()=>{syncInput();paint();grow();};
+  textarea.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing&&event.keyCode!==229){event.preventDefault();if(!submit.disabled)element.requestSubmit?element.requestSubmit(submit):element.dispatchEvent(new document.defaultView.Event('submit',{cancelable:true}));}});
   function setReply(message){
     if(!connected()||!scope||busy||state.operation?.status==='unknown')return false;
     if(message===null)state.reply=null;
@@ -101,7 +112,7 @@ export function createCommunityPostComposer({document,communityId,viewerId,state
     if(!filesValid(next)){status.textContent='JPEG・PNG・WebP画像を、1枚5MiB以下・4枚以内で選択してください。';return false;}
     state.files=next;state.revision++;paint();return true;
   }
-  add.onclick=()=>{if(!add.disabled&&connected())imageInput.click();};imageInput.onchange=()=>{const files=Array.from(imageInput.files??[]);imageInput.value='';addFiles(files);};clearReply.onclick=()=>setReply(null);
+  add.onclick=()=>{closeMenu();if(!add.disabled&&connected())imageInput.click();};imageInput.onchange=()=>{const files=Array.from(imageInput.files??[]);imageInput.value='';addFiles(files);};clearReply.onclick=()=>setReply(null);
   function matchMessage(message,op){
     if(!message||message.id!==op.messageId||message.communityId!==communityId||message.authorProfileId!==viewerId||message.body!==op.body
       ||message.kind!==op.kind||!Object.hasOwn(message,'replyToMessageId')||message.replyToMessageId!==op.replyToMessageId||!Array.isArray(message.images))return false;
@@ -183,5 +194,5 @@ export function createCommunityPostComposer({document,communityId,viewerId,state
     }catch{invalidate();return false;}
     finally{busy=false;paint();}
   })();
-  paint();return {element,ready,destroy,invalidate,setReply,textarea,kind,hasImages:()=>Boolean(state.files?.length),addFiles,send,recheck:recheckResult};
+  paint();return {element,ready,destroy,invalidate,setReply,addAction,textarea,kind,hasImages:()=>Boolean(state.files?.length),addFiles,send,recheck:recheckResult};
 }

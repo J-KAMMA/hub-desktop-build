@@ -1,4 +1,5 @@
 
+import { createPostRow } from './post-row.mjs';
 import { researchDiscussionReference, researchGitDiscussionReference } from './research-reference.mjs';
 import {communityMembershipReviewRequest} from "./community-membership-review.mjs";
 import {communityReportReviewRequest} from "./community-report-review.mjs";
@@ -522,7 +523,7 @@ test("the bundled app UI is the primary surface and the Web Hub opens in the in-
   assert.equal(mainWindow.maximized, true);
   assert.equal(mainWindow.preventOverflow, true);
   assert.match(html, /<dialog id="harness-dialog"/);
-  assert.match(html, /<dialog id="games-dialog"/);
+  assert.doesNotMatch(html, /games-dialog/);
   // The browser is one destination inside the app, rendered by child webviews.
   assert.match(html, /data-view="browser"/);
   assert.match(html, /id="view-browser"/);
@@ -532,13 +533,13 @@ test("the bundled app UI is the primary surface and the Web Hub opens in the in-
   assert.match(browserRust, /const NEW_TAB_PAGE: &str = "newtab\.html"/);
   assert.doesNotMatch(newtab, /app-shell|app\.js/);
   assert.match(newtab, /newtab\.js/);
-  assert.match(app, /invoke\("launch_game"/);
+  assert.doesNotMatch(app, /launch_game/);
   assert.match(html, /id="ai-workspace"/);
   assert.match(html, /id="sidebar-ai-history"/);
   assert.match(app, /document\.querySelector\("#ai-workspace"\)\.append\(layout\)/);
   assert.doesNotMatch(app, /invoke\("open_harness_window"\)/);
   assert.match(app, /listen\("hub-open-harness"/);
-  assert.match(app, /listen\("hub-open-games"/);
+  assert.doesNotMatch(app, /hub-open-games/);
   assert.match(app, /listen\("browser-open-request"/);
   assert.match(app, /classList\.add\("native-tool"\)/);
   assert.match(css, /\.native-tool \.app-shell/);
@@ -551,7 +552,7 @@ test("the main AI view owns work while other tool windows skip it", () => {
   assert.match(app, /!startupTool \|\| startupTool === "harness"\) \{\s*legacyPiWorkController = initPiWork\(\);/);
   assert.match(app, /!startupTool \|\| startupTool === "harness"\) \{\s*if \(startupTool === "harness"\) await refresh\(\);/);
   assert.match(app, /if \(!startupTool\) void refreshDesktopAccount\(true\);/);
-  assert.match(app, /if \(!startupTool \|\| startupTool === "games"\)/);
+  assert.doesNotMatch(app, /startupTool === "games"/);
 });
 
 test("desktop keeps the icon rail, the contextual sidebar and the workspace in one grid", () => {
@@ -560,15 +561,15 @@ test("desktop keeps the icon rail, the contextual sidebar and the workspace in o
   const app = readFileSync(path.join(directory, "app.js"), "utf8");
   const rail = html.match(/<nav class="icon-rail"[\s\S]*?<\/nav>/)?.[0];
   assert.ok(rail);
-  for (const view of ["feed", "messages", "notifications", "videos", "music", "articles", "ai", "market", "browser", "settings"]) {
+  for (const view of ["feed", "messages", "notifications", "videos", "music", "articles", "market", "settings"]) {
     assert.match(rail, new RegExp(`data-view="${view}"`));
   }
   assert.doesNotMatch(rail, /data-view="hubpedia"/);
   assert.doesNotMatch(rail, /rail-expand-toggle/);
   // 2026-11-02: 元の左の帯に戻した。タイムライン、通知、メッセージが先頭。検索とコミュニティは帯に置かない（コミュニティは内側の列に参加中の一覧を持つ）。
   const firstFour = [...rail.matchAll(/<button[^>]*data-view="([^"]+)"/g)].map((m) => m[1]).slice(0, 4);
-  assert.deepEqual(firstFour, ["feed", "notifications", "messages", "articles"]);
-  assert.doesNotMatch(rail, /data-view="search"|data-view="community"|id="nav-communities"/);
+  assert.deepEqual(firstFour, ["feed", "notifications", "messages", "videos"]);
+  assert.doesNotMatch(rail, /data-view="search"|id="nav-communities"/);
   // スレッドは今もタイムラインの札。ウォレットは右の帯（右列）にある。
   assert.doesNotMatch(rail, /data-view="threads"/);
   assert.doesNotMatch(rail, /data-view="wallet"/);
@@ -577,21 +578,19 @@ test("desktop keeps the icon rail, the contextual sidebar and the workspace in o
   assert.ok(compose, "post button exists in the left column");
   assert.doesNotMatch(compose, /hidden/);
   assert.match(compose, /aria-label="投稿する"/);
-  // 並び（元の帯）: 記事、動画、音楽、ゲーム、研究、すべての機能、マーケット、デスクトップだけのブラウザ、AI。
-  const railOrder = ['data-view="articles"', 'data-view="videos"', 'data-view="music"', 'id="rail-games"', 'data-view="research"', 'id="desktop-apps"', 'data-view="market"', 'data-view="browser"', 'data-view="ai"'].map((k) => rail.indexOf(k));
-  assert.ok(railOrder.every((x, i) => x > 0 && (i === 0 || x > railOrder[i - 1])), "rail order: articles, video, music, games, research, all features, market, browser, AI");
-  assert.match(rail, /id="rail-games"[^>]*aria-label="ゲーム"/);
-  assert.match(rail, /data-view="research"[^>]*aria-label="研究"/);
-  assert.ok(rail.indexOf('data-view="ai"') < rail.indexOf('id="desktop-compose"'), "below the main destinations");
+  // 並び（2026-11-07 所有者承認 IA.md）: タイムライン、通知、メッセージ、コミュニティ｜動画、音楽、記事、マーケット、すべて｜投稿｜プロフィール、設定。
+  const railOrder = ['data-view="feed"', 'data-view="notifications"', 'data-view="messages"', 'data-view="videos"', 'data-view="music"', 'data-view="articles"', 'id="desktop-apps"', 'data-view="market"', 'data-view="browser"', 'data-view="ai"', 'id="desktop-compose"', 'data-view="profile"', 'data-view="settings"'].map((k) => rail.indexOf(k));
+  assert.ok(railOrder.every((x, i) => x > 0 && (i === 0 || x > railOrder[i - 1])), "rail order follows IA.md");
   assert.ok(rail.indexOf('id="desktop-compose"') < rail.indexOf('class="icon-rail-bottom"'), "above the bottom group");
+  assert.doesNotMatch(rail, /data-view="community"/, "2026-11-09: communities live in the sidebar tree and すべて, not the rail");
   assert.ok(rail.indexOf('id="desktop-compose"') < rail.indexOf('data-view="profile"'));
   const marks = html.match(/<nav class="rail-marks"[\s\S]*?<\/nav>/)?.[0] ?? "";
   assert.match(marks, /data-rail-view="wallet"/);
   assert.match(html, /data-rail-view="wallet" hidden><div id="rail-wallet"/);
-  // Owner 2026-10-18: wallet, browser, AI sit at the bottom of the right strip.
+  // Owner 2026-11-06 (docs/hub-groups/DESIGN.md): notifications, messages, timeline, music, video, browser, AI, wallet last.
   const order = (s, keys) => keys.map((k) => s.indexOf(k));
   const sorted = (xs) => xs.every((x, i) => x > 0 && (i === 0 || x > xs[i - 1]));
-  assert.ok(sorted(order(marks, ['data-rail-view="posts" type', 'data-rail-view="notifications"', 'data-rail-view="browser" type', 'data-rail-view="ai" type', 'data-rail-view="wallet" type'])), "strip bottom group: browser, AI, wallet");
+  assert.ok(sorted(order(marks, ['data-rail-view="notifications" type', 'data-rail-view="messages" type', 'data-rail-view="posts" type', 'data-rail-view="music" type', 'data-rail-view="video" type', 'data-rail-view="browser" type', 'data-rail-view="ai" type', 'data-rail-view="wallet" type'])), "strip bottom group: browser, AI, wallet");
   assert.match(marks, /rail-mark--bottom/);
   // 投稿ボタンは白黒で --text の塗り、黒金で金の線と字（塗りなし）。値は --ds-btn-primary-*。
   const shellCss = readFileSync(path.join(directory, "desktop-shell.css"), "utf8");
@@ -681,6 +680,7 @@ test("content lists and their details keep their own primary destination selecte
   assert.equal(select("hubpedia", shell, document), "research");
   // 2026-11-02: 元の左の帯に戻した。コミュニティもスレッドもタイムラインの項目の下に付く（帯にコミュニティの項目は無い）。
   for(const view of ["feed","threads","community"])assert.equal(select(view,shell,document),"feed");
+  assert.equal(select("community",shell,document),"feed");
   const parents = new Function(`return (${source.match(/const DETAIL_PARENT_VIEW = (\{[\s\S]*?\});/)[1]});`)();
   for (const [detail, view] of [["article","articles"],["hubpedia_article","research"],["research_project","research"],["research_document","research"]]) {
     assert.equal(select(parents[detail], shell, document), view);
@@ -770,10 +770,10 @@ test('research reference navigation retains the exact version and refuses ambigu
 
 test('thread references return to the pinned document and disappear for hidden posts',()=>{
   const source=readFileSync(new URL('./app.js',import.meta.url),'utf8');
-  const start=source.indexOf('function threadPostCard(post, context, rerender) {'),end=source.indexOf('\n}',start)+2;
+  const start=source.indexOf('function threadPostCard('),end=source.indexOf('function renderThreadDetail(');
   const {document}=new JSDOM('<body></body>').window;
   let opened;
-  const card=new Function('document','relTime','researchDiscussionReference','researchGitDiscussionReference','openHubPath',`return (${source.slice(start,end)});`)(document,()=>'',researchDiscussionReference,researchGitDiscussionReference,href=>{opened=href;});
+  const card=new Function('document','window','relTime','researchDiscussionReference','researchGitDiscussionReference','openHubPath','createPostRow','icon','paintAvatar','hubAsset','addBaitRow',`${source.slice(start,end)};return threadPostCard;`)(document,document.defaultView,()=>'',researchDiscussionReference,researchGitDiscussionReference,href=>{opened=href;},createPostRow,()=>'',()=>{},()=>{},()=>null);
   const post={id:'post',no:1,body:`A research discussion\nsha256:${'a'.repeat(64)}\n/v2/research/p?document=d&version=2`};
   const visible=card(post,{},()=>{}),link=visible.querySelector('.detail-link');
   assert.equal(link.textContent,'参照した文書の版（v2）');link.click();assert.equal(opened,'/v2/research/p?document=d&version=2');
@@ -783,10 +783,10 @@ test('thread references return to the pinned document and disappear for hidden p
 
 test('visible Git discussion returns to the same commit and hidden posts expose no reference',()=>{
   const source=readFileSync(new URL('./app.js',import.meta.url),'utf8');
-  const start=source.indexOf('function threadPostCard(post, context, rerender) {'),end=source.indexOf('\n}',start)+2;
+  const start=source.indexOf('function threadPostCard('),end=source.indexOf('function renderThreadDetail(');
   const {document}=new JSDOM('<body></body>').window;
   let opened;
-  const card=new Function('document','relTime','researchDiscussionReference','researchGitDiscussionReference','openHubPath',`return (${source.slice(start,end)});`)(document,()=>'',researchDiscussionReference,researchGitDiscussionReference,href=>{opened=href;});
+  const card=new Function('document','window','relTime','researchDiscussionReference','researchGitDiscussionReference','openHubPath','createPostRow','icon','paintAvatar','hubAsset','addBaitRow',`${source.slice(start,end)};return threadPostCard;`)(document,document.defaultView,()=>'',researchDiscussionReference,researchGitDiscussionReference,href=>{opened=href;},createPostRow,()=>'',()=>{},()=>{},()=>null);
   const p='rp_'+'a'.repeat(32),oid='b'.repeat(40),href=`/v2/research/${p}?commit=${oid}#git`;
   const post={id:'post',no:1,body:`A Git discussion\n\n参照Git: Project / Fix\n${oid}\n${href}`};
   const visible=card(post,{},()=>{}),link=visible.querySelector('.detail-link');
@@ -851,17 +851,15 @@ test("rail ゲーム opens /v2/games, local launch sits there, 情報 lives in s
   const rail = html.match(/<nav class="icon-rail[\s\S]*?<\/nav>/)?.[0] ?? html;
   assert.ok(rail.includes('id="desktop-apps"'), "すべての機能 stays in the rail");
   assert.doesNotMatch(rail, /data-short-label="情報"/);
-  assert.match(html, /id="rail-games"[^>]*data-view="games"/);
-  assert.match(html, /id="view-games" data-view-panel="games"/);
+  assert.match(html, /<button class="nav-item" data-view="games"/);
+  assert.doesNotMatch(rail, /data-view="(games|research)"/);
+  // 2026-11-09 所有者決定: マーケット・ブラウザ・AIは左の列の下（投稿の上）。
+  assert.ok(rail.indexOf('id="desktop-apps"') < rail.indexOf('data-view="market"') && rail.indexOf('data-view="market"') < rail.indexOf('data-view="browser"') && rail.indexOf('data-view="browser"') < rail.indexOf('data-view="ai"') && rail.indexOf('data-view="ai"') < rail.indexOf('id="desktop-compose"'));
+  assert.doesNotMatch(html, /id="view-games"/);
   assert.match(app, /resource: "games_store"/);
   assert.doesNotMatch(app, /#rail-games"\)\.onclick/);
-  assert.match(html, /id="browser-local-games"[^>]*hidden[^>]*>このPCで起動</);
-  assert.match(app, /onLocalGames: \(\) => openTool\("games"\)/);
-  assert.match(html, /data-settings-sec="app-info"[^>]*>このアプリについて</);
-  assert.match(html, /data-settings-panel="app-info"[\s\S]*id="settings-about-panel"[^>]*desktop-rail-toggle/);
-  const { isHubGamesUrl } = await import("./browser-workspace.mjs");
-  assert.equal(isHubGamesUrl("https://hub.jkamma.com/v2/games"), true);
-  assert.equal(isHubGamesUrl("http://localhost:3020/v2/games/abc"), true);
-  assert.equal(isHubGamesUrl("https://evil.example/v2/games"), false);
-  assert.equal(isHubGamesUrl("https://hub.jkamma.com/v2/gamesx"), false);
+  assert.doesNotMatch(html, /browser-local-games/);
+  assert.doesNotMatch(app, /onLocalGames/);
+  assert.doesNotMatch(html, /data-settings-sec="app-info"/);
+  assert.match(html, /data-settings-panel="advanced"[\s\S]*id="settings-about-panel"[^>]*desktop-rail-toggle/);
 });

@@ -17,7 +17,7 @@ test("each view's column holds its own navigation and never repeats a rail desti
       f.calls.length = 0;
       node.click();
       // マーケットの木（マーケット/自分）は、買い物の画面どうしの行き来でマーケットへ戻る（木の根が行き先）。
-      assert.deepEqual(f.calls.filter(([kind, target]) => kind === "rail" && !(["market", "cart", "purchased", "order"].includes(view) && target === "market")), [], `${view}: "${node.textContent}" does not jump to a rail destination`);
+      assert.deepEqual(f.calls.filter(([kind, target]) => kind === "rail" && !(["market", "cart", "purchased", "order"].includes(view) && target === "market") && !(["threads", "community"].includes(view) && ["feed", "threads", "community"].includes(target) && node.classList.contains("sidebar-tree-root"))), [], `${view}: "${node.textContent}" does not jump to a rail destination`);
       f.show(view);
     }
   }
@@ -190,40 +190,39 @@ test("the feed column is a tree of three roots with their children under the rig
   assert.deepEqual(trees.map((tree) => tree.querySelector(".sidebar-tree-root").textContent), ["フィード", "スレッド", "コミュニティ"]);
   const kids = trees.map((tree) => [...tree.querySelectorAll(".sidebar-tree-children > *, .sidebar-tree-children .nav-communities > *")].filter((node) => !node.classList.contains("nav-communities")));
   const text = (nodes) => nodes.filter((node) => !node.classList.contains("nav-community-all")).map((node) => node.textContent.trim());
-  assert.deepEqual(text(kids[0]), ["フォロー中のタグ", "#UI", "#音楽", "話題を探す", "リスト", "友だち2", "すべて見る"]);
-  assert.deepEqual(text(kids[1]), ["探す・作る"]);
-  assert.deepEqual(text(kids[2]), ["設計", "音楽", "写真", "コミュニティを探す"]);
-  assert.deepEqual([...trees[0].querySelectorAll(".sidebar-tree-sub")].map((node) => node.textContent), ["フォロー中のタグ", "リスト"]);
+  assert.deepEqual(text(kids[0]), ["おすすめ", "フォロー中", "人気", "#UI", "#音楽"]);
+  assert.deepEqual(text(kids[1]), [], "スレッド has no text children; finding is the root-row icon");
+  assert.deepEqual(text(kids[2]), [], "コミュニティ is collapsed while another root is selected (2026-11-07)");
+  assert.deepEqual(trees.map((tree) => tree.querySelector(".sidebar-tree-tool")?.getAttribute("aria-label")), ["ブックマーク", undefined, undefined], "search lives only in the top bar (2026-11-04)");
+  assert.deepEqual([...trees[0].querySelectorAll(".sidebar-tree-sub, .sidebar-tree-note")].map((node) => node.textContent), [], "no sub-headings or empty notes (2026-11-04)");
   // 根は枝の外にあり、線の入れ物（.sidebar-tree-children）に入らない。
   for (const tree of trees) assert.equal(tree.querySelector(".sidebar-tree-children .sidebar-tree-root"), null);
   // 各根の最初と最後の枝に印が付く（最後は曲がり角だけ）。
-  for (const tree of trees) {
+  for (const tree of [trees[0]]) {
     assert.equal(tree.querySelectorAll(".is-tree-first").length, 1);
     assert.equal(tree.querySelectorAll(".is-tree-last").length, 1);
   }
-  assert.equal(trees[0].querySelector(".is-tree-last").textContent, "すべて見る");
-  assert.equal(trees[1].querySelector(".is-tree-last").textContent, "探す・作る");
-  assert.equal(trees[2].querySelector(".is-tree-last").textContent, "コミュニティを探す");
-  assert.equal(trees[0].querySelector(".is-tree-first").textContent, "フォロー中のタグ");
-  assert.equal(trees[2].querySelector(".is-tree-first").textContent, "設計");
-  // 根の動作はこれまでどおり。
+  assert.equal(trees[0].querySelector(".is-tree-last").textContent, "#音楽");
+  assert.equal(trees[0].querySelector(".is-tree-first").textContent, "おすすめ");
+  // スレッドとコミュニティの根は、それぞれの一覧を開く（2026-11-04）。投稿の絞り込みには使わない。
   f.calls.length = 0;
   trees[1].querySelector(".sidebar-tree-root").click();
   trees[2].querySelector(".sidebar-tree-root").click();
-  assert.deepEqual(f.calls.filter(([kind]) => kind === "social"), [["social", "mixed", "thread", "latest"], ["social", "mixed", "community", "latest"]]);
+  assert.deepEqual(f.calls.filter(([kind]) => kind === "social"), []);
   f.calls.length = 0;
-  trees[0].querySelectorAll(".sidebar-tree-children .sidebar-context-item")[0].click();
+  trees[0].querySelectorAll(".sidebar-tree-children .sidebar-context-item")[3].click();
   assert.deepEqual(f.calls.at(-1), ["detail", "tag", "UI"]);
   f.dom.window.close();
 });
 
-test("a root without data children still shows its find row", async () => {
+test("a root without data children shows no find row or search icon (2026-11-04)", async () => {
   const f = fixture({ registered: false });
   f.show("feed");
   const trees = [...f.document.querySelectorAll("#sidebar-context > .sidebar-tree")];
   assert.equal(trees.length, 3);
-  assert.equal(trees[2].querySelector(".sidebar-tree-children").textContent, "コミュニティを探す");
-  assert.equal(trees[2].querySelectorAll(".is-tree-last").length, 1);
+  assert.equal(trees[2].querySelector(".sidebar-tree-children").textContent, "");
+  assert.deepEqual([...trees.map((tree) => tree.querySelector(".sidebar-tree-head .sidebar-tree-tool")?.getAttribute("aria-label"))],
+    ["ブックマーク", undefined, undefined]);
   f.dom.window.close();
 });
 
@@ -233,5 +232,105 @@ test("the notifications column's heading is 通知, not the tree's 絞り込み 
   await settle();
   f.show("notifications");
   assert.equal(f.document.querySelector(".sidebar .brand h1").textContent, "通知");
+  f.dom.window.close();
+});
+
+test("feed kinds are sidebar rows: selected row is current, lists follow 人気, arrows pick the next kind (2026-11-06)", async () => {
+  const f = fixture();
+  f.state.feedTabEntries = [["recommended", "おすすめ"], ["following", "フォロー中"], ["popular", "人気"], ["list:l1", "友人"]]
+    .map(([key, label]) => ({ key, label, selected: key === "following" }));
+  f.show("feed");
+  await settle();
+  const rows = () => [...f.document.querySelectorAll("#sidebar-context .sidebar-tree-children [data-feed-tab]")];
+  assert.deepEqual(rows().map((node) => node.textContent), ["おすすめ", "フォロー中", "人気", "友人"]);
+  assert.deepEqual(rows().map((node) => node.getAttribute("aria-current")), [null, "true", null, null]);
+  assert.equal(f.document.querySelector("#sidebar-context .sidebar-tree-root").classList.contains("on"), false, "root pill yields to the selected kind");
+  f.calls.length = 0;
+  rows()[2].dispatchEvent(new f.dom.window.KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+  rows()[3].dispatchEvent(new f.dom.window.KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+  rows()[0].dispatchEvent(new f.dom.window.KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
+  rows()[1].dispatchEvent(new f.dom.window.KeyboardEvent("keydown", { key: "End", bubbles: true }));
+  assert.deepEqual(f.calls.filter(([kind]) => kind === "feedTab"), [["feedTab", "list:l1"], ["feedTab", "recommended"], ["feedTab", "list:l1"], ["feedTab", "list:l1"]]);
+  f.dom.window.close();
+});
+
+test("the community list keeps the three roots; the concrete communities come first, then おすすめ / 人気 / 参加中 (2026-11-09)", async () => {
+  const f = fixture();
+  f.show("community");
+  await settle();
+  f.show("community");
+  await settle();
+  const trees = [...f.document.querySelectorAll("#sidebar-context > .sidebar-tree")];
+  assert.deepEqual(trees.map((tree) => tree.querySelector(".sidebar-tree-root").textContent), ["フィード", "スレッド", "コミュニティ"]);
+  const labels = [...trees[2].querySelectorAll(".sidebar-tree-children > .sidebar-context-item .sidebar-item-label")].map((node) => node.textContent);
+  assert.deepEqual(labels.slice(0, 3), ["おすすめ", "人気", "参加中"]);
+  const joinedAt = [...trees[2].querySelector(".sidebar-tree-children").children].findIndex((node) => node.classList.contains("nav-communities"));
+  assert.equal(joinedAt, 0, "the community list is the first thing under コミュニティ");
+  assert.equal(f.document.querySelectorAll("#sidebar-context .sidebar-heading").length, 0);
+  assert.equal([...f.document.querySelectorAll("#sidebar-context")].map((n) => n.textContent.split("参加中").length - 1)[0], 1, "参加中 appears once");
+  f.dom.window.close();
+});
+
+test("with a community open, the list keeps the three rows (おすすめ, 参加中, 人気) unchanged", async () => {
+  const f = fixture();
+  f.state.detailTrail = [{ name: "community", ids: ["c1"] }];
+  f.show("detail");
+  await settle();
+  const tree = [...f.document.querySelectorAll("#sidebar-context > .sidebar-tree")].find((node) => node.querySelector(".sidebar-tree-root")?.textContent === "コミュニティ");
+  const labels = [...tree.querySelectorAll(".sidebar-tree-children > .sidebar-context-item .sidebar-item-label")].map((node) => node.textContent);
+  assert.deepEqual(labels.slice(0, 3), ["おすすめ", "人気", "参加中"]);
+  f.dom.window.close();
+});
+
+test("exactly one current row: with a community open, 参加中 / おすすめ / 人気 are not current; they are only while their list is the main content", async () => {
+  const f = fixture();
+  f.state.communitySort = "joined";
+  const sorts = () => [...f.document.querySelectorAll("#sidebar-context [data-community-sort]")];
+  const marked = (node) => node.classList.contains("on") || node.hasAttribute("aria-current");
+  f.state.detailTrail = [{ name: "community", ids: ["c1"] }];
+  f.show("detail");
+  await settle();
+  f.show("detail");
+  assert.equal(sorts().length, 3);
+  assert.deepEqual(sorts().filter(marked), [], "community open: no directory row is current");
+  f.state.detailTrail = [{ name: "post", ids: ["p1"], communityId: "c1" }];
+  f.show("detail");
+  await settle();
+  assert.deepEqual(sorts().filter(marked), [], "a post inside a community: no directory row is current");
+  f.state.detailTrail = [];
+  f.show("community");
+  await settle();
+  f.show("community");
+  assert.deepEqual(sorts().filter(marked).map((node) => node.textContent.trim()), ["参加中"], "directory open: exactly the chosen directory row");
+  f.dom.window.close();
+});
+
+test("exactly one current row: an open thread is current, not the thread sort row", async () => {
+  const f = fixture();
+  f.state.threadSort = "popular";
+  f.state.detailTrail = [{ name: "thread", ids: ["t1"], title: "話題" }];
+  f.show("detail");
+  await settle();
+  const marked = [...f.document.querySelectorAll("#sidebar-context [data-thread-sort]")].filter((node) => node.classList.contains("on") || node.hasAttribute("aria-current"));
+  assert.deepEqual(marked, []);
+  f.dom.window.close();
+});
+
+test("exactly one current row in a directory list: the chosen sort row, not also the コミュニティ / スレッド root", async () => {
+  const f = fixture();
+  const marked = () => [...f.document.querySelectorAll("#sidebar-context .sidebar-context-item")].filter((node) => node.classList.contains("on") || node.hasAttribute("aria-current")).map((node) => node.textContent.trim());
+  f.state.communitySort = "joined";
+  f.show("community");
+  await settle();
+  f.show("community");
+  assert.deepEqual(marked(), ["参加中"]);
+  f.state.communitySort = "";
+  f.show("community");
+  await settle();
+  assert.deepEqual(marked(), ["コミュニティ"], "no sort chosen: the root is the one current row");
+  f.state.threadSort = "popular";
+  f.show("threads");
+  await settle();
+  assert.deepEqual(marked(), ["人気"]);
   f.dom.window.close();
 });

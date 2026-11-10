@@ -123,14 +123,14 @@ test("orderWithPins and broken storage", () => {
 
 test("a view without any source renders nothing; sections follow the owner's list", () => {
   const f = build({ sources: {} });
-  f.show("games");
+  f.show("market");
   assert.equal(f.host.children.length, 0);
   const titles = (view) => MINE_SECTIONS[view].map((s) => s.title);
   assert.deepEqual(titles("feed"), ["フォロー中のタグ", "リスト"]);
   assert.deepEqual(titles("articles"), ["フォロー中の書き手", "フォロー中のタグ", "下書き", "保存した記事"]);
   assert.deepEqual(titles("videos"), ["フォロー中のタグ", "フォロー中", "あとで見る"]);
   assert.deepEqual(titles("music"), ["フォロー中のタグ", "プレイリスト", "お気に入り", "最近聴いた曲"]);
-  assert.deepEqual(titles("games"), ["ライブラリ"]);
+  assert.equal(MINE_SECTIONS.games, undefined);
   assert.deepEqual(titles("research"), ["自分のプロジェクト"]);
   assert.ok(![...Object.values(MINE_SECTIONS)].flat().some((s) => /購入|買う|checkout/i.test(s.title + s.empty.action)), "music and others carry no purchase controls");
 });

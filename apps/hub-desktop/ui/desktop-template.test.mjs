@@ -14,7 +14,7 @@ test('every view and detail maps to one of the five templates (or the browser)',
 });
 
 test('the route map of DESIGN-SYSTEM section 5 holds for the desktop views', () => {
-  for (const view of ['feed', 'notifications', 'profile', 'community', 'threads', 'search', 'hubpedia', 'articles', 'bookmarks', 'lists']) assert.equal(templateFor(view), 'stream', view);
+  for (const view of ['feed', 'notifications', 'profile', 'threads', 'community', 'search', 'hubpedia', 'bookmarks', 'lists']) assert.equal(templateFor(view), 'stream', view);
   for (const view of ['videos', 'music', 'market', 'games', 'books', 'compute', 'node', 'code']) assert.equal(templateFor(view), 'wide', view);
   for (const view of ['messages', 'mail']) assert.equal(templateFor(view), 'split', view);
   for (const view of ['settings', 'wallet', 'cart', 'order']) assert.equal(templateFor(view), 'settings', view);

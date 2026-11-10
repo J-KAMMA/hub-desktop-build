@@ -109,6 +109,7 @@ var ROLE_LABELS = { unspecified: "\u901A\u5E38", answer: "\u56DE\u7B54", context
 
 // thread-reader.src.mjs
 function createThreadReader(document, { thread, posts, viewer, renderPost, state: reading = {}, selection = null, isCurrent = () => true, onBeforeRender = () => {
+}, onRendered = () => {
 } }) {
   const root = document.createElement("section");
   root.className = "thread-reader";
@@ -273,6 +274,7 @@ function createThreadReader(document, { thread, posts, viewer, renderPost, state
       return output;
     });
     list.replaceChildren(...nodes);
+    onRendered(list);
     if (!nodes.length) {
       const empty = document.createElement("p");
       empty.className = "meta";
@@ -284,6 +286,7 @@ function createThreadReader(document, { thread, posts, viewer, renderPost, state
     previous.disabled = page === 0;
     next.disabled = page + 1 >= pages;
     pager.hidden = pages === 1;
+    state.hidden = !searching && !guided && pages === 1;
   }
   const refresh = () => {
     stopFocus();

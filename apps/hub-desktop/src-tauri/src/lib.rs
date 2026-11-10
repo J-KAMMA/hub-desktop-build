@@ -35,7 +35,10 @@ mod agent_usage;
 mod cli_auth;
 mod artifact_store;
 mod browser_window;
+mod browser_tab_rest;
 mod window_fit;
+mod pc_games;
+mod game_dock;
 mod window_material;
 mod no_activate;
 mod browser_site_permissions;
@@ -60,16 +63,19 @@ mod desktop_account;
 mod desktop_wallet;
 mod dev_cli;
 mod docker;
-mod game_launcher;
 mod harness_adapter;
 mod harness_context;
 mod harness_control;
 mod harness_workspace;
 mod hub_client;
+mod realtime_client;
 mod hub_network;
 mod media_manifest;
 mod media_cache;
 mod portable_identity;
+mod media_declaration;
+mod media_declaration_net;
+mod media_swarm;
 mod hub_window;
 mod music_player;
 mod native_video;
@@ -94,12 +100,17 @@ mod personal_node;
 mod pi_sidecar;
 mod pi_changes;
 mod pi_work;
+mod pi_journal;
 mod verification;
 mod fast_check;
 mod security;
 mod single;
 mod workspace_files;
 mod local_data;
+mod local_translate;
+mod translate_api;
+#[cfg(test)]
+mod test_tmp;
 mod node_key_backup;
 // スマートウォレット（第0段の試作・第1段）が使う WebAuthn P-256 の包み。
 #[allow(dead_code)]
@@ -205,7 +216,6 @@ pub struct RunnerState {
     origins: Vec<HeaderValue>,
     checkpoint: Option<Arc<checkpoint::CheckpointStore>>,
     node: Option<personal_node::PersonalNodeService>,
-    games: Option<game_launcher::GameLibrary>,
     dev_runs: Arc<Mutex<dev_cli::DevRuns>>,
     /// Shared with the Tauri-managed instance through `.manage(clone())` —
     /// the native window and the paired-HTTP routes observe the same runs.
@@ -435,7 +445,6 @@ impl RunnerState {
             origins,
             checkpoint: None,
             node: None,
-            games: None,
             dev_runs: Arc::new(Mutex::new(dev_cli::DevRuns::default())),
             pi_work: pi_work::PiWorkService::default(),
         })
@@ -484,11 +493,8 @@ impl RunnerState {
         // Personal Node identity and settings. For everything else this app keeps
         // on disk, see docs/hub-desktop-local-data/INVENTORY.md.
         if let Some(dir) = personal_node_dir() {
-            if let Ok(service) = personal_node::PersonalNodeService::load(dir.clone()) {
+            if let Ok(service) = personal_node::PersonalNodeService::load(dir) {
                 state.node = Some(service);
-            }
-            if let Ok(games) = game_launcher::GameLibrary::load(dir) {
-                state.games = Some(games);
             }
         }
         Ok(state)
@@ -748,7 +754,6 @@ pub fn router(state: Arc<RunnerState>) -> Router {
         .route("/show", post(http_show_running))
         .route("/pending", get(http_pending))
         .route("/local-window/show", post(http_show_local))
-        .route("/game-window/show", post(http_show_games))
         .route("/browser-window/show", post(http_show_browser))
         .route("/pair", post(pair))
         .route("/disconnect", post(disconnect))
@@ -2342,19 +2347,6 @@ async fn http_pending_events(
     Ok(Json(node.pending_events(20).await))
 }
 
-async fn http_show_games(
-    State(state): State<Arc<RunnerState>>,
-    headers: axum::http::HeaderMap,
-) -> Result<StatusCode, AppError> {
-    let token = bearer(&headers)?;
-    state
-        .require_session(&token)
-        .await
-        .map_err(AppError::from)?;
-    hub_window::show_games();
-    Ok(StatusCode::NO_CONTENT)
-}
-
 /// ブラウザ窓を前に出す合図だけを受ける。URLは任意（開く最初のページ）。
 /// 窓そのものは利用者の操作面であり、HTTPから内容の読み書きは受けない。
 async fn http_show_browser(
@@ -3079,9 +3071,10 @@ async fn hub_resource(
 async fn hub_client(
     name: String,
     conversation: Option<String>,
+    cursor: Option<String>,
 ) -> Result<serde_json::Value, String> {
     let base = hub_window::hub_url(std::env::var("HUB_APP_URL").ok().as_deref());
-    hub_client::fetch_client(&base, &name, conversation.as_deref()).await
+    hub_client::fetch_client(&base, &name, conversation.as_deref(), cursor.as_deref()).await
 }
 /// 本人専用の操作（既読化・DM送信）。行えることは hub_client::post_client の
 /// 固定表に閉じている。options は各操作が必要とする決まったキーだけを
@@ -3110,6 +3103,37 @@ async fn hub_client_action(
         options.as_ref(),
     )
     .await
+}
+/// 右列のグループ・DMの新着（WebSocket）。チケットの取得も接続も Rust で行い、窓へは id だけのイベント
+/// （`hub-realtime`）と接続の状態（`hub-realtime-status`: open / closed / failed）だけを渡す。
+/// 呼び直すと前の購読は置き換わる。繋がっていない間は窓が従来のポーリングを使う。
+#[tauri::command]
+async fn hub_realtime_open(
+    window: tauri::Webview,
+    app: tauri::AppHandle,
+    state: tauri::State<'_, realtime_client::RealtimeState>,
+    communities: Vec<String>,
+    dm: bool,
+) -> Result<(), String> {
+    if !matches!(window.label(), "main") { return Err("native_window_required".into()); }
+    let topics = realtime_client::validate_topics(communities, dm)?;
+    let base = hub_window::hub_url(std::env::var("HUB_APP_URL").ok().as_deref());
+    let (cancel, watcher) = tokio::sync::watch::channel(false);
+    state.replace(cancel).await;
+    tauri::async_runtime::spawn(async move {
+        let transport = realtime_client::HubTransport { base };
+        let sink = realtime_client::TauriSink(app);
+        realtime_client::run(&transport, &sink, topics, watcher, realtime_client::Timing::default()).await;
+    });
+    Ok(())
+}
+/// 右列が隠れた・一時停止した・グループを閉じたときの停止。購読が無くても成功する。
+#[tauri::command]
+async fn hub_realtime_close(
+    state: tauri::State<'_, realtime_client::RealtimeState>,
+) -> Result<(), String> {
+    state.stop().await;
+    Ok(())
 }
 #[tauri::command]
 async fn hub_video_metadata(
@@ -3985,6 +4009,10 @@ async fn media_storage(state: &tauri::State<'_, Arc<RunnerState>>) -> Result<Str
 async fn media_audio(origin: String, track_id: String, state: tauri::State<'_, Arc<RunnerState>>) -> Result<tauri::ipc::Response, String> {
     let storage = media_storage(&state).await?;
     let own = hub_window::hub_url(std::env::var("HUB_APP_URL").ok().as_deref());
+    // 端末どうしの受け渡し（受け取り・配布のどちらかが有効で、宣言とフォローが通る曲だけ）。なければ従来の経路。
+    if let Some(bytes) = media_swarm::command_audio(&storage, &own, &origin, &track_id, &own).await? {
+        return Ok(tauri::ipc::Response::new(bytes));
+    }
     media_cache::command_audio(&storage, &own, &origin, &track_id).await.map(tauri::ipc::Response::new)
 }
 #[tauri::command]
@@ -4169,6 +4197,28 @@ async fn ai_call(
 }
 /// AI面: 支払い付き実行。accepted は 402 で返った要件1件、display は
 /// 窓が組んだ人間向けの金額表示。確認モーダル→EIP-3009署名→再送。
+/// AI market (slice 1, testnet only): a direct call to a listed endpoint, paid by x402 through the wallet
+/// confirmation. Hub never sees the prompt. `private` content is refused. See byok/market.rs.
+#[tauri::command]
+async fn ai_market_call(
+    app: tauri::AppHandle,
+    listing: byok::market::Listing,
+    model: String,
+    messages: Vec<byok::ChatMessage>,
+    private: bool,
+) -> Result<serde_json::Value, String> {
+    let base = byok::market::market_base(&listing).map_err(str::to_owned)?;
+    byok::market::run(
+        byok::market::SPLITTER_FACTORY_TESTNET,
+        &byok::market::HttpTransport { base },
+        &byok::market::WalletSigner { app: &app },
+        &listing,
+        &model,
+        &messages,
+        private,
+    )
+    .await
+}
 #[tauri::command]
 async fn ai_pay_and_call(
     app: tauri::AppHandle,
@@ -4305,92 +4355,6 @@ fn hub_origin() -> String {
     hub_window::hub_url(std::env::var("HUB_APP_URL").ok().as_deref())
 }
 
-/// ゲーム一覧と起動はこの端末の窓だけに出す。HTTPのペアリング権限には含めない。
-#[tauri::command]
-async fn games(
-    state: tauri::State<'_, Arc<RunnerState>>,
-) -> Result<Vec<game_launcher::GameEntry>, String> {
-    state
-        .games
-        .as_ref()
-        .ok_or("ゲーム一覧の保管先が使えません")?
-        .list()
-        .await
-        .map_err(game_error)
-}
-#[tauri::command]
-async fn pick_game_executable(
-    app: tauri::AppHandle,
-    state: tauri::State<'_, Arc<RunnerState>>,
-) -> Result<Option<game_launcher::GameEntry>, String> {
-    use tauri_plugin_dialog::DialogExt;
-    let (tx, rx) = tokio::sync::oneshot::channel();
-    app.dialog().file().pick_file(move |chosen| {
-        let _ = tx.send(chosen);
-    });
-    let Some(chosen) = rx.await.map_err(|_| "ゲーム選択を完了できませんでした")?
-    else {
-        return Ok(None);
-    };
-    state
-        .games
-        .as_ref()
-        .ok_or("ゲーム一覧の保管先が使えません")?
-        .add(&chosen.to_string())
-        .await
-        .map(Some)
-        .map_err(game_error)
-}
-#[tauri::command]
-async fn rename_game(
-    id: String,
-    title: String,
-    state: tauri::State<'_, Arc<RunnerState>>,
-) -> Result<game_launcher::GameEntry, String> {
-    state
-        .games
-        .as_ref()
-        .ok_or("ゲーム一覧の保管先が使えません")?
-        .rename(&id, &title)
-        .await
-        .map_err(game_error)
-}
-#[tauri::command]
-async fn remove_game(id: String, state: tauri::State<'_, Arc<RunnerState>>) -> Result<(), String> {
-    state
-        .games
-        .as_ref()
-        .ok_or("ゲーム一覧の保管先が使えません")?
-        .remove(&id)
-        .await
-        .map_err(game_error)
-}
-#[tauri::command]
-async fn launch_game(
-    id: String,
-    state: tauri::State<'_, Arc<RunnerState>>,
-) -> Result<game_launcher::GameEntry, String> {
-    state
-        .games
-        .as_ref()
-        .ok_or("ゲーム一覧の保管先が使えません")?
-        .launch(&id)
-        .await
-        .map_err(game_error)
-}
-fn game_error(error: &'static str) -> String {
-    match error {
-        "game_executable_missing" => "ゲームの実行ファイルが見つかりません".into(),
-        "game_executable_must_be_exe" => {
-            "Windowsのゲーム実行ファイル（.exe）を選んでください".into()
-        }
-        "invalid_game_title" => "ゲーム名は1〜80文字で入力してください".into(),
-        "game_not_found" => "このゲームは一覧にありません".into(),
-        "game_launch_failed" => "ゲームを起動できませんでした".into(),
-        "game_library_invalid" => "ゲーム一覧のデータが壊れています".into(),
-        _ => "ゲーム一覧の保管先が使えません".into(),
-    }
-}
 #[tauri::command]
 async fn dev_agents() -> Vec<dev_cli::DevAgent> {
     dev_cli::agents()
@@ -4522,6 +4486,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .manage(state.clone())
         .manage(personal_node_registration::RegistrationState::default())
+        .manage(realtime_client::RealtimeState::default())
         .manage(personal_node_reactivation::ReactivationState::default())
         // The managed services are clones of the state's fields, so Tauri
         // commands and the loopback HTTP routes share one run registry.
@@ -4602,11 +4567,30 @@ pub fn run() {
             pi_work::queue_runtime::pi_work_queue_release,
             pi_work::pi_work_status,
             pi_work::pi_work_list,
+            pi_journal::pi_work_interrupted,
+            pi_journal::pi_work_interrupted_dismiss,
             pi_work::pi_work_delete,
             pi_work::pi_work_delete_all,
             local_data::local_data_schedule_wipe,
             local_data::local_data_restart,
             local_data::wallet_delete_key,
+            local_translate::local_translate_status,
+            local_translate::local_translate_accept_licence,
+            local_translate::local_translate_select,
+            local_translate::local_translate_pick_gguf,
+            local_translate::local_translate_clear_gguf,
+            local_translate::local_translate_set_runtime_path,
+            local_translate::local_translate_download,
+            local_translate::local_translate_cancel_download,
+            local_translate::local_translate_verify,
+            local_translate::local_translate_delete,
+            local_translate::local_translate_stop,
+            local_translate::local_translate_run,
+            local_translate::local_translate_api_set,
+            local_translate::local_translate_api_allow_private,
+            local_translate::local_translate_plan,
+            local_translate::local_translate_cached,
+            local_translate::local_translate_share_payload,
             node_key_backup::node_key_backup_export,
             node_key_backup::node_key_backup_import,
             pi_work::pi_work_diff,
@@ -4653,6 +4637,8 @@ pub fn run() {
             hub_resource,
             hub_client,
             hub_client_action,
+            hub_realtime_open,
+            hub_realtime_close,
             native_video::native_video_request,
             native_video::native_video_pick_file,
             native_video::native_video_upload,
@@ -4731,6 +4717,12 @@ pub fn run() {
             commerce_seller_chain_destination_disable,
             wallet_sign_message,
             open_external,
+            pc_games::pc_games_list,
+            pc_games::pc_game_art,
+            pc_games::pc_game_launch,
+            game_dock::game_dock_start,
+            game_dock::game_dock_rect,
+            game_dock::game_dock_stop,
             compute_status,
             compute_demo,
             compute_reserve,
@@ -4759,6 +4751,13 @@ pub fn run() {
             portable_identity::portable_identity_sign_registration,
             portable_identity::portable_identity_sign_move,
             music_artwork,
+            media_declaration::music_p2p_prepare,
+            media_declaration::music_p2p_declare,
+            media_declaration::music_p2p_withdraw,
+            media_declaration::music_p2p_declared,
+            media_declaration_net::media_p2p_publish,
+            media_declaration_net::media_p2p_followed_keys,
+            media_declaration_net::media_p2p_fetch_declarations,
             music_own_attribution_candidates,
             music_attribution_proof,
             mail_mailbox,
@@ -4778,6 +4777,7 @@ pub fn run() {
             ai_catalog,
             ai_call,
             ai_pay_and_call,
+            ai_market_call,
             ai_video_status,
             ai_video_content,
             desktop_account_status,
@@ -4825,6 +4825,8 @@ pub fn run() {
             browser_window::browser_history,
             browser_window::browser_newtab_stats,
             browser_protection_status,
+            browser_protection_site_status,
+            browser_set_protection_site,
             browser_set_protection,
             browser_autoplay_status,
             browser_set_autoplay,
@@ -4841,6 +4843,7 @@ pub fn run() {
             browser_window::browser_duplicate_tab,
             browser_window::browser_sleep_tab,
             browser_window::browser_sleep_background_tabs,
+            browser_window::browser_set_rest_minutes,
             browser_window::browser_restore_tab,
             browser_window::browser_zoom,
             browser_window::browser_find,
@@ -4872,11 +4875,6 @@ pub fn run() {
             browser_window::browser_resume_download,
             browser_window::browser_reveal_download,
 
-            games,
-            pick_game_executable,
-            rename_game,
-            remove_game,
-            launch_game,
             dev_agents,
             dev_history,
             dev_workspace,
@@ -5298,22 +5296,6 @@ mod tests {
     }
 
     #[test]
-    fn game_launch_is_not_reachable_over_http() {
-        let routes = include_str!("lib.rs");
-        let router = http_router_source(routes);
-        for forbidden in ["launch_game", "remove_game", "pick_game_executable"] {
-            assert!(
-                !router.contains(forbidden),
-                "ゲーム操作はデスクトップ窓だけ"
-            );
-        }
-        assert!(
-            router.contains("\"/game-window/show\""),
-            "購入済みからランチャーを前に出せること"
-        );
-    }
-
-    #[test]
     fn only_the_native_work_window_can_return_to_hub() {
         let source = include_str!("lib.rs");
         let command = source
@@ -5479,6 +5461,18 @@ fn browser_protection_status(window: tauri::Webview) -> Result<serde_json::Value
     native_pi(&window)?;
     if !local_pairing_address(window.label(), &window.url().map_err(|_| "native_window_required")?) { return Err("native_window_required".into()); }
     browser_window::protection_status()
+}
+#[tauri::command]
+fn browser_protection_site_status(window: tauri::Webview, tab: Option<u64>) -> Result<serde_json::Value, String> {
+    native_pi(&window)?;
+    if !local_pairing_address(window.label(), &window.url().map_err(|_| "native_window_required")?) { return Err("native_window_required".into()); }
+    browser_window::protection_site_status(tab)
+}
+#[tauri::command]
+fn browser_set_protection_site(window: tauri::Webview, site: String, allowed: bool, tab: Option<u64>) -> Result<serde_json::Value, String> {
+    native_pi(&window)?;
+    if !local_pairing_address(window.label(), &window.url().map_err(|_| "native_window_required")?) { return Err("native_window_required".into()); }
+    browser_window::set_protection_site(&site, allowed, tab)
 }
 #[tauri::command]
 fn browser_set_protection(window: tauri::Webview, enabled: bool) -> Result<serde_json::Value, String> {

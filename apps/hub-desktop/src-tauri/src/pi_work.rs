@@ -301,6 +301,9 @@ pub struct PiRunState {
     /// Id of the fast type/lint checker attached to edit results (`fast_check`), if any.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub fast_check: Option<String>,
+    /// Short context-compaction status line (2026-11-06); no UI reads it yet.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub compaction: Option<crate::pi_journal::CompactionStatus>,
     /// Present only on a best-of-N parent run (`pi_best_of.rs`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub best_of: Option<best_of::BestOfState>,
@@ -577,10 +580,23 @@ fn approver_for(
     decisions: Arc<Mutex<HashMap<String, oneshot::Sender<PiDecision>>>>,
     changes: watch::Sender<u64>,
 ) -> PiApprover {
+    approver_with_journal(state, decisions, changes, None)
+}
+
+/// As `approver_for`, and the request is committed to the journal before it is
+/// published. If that commit fails the action is denied: a pending approval
+/// that could not survive a restart is never offered.
+fn approver_with_journal(
+    state: Arc<Mutex<PiRunState>>,
+    decisions: Arc<Mutex<HashMap<String, oneshot::Sender<PiDecision>>>>,
+    changes: watch::Sender<u64>,
+    journal: Option<Arc<hub_loop::Journal>>,
+) -> PiApprover {
     Arc::new(move |request: PiApprovalRequest| {
         let state = Arc::clone(&state);
         let decisions = Arc::clone(&decisions);
         let changes = changes.clone();
+        let journal = journal.clone();
         Box::pin(async move {
             let denied = || PiDecision {
                 approved: false,
@@ -594,6 +610,11 @@ fn approver_for(
                 let mut state = state.lock().unwrap();
                 if state.status != "running" || state.pending_actions.len() >= MAX_PENDING_ACTIONS {
                     return denied();
+                }
+                if let Some(journal) = &journal {
+                    if journal.approval_requested(&action_id, None, &request.tool, &request.summary).is_err() {
+                        return denied();
+                    }
                 }
                 state.pending_actions.push(PiPendingAction {
                     id: action_id.clone(),
@@ -642,6 +663,10 @@ pub struct PiWorkService {
     /// Folder of the encrypted image attachments (`pi_images`); only removal uses it.
     images: Option<PathBuf>,
     model_probe: Arc<tokio::sync::Mutex<Option<CachedModelProbe>>>,
+    /// Durable per-session journal (`hub-loop`); `None` for tests and ephemeral services.
+    journals: Option<Arc<hub_loop::Store>>,
+    /// Open journals of runs in flight, so every writer shares one sequence.
+    live_journals: Arc<Mutex<HashMap<String, Arc<hub_loop::Journal>>>>,
 }
 
 fn now_ms() -> u128 {
@@ -657,8 +682,14 @@ impl PiWorkService {
             history: default_history(),
             checkpoints: crate::checkpoint::CheckpointStore::named("pi-sessions").ok(),
             images: crate::checkpoint::folder_path(crate::pi_images::FOLDER).ok(),
+            journals: crate::pi_journal::store().map(Arc::new),
             ..Self::default()
         };
+        if let Some(store) = &service.journals {
+            // Sessions a crash left open are marked, never resumed or approved on their own.
+            crate::pi_journal::mark_interrupted(store);
+            store.prune_finished(crate::pi_journal::KEEP_FINISHED);
+        }
         // Old records go before they are read back, so an expired session never reappears.
         service.prune_expired();
         service.restore_history();
@@ -729,6 +760,9 @@ impl PiWorkService {
         if let Some(store) = &self.checkpoints {
             for id in &removed { store.remove(id); }
         }
+        if let Some(journals) = &self.journals {
+            for id in &removed { let _ = journals.remove(id); }
+        }
         self.forget_runs(&removed);
         if let Some(images) = &self.images {
             let used = self.referenced_images(&removed);
@@ -754,6 +788,7 @@ impl PiWorkService {
             rewrite_history(path, |state| state.id == id).ok_or("pi_work_history_unavailable")?;
         }
         if let Some(store) = &self.checkpoints { store.remove(id); }
+        if let Some(journals) = &self.journals { let _ = journals.remove(id); }
         if let Some(images) = &self.images {
             for image in own.difference(&used) { crate::checkpoint::remove_record(images, image); }
         }
@@ -774,6 +809,11 @@ impl PiWorkService {
                 if !running.contains(&id) { store.remove(&id); removed.insert(id); }
             }
             let _ = std::fs::remove_dir_all(store.directory().join("unreadable"));
+        }
+        if let Some(journals) = &self.journals {
+            for (id, _) in journals.sessions() {
+                if !running.contains(&id) { let _ = journals.remove(&id); }
+            }
         }
         self.forget_runs(&removed);
         if let Some(images) = &self.images {
@@ -1094,6 +1134,28 @@ impl PiWorkService {
         Some((version, Self::snapshot(&run)))
     }
 
+    /// The open journal of a run in flight, if journaling is on.
+    fn live_journal(&self, id: &str) -> Option<Arc<hub_loop::Journal>> {
+        self.live_journals.lock().unwrap().get(id).cloned()
+    }
+
+    /// Creates the journal of a new run, or `None` when journaling is off or
+    /// the folder is unusable (the run then continues without one).
+    fn start_journal(&self, id: &str) -> Option<Arc<hub_loop::Journal>> {
+        let journal = Arc::new(self.journals.as_ref()?.open(id).ok()?);
+        self.live_journals.lock().unwrap().insert(id.to_owned(), journal.clone());
+        Some(journal)
+    }
+
+    /// Records how the run ended and closes its journal.
+    fn close_journal(&self, id: &str, status: &str, ok: bool) {
+        let Some(journal) = self.live_journals.lock().unwrap().remove(id) else { return };
+        if status == "cancelled" {
+            let _ = journal.cancel("cancelled");
+        }
+        let _ = journal.done(status, ok);
+    }
+
     /// Appends the terminal state to the JSONL history — once per run, via
     /// the `recorded` check-and-set the wait task and `cancel` share so a
     /// racing pair still writes a single line. Write failures are logged,
@@ -1105,6 +1167,7 @@ impl PiWorkService {
         if recorded.swap(true, Ordering::SeqCst) {
             return;
         }
+        self.close_journal(&state.id, &state.status, state.outcome.as_ref().is_some_and(|outcome| outcome.ok));
         // Serialize final checkpoint writes with file observers and conversation saves.
         let run = self.run(&state.id);
         if let Some(run) = &run { reconcile_steering(run); }
@@ -1406,7 +1469,7 @@ impl PiWorkService {
         let file_changes = Arc::new(Mutex::new(PiChangeArchive::new()));
         let state = Arc::new(Mutex::new(PiRunState {
             image_receipt_valid: image_refs.is_empty(), image_attachments, image_context_refs: image_refs.clone(), prompt_image_ids: prompt_image_ids.clone(), reattached_image_ids: Vec::new(), image_request_id,
-            fast_check: None, best_of: None,
+            fast_check: None, compaction: None, best_of: None,
             generation: generation.clone(), supports_steering: false, instructions: Vec::new(), changes: PiChangeSummary::default(),
             verification: verification.as_ref().map(|_| Default::default()),
             engine,
@@ -1449,6 +1512,25 @@ impl PiWorkService {
             ended_at_ms: None,
         }));
         state.lock().unwrap().changes = file_changes.lock().unwrap().summary();
+        let journal = self.start_journal(&id);
+        if self.journals.is_some() {
+            let committed = journal.as_ref().is_some_and(|journal| {
+                let snapshot = state.lock().unwrap();
+                journal.session(serde_json::json!({
+                    "runId": id, "workspace": snapshot.workspace, "model": snapshot.model,
+                    "engine": format!("{:?}", snapshot.engine), "resumedFrom": resume_id,
+                    "allowWrite": snapshot.allow_write, "allowExec": snapshot.allow_exec,
+                    "allowHttp": snapshot.allow_http,
+                })).and_then(|_| journal.user_input(&snapshot.prompt)).is_ok()
+            });
+            if !committed {
+                state.lock().unwrap().continuation.error = Some("pi_journal_unavailable".into());
+            }
+            // The earlier session is now carried by this one.
+            if let (Some(old), Some(journals)) = (resume_id, &self.journals) {
+                if let Ok(Some(previous)) = journals.open_existing(old) { let _ = previous.done("resumed", true); }
+            }
+        }
         let observed = Arc::clone(&state);
         // Shared with the approver and the run record: `pi_work_decide` sends
         // on it; cancel and the wait task clear it to fail pending calls.
@@ -1501,10 +1583,11 @@ impl PiWorkService {
                 test: allow_test, native_fs: engine == WorkEngine::Thin
             },
             Some({
-                let approver = approver_for(
+                let approver = approver_with_journal(
                     Arc::clone(&state),
                     Arc::clone(&decisions),
                     changes.clone(),
+                    journal.clone(),
                 );
                 // The operator's declaration of the command for this run is
                 // its approval (capped); every other action still parks.
@@ -1548,6 +1631,7 @@ impl PiWorkService {
         } else {
             executor
         };
+        let observer_journal = journal.clone();
         let event_archive = file_changes.clone();
         let event_store = self.checkpoints.clone();
         let event_workspace = workspace.clone();
@@ -1558,7 +1642,29 @@ impl PiWorkService {
                 stderr_changes.send_modify(|version| *version += 1);
             }))
             .with_observer(Arc::new(move |event| {
+                // Committed to the journal before anything below changes state the
+                // window can see (and, for a tool call, before the tool runs).
+                let journal_failed = observer_journal.as_ref().is_some_and(|journal| {
+                    match &event {
+                        SessionEvent::ToolCallStarted { id, name, detail } => journal
+                            .tool_call(id, name, crate::pi_journal::tool_effect(name), detail.as_deref()).is_err(),
+                        SessionEvent::ToolCallSettled { id, ok, preview } => journal
+                            .tool_result(id, *ok, preview.as_deref()).is_err(),
+                        SessionEvent::AgentEvent(event) => match event["type"].as_str() {
+                            Some("turn_start") => journal.model_turn_start(serde_json::json!({})).is_err(),
+                            Some("turn_end") => journal.model_turn_done(serde_json::json!({})).is_err(),
+                            // Committed before the window sees the status line.
+                            Some("compaction_end") => crate::pi_journal::compaction_record(event)
+                                .is_some_and(|record| journal.compacted(&record).is_err()),
+                            _ => false,
+                        },
+                        _ => false,
+                    }
+                });
                 let mut state = observed.lock().unwrap();
+                if journal_failed && state.continuation.error.is_none() {
+                    state.continuation.error = Some("pi_journal_unavailable".into());
+                }
                 match event {
                     SessionEvent::Hello {
                         generation,
@@ -1600,6 +1706,7 @@ impl PiWorkService {
                             } else { state.continuation.error = Some("pi_image_invalid_receipt".into()); }
                         }
                         state.usage.observe(&event);
+                        crate::pi_journal::observe_compaction(&event, &mut state.compaction);
                         if event["type"] == "agent_start" {
                             state.final_output.clear();
                         }
@@ -1886,6 +1993,14 @@ impl PiWorkService {
                 .unwrap_or(usize::MAX);
             if size > 16_384 {
                 return Err("outcome_too_large".into());
+            }
+        }
+        // Committed before the decision is delivered. A denial always goes through;
+        // an approval that cannot be recorded is refused.
+        if let Some(journal) = self.live_journal(id) {
+            let recorded = journal.approval_decided(action_id, approve);
+            if approve && recorded.is_err() {
+                return Err("pi_journal_unavailable".into());
             }
         }
         let sender = run
@@ -3105,7 +3220,7 @@ else if(m.type==='tool_error'){send({type:'agent_done',ok:false});process.exit(1
     fn run_state_serializes_camel_case() {
         let state = PiRunState {
             image_attachments: Vec::new(), image_context_refs: Vec::new(), prompt_image_ids: Vec::new(), reattached_image_ids: Vec::new(), image_request_id: None, image_receipt_valid: true,
-            fast_check: None, best_of: None,
+            fast_check: None, compaction: None, best_of: None,
             generation: None, supports_steering: false, instructions: Vec::new(), changes: PiChangeSummary::default(),
             verification: None,
             engine: WorkEngine::Thin,
@@ -4527,7 +4642,7 @@ console.log(JSON.stringify({type:'models',models:['test/a'],ready:JSON.parse(fs.
     fn running_state(id: &str, root: &std::path::Path) -> PiRunState {
         PiRunState {
             image_attachments: Vec::new(), image_context_refs: Vec::new(), prompt_image_ids: Vec::new(), reattached_image_ids: Vec::new(), image_request_id: None, image_receipt_valid: true,
-            fast_check: None, best_of: None,
+            fast_check: None, compaction: None, best_of: None,
             generation: None, supports_steering: false, instructions: Vec::new(), changes: PiChangeSummary::default(),
             verification: None,
             engine: WorkEngine::Thin,
@@ -4591,6 +4706,46 @@ console.log(JSON.stringify({type:'models',models:['test/a'],ready:JSON.parse(fs.
             tokio::time::sleep(Duration::from_millis(10)).await;
         }
         panic!("no pending action published");
+    }
+
+    /// The approval is committed to the journal before it is published, the
+    /// decision before it is delivered, and an unanswered one is still pending
+    /// when the journal is read back after a "crash".
+    #[tokio::test]
+    async fn approvals_are_journalled_before_they_are_published_and_survive_restart_pending() {
+        let (_guard, root) = temp_workspace();
+        let dir = std::env::temp_dir().join(format!("pi-journal-wire-{}", uuid::Uuid::new_v4()));
+        let store = Arc::new(hub_loop::Store::new(&dir));
+        let service = PiWorkService { journals: Some(store.clone()), ..Default::default() };
+        let state = Arc::new(Mutex::new(running_state("r1", &root)));
+        let decisions = Arc::new(Mutex::new(HashMap::new()));
+        insert_run(&service, "r1", &root, state.clone(), decisions.clone());
+        let journal = service.start_journal("r1").expect("journal");
+        journal.tool_call("c1", "hub_write", crate::pi_journal::tool_effect("hub_write"), None).unwrap();
+        let approver = approver_with_journal(state, decisions, service.run("r1").unwrap().changes.clone(), Some(journal));
+        let ask = tokio::spawn(approver(PiApprovalRequest {
+            tool: "hub_write".into(), summary: "write a.txt".into(), detail: serde_json::Value::Null,
+        }));
+        let pending = pending_action(&service, "r1").await;
+        // Already on disk when the window could first see it.
+        let replay = store.open_existing("r1").unwrap().unwrap().replay().unwrap();
+        assert_eq!(replay.approvals.len(), 1);
+        assert_eq!(replay.approvals[0].approval_id, pending.id);
+        assert_eq!(replay.approvals[0].decision, None);
+        // "Crash": nothing was answered. A fresh reader sees it pending, the write not retried.
+        let after = hub_loop::Store::new(&dir);
+        crate::pi_journal::mark_interrupted(&after);
+        let plan = after.open_existing("r1").unwrap().unwrap().replay().unwrap().plan();
+        assert_eq!(plan.pending_approvals.len(), 1);
+        assert!(plan.retry.is_empty() && plan.interrupted.is_empty());
+        // An answer is recorded before delivery.
+        service.decide("r1", &pending.id, false, None).unwrap();
+        assert!(!ask.await.unwrap().approved);
+        let replay = store.open_existing("r1").unwrap().unwrap().replay().unwrap();
+        assert_eq!(replay.approvals[0].decision, Some(false));
+        service.close_journal("r1", "cancelled", false);
+        assert!(store.open_existing("r1").unwrap().unwrap().replay().unwrap().is_finished());
+        let _ = std::fs::remove_dir_all(dir);
     }
 
     /// The full approval round trip without a child process: the approver
@@ -5611,7 +5766,7 @@ setInterval(() => {}, 1000);
         // The window reads exact keys; pin the whole contract of one run.
         let state = PiRunState {
             image_attachments: Vec::new(), image_context_refs: Vec::new(), prompt_image_ids: Vec::new(), reattached_image_ids: Vec::new(), image_request_id: None, image_receipt_valid: true,
-            fast_check: None, best_of: None,
+            fast_check: None, compaction: None, best_of: None,
             generation: None, supports_steering: false, instructions: Vec::new(), changes: PiChangeSummary::default(),
             verification: None,
             engine: WorkEngine::Thin,

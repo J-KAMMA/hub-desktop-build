@@ -25,6 +25,12 @@ static PENDING: Mutex<Option<Pending>> = Mutex::new(None);
 pub(crate) fn enable_control() {
     ENABLED.store(true, Ordering::SeqCst);
 }
+/// AIへ渡す操作の途中にあるタブ（自動の休止・破棄から守る）。
+pub(crate) fn busy_tab() -> Option<u64> {
+    let pending = PENDING.lock().unwrap_or_else(|error| error.into_inner());
+    let owned = OWNED_TAB.load(Ordering::SeqCst);
+    pending.as_ref().map(|entry| entry.tab_id).or((owned != 0).then_some(owned))
+}
 pub(crate) fn record_private_tab(id: u64) {
     OWNED_TAB.store(id, Ordering::SeqCst);
 }

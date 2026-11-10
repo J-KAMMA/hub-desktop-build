@@ -1,0 +1,25 @@
+/* この PC のゲーム（#pc-games）と、右のレールの並べる状態（#pc-dock-bar）。トークンだけを使う（生の色なし）。枠のカードは使わない：絵が半径を持つ。 */
+#pc-games { display: grid; gap: var(--ds-space-3); padding-bottom: var(--ds-space-5); margin-bottom: var(--ds-space-4); border-bottom: 1px solid var(--divider); }
+#pc-games .pcg-head { display: flex; align-items: center; justify-content: space-between; gap: var(--ds-space-2); }
+#pc-games .pcg-title { margin: 0; font-size: var(--ds-type-title-size); line-height: var(--ds-type-title-leading); font-weight: var(--ds-weight-heavy); color: var(--text); }
+#pc-games .pcg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--ds-space-4) var(--ds-space-3); }
+#pc-games .pcg-tile { display: grid; gap: var(--ds-space-2); min-width: 0; align-content: start; }
+#pc-games .pcg-art { position: relative; display: grid; place-items: center; overflow: hidden; aspect-ratio: 3 / 4; border-radius: var(--radius-md); background: var(--interactive); color: var(--muted); }
+#pc-games .pcg-letter { font-size: var(--ds-type-title-size); line-height: var(--ds-type-title-leading); font-weight: var(--ds-weight-heavy); }
+#pc-games .pcg-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+#pc-games .pcg-art::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px var(--media-outline); pointer-events: none; }
+#pc-games .pcg-body { display: grid; gap: var(--space-1); min-width: 0; }
+#pc-games .pcg-name { font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); font-weight: var(--ds-weight-strong); color: var(--text); overflow-wrap: anywhere; }
+#pc-games .pcg-source { color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); }
+#pc-games .pcg-actions { display: flex; gap: var(--ds-space-2); }
+#pc-games .pcg-skeleton { aspect-ratio: 3 / 4; border-radius: var(--radius-md); background: var(--interactive); }
+#pc-games .pcg-empty, #pc-games .pcg-note { margin: 0; color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); }
+.pcg-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--ds-space-2); min-width: var(--control-h-lg); height: var(--control-h-lg); padding: 0 var(--ds-space-2); border: 0; border-radius: var(--radius-md); background: var(--interactive); color: var(--text); font: inherit; cursor: pointer; }
+.pcg-btn:hover:not(:disabled) { background: var(--interactive-hover); }
+.pcg-btn:disabled { opacity: .5; cursor: default; }
+.pcg-btn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.pcg-btn .ic { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+#pc-games .pcg-refresh { background: transparent; color: var(--muted); }
+.pc-dock-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--ds-space-2); padding: var(--ds-space-2) var(--ds-space-3); border-bottom: 1px solid var(--divider); }
+.pc-dock-bar[hidden] { display: none; }
+.pc-dock-bar .pcg-dock-text { min-width: 0; color: var(--text); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); overflow-wrap: anywhere; }

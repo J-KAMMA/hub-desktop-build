@@ -40,8 +40,11 @@
 #hub-shell .mk-chip:hover { background: var(--interactive-hover); }
 #hub-shell .mk-chip.on { background: transparent; border-color: var(--emphasis); font-weight: var(--ds-weight-strong); }
 #hub-shell .mk-chip:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
-#hub-shell .mk-count { margin: 0; padding: var(--ds-space-3) var(--ds-page-inset) 0; min-height: var(--ds-type-meta-leading); color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); font-variant-numeric: tabular-nums; }
-#hub-shell .mk-count:empty { display: none; }
+/* 件数（左）と並べ替え（右）の1行。Etsy の検索結果の配置。両方空なら畳む。 */
+#hub-shell .mk-results { display: flex; align-items: center; justify-content: space-between; gap: var(--ds-space-3); min-height: var(--ds-btn-h-compact); padding: var(--ds-space-3) var(--ds-page-inset) 0; }
+#hub-shell .mk-results:has(> .mk-count:empty):has(> .mk-sort[hidden]) { display: none; }
+#hub-shell .mk-results .mk-sort { margin-left: auto; }
+#hub-shell .mk-count { margin: 0; min-height: var(--ds-type-meta-leading); color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); font-variant-numeric: tabular-nums; }
 #hub-shell .mk-body { padding-top: var(--ds-space-3); }
 #hub-shell .mk-body[data-games] { padding-top: 0; }
 #hub-shell .mk-note { margin: 0; padding: var(--ds-space-2) 0 0; color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); }
@@ -49,12 +52,12 @@
 #hub-shell .mk-more { display: flex; justify-content: center; padding-block: var(--ds-space-5) 0; }
 
 /* ---- 格子と札：絵が半径を持つ。札に枠・影・面は無い ---- */
-#hub-shell .mk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: var(--ds-grid-gap-y) var(--ds-grid-gap-x); padding: var(--ds-space-3) var(--ds-page-inset) 0; align-items: start; }
+#hub-shell .mk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--ds-space-5) var(--ds-grid-gap-x); padding: var(--ds-space-3) var(--ds-page-inset) 0; align-items: start; }
 #hub-shell .mk-tile { display: grid; align-content: start; gap: var(--ds-space-2); min-width: 0; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
 #hub-shell .mk-tile:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 4px; border-radius: var(--radius-md); }
 #hub-shell .mk-tile:hover .mk-media { box-shadow: 0 0 0 1px var(--line-strong); }
 #hub-shell .mk-tile-body { display: grid; gap: var(--ds-space-1); min-width: 0; }
-#hub-shell .mk-tile-title { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; min-height: calc(var(--ds-type-body-leading) * 2); font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); font-weight: var(--ds-weight-strong); overflow-wrap: anywhere; }
+#hub-shell .mk-tile-title { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); font-weight: var(--ds-weight-strong); overflow-wrap: anywhere; }
 #hub-shell .mk-tile-price { display: flex; align-items: baseline; gap: var(--ds-space-1); min-width: 0; font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); font-weight: var(--ds-weight-strong); }
 #hub-shell .mk-tile-tax { color: var(--muted); font-size: var(--ds-type-meta-size); font-weight: var(--ds-weight-text); }
 #hub-shell .mk-tile-seller { overflow: hidden; color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); text-overflow: ellipsis; white-space: nowrap; }
@@ -74,8 +77,33 @@
 #hub-shell .mk-skel-line.is-seller { width: 50%; height: 12px; }
 #hub-shell .mk-skeleton .mk-tile-body { gap: var(--ds-space-2); padding-top: 3px; }
 
+/* ---- チケット：日付の札つきの行（Eventbrite の一覧）。札は線の枠だけで面にしない ---- */
+#hub-shell .mk-events { display: grid; margin: 0; padding: var(--ds-space-2) 0 0; border-top: 1px solid var(--divider); }
+#hub-shell .mk-event { display: flex; align-items: center; gap: var(--ds-space-4); width: 100%; box-sizing: border-box; margin: 0; padding: var(--ds-space-3) var(--ds-page-inset); border: 0; border-bottom: 1px solid var(--divider); border-radius: 0; background: transparent; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+#hub-shell .mk-event:hover { background: var(--interactive); }
+#hub-shell .mk-event:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+#hub-shell .mk-event-date { display: grid; flex: none; justify-items: center; align-content: center; width: 56px; height: 64px; box-sizing: border-box; border: 1px solid var(--line-strong); border-radius: var(--ds-radius-input); color: var(--text); }
+#hub-shell .mk-event-month, #hub-shell .mk-event-week { color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); }
+#hub-shell .mk-event-month { color: var(--emphasis); }
+#hub-shell .mk-event-day { font-size: var(--ds-type-title-size); line-height: var(--ds-type-title-leading); font-weight: var(--ds-weight-heavy); }
+#hub-shell .mk-event-body { display: grid; flex: 1 1 auto; gap: var(--ds-space-1); min-width: 0; }
+#hub-shell .mk-event-title { overflow: hidden; font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); font-weight: var(--ds-weight-strong); text-overflow: ellipsis; white-space: nowrap; }
+#hub-shell .mk-event-meta { overflow: hidden; color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); text-overflow: ellipsis; white-space: nowrap; }
+#hub-shell .mk-event-thumb { flex: none; width: 96px; aspect-ratio: 16 / 9; border-radius: var(--ds-radius-input); }
+#hub-shell .mk-event-price { flex: none; min-width: 96px; text-align: right; font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); font-weight: var(--ds-weight-strong); }
+#hub-shell .mk-event.mk-skeleton .mk-event-date { border-color: transparent; }
+
+/* ---- 注文の頭の帯（Amazon の注文履歴：注文日・合計）。帯は線の上下だけで面にしない ---- */
+#hub-shell .mk-order-head { display: flex; flex-wrap: wrap; gap: var(--ds-space-2) var(--ds-space-6); margin: 0; }
+#hub-shell .mk-order-cell { display: grid; gap: 0; }
+#hub-shell .mk-order-cell dt { margin: 0; color: var(--muted); font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); }
+#hub-shell .mk-order-cell dd { margin: 0; font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); font-weight: var(--ds-weight-strong); }
+
 /* ---- 空・エラー：16の余白、題20/800、本文15の淡色（最大360）、副ボタンは1つまで ---- */
 #hub-shell .mk-empty { display: grid; justify-items: start; gap: var(--ds-space-2); padding: var(--ds-space-4); }
+/* 空の状態の記号：ほかの空の画面と同じ薄い色、40の記号を置くだけ（円や面は付けない） */
+#hub-shell .mk-empty-icon { display: grid; place-items: center; width: 40px; height: 40px; margin: 0 0 var(--ds-space-2); color: var(--muted); }
+#hub-shell .mk-empty-icon svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 #hub-shell .mk-empty-title { margin: 0; font-size: var(--ds-type-title-size); line-height: var(--ds-type-title-leading); font-weight: var(--ds-weight-heavy); }
 #hub-shell .mk-empty-body { max-width: 360px; margin: 0; color: var(--muted); font-size: var(--ds-type-body-size); line-height: var(--ds-type-body-leading); }
 #hub-shell .mk-empty .mk-btn { margin-top: var(--ds-space-2); }
@@ -85,8 +113,13 @@
 
 /* ---- 商品ページ ---- */
 #hub-shell .mk-product { display: grid; gap: var(--ds-space-6); padding: var(--ds-space-4) var(--ds-page-inset) var(--ds-space-8); }
-#hub-shell .mk-product-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--ds-space-6); align-items: start; }
+/* Etsy の商品ページ：絵の組が広く（約6割）、右の情報の列はスクロールしても上に残る。 */
+#hub-shell .mk-product-top { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: var(--ds-space-6); align-items: start; }
+#hub-shell .mk-info { position: sticky; top: var(--ds-space-4); }
 #hub-shell .mk-gallery { display: grid; gap: var(--ds-space-3); min-width: 0; }
+#hub-shell .mk-gallery.has-thumbs { grid-template-columns: 64px minmax(0, 1fr); align-items: start; }
+#hub-shell .mk-gallery.has-thumbs > .mk-gallery-main { grid-column: 2; grid-row: 1; }
+#hub-shell .mk-gallery.has-thumbs > .mk-thumbs { grid-column: 1; grid-row: 1; flex-direction: column; max-height: 100%; overflow-x: hidden; overflow-y: auto; }
 #hub-shell .mk-gallery-main { border-radius: var(--radius-md); }
 #hub-shell .mk-thumbs { display: flex; gap: var(--ds-space-2); overflow-x: auto; scrollbar-width: none; }
 #hub-shell .mk-thumb { flex: none; box-sizing: content-box; width: 64px; padding: 0; border: 1px solid transparent; border-radius: calc(var(--radius-sm) + 1px); background: transparent; cursor: pointer; opacity: .7; }
@@ -174,12 +207,64 @@
 
 @media (max-width: 760px) {
   #hub-shell .mk-product-top { grid-template-columns: minmax(0, 1fr); }
+  #hub-shell .mk-info { position: static; }
+  #hub-shell .mk-gallery.has-thumbs { grid-template-columns: minmax(0, 1fr); }
+  #hub-shell .mk-gallery.has-thumbs > .mk-gallery-main, #hub-shell .mk-gallery.has-thumbs > .mk-thumbs { grid-column: 1; grid-row: auto; }
+  #hub-shell .mk-gallery.has-thumbs > .mk-thumbs { flex-direction: row; overflow-x: auto; overflow-y: hidden; }
+  #hub-shell .mk-event-thumb { display: none; }
   #hub-shell .mk-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
   #hub-shell .mk-row-main { flex-wrap: wrap; }
   #hub-shell .mk-seller { flex-wrap: wrap; }
 }
 
+/* カート・注文詳細の見出し：戻るは題の左の36の記号ボタン1つだけ（文字の「← 戻る」は置かない）。 */
+#hub-shell .mk-view-head { justify-content: flex-start; gap: var(--ds-space-2); }
+#hub-shell .mk-back { display: inline-flex; flex: none; align-items: center; justify-content: center; width: var(--ds-icon-btn); height: var(--ds-icon-btn); padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--text); cursor: pointer; }
+#hub-shell .mk-back:hover { background: var(--interactive); }
+#hub-shell .mk-back:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+#hub-shell .mk-back svg { width: var(--ds-icon-size); height: var(--ds-icon-size); fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
 /* 在庫あり・送料無料：同じチップ。種別のチップとは細い線で区切る */
 #hub-shell .mk-toggles { display: flex; flex: none; gap: var(--ds-chip-gap); margin-left: var(--ds-space-2); padding-left: var(--ds-space-3); border-left: 1px solid var(--divider); }
 #hub-shell .mk-toggles[hidden] { display: none; }
 #hub-shell .mk-row-shipping { color: var(--muted); }
+
+/* ---- ライブラリ（2026-11-04）：Steam のライブラリ / Apple Books のライブラリの配置だけ。左に種別の列、右に一覧。
+   選んだ種別は左の金の細線と太字だけ（面は塗らない）。右の列は作らない。 ---- */
+#hub-shell .mk-library { display: grid; grid-template-columns: 148px minmax(0, 1fr); align-items: start; min-width: 0; border-bottom: 1px solid var(--divider); }
+#hub-shell .mk-lib-kinds { display: grid; gap: var(--ds-space-2); padding: var(--ds-space-3) var(--ds-space-2) var(--ds-space-3) var(--ds-page-inset); border-right: 1px solid var(--divider); min-width: 0; }
+#hub-shell .mk-lib-kind-list { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+#hub-shell .mk-lib-kind { display: flex; align-items: center; justify-content: space-between; gap: var(--ds-space-2); width: 100%; min-height: var(--ds-btn-h-compact); padding: 0 var(--ds-space-3); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--muted); font: inherit; font-size: var(--ds-type-body-size); text-align: left; cursor: pointer; }
+#hub-shell .mk-lib-kind:hover { background: var(--interactive); color: var(--text); }
+#hub-shell .mk-lib-kind:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
+#hub-shell .mk-lib-kind.on { color: var(--text); font-weight: var(--ds-weight-strong); box-shadow: inset 1px 0 0 var(--emphasis); border-radius: 0; }
+#hub-shell .mk-lib-kind-count { color: var(--muted); font-size: var(--ds-type-meta-size); font-weight: var(--ds-weight-text); }
+#hub-shell .mk-lib-goods { justify-self: start; margin-top: var(--ds-space-2); padding: var(--ds-space-2) var(--ds-space-3) 0; border-top: 1px solid var(--divider); width: 100%; text-align: left; border-radius: 0; }
+#hub-shell .mk-lib-list { min-width: 0; }
+#hub-shell .mk-lib-list .mk-row, #hub-shell .mk-lib-list .mk-empty { padding-inline: var(--ds-space-4); }
+#hub-shell .mk-lib-list > .mk-note { padding-inline: var(--ds-space-4); }
+@media (max-width: 560px) {
+  #hub-shell .mk-library { grid-template-columns: minmax(0, 1fr); }
+  #hub-shell .mk-lib-kinds { border-right: 0; border-bottom: 1px solid var(--divider); padding-right: var(--ds-page-inset); }
+  #hub-shell .mk-lib-kind-list { display: flex; flex-wrap: wrap; gap: var(--ds-space-1); }
+  #hub-shell .mk-lib-kind { width: auto; }
+  #hub-shell .mk-lib-kind.on { box-shadow: inset 0 -1px 0 var(--emphasis); }
+}
+
+/* ---- 一覧の札を COS（cos.com のカテゴリの一覧、1280幅で実測 2026-11-04）の寸法に合わせる。配置だけで、ブランドの素材は使わない ----
+   写真は縦 2:3・角なし・枠なし。列の間 48px、行の間 48px。題と値段は 13px・400、写真の下 16px から。販売者は淡色で残す（売り手の表示）。 */
+#hub-shell .mk-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--ds-space-8) var(--ds-space-8); }
+#hub-shell .mk-grid .mk-tile { gap: var(--ds-space-4); }
+#hub-shell .mk-grid .mk-media { aspect-ratio: 2 / 3; border-radius: 0; }
+#hub-shell .mk-grid .mk-media::after { content: none; }
+#hub-shell .mk-grid .mk-tile:hover .mk-media { box-shadow: none; }
+#hub-shell .mk-grid .mk-tile-body { gap: var(--ds-space-2); }
+#hub-shell .mk-grid .mk-tile-title, #hub-shell .mk-grid .mk-tile-price { font-size: var(--ds-type-meta-size); line-height: var(--ds-type-meta-leading); font-weight: var(--ds-weight-text); }
+#hub-shell .mk-grid .mk-tile-title { -webkit-line-clamp: 1; }
+
+/* 記号だけのチップ（2026-11-04「全部のボタンをロゴ化」）。四角でなく丸い当たり、名前は title に出る */
+#hub-shell .mk-chip.is-icon { display: inline-grid; place-items: center; width: var(--ds-chip-h); padding: 0; }
+#hub-shell .mk-chip.is-icon .sidebar-icon, #hub-shell .mk-sort-label .sidebar-icon { width: var(--ds-icon-size); height: var(--ds-icon-size); fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+#hub-shell .mk-sort-label { display: inline-grid; place-items: center; }
+/* 種別のチップが左の列へ移った後は、切り替えのチップが先頭。前に何も無いのに区切りの線と間を残さない（2026-11-11）。 */
+#hub-shell .mk-toggles:first-child { margin-left: 0; padding-left: 0; border-left: 0; }
