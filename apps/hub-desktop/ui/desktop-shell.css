@@ -589,3 +589,20 @@ html[data-material] #hub-shell.rail-open .rail .rail-activity-head:not(#_):not(#
 /* 2026-11-06 所有者「上のやつの区切りが欲しい」：上の帯の下に細い区切り線（右列の頭の線と同じ高さ・同じ色）。 */
 #hub-shell .app-toolbar:not(#_):not(#_):not(#_):not(#_) { box-shadow: inset 0 -1px 0 var(--line); }
 #hub-shell.rail-open .rail .rail-activity-head:not(#_):not(#_):not(#_):not(#_) { border-bottom: 1px solid var(--line); }
+
+/* ===== ブラウザ画面の崩れ（2026-11-11 所有者「ブラウザを開いてるときのUIが崩れてる」） ===== */
+/* 右上の群（保護・ダウンロード・AI・メニュー）は、窓の操作（最小化・最大化・閉じる）の左に置く。重ねない。 */
+#hub-shell.browser-active:not(.rail-open) #view-browser .browser-strip:not(#_) { right: calc(var(--window-controls-w) + var(--space-2)); }
+/* ブラウザの画面は自分では縦に流れない。スクロールバーのための左右の空き（10px ずつ）を取らず、バーとページを列の端まで広げる。 */
+#hub-shell.browser-active .workspace-main:not(#_) { scrollbar-gutter: auto; }
+@media (min-width: 861px) {
+  /* 細いタブの列をブックマークバーの段の下から始めるとき、列の高さはその分だけ縮める（縮めないと画面全体が下へはみ出し、左の列の「設定」が切れた）。 */
+  #hub-shell.browser-tabs-peek:not(.browser-tabs-overlay-unavailable):has(#browser-bookmark-bar:not([hidden])) .sidebar:not(#_) {
+    height: calc(100vh - var(--toolbar-height) - var(--tap-compact) - 5px);
+    align-self: start;
+  }
+  /* 閉じた細い列の上（バーの段の左）は、窓の裏が見える穴にしない。ブックマークバーと同じ地で塗る。 */
+  #hub-shell.browser-tabs-peek:not(.browser-tabs-peek-open):not(.browser-tabs-overlay-unavailable):has(#browser-bookmark-bar:not([hidden])) .sidebar:not(#_) {
+    box-shadow: 0 calc(-1 * (var(--tap-compact) + 5px)) 0 0 var(--panel);
+  }
+}

@@ -5,16 +5,14 @@ export const APPEARANCE_KEY = 'hub.desktop.appearance';
 export const TEMPLATE_KEY = 'hub.desktop.template';
 
 // カラーテンプレート。scheme は data-theme（明暗）。色の値は tokens.css の [data-template] にだけある。
-// paper / charcoal は 2026-11-10 の既定（暖かい生成りと暖かい炭色、所有者の決定）。残りの 5 つは 2026-11-02 からのテンプレートで、選べるまま残す。
+// paper / charcoal は 2026-11-10 の既定（暖かい生成りと暖かい炭色、所有者の決定）。
+// 2026-11-11 所有者「新しいやつだけでよくね」: 選べるのはこの 2 つと「端末に合わせる」だけ。
 export const TEMPLATES = Object.freeze([
   Object.freeze({ id: 'paper', name: 'Paper', scheme: 'light' }),
   Object.freeze({ id: 'charcoal', name: 'Charcoal', scheme: 'dark' }),
-  Object.freeze({ id: 'light', name: 'Light', scheme: 'light' }),
-  Object.freeze({ id: 'dark', name: 'Dark', scheme: 'dark' }),
-  Object.freeze({ id: 'noir', name: 'Noir', scheme: 'dark' }),
-  Object.freeze({ id: 'ivory', name: 'Ivory', scheme: 'light' }),
-  Object.freeze({ id: 'midnight', name: 'Midnight', scheme: 'dark' }),
 ]);
+// やめたテンプレート（2026-11-02〜11-10）を保存していた人は、同じ明暗の今のテンプレートへ移す。
+export const RETIRED_TEMPLATES = Object.freeze({ light: 'paper', ivory: 'paper', dark: 'charcoal', noir: 'charcoal', midnight: 'charcoal' });
 export const DEVICE_TEMPLATE = 'device'; // 端末に合わせる: Windows が明るければ paper、暗ければ charcoal
 export const DEFAULT_TEMPLATE = DEVICE_TEMPLATE;
 const DEVICE_LIGHT = 'paper';
@@ -28,8 +26,10 @@ export const APPEARANCE_CHOICES = Object.freeze({
 });
 
 const isTemplate = (id) => id === DEVICE_TEMPLATE || TEMPLATES.some((t) => t.id === id);
+/** 保存されていた値を今のテンプレートへ。やめたものは同じ明暗へ、知らない値は既定へ。 */
+const currentTemplate = (id) => (isTemplate(id) ? id : Object.hasOwn(RETIRED_TEMPLATES, id) ? RETIRED_TEMPLATES[id] : DEFAULT_TEMPLATE);
 
-/** 旧い theme / palette の保存から新しいテンプレートへ。黒金ダーク→noir、黒金ライト→ivory、白黒ライト→light、白黒ダーク→dark。 */
+/** 旧い theme / palette の保存から今のテンプレートへ。明るい色は paper、暗い色は charcoal（黒金・白黒の別は無くなった）。 */
 export function migrateTemplate(old) { return legacyTemplate(old) ?? DEFAULT_TEMPLATE; }
 /** 旧い保存に色の選択があればその移行先、なければ null。 */
 export function legacyTemplate(old) {
@@ -38,14 +38,13 @@ export function legacyTemplate(old) {
   const gold = old.palette === 'gold-ivory';
   if (theme === null && !gold && old.palette !== 'standard') return null; // 色を選んだことが無い
   if (theme === 'system') return DEVICE_TEMPLATE;
-  if (theme === 'light') return gold ? 'ivory' : 'light';
-  return gold ? 'noir' : 'dark';
+  return theme === 'light' ? DEVICE_LIGHT : DEVICE_DARK;
 }
 
 export function normalizeAppearance(raw) {
   const value = raw !== null && typeof raw === 'object' ? raw : {};
   const pick = (key) => (APPEARANCE_CHOICES[key].some(([id]) => id === value[key]) ? value[key] : APPEARANCE_DEFAULTS[key]);
-  return { template: isTemplate(value.template) ? value.template : DEFAULT_TEMPLATE, crisp: value.crisp === true, textSize: pick('textSize'), density: pick('density'), reduceMotion: value.reduceMotion === true, reduceTransparency: value.reduceTransparency === true };
+  return { template: currentTemplate(value.template), crisp: value.crisp === true, textSize: pick('textSize'), density: pick('density'), reduceMotion: value.reduceMotion === true, reduceTransparency: value.reduceTransparency === true };
 }
 
 const readJson = (storage, key) => {
@@ -58,7 +57,7 @@ export function loadAppearance(storage) {
   const saved = readJson(storage, TEMPLATE_KEY);
   let template; let crisp = false;
   if (saved !== null && typeof saved === 'object') {
-    template = isTemplate(saved.template) ? saved.template : DEFAULT_TEMPLATE;
+    template = currentTemplate(saved.template);
     crisp = saved.crisp === true;
   } else {
     const legacy = legacyTemplate(base);
@@ -137,7 +136,7 @@ export function createAppearanceSettings({ document, storage, media = null }) {
     ['textSize', '文字の大きさ', '一覧・詳細・設定の文字を大きくします。サイドバー・ブラウザ・AIは変わりません。', 'フォント サイズ 拡大'],
     ['density', '表示の余白', '「ゆったり」は余白とボタンを広げます。', '密度 余白 ゆったり'],
   ];
-  // カラーテンプレート: 「端末に合わせる」（既定）と見本ボタン 7 つで 1 つだけ選ぶ。見本の中は data-template で、そのテンプレートの色になる。
+  // カラーテンプレート: 「端末に合わせる」（既定）と見本ボタン 2 つで 1 つだけ選ぶ。見本の中は data-template で、そのテンプレートの色になる。
   const swatches = new Map();
   const picker = make('div', undefined, 'template-swatches');
   picker.setAttribute('role', 'radiogroup');
@@ -167,7 +166,7 @@ export function createAppearanceSettings({ document, storage, media = null }) {
     swatches.set(entry.id, button);
     picker.append(button);
   }
-  element.append(row('カラーテンプレート', '画面全体の色を 1 つ選びます。「端末に合わせる」はWindowsの明るさに従います。', picker, { className: 'appearance-group appearance-template', keywords: 'テンプレート 配色 テーマ 色 ペーパー チャコール ライト ダーク ノワール アイボリー ミッドナイト 端末に合わせる 暗い 明るい 生成り 炭 ゴールド 金' }));
+  element.append(row('カラーテンプレート', '画面全体の色を 1 つ選びます。「端末に合わせる」はWindowsの明るさに従います。', picker, { className: 'appearance-group appearance-template', keywords: 'テンプレート 配色 テーマ 色 ペーパー チャコール ライト ダーク 端末に合わせる 暗い 明るい 生成り 炭 ゴールド 金' }));
   const crisp = document.createElement('input');
   crisp.type = 'checkbox';
   crisp.addEventListener('change', () => { prefs = { ...prefs, crisp: crisp.checked }; commit(); });

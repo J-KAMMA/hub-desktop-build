@@ -2,7 +2,9 @@
 // 規則は appearance.mjs の applyAppearance / loadAppearance と同じ。変えるときは両方と appearance.test.mjs を揃える。
 (function () {
   var TEMPLATE_KEY = 'hub.desktop.template', APPEARANCE_KEY = 'hub.desktop.appearance';
-  var IDS = { paper: 'light', charcoal: 'dark', light: 'light', dark: 'dark', noir: 'dark', ivory: 'light', midnight: 'dark' };
+  var IDS = { paper: 'light', charcoal: 'dark' };
+  // やめたテンプレートは同じ明暗の今のテンプレートへ（appearance.mjs の RETIRED_TEMPLATES と同じ）。
+  var RETIRED = { light: 'paper', ivory: 'paper', dark: 'charcoal', noir: 'charcoal', midnight: 'charcoal' };
   var template = 'device', crisp = false, textSize = 'normal', density = 'normal', reduce = false, clear = false;
   var storage = null, old = null, saved = null;
   try { storage = window.localStorage; } catch (e) { /* 保存が読めなければ既定 */ }
@@ -11,13 +13,14 @@
   saved = read(TEMPLATE_KEY);
   if (saved && typeof saved === 'object') {
     if (saved.template === 'device' || IDS.hasOwnProperty(saved.template)) template = saved.template;
+    else if (RETIRED.hasOwnProperty(saved.template)) template = RETIRED[saved.template];
     crisp = saved.crisp === true;
   } else if (old && typeof old === 'object') {
-    // 旧い theme / palette から 1 度だけ移す: 黒金ダーク→noir、黒金ライト→ivory、白黒ライト→light、白黒ダーク→dark。
+    // 旧い theme / palette から 1 度だけ移す: 明るい色は paper、暗い色は charcoal。
     var theme = old.theme === 'light' || old.theme === 'system' || old.theme === 'dark' ? old.theme : null;
     var gold = old.palette === 'gold-ivory';
     if (theme !== null || gold || old.palette === 'standard') {
-      template = theme === 'system' ? 'device' : theme === 'light' ? (gold ? 'ivory' : 'light') : (gold ? 'noir' : 'dark');
+      template = theme === 'system' ? 'device' : theme === 'light' ? 'paper' : 'charcoal';
       try { storage.setItem(TEMPLATE_KEY, JSON.stringify({ template: template, crisp: false })); } catch (e) { /* 書けなくてもこの起動では効く */ }
     }
   }

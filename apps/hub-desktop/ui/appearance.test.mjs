@@ -18,16 +18,16 @@ const fixture=(stored,media=fakeMedia(true),template)=>{
 };
 const DEFAULTS={template:'device',crisp:false,textSize:'normal',density:'normal',reduceMotion:false,reduceTransparency:false};
 
-test('there are seven templates and the default is 端末に合わせる (Paper / Charcoal, owner decision 2026-11-10)',()=>{
-  assert.deepEqual(TEMPLATES.map(t=>t.id),['paper','charcoal','light','dark','noir','ivory','midnight']);
+test('there are two templates and the default is 端末に合わせる (Paper / Charcoal, owner decision 2026-11-10)',()=>{
+  assert.deepEqual(TEMPLATES.map(t=>t.id),['paper','charcoal']);
   assert.deepEqual(normalizeAppearance(null),DEFAULTS);
   assert.deepEqual(normalizeAppearance({template:'blue',crisp:'yes',textSize:'huge',density:'tight',reduceMotion:'yes'}),DEFAULTS);
   for(const t of [...TEMPLATES.map(x=>x.id),'device'])assert.equal(normalizeAppearance({template:t}).template,t);
 });
 test('load and save survive broken or throwing storage',()=>{
-  const s=memory();assert.equal(saveAppearance(s,{template:'midnight',crisp:true,textSize:'large',density:'roomy',reduceMotion:true,reduceTransparency:true}),true);
-  assert.deepEqual(loadAppearance(s),{template:'midnight',crisp:true,textSize:'large',density:'roomy',reduceMotion:true,reduceTransparency:true});
-  assert.deepEqual(JSON.parse(s.map.get(TEMPLATE_KEY)),{template:'midnight',crisp:true});
+  const s=memory();assert.equal(saveAppearance(s,{template:'charcoal',crisp:true,textSize:'large',density:'roomy',reduceMotion:true,reduceTransparency:true}),true);
+  assert.deepEqual(loadAppearance(s),{template:'charcoal',crisp:true,textSize:'large',density:'roomy',reduceMotion:true,reduceTransparency:true});
+  assert.deepEqual(JSON.parse(s.map.get(TEMPLATE_KEY)),{template:'charcoal',crisp:true});
   assert.equal(JSON.parse(s.map.get(APPEARANCE_KEY)).template,undefined);
   s.setItem(TEMPLATE_KEY,'{broken');s.setItem(APPEARANCE_KEY,'{broken');assert.equal(loadAppearance(s).template,'device');
   const bad={getItem(){throw Error('blocked');},setItem(){throw Error('blocked');}};
@@ -37,8 +37,8 @@ test('the new key lives under the hub.desktop. prefix',()=>{
   assert.equal(TEMPLATE_KEY,'hub.desktop.template');assert.ok(APPEARANCE_KEY.startsWith('hub.desktop.'));
 });
 test('migration: old theme and palette map to the new templates, once',()=>{
-  const cases=[[{theme:'dark',palette:'gold-ivory'},'noir'],[{theme:'light',palette:'gold-ivory'},'ivory'],[{theme:'light',palette:'standard'},'light'],[{theme:'dark',palette:'standard'},'dark'],
-    [{theme:'light'},'light'],[{theme:'dark'},'dark'],[{palette:'gold-ivory'},'noir'],[{theme:'system'},'device'],[{theme:'system',palette:'gold-ivory'},'device'],
+  const cases=[[{theme:'dark',palette:'gold-ivory'},'charcoal'],[{theme:'light',palette:'gold-ivory'},'paper'],[{theme:'light',palette:'standard'},'paper'],[{theme:'dark',palette:'standard'},'charcoal'],
+    [{theme:'light'},'paper'],[{theme:'dark'},'charcoal'],[{palette:'gold-ivory'},'charcoal'],[{theme:'system'},'device'],[{theme:'system',palette:'gold-ivory'},'device'],
     [{textSize:'large'},'device'],[{},'device'],[null,'device']];
   for(const [old,expected] of cases){
     assert.equal(migrateTemplate(old),expected,JSON.stringify(old));
@@ -47,14 +47,14 @@ test('migration: old theme and palette map to the new templates, once',()=>{
   }
   const s=memory();put(s,APPEARANCE_KEY,{theme:'light',palette:'gold-ivory',textSize:'large'});
   const first=loadAppearance(s);
-  assert.deepEqual(JSON.parse(s.map.get(TEMPLATE_KEY)),{template:'ivory',crisp:false});
+  assert.deepEqual(JSON.parse(s.map.get(TEMPLATE_KEY)),{template:'paper',crisp:false});
   assert.equal(first.textSize,'large');
   // 2 回目以降は新しい鍵だけを読む: 旧い theme / palette を書き換えても結果は変わらない
   put(s,APPEARANCE_KEY,{theme:'dark',palette:'standard',textSize:'large'});
-  assert.equal(loadAppearance(s).template,'ivory');
+  assert.equal(loadAppearance(s).template,'paper');
   // 保存が書けなくても、この起動では移行先が効く
   const readOnly={getItem:k=>(k===APPEARANCE_KEY?JSON.stringify({theme:'light'}):null),setItem(){throw Error('blocked');}};
-  assert.equal(loadAppearance(readOnly).template,'light');
+  assert.equal(loadAppearance(readOnly).template,'paper');
   // 何も選んでいなければ新しい鍵を作らない
   const fresh=memory();loadAppearance(fresh);assert.equal(fresh.map.has(TEMPLATE_KEY),false);
 });
@@ -65,7 +65,7 @@ test('端末に合わせる follows the OS, an explicit template does not',()=>{
 });
 test('applyAppearance writes data-template, the light/dark scheme, crisp and the other attributes',()=>{
   const {root}=fixture();
-  const expected={paper:'light',charcoal:'dark',light:'light',dark:'dark',noir:'dark',ivory:'light',midnight:'dark'};
+  const expected={paper:'light',charcoal:'dark'};
   for(const [id,scheme] of Object.entries(expected)){
     applyAppearance(root,{template:id},false);
     assert.deepEqual([root.dataset.template,root.dataset.theme,root.dataset.themeMode],[id,scheme,scheme],id);
@@ -76,12 +76,12 @@ test('applyAppearance writes data-template, the light/dark scheme, crisp and the
   applyAppearance(root,{},true);
   assert.deepEqual([root.dataset.template,root.dataset.theme,root.dataset.themeMode,root.hasAttribute('data-crisp'),root.dataset.motion,root.hasAttribute('data-palette')],['charcoal','dark','system',false,undefined,false]);
 });
-test('the settings UI is one row of 端末に合わせる plus seven swatches, a くっきり toggle, and no old テーマ / 配色 rows',()=>{
+test('the settings UI is one row of 端末に合わせる plus two swatches, a くっきり toggle, and no old テーマ / 配色 rows',()=>{
   const f=fixture();
   const names=[...f.widget.element.querySelectorAll('.template-swatch .template-name')].map(n=>n.textContent);
-  assert.deepEqual(names,['端末に合わせる','Paper','Charcoal','Light','Dark','Noir','Ivory','Midnight']);
-  assert.equal(f.widget.element.querySelectorAll('.template-swatches > button').length,8);
-  assert.equal(f.widget.element.querySelectorAll('.template-swatches [data-template]').length,7+2);
+  assert.deepEqual(names,['端末に合わせる','Paper','Charcoal']);
+  assert.equal(f.widget.element.querySelectorAll('.template-swatches > button').length,3);
+  assert.equal(f.widget.element.querySelectorAll('.template-swatches [data-template]').length,2+2);
   assert.deepEqual([...f.widget.element.querySelectorAll('.template-chip-device [data-template]')].map(n=>n.dataset.template),['paper','charcoal']);
   assert.equal(f.widget.element.querySelector('input[name="appearance-theme"]'),null);
   assert.equal(f.widget.element.querySelector('input[name="appearance-palette"]'),null);
@@ -95,18 +95,18 @@ test('the settings UI is one row of 端末に合わせる plus seven swatches, a
 test('choosing a swatch applies at once, persists, and stays a single selection',()=>{
   const f=fixture({textSize:'large'});
   assert.equal(f.root.dataset.template,'charcoal');assert.equal(f.root.dataset.textSize,'large');
-  f.choose('midnight');
-  assert.deepEqual([f.root.dataset.template,f.root.dataset.theme],['midnight','dark']);
-  assert.deepEqual(JSON.parse(f.storage.map.get(TEMPLATE_KEY)),{template:'midnight',crisp:false});
-  assert.deepEqual([...f.widget.element.querySelectorAll('[aria-checked="true"]')].map(b=>b.dataset.templateChoice),['midnight']);
-  f.choose('ivory');assert.deepEqual([f.root.dataset.template,f.root.dataset.theme],['ivory','light']);
+  f.choose('charcoal');
+  assert.deepEqual([f.root.dataset.template,f.root.dataset.theme],['charcoal','dark']);
+  assert.deepEqual(JSON.parse(f.storage.map.get(TEMPLATE_KEY)),{template:'charcoal',crisp:false});
+  assert.deepEqual([...f.widget.element.querySelectorAll('[aria-checked="true"]')].map(b=>b.dataset.templateChoice),['charcoal']);
+  f.choose('paper');assert.deepEqual([f.root.dataset.template,f.root.dataset.theme],['paper','light']);
   f.choose('device');
   assert.deepEqual([...f.widget.element.querySelectorAll('[aria-checked="true"]')].map(b=>b.dataset.templateChoice),['device']);
   assert.equal(f.root.dataset.template,'charcoal');
   const crisp=f.widget.element.querySelector('.appearance-crisp input');crisp.checked=true;crisp.dispatchEvent(new f.dom.window.Event('change'));
   assert.equal(f.root.hasAttribute('data-crisp'),true);
   assert.deepEqual(JSON.parse(f.storage.map.get(TEMPLATE_KEY)),{template:'device',crisp:true});
-  assert.equal(f.widget.element.querySelectorAll('.template-chip[data-crisp]').length,10);
+  assert.equal(f.widget.element.querySelectorAll('.template-chip[data-crisp]').length,5);
   f.widget.element.querySelector('.head-action').click();
   assert.deepEqual(f.widget.value,DEFAULTS);assert.equal(f.root.dataset.template,'charcoal');assert.equal(f.root.hasAttribute('data-crisp'),false);
 });
@@ -118,18 +118,18 @@ test('くっきり is independent of the template',()=>{
 test('端末に合わせる re-resolves when the OS scheme changes, other templates ignore it',()=>{
   const f=fixture(undefined,fakeMedia(true),{template:'device'});assert.equal(f.root.dataset.template,'charcoal');
   f.media.flip(false);assert.equal(f.root.dataset.template,'paper');assert.equal(f.root.dataset.theme,'light');
-  f.choose('noir');f.media.flip(true);f.media.flip(false);assert.equal(f.root.dataset.template,'noir');
+  f.choose('charcoal');f.media.flip(true);f.media.flip(false);assert.equal(f.root.dataset.template,'charcoal');
 });
 test('stored settings apply on creation and old text-size choices survive the move',()=>{
   const f=fixture({theme:'light',palette:'gold-ivory',textSize:'large',density:'roomy',reduceMotion:true},fakeMedia(false));
-  assert.deepEqual([f.root.dataset.template,f.root.dataset.textSize,f.root.dataset.density,f.root.dataset.motion],['ivory','large','roomy','reduce']);
-  assert.equal(f.widget.element.querySelector('[data-template-choice="ivory"]').getAttribute('aria-checked'),'true');
+  assert.deepEqual([f.root.dataset.template,f.root.dataset.textSize,f.root.dataset.density,f.root.dataset.motion],['paper','large','roomy','reduce']);
+  assert.equal(f.widget.element.querySelector('[data-template-choice="paper"]').getAttribute('aria-checked'),'true');
 });
 test('unwritable storage still applies for this run and says so',()=>{
   const dom=new JSDOM('<body></body>');const storage={getItem(){throw Error('x');},setItem(){throw Error('x');}};
   const w=createAppearanceSettings({document:dom.window.document,storage,media:fakeMedia(false)});
-  w.element.querySelector('[data-template-choice="light"]').click();
-  assert.equal(dom.window.document.documentElement.dataset.template,'light');assert.match(w.element.querySelector('[role=status]').textContent,/保存できませんでした/);
+  w.element.querySelector('[data-template-choice="charcoal"]').click();
+  assert.equal(dom.window.document.documentElement.dataset.template,'charcoal');assert.match(w.element.querySelector('[role=status]').textContent,/保存できませんでした/);
 });
 const RUN_KEYS=['data-template','data-theme','data-theme-mode','data-crisp','data-text-size','data-density','data-motion','data-transparency'];
 function runEarly(stored,template,dark){
@@ -153,7 +153,7 @@ test('no flash: appearance-early.js sets the same attributes as appearance.mjs b
 });
 test('no flash: the early script migrates the old keys once and tolerates blocked storage',()=>{
   const a=runEarly({theme:'light',palette:'gold-ivory'},undefined,true);
-  assert.equal(a.root.getAttribute('data-template'),'ivory');assert.deepEqual(JSON.parse(a.store.map.get(TEMPLATE_KEY)),{template:'ivory',crisp:false});
+  assert.equal(a.root.getAttribute('data-template'),'paper');assert.deepEqual(JSON.parse(a.store.map.get(TEMPLATE_KEY)),{template:'paper',crisp:false});
   const fresh=runEarly(undefined,undefined,false);
   assert.equal(fresh.root.getAttribute('data-template'),'paper');assert.equal(fresh.root.getAttribute('data-theme-mode'),'system');assert.equal(fresh.store.map.has(TEMPLATE_KEY),false);
   const dom=new JSDOM('<html></html>');
@@ -161,7 +161,7 @@ test('no flash: the early script migrates the old keys once and tolerates blocke
   assert.deepEqual([dom.window.document.documentElement.dataset.template,dom.window.document.documentElement.dataset.theme],['charcoal','dark']);
   const blockedWrite=new JSDOM('<html></html>');
   vm.runInNewContext(readFileSync(new URL('./appearance-early.js',import.meta.url),'utf8'),{window:{localStorage:{getItem:k=>(k===APPEARANCE_KEY?'{"theme":"light"}':null),setItem(){throw Error('full');}},matchMedia:()=>({matches:true})},document:blockedWrite.window.document});
-  assert.equal(blockedWrite.window.document.documentElement.dataset.template,'light');
+  assert.equal(blockedWrite.window.document.documentElement.dataset.template,'paper');
 });
 test('index.html and newtab.html load the early script before any stylesheet; settings css uses tokens only; every template is defined in tokens.css',()=>{
   const html=readFileSync(new URL('./index.html',import.meta.url),'utf8');
@@ -178,4 +178,16 @@ test('index.html and newtab.html load the early script before any stylesheet; se
   }
   assert.match(tokens,/html:not\(\[data-template\]\),\s*\[data-template="charcoal"\] \{/);
   assert.doesNotMatch(tokens,/data-palette/);
+});
+
+test('retired templates (light / dark / noir / ivory / midnight) move to Paper or Charcoal by brightness, in the module and in the early script (owner 2026-11-11)',()=>{
+  const moved={light:'paper',ivory:'paper',dark:'charcoal',noir:'charcoal',midnight:'charcoal'};
+  for(const [old,now] of Object.entries(moved)){
+    assert.equal(normalizeAppearance({template:old}).template,now,old);
+    const s=memory();put(s,TEMPLATE_KEY,{template:old,crisp:true});
+    assert.deepEqual([loadAppearance(s).template,loadAppearance(s).crisp],[now,true],`saved ${old}`);
+    assert.equal(runEarly(undefined,{template:old},true).root.getAttribute('data-template'),now,`early ${old}`);
+  }
+  const f=fixture(undefined,fakeMedia(true));
+  assert.deepEqual([...f.widget.element.querySelectorAll('button[data-template-choice]')].map(b=>b.dataset.templateChoice),['device','paper','charcoal']);
 });
