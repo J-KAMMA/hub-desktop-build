@@ -118,5 +118,10 @@ test("the community list card is a plain row card: icon, name, 1-line descriptio
     const bare = vm.runInContext("communityListCard(h)", c);
     assert.equal(bare.querySelector(".community-card-badge"), null);
     assert.equal(bare.querySelector(".community-card-icon").textContent, "G");
+    // 入っていないカードだけに「参加する」。入っているカードには出さない。
+    assert.equal(card.querySelector(".community-card-join"), null);
+    assert.equal(bare.querySelector(".community-card-join").textContent, "参加を申請");
+    c.p = { id: "g3", name: "公開部", visibility: "public" };
+    assert.equal(vm.runInContext("communityListCard(p)", c).querySelector(".community-card-join").textContent, "参加する");
   } finally { dom.window.close(); }
 });

@@ -58,3 +58,17 @@ test('the header search still filters the posts', (t) => {
   const text = f.target.querySelector('.thread-reader').textContent;
   assert.match(text, /two/); assert.doesNotMatch(text, /one/);
 });
+
+test('search, sort and filters stay folded behind the search button in the head; a press opens them and focuses the search', (t) => {
+  const f = mount(); t.after(() => f.window.close());
+  const form = f.target.querySelector('.thread-head .thread-head-search'), toggle = f.target.querySelector('.thread-head-tools .thread-search-toggle');
+  assert.equal(form.hidden, true);
+  assert.equal(toggle.getAttribute('aria-expanded'), 'false');
+  assert.equal(f.target.querySelector('.thread-head-tools').firstElementChild, toggle);
+  toggle.click();
+  assert.equal(form.hidden, false);
+  assert.equal(toggle.getAttribute('aria-expanded'), 'true');
+  assert.equal(f.document.activeElement, form.querySelector('input[type="search"]'));
+  toggle.click();
+  assert.equal(form.hidden, true);
+});

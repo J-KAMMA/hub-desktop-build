@@ -1191,6 +1191,23 @@ dialog.media-lightbox .media-lightbox-count[hidden] { display: none; }
 /* ===== スレッド（2026-11-11 所有者「スレッドとコミュニティのUIを使いやすくして」） ===== */
 /* 種別（雑談・質問・募集）は札。コミュニティの行の札と同じ形で、ほかの字（件数・時刻）と見分けが付く。 */
 #hub-shell .thread-row-meta > .thread-row-type:not(#_) { padding: 0 var(--space-2); border: 1px solid var(--divider); border-radius: var(--radius-pill); color: var(--text); font-size: var(--type-caption); line-height: var(--lh-caption); }
-#hub-shell .thread-row-meta > .thread-row-type + *::before:not(#_) { content: none; }
+#hub-shell .thread-row-meta > .thread-row-type:not(#_) + *::before { content: none; }
 /* 受付終了の知らせ・下の折りたたみは、本文と同じ左端に置く（16px ずれていた）。 */
 #hub-shell #view-detail .thread-reader ~ p.meta:not(#_) { margin: 0; padding: var(--space-3) var(--space-4); }
+
+/* 検索・並び順・絞り込みは、頭の検索の印から開く。畳んでいる間は場所を取らない。 */
+#hub-shell #view-detail .thread-head-search[hidden]:not(#_):not(#_) { display: none; }
+#hub-shell #view-detail .thread-head-tools:not(#_) { display: flex; align-items: center; gap: var(--space-1); }
+#hub-shell #view-detail .thread-search-toggle:not(#_) { display: inline-grid; place-items: center; width: var(--icon-btn); height: var(--icon-btn); padding: 0; }
+#hub-shell #view-detail .thread-search-toggle .ic { width: 18px; height: 18px; }
+#hub-shell #view-detail .thread-search-toggle[aria-expanded="true"]:not(#_) { background: var(--selected); color: var(--text); }
+/* 共同まとめ・話題フォロー：開ける行だと分かるように、字は本文の色、右端に向きの変わる印。 */
+#hub-shell #view-detail details.thread-knowledge > summary:not(#_):not(#_) { justify-content: space-between; color: var(--text); list-style: none; }
+#hub-shell #view-detail details.thread-knowledge > summary::-webkit-details-marker { display: none; }
+#hub-shell #view-detail details.thread-knowledge > summary::after { content: "›"; color: var(--muted); font-size: var(--type-headline); line-height: 1; transition: transform var(--motion-fast, 120ms); }
+#hub-shell #view-detail details.thread-knowledge[open] > summary::after { transform: rotate(90deg); }
+#hub-shell #view-detail details.thread-knowledge > summary:hover { background: var(--interactive-hover); }
+/* 一覧のカードの「参加する」：右端に置く小さな線のボタン。 */
+#hub-shell #community-results .community-card:not(#_) { position: relative; }
+#hub-shell #community-results .community-card-join:not(#_):not(#_) { flex: none; align-self: center; margin-left: var(--space-3); min-height: var(--control-h); padding: 0 var(--space-3); border: 1px solid var(--line-strong); border-radius: var(--radius-pill); background: transparent; color: var(--text); font: inherit; font-size: var(--type-caption); font-weight: var(--weight-bold); cursor: pointer; }
+#hub-shell #community-results .community-card-join:hover:not(#_):not(#_) { background: var(--interactive-hover); }

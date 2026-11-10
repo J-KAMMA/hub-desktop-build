@@ -3470,6 +3470,16 @@ function communityListCard(c) {
   }
   body.append(title, desc, foot);
   card.append(iconBox, body);
+  if (!c.viewerJoined && c.id) {
+    // 開いてから「参加する」を探さなくてよいように、カードから参加の欄まで1手で行く（2026-11-11）。
+    const join = document.createElement("button");
+    join.type = "button";
+    join.className = "community-card-join";
+    join.textContent = c.visibility === "public" ? "参加する" : "参加を申請";
+    join.setAttribute("data-keep-text", "");
+    join.addEventListener("click", (event) => { event.stopPropagation(); void openDetail("community", [c.id], { title: c.name, headPanels: { join: true } }); });
+    card.append(join);
+  }
   const open = () => void openDetail("community", [c.id], { title: c.name });
   card.addEventListener("click", open);
   card.addEventListener("keydown", (event) => { if (event.target === card && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); open(); } });
@@ -8026,6 +8036,7 @@ async function openDetail(name, ids, opts = {}) {
   } else if (detailTrail.at(-1)) detailTrail.at(-1).scrollTop = viewScroller()?.scrollTop ?? 0;
   detailForwardTrail = [];
   const entry = { name, ids, title: opts.title ?? "詳細", local: opts.local ?? false, data: opts.data, targetSelection:opts.targetSelection, scrollTop: 0, editorState:opts.editorState,governanceState:opts.governanceState, ...(typeof opts.communityId === "string" && opts.communityId ? { communityId: opts.communityId } : {}) };
+  if (opts.headPanels && typeof opts.headPanels === "object") entry.headPanels = { join: opts.headPanels.join === true, about: opts.headPanels.about === true };
   detailTrail.push(entry);
   if (enteringDetail) {
     toolbarTrail.push({ view: "detail", title: entry.title });
@@ -8506,7 +8517,22 @@ function renderThreadDetail(target, data, entry) {
   });
   // 検索と絞り込みは見出しの中へ（本文の前に別の枠を積まない）。
   const readerControls = threadReader.querySelector(":scope > form");
-  if (readerControls) { readerControls.classList.add("thread-head-search"); head.append(readerControls); }
+  if (readerControls) {
+    readerControls.classList.add("thread-head-search");
+    // 普段は畳む（2026-11-11）。頭の検索の印で開く。検索語が入っている間は開いたまま。
+    const searchInput = readerControls.querySelector('input[type="search"]');
+    const searchToggle = document.createElement("button");
+    searchToggle.type = "button";
+    searchToggle.className = "head-action thread-search-toggle";
+    searchToggle.innerHTML = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 4a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13Zm9.5 16-4.5-4.5"/></svg>';
+    searchToggle.title = "スレッド内を検索・並び順";
+    searchToggle.setAttribute("aria-label", "スレッド内を検索・並び順");
+    const showSearch = (open) => { readerControls.hidden = !open; searchToggle.setAttribute("aria-expanded", String(open)); };
+    showSearch(entry.threadSearchOpen === true || Boolean(searchInput?.value));
+    searchToggle.onclick = () => { entry.threadSearchOpen = readerControls.hidden; showSearch(entry.threadSearchOpen); if (entry.threadSearchOpen) searchInput?.focus(); };
+    head.querySelector(".thread-head-tools")?.prepend(searchToggle);
+    head.append(readerControls);
+  }
   nodes.push(threadReader);
   // 統一した投稿の読み出し（place = thread:{id}）。旧表の投稿は上の道のまま、新しい形の投稿だけを続けて並べる。
   const placeList = document.createElement("div");
@@ -9226,10 +9252,7 @@ function mountCommunityStream(host, entry, holder, ownerCurrent, mode = {}) {
       if (mine !== epoch || !ownerCurrent()) return;
       if (quiet) return;
       settled = true;
-      const note = document.createElement("p");
-      note.className = "meta warning";
-      note.textContent = friendlyError(error);
-      host.replaceChildren(note, retryButton(() => void load(cursor)));
+      host.replaceChildren(accountNeeded(error) ? connectState() : pageErrorState("読み込めませんでした", friendlyError(error), () => void load(cursor)));
     }
   }
   const first = load();

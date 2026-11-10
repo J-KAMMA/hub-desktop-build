@@ -29,7 +29,7 @@ function mount(data, entry = { name: 'community', ids: ['c1'] }, { channels, can
     openDetail: (...a) => opened.push(a), communityMembershipControls: () => { const root = document.createElement('div'); const b = document.createElement('button'); b.textContent = '参加する'; root.append(b); return { root, ready: Promise.resolve(), dispose() {}, invalidate() {} }; },
     invoke, friendlyError: String, createCommunityPoints: () => ({ own: Object.assign(stub(), { className: 'points-own' }), toggle: [], ranking: Object.assign(document.createElement('div'), { className: 'points-ranking' }), ready: Promise.resolve() }),
     createCommunityContentTabs: (options) => { contentCalls.push(options); const root = document.createElement('div'); root.className = `content-${options.type}`; return { root, ready: Promise.resolve(), dispose() {}, invalidate() {} }; },
-    openCommunityContent() {}, skeletonResult: stub, retryButton: () => document.createElement('button'), emptyState: stub,
+    openCommunityContent() {}, skeletonResult: stub, retryButton: () => document.createElement('button'), emptyState: stub, accountNeeded: () => false, connectState: stub, pageErrorState: () => Object.assign(stub(), { className: 'stream-error' }),
     renderCommunityStream: (host, streamData, _entry, ctx) => { streams.push(ctx); host.replaceChildren(Object.assign(document.createElement('div'), { className: `stream-for-${ctx.kind ?? 'all'}`, textContent: String((streamData.messages ?? []).length) })); return { dispose() {} }; },
     communityMemberControls: (_doc, options) => Object.assign(document.createElement('section'), { className: 'member-controls', textContent: String(options.members.length) }),
     createChannelColumn, createSharedTab, loadChannels, parseChannels, pickChannel,
@@ -194,4 +194,11 @@ test('a live refresh that arrives before the first read finishes does not leave 
   await f.live[0].refresh(); await tick();
   assert.equal(f.invokes.filter((call) => call.args?.name === 'community_posts').length, 2);
   assert.ok(f.target.querySelector('.stream-for-all'));
+});
+
+test('a stream that cannot be read shows the shared error state with a retry, not bare text', async (t) => {
+  const f = mount(member, { name: 'community', ids: ['c1'] }, { postsFail: () => true }); t.after(() => f.controller.dispose?.() ?? f.dom.window.close());
+  await f.controller.ready; await tick();
+  assert.ok(f.target.querySelector('.stream-error'));
+  assert.equal(f.target.querySelector('p.meta.warning'), null);
 });
