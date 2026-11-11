@@ -163,7 +163,7 @@ export function railSignedOut(document, name, connect) {
 // 投稿：人気の公開投稿。押すと右で読む（app.js のプレビュー）。
 export function railPostRows(document, posts, { relTime, asset, onOpen }) {
   const items = (Array.isArray(posts) ? posts : []).filter((post) => post?.id).slice(0, 20);
-  if (!items.length) return [railState(document, "empty", { title: "公開投稿はまだありません", detail: "新しい投稿が届くとここに並びます。" })];
+  if (!items.length) return [railState(document, "empty", { title: "公開投稿はまだありません" })];
   return items.map((post) => {
     const name = post.authorName || post.displayName || post.authorHandle || "（名無し）";
     const images = Array.isArray(post.images) ? post.images.length : 0;
@@ -186,7 +186,7 @@ export function railPostRows(document, posts, { relTime, asset, onOpen }) {
 // 通知：まとめた行。未読は点、上に「未読 n件」と「すべて既読にする」。
 export function railNotificationNodes(document, data, { groups, textOf, relTime, asset, onOpen, onMarkAll, pending = false, canMark = true }) {
   const list = Array.isArray(data?.notifications) ? data.notifications : [];
-  if (!list.length) return [railState(document, "empty", { title: "通知はありません", detail: "いいねや返信が届くとここに出ます。" })];
+  if (!list.length) return [railState(document, "empty", { title: "通知はありません" })];
   const actors = new Map((Array.isArray(data.actors) ? data.actors : []).map((actor) => [actor.id, actor]));
   const unread = Number.isSafeInteger(data.unreadCount) ? data.unreadCount : list.filter((item) => !item.isRead).length;
   const markAll = el(document, "button", "rail-head-action", "すべて既読にする");
@@ -228,7 +228,7 @@ export function railNotificationNodes(document, data, { groups, textOf, relTime,
 // メッセージ：会話ごとに相手・最後の1行・時刻・未読数。
 export function railConversationRows(document, data, { peerOf, relTime, asset, onOpen }) {
   const conversations = Array.isArray(data?.conversations) ? data.conversations : [];
-  if (!conversations.length) return [railState(document, "empty", { title: "会話はまだありません", detail: "プロフィールから相手を選ぶと会話を始められます。" })];
+  if (!conversations.length) return [railState(document, "empty", { title: "会話はまだありません" })];
   const profiles = new Map((Array.isArray(data.profiles) ? data.profiles : []).map((profile) => [profile.id, profile]));
   const latest = new Map();
   for (const message of Array.isArray(data.messages) ? data.messages : []) {
@@ -273,7 +273,7 @@ export function railCommunityNodes(document, data, { asset, onOpen, signedIn = f
   else if (signedIn && others.length) nodes.push(railState(document, "empty", { title: "参加中のコミュニティはありません", detail: "下の一覧から開いて参加できます。" }));
   else if (!signedIn && connect && others.length) nodes.push(railState(document, "signedOut", { title: "接続すると参加中が分かります", detail: "公開コミュニティは接続しなくても読めます。", actions: [{ label: "Desktopを接続", onClick: connect }] }));
   if (others.length) nodes.push(railHeading(document, "公開コミュニティ"), ...others.map(row));
-  if (!joined.length && !others.length) return [railState(document, "empty", { title: "公開コミュニティはまだありません", detail: "作られるとここに並びます。" })];
+  if (!joined.length && !others.length) return [railState(document, "empty", { title: "公開コミュニティはまだありません" })];
   return nodes;
 }
 
@@ -303,7 +303,7 @@ export function railNowPlaying(document, { track, paused, controls }) {
 // メール：受信箱の1通ごとに送り主・件名・時刻。未読（受信で未開封）は点。本文は右で読む／中央のメールで開く。
 export function railMailRows(document, data, { relTime, onOpen }) {
   const items = (Array.isArray(data?.messages) ? data.messages : []).filter((item) => item?.id).slice(0, 30);
-  if (!items.length) return [railState(document, "empty", { title: "メールはありません", detail: "届くとここに並びます。" })];
+  if (!items.length) return [railState(document, "empty", { title: "メールはありません" })];
   return items.map((item) => {
     const inbound = item.direction === "inbound";
     const who = inbound ? item.sender : `宛先: ${item.recipient}`;

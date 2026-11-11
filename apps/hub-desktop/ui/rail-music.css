@@ -72,3 +72,7 @@
 .rail-music-item.is-current .rail-item-head strong { font-weight: var(--weight-bold); }
 .rail-music-next[hidden] { display: none; }
 .rail-music-item .rail-item-text, .rp-artist { font-weight: normal; }
+
+/* 何も選んでいないあいだは、絵の無い大きな枠と 0:00 の送りを出さない（2026-11-12 実物：枠が 265px を取り、
+   曲の一覧が画面の下 1/4 まで押し下げられていた）。操作の釦と一覧はそのまま。絵のある曲を止めているときは出す。 */
+.rail-player.is-idle .rp-art:not(:has(img)), .rail-player.is-idle .rp-seek { display: none; }

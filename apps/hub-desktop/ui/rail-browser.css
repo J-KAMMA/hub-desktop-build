@@ -76,3 +76,14 @@
 #hub-shell .rb-button svg { width: var(--tap-icon); height: var(--tap-icon); }
 #hub-shell .rb-button:active:not(:disabled) { background: var(--interactive-hover); color: var(--text); }
 #hub-shell .rb-address { height: var(--tap-compact); }
+
+/* 右列の使いやすさ（2026-11-12 所有者「右列のUIを使いやすくして」、実物で測った）。
+   1) 右列ブラウザの操作列は、窓の釦（最小化・最大化・閉じる）の下へ潜っていた：アドレス欄が x1027..1190、
+      最小化が x1168..1200。窓の釦をよけるだけだと欄が 51px まで縮むので、2段に組む。
+      上の段は戻る・進む・再読み込み・中央で開く（2026-10-18 の「戻るとかが一番上」のまま、窓の釦と同じ高さ）、
+      下の段はアドレス欄を右列の幅いっぱい。ページの位置は #rail-browser-stage の実測で追従する。 */
+#hub-shell .rb-bar { padding-block: 10px var(--space-2); }
+#hub-shell .rb-row { flex-wrap: wrap; row-gap: var(--space-2); }
+#hub-shell .rb-row > .rb-form { order: 9; flex: 1 0 100%; margin: 0; }
+/* 2) 戻る・進むは、戻る先も進む先も無いあいだは出さない。空いた幅を題に使う（AI の題が「新..」に切れていた）。 */
+#hub-shell .rail-history-nav:not(:has(button:not(:disabled))) { display: none; }
