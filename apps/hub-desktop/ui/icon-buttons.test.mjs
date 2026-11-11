@@ -11,7 +11,7 @@ const css = read('icon-buttons.css');
 const html = read('index.html');
 
 // 寸法を揃える対象。足すときはここと icon-buttons.css の両方へ。
-const TARGETS = ['.window-control', '.app-toolbar .toolbar-button', '.rb-button', '.rail-activity-actions .btn-icon', '.uc-tool[aria-label="閉じる"]', '.yt-dock-close', '.media-lightbox-close', '.community-composer-panel-close', '#browser-find-close'];
+const TARGETS = ['.window-control', '.app-toolbar .toolbar-button', '.rb-button', '.rail-activity-actions .btn-icon', '.uc-tool[aria-label="閉じる"]', '.uc-tool[data-ja-label="閉じる"]', '.yt-dock-close', '.media-lightbox-close', '.community-composer-panel-close', '#browser-find-close'];
 const SIZED = ['width', 'min-width', 'height', 'min-height'];
 const specificity = (selector) => (selector.match(/#[\w-]+|:not\(#_\)/g) ?? []).length;
 const rules = (text) => [...text.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}@]+)\{([^{}]*)\}/g)].map((m) => ({ selectors: m[1].split(',').map((s) => s.trim()), body: m[2] }));

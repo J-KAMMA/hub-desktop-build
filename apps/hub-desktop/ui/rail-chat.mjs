@@ -367,7 +367,7 @@ export function createRailChat({ document, invoke, deps }) {
     attach.disabled = draft.attachments.length >= MAX_IMAGES;
     send.disabled = blocked || (!input.value.trim() && !draft.attachments.length);
     if (privateBlocked()) note.textContent = "前の送信の結果を確認してから送れます。";
-    else if (note.textContent === "前の送信の結果を確認してから送れます。") note.textContent = "";
+    else if ((globalThis.__hubI18n?.source(note) ?? note.textContent) === "前の送信の結果を確認してから送れます。") note.textContent = "";
   }
   function showDraft() {
     const draft = draftOf();

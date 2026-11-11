@@ -6,6 +6,7 @@ body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .app-toolba
 body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .rb-button,
 body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .rail-activity-actions .btn-icon,
 body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .uc-tool[aria-label="閉じる"],
+body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .uc-tool[data-ja-label="閉じる"],
 body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .yt-dock-close,
 body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .media-lightbox-close,
 body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .community-composer-panel-close,
@@ -29,6 +30,7 @@ body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .app-toolba
 body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .rb-button svg,
 body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .rail-activity-actions .btn-icon svg,
 body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .uc-tool[aria-label="閉じる"] svg,
+body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .uc-tool[data-ja-label="閉じる"] svg,
 body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .yt-dock-close svg,
 body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .media-lightbox-close svg,
 body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .community-composer-panel-close svg,
@@ -58,6 +60,7 @@ body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .window-con
 }
 /* 当たり判定：見た目は 32、押せる範囲は 44。隣にボタンが無い × だけに付ける。 */
 body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .uc-tool[aria-label="閉じる"]::before,
+body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .uc-tool[data-ja-label="閉じる"]::before,
 body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .yt-dock-close::before,
 body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .community-composer-panel-close::before,
 body:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) #browser-find-close::before {

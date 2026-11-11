@@ -25,16 +25,17 @@ test('thread meta: type, reply count, 解決済み and N分前 / N時間前 / N�
   assert.doesNotMatch(text({ threadType: 'chat', postCount: 2, updatedAt: 'c' }), /解決済み|板|board/);
 });
 
-test('the thread list has no count line, no body chips and no big title', () => {
+test('the thread list has no count line and no big title; sort and category chips sit above the list', () => {
   assert.match(app, /view === "threads" \? "" : page\.loading/);
-  assert.ok(app.includes('if (view === "threads" || view === "community") { document.querySelector(`#${view}-chips`)?.remove(); return; }'));
+  assert.ok(app.includes('renderChipRow(document, host, { label: "並び替えと分類", chips, onSelect: (chip) => {'));
   assert.match(css, /#view-threads > \.view-head > h2/);
 });
 
-test('sort and category rows live in the left column', () => {
+test('sort and category are chips above the list, not rows in the left column (owner 2026-11-11)', () => {
   assert.match(app, /THREAD_SORTS = \[\["recommended", "おすすめ"\], \["mine", "参加中・追跡中"\], \["popular", "人気"\]\]/);
   assert.match(app, /thread_rankings_\$\{sort\}/);
-  assert.match(app, /threadFilterRows\(\)/);
+  assert.doesNotMatch(app, /threadFilterRows|readingFilterRows/);
+  assert.match(app, /\(isThread \? THREAD_SORTS : COMMUNITY_SORTS\)\.map\(\(\[key, label\]\) => \(\{ key, label, kind: "sort"/);
 });
 
 test('row styling uses semantic tokens only', () => {
@@ -47,18 +48,18 @@ test('row styling uses semantic tokens only', () => {
 test('community list: rankings, card grid, no title or count line', () => {
   assert.match(app, /COMMUNITY_SORTS = \[\["recommended", "おすすめ"\], \["popular", "人気"\], \["joined", "参加中"\]\]/);
   assert.match(app, /community_rankings_\$\{sort\}/);
-  assert.ok(app.includes(`readingFilterRows("community", placeJoined, view !== "community")`));
+  assert.ok(app.includes(`if (inCommunity || view === "detail") placeJoined();`));
   assert.match(css, /#view-community > \.view-head > h2/);
   const block = css.slice(css.indexOf('#community-results .community-card {'));
   assert.doesNotMatch(block, /#[0-9a-fA-F]{3,8}\b|rgb\(|hsl\(/);
   assert.match(css, /repeat\(auto-fill, minmax\(280px, 1fr\)\)/);
 });
 
-test('threads and community lists always use the three-root tree; the community list sits before the sort rows', () => {
+test('threads and community lists always use the three-root tree; the tree holds destinations only', () => {
   assert.match(app, /view === "threads" \|\| view === "community"\n\s+\|\| \(view === "detail" && \(detailName === "thread" \|\| detailName === "community"\)\)\n\s+\|\| \(sidebarContextOwner === "feed"/);
   // 詳細の画面でも同じ木のまま（戻る行は置かない：戻るのは上の戻るボタン）。
   assert.ok(!app.includes("に戻る` : label") && !app.includes("destination({ articles: \"記事一覧\""));
-  assert.match(app, /if \(afterJoined\) afterJoined\(\);/);
+  assert.match(app, /const placeJoined = \(\) => \{ kids\.append\(communitiesHost\); \};/);
   assert.match(css, /#view-threads, #view-community\):not\(#_\):not\(#_\) \{ padding-inline: 0; \}/);
   assert.doesNotMatch(css, /\.sidebar-tree \.nav-communities \.nav-community-all \{ display: none; \}/);
 });

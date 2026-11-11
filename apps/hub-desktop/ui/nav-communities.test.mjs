@@ -178,10 +178,11 @@ test('with nothing joined, the list falls back to a few public popular communiti
   assert.equal(joined.suggested, undefined);
 });
 
-test('the community tree puts the list before the おすすめ / 人気 rows', () => {
+test('the community tree holds the community list and no sort rows (sorts are chips above the main list)', () => {
   const app = readFileSync(new URL('./app.js', import.meta.url), 'utf8');
-  const body = app.slice(app.indexOf('const readingFilterRows'));
-  assert.ok(body.indexOf('if (afterJoined) afterJoined();') < body.indexOf('for (const [key, label] of isThread'));
+  const tree = app.slice(app.indexOf('tree("コミュニティ", "community"'), app.indexOf('try { loadFeedTabLists(); }'));
+  assert.match(tree, /placeJoined\(\)/);
+  assert.doesNotMatch(tree, /COMMUNITY_SORTS|communitySort\b/);
 });
 
 test('exactly one current row: the open community row, or its 共有/メンバー child when that is open', () => {

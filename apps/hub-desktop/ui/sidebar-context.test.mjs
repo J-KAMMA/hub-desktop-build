@@ -254,83 +254,38 @@ test("feed kinds are sidebar rows: selected row is current, lists follow 人気,
   f.dom.window.close();
 });
 
-test("the community list keeps the three roots; the concrete communities come first, then おすすめ / 人気 / 参加中 (2026-11-09)", async () => {
-  const f = fixture();
-  f.show("community");
-  await settle();
-  f.show("community");
-  await settle();
-  const trees = [...f.document.querySelectorAll("#sidebar-context > .sidebar-tree")];
-  assert.deepEqual(trees.map((tree) => tree.querySelector(".sidebar-tree-root").textContent), ["フィード", "スレッド", "コミュニティ"]);
-  const labels = [...trees[2].querySelectorAll(".sidebar-tree-children > .sidebar-context-item .sidebar-item-label")].map((node) => node.textContent);
-  assert.deepEqual(labels.slice(0, 3), ["おすすめ", "人気", "参加中"]);
-  const joinedAt = [...trees[2].querySelector(".sidebar-tree-children").children].findIndex((node) => node.classList.contains("nav-communities"));
-  assert.equal(joinedAt, 0, "the community list is the first thing under コミュニティ");
-  assert.equal(f.document.querySelectorAll("#sidebar-context .sidebar-heading").length, 0);
-  assert.equal([...f.document.querySelectorAll("#sidebar-context")].map((n) => n.textContent.split("参加中").length - 1)[0], 1, "参加中 appears once");
-  f.dom.window.close();
-});
-
-test("with a community open, the list keeps the three rows (おすすめ, 参加中, 人気) unchanged", async () => {
-  const f = fixture();
-  f.state.detailTrail = [{ name: "community", ids: ["c1"] }];
-  f.show("detail");
-  await settle();
-  const tree = [...f.document.querySelectorAll("#sidebar-context > .sidebar-tree")].find((node) => node.querySelector(".sidebar-tree-root")?.textContent === "コミュニティ");
-  const labels = [...tree.querySelectorAll(".sidebar-tree-children > .sidebar-context-item .sidebar-item-label")].map((node) => node.textContent);
-  assert.deepEqual(labels.slice(0, 3), ["おすすめ", "人気", "参加中"]);
-  f.dom.window.close();
-});
-
-test("exactly one current row: with a community open, 参加中 / おすすめ / 人気 are not current; they are only while their list is the main content", async () => {
+test("the left column holds destinations only: three roots, the communities under コミュニティ, and no sort or category rows (owner 2026-11-11)", async () => {
   const f = fixture();
   f.state.communitySort = "joined";
-  const sorts = () => [...f.document.querySelectorAll("#sidebar-context [data-community-sort]")];
-  const marked = (node) => node.classList.contains("on") || node.hasAttribute("aria-current");
-  f.state.detailTrail = [{ name: "community", ids: ["c1"] }];
-  f.show("detail");
-  await settle();
-  f.show("detail");
-  assert.equal(sorts().length, 3);
-  assert.deepEqual(sorts().filter(marked), [], "community open: no directory row is current");
-  f.state.detailTrail = [{ name: "post", ids: ["p1"], communityId: "c1" }];
-  f.show("detail");
-  await settle();
-  assert.deepEqual(sorts().filter(marked), [], "a post inside a community: no directory row is current");
-  f.state.detailTrail = [];
-  f.show("community");
-  await settle();
-  f.show("community");
-  assert.deepEqual(sorts().filter(marked).map((node) => node.textContent.trim()), ["参加中"], "directory open: exactly the chosen directory row");
-  f.dom.window.close();
-});
-
-test("exactly one current row: an open thread is current, not the thread sort row", async () => {
-  const f = fixture();
   f.state.threadSort = "popular";
-  f.state.detailTrail = [{ name: "thread", ids: ["t1"], title: "話題" }];
-  f.show("detail");
-  await settle();
-  const marked = [...f.document.querySelectorAll("#sidebar-context [data-thread-sort]")].filter((node) => node.classList.contains("on") || node.hasAttribute("aria-current"));
-  assert.deepEqual(marked, []);
-  f.dom.window.close();
-});
-
-test("exactly one current row in a directory list: the chosen sort row, not also the コミュニティ / スレッド root", async () => {
-  const f = fixture();
   const marked = () => [...f.document.querySelectorAll("#sidebar-context .sidebar-context-item")].filter((node) => node.classList.contains("on") || node.hasAttribute("aria-current")).map((node) => node.textContent.trim());
+  for (const view of ["community", "threads"]) {
+    f.show(view);
+    await settle();
+    f.show(view);
+    await settle();
+    const trees = [...f.document.querySelectorAll("#sidebar-context > .sidebar-tree")];
+    assert.deepEqual(trees.map((tree) => tree.querySelector(".sidebar-tree-root").textContent), ["フィード", "スレッド", "コミュニティ"]);
+    assert.equal(f.document.querySelectorAll("#sidebar-context [data-community-sort], #sidebar-context [data-thread-sort], #sidebar-context [data-reading-category]").length, 0, `${view}: no sort or category rows`);
+    assert.deepEqual(marked(), [view === "community" ? "コミュニティ" : "スレッド"], `${view}: the root is the one current row`);
+  }
+  f.show("community");
+  await settle();
+  const tree = [...f.document.querySelectorAll("#sidebar-context > .sidebar-tree")][2];
+  assert.equal([...tree.querySelector(".sidebar-tree-children").children].findIndex((node) => node.classList.contains("nav-communities")), 0, "the community list is the first thing under コミュニティ");
+  f.dom.window.close();
+});
+
+test("with a community or a thread open, the tree still has no sort rows", async () => {
+  const f = fixture();
   f.state.communitySort = "joined";
-  f.show("community");
-  await settle();
-  f.show("community");
-  assert.deepEqual(marked(), ["参加中"]);
-  f.state.communitySort = "";
-  f.show("community");
-  await settle();
-  assert.deepEqual(marked(), ["コミュニティ"], "no sort chosen: the root is the one current row");
-  f.state.threadSort = "popular";
-  f.show("threads");
-  await settle();
-  assert.deepEqual(marked(), ["人気"]);
+  for (const trail of [[{ name: "community", ids: ["c1"] }], [{ name: "post", ids: ["p1"], communityId: "c1" }], [{ name: "thread", ids: ["t1"], title: "話題" }]]) {
+    f.state.detailTrail = trail;
+    f.show("detail");
+    await settle();
+    assert.equal(f.document.querySelectorAll("#sidebar-context [data-community-sort], #sidebar-context [data-thread-sort]").length, 0, trail[0].name);
+  }
+  const open = [...f.document.querySelectorAll("#sidebar-context .sidebar-detail-current")].map((node) => node.textContent.trim());
+  assert.deepEqual(open, ["話題"], "the open thread is the row under スレッド");
   f.dom.window.close();
 });

@@ -773,3 +773,7 @@ html:is([data-template="noir"], [data-template="ivory"]) #hub-shell :is(.btn-pri
 @media (min-width: 861px) {
   #hub-shell:not(.sidebar-collapsed) #view-market > :is(.view-head, .page-header):not(#_):not(#_):not(#_):not(#_) { min-height: 0; height: 0; padding-block: 0; border: 0; }
 }
+/* 並び替えのチップ（おすすめ・人気…）と分類のチップの間は、少し空けて別の組だと分かるようにする。 */
+#hub-shell .sidebar-chip-track > .sidebar-chip.is-sort + .sidebar-chip:not(.is-sort):not(#_) { margin-inline-start: var(--space-4); }
+/* スレッドとコミュニティ：並び替えと分類のチップは、「＋」のある頭の帯の中、操作の左（帯を2段にしない。線も1本）。 */
+#hub-shell :is(#view-threads, #view-community) > .view-head > .view-head-chips:not(#_):not(#_):not(#_):not(#_) { flex: 1 1 auto; min-width: 0; margin: 0; padding: 0; border: 0; }

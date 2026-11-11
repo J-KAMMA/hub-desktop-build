@@ -906,11 +906,11 @@ dialog.media-lightbox .media-lightbox-count[hidden] { display: none; }
 #hub-shell #view-feed [id=feed-list] .post:not(#_):not(#_):not(#_):hover { background: var(--fill-subtle); }
 #hub-shell .post .post-actions:not(#_):not(#_):not(#_) { justify-content: space-between; gap: 0; max-width: 440px; }
 #hub-shell .post .post-actions > *:not(#_):not(#_) { order: 4; margin-left: 0; }
-#hub-shell .post .post-actions > [aria-label=返信]:not(#_):not(#_) { order: 1; }
+#hub-shell .post .post-actions > :is([aria-label=返信], [data-ja-label=返信]):not(#_):not(#_) { order: 1; }
 #hub-shell .post .post-actions > .post-repost-wrap:not(#_):not(#_) { order: 2; }
-#hub-shell .post .post-actions > [aria-label=いいね]:not(#_):not(#_) { order: 3; }
-#hub-shell .post .post-actions > [aria-label=ブックマーク]:not(#_):not(#_) { order: 5; }
-#hub-shell .post .post-actions > [aria-label=共有]:not(#_):not(#_) { order: 6; }
+#hub-shell .post .post-actions > :is([aria-label=いいね], [data-ja-label=いいね]):not(#_):not(#_) { order: 3; }
+#hub-shell .post .post-actions > :is([aria-label=ブックマーク], [data-ja-label=ブックマーク]):not(#_):not(#_) { order: 5; }
+#hub-shell .post .post-actions > :is([aria-label=共有], [data-ja-label=共有]):not(#_):not(#_) { order: 6; }
 #hub-shell .post .post-action:not(#_):not(#_):not(#_) { color: var(--muted); font-weight: var(--ds-weight-text); }
 
 /* 2026-11-06 所有者「スレッド一覧が読みにくい」：スレッドの行は区切り線の行（X・Reddit の並び）。題を1行目（最大2行）、板の名前・返信数・時刻を2行目の薄い字に置く。

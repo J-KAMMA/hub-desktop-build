@@ -119,7 +119,8 @@ export function renderChipRow(document, host, { label, chips, onSelect }) {
   for (const chip of chips) {
     const button = document.createElement('button');
     button.type = 'button';
-    button.className = `sidebar-chip${chip.kind === 'tag' ? ' is-tag' : ''}`;
+    button.className = `sidebar-chip${chip.kind === 'tag' ? ' is-tag' : chip.kind === 'sort' ? ' is-sort' : ''}`;
+    if (chip.kind === 'sort' || chip.kind === 'category') button.dataset.chipKey = chip.key;
     button.textContent = chip.kind === 'tag' ? `#${chip.label}` : chip.label;
     button.setAttribute('aria-pressed', String(Boolean(chip.selected)));
     button.onclick = () => onSelect(chip);

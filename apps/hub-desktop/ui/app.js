@@ -198,6 +198,11 @@ import { installTextButtonIcons } from "./text-button-icons.mjs";
 import { createMarketProductPage } from "./market-product.mjs";
 import { renderCart as renderCartRows, createLibrary, createOrdersList, renderWebRows, WEB_ROWS } from "./market-me.mjs";
 import { normalizeProduct } from "./market-model.mjs";
+import { installI18n, createLanguageSetting } from "./i18n.mjs";
+import * as localeEn from "./locales/en.mjs";
+// 画面の文言の言語（i18n.mjs）。元の文言は日本語のまま書き、表示のときに辞書で置き換える。画面の文字で判断する所は __hubI18n.source() で元の日本語を読む。
+const hubI18n = installI18n({ document, storage: (() => { try { return window.localStorage; } catch { return null; } })(), dictionaries: { en: { exact: localeEn.EXACT, patterns: localeEn.PATTERNS, scoped: localeEn.SCOPED } } });
+window.__hubI18n = hubI18n;
 const controlMetrics = createDesktopControlMetrics();
 controlMetrics.mark("moduleReady");
 
@@ -1081,7 +1086,12 @@ function viewChipHost(view) {
     const header = panel.id === "view-feed" ? null : panel.querySelector(":scope > .view-head.page-header, :scope > div > .view-head.page-header");
     const anchor = (search && panel.querySelector(search)) || panel.querySelector(":scope > .view-head, :scope > .page-header, :scope > div > .view-head");
     // 共通の見出しを使う画面では、絞り込みのチップを page-tabs として見出しの中に置く。
-    if (header) {
+    const ownHead = view === "threads" || view === "community" ? panel.querySelector(":scope > .view-head") : null;
+    if (ownHead) {
+      // スレッドとコミュニティ：チップは「＋」のある頭の帯の中、操作の左に置く（帯を2段にしない）。
+      host.classList.add("view-head-chips");
+      ownHead.insertBefore(host, ownHead.querySelector(":scope > .view-head-actions"));
+    } else if (header) {
       host.classList.add("page-tabs");
       header.append(host);
     } else if (anchor) anchor.after(host);
@@ -1163,29 +1173,7 @@ function fillSidebarContext(view) {
     if (selected) button.setAttribute("aria-current", "true");
     return button;
   };
-  // スレッドの列：並び（おすすめ・参加中・追跡中・人気）に続けて分類（雑談・質問…）。もう一度押すと解除。
-  const readingFilterRows = (kind, afterJoined = null, sortsOnly = false) => {
-    const directory = readingDirectory.get(kind);
-    const isThread = kind === "threads";
-    // 具体的なコミュニティの一覧が先、おすすめ・人気はその後ろの入口（2026-11-09 所有者）。
-    if (afterJoined) afterJoined();
-    for (const [key, label] of isThread ? THREAD_SORTS : COMMUNITY_SORTS) {
-      // 現在の行は1つだけ：並びの行（参加中・おすすめ・人気…）は、その一覧が本文のときだけ現在。コミュニティやスレッドを開いている間は、開いている行が現在。
-      const current = view === kind ? (isThread ? threadSort : communitySort) : "";
-      const button = row(label, "", () => { const next = current === key ? "" : key; if (isThread) threadSort = next; else { communitySort = next; communitySortChosen = true; } void loadCatalog(kind); renderSidebarContext(kind); }, current === key);
-      button.dataset[isThread ? "threadSort" : "communitySort"] = key;
-    }
-    if (sortsOnly) return;
-    const counts = new Map();
-    for (const item of directory.items) for (const label of new Set(readingLabels(kind, item))) counts.set(label, (counts.get(label) ?? 0) + 1);
-    // 分類が1つだけなら、押しても絞れない行になる。2つ以上のときだけ並べる（2026-11-09）。
-    if (counts.size < 2) return;
-    for (const label of [...counts.keys()].sort((a, b) => a.localeCompare(b, "ja"))) {
-      const button = row(label, counts.get(label), () => { directory.filter = directory.filter === label ? "" : label; renderReadingCatalog(kind); renderSidebarContext(kind); }, directory.filter === label);
-      button.dataset.readingCategory = label;
-    }
-  };
-  const threadFilterRows = () => readingFilterRows("threads");
+  // 左の列は行き先だけ（2026-11-11 所有者）。並び替え（おすすめ・人気・参加中）と分類は、本文の一覧の上のチップ（renderReadingChips）。
   // 同じ受信トレイの中の切り替え（DM・メール・連絡先）。項目の一覧とは別の段にする。
   const switchRow = (label, entries) => {
     const group = document.createElement("div");
@@ -1578,21 +1566,18 @@ function fillSidebarContext(view) {
     // スレッドの詳細でも同じ木のまま。開いているスレッドは「スレッド」の枝の現在の1行になる（戻る行は足さない：戻るのは上の戻るボタン）。
     const openThread = detailName === "thread" ? detailTrail.at(-1) : null;
     // 根はフィードと同じく、並びの行が選ばれていないときだけ現在（現在の行は1つだけ）。
-    tree("スレッド", "thread", () => railGo("threads", true), view === "threads" && !threadSort, view === "threads" || openThread ? () => {
-      threadFilterRows();
-      if (!openThread) return;
+    tree("スレッド", "thread", () => railGo("threads", true), view === "threads", openThread ? () => {
       const title = String(openThread.title || document.querySelector("#detail-content h1, #detail-content h2")?.textContent || "スレッド").trim();
       const current = row(title, "", () => viewScroller()?.scrollTo?.({ top: 0, behavior: "smooth" }), true);
       current.setAttribute("aria-current", "page");
       current.classList.add("sidebar-detail-current");
     } : null);
-    tree("コミュニティ", "community", () => railGo("community", true), view === "community" && !communitySort, (kids) => {
+    tree("コミュニティ", "community", () => railGo("community", true), view === "community", (kids) => {
       // 具体的なコミュニティの一覧は根の直下（見出しは足さない）。
       const placeJoined = () => { kids.append(communitiesHost); };
       const postCommunity = detailName === "post" ? detailTrail.at(-1)?.communityId ?? "" : "";
       const inCommunity = view === "community" || detailName === "community" || Boolean(postCommunity);
-      if (inCommunity) readingFilterRows("community", placeJoined, view !== "community");
-      if (view === "detail" && !inCommunity) placeJoined();
+      if (inCommunity || view === "detail") placeJoined();
       const openId = detailName === "community" ? detailId ?? "" : postCommunity;
       navCommunities.setCurrent(openId, openId ? communitySectionItems(detailTrail.findLast((item) => item.name === "community" && item.ids?.[0] === openId)).map((item) => (postCommunity ? { ...item, selected: false } : item)) : []);
       void navCommunities.refresh().then(() => markTreeEdges(kids));
@@ -1683,7 +1668,6 @@ function fillSidebarContext(view) {
   } else if (view === "music") {
     musicColumn();
   } else if (readingDirectory.has(contextView)) {
-    if (contextView === "community" && view === "community") readingFilterRows("community");
     if (contextView === "community") {
       // コミュニティの一覧（hub_resource communities。参加中が先、無ければ公開の人気）。見出しは一覧が描かれたときだけ出す。
       const heading = section("コミュニティ");
@@ -1735,7 +1719,6 @@ function fillSidebarContext(view) {
       articleColumn();
     }
     // コミュニティ・資料の分類は本文の上のチップにある（列には並べない）。スレッドは並びと分類を列の行にする。
-    if (contextView === "threads" && view === "threads") threadFilterRows();
   } else if (view === "profile") {
     // プロフィールの列は木（2026-11-03）：根「プロフィール」の下に 投稿・返信・メディア（返った種類だけ。記事・動画・コード・スレッド・コミュニティも同じ）、
     // 「つながり」の下に フォロー中・フォロワー。押すのは本文の札と同じもの。「いいね」はこの端末が読める応答に無いので置かない。
@@ -3806,11 +3789,33 @@ function renderFeedChips() {
 }
 // 記事・コミュニティ・スレッド・資料の上のチップ：すべて・分類（件数つき）、記事はフォロー中のタグも。
 function renderReadingChips(view) {
-  // スレッドの分類は左の列の行（おすすめ・参加中・人気の下）。本文の上にはチップを置かない。
-  if (view === "threads" || view === "community") { document.querySelector(`#${view}-chips`)?.remove(); return; }
   const host = viewChipHost(view);
   const directory = readingDirectory.get(view);
   if (!host || !directory) return;
+  if (view === "threads" || view === "community") {
+    // スレッドとコミュニティ：並び替え（おすすめ・人気…）と分類を、一覧の上の1行に置く（2026-11-11 所有者：左の列は行き先だけ）。もう一度押すと解除。
+    const isThread = view === "threads";
+    const sort = isThread ? threadSort : communitySort;
+    const counts = new Map();
+    for (const item of directory.items) for (const label of new Set(readingLabels(view, item))) counts.set(label, (counts.get(label) ?? 0) + 1);
+    const labels = counts.size >= 2 ? [...counts.keys()].sort((a, b) => a.localeCompare(b, "ja")) : [];
+    const chips = [
+      ...(isThread ? THREAD_SORTS : COMMUNITY_SORTS).map(([key, label]) => ({ key, label, kind: "sort", selected: sort === key })),
+      ...labels.map((label) => ({ key: label, label: `${label} ${counts.get(label)}`, kind: "category", selected: directory.filter === label })),
+    ];
+    renderChipRow(document, host, { label: "並び替えと分類", chips, onSelect: (chip) => {
+      if (chip.kind === "sort") {
+        const next = sort === chip.key ? "" : chip.key;
+        if (isThread) threadSort = next; else { communitySort = next; communitySortChosen = true; }
+        void loadCatalog(view);
+      } else {
+        directory.filter = directory.filter === chip.key ? "" : chip.key;
+        renderReadingCatalog(view);
+      }
+      renderReadingChips(view);
+    } });
+    return;
+  }
   const counts = new Map();
   for (const item of directory.items) for (const label of new Set(readingLabels(view, item))) counts.set(label, (counts.get(label) ?? 0) + 1);
   const labels = [...counts.keys()].sort((a, b) => a.localeCompare(b, "ja"));
@@ -8376,7 +8381,7 @@ function threadPostCard(post, context, rerender, jumpTo = () => {}) {
       const host = document.createElement("span");
       host.className = "local-translate-host";
       host.onclick = (event) => event.stopPropagation();
-      bar.insertBefore(host, bar.querySelector('[aria-label="共有"]'));
+      bar.insertBefore(host, [...bar.querySelectorAll("[aria-label]")].find((node) => (globalThis.__hubI18n?.sourceAttr(node, "aria-label") ?? node.getAttribute("aria-label")) === "共有") ?? null);
       attachTranslateAction({ doc: document, host, body: text, translator: localTranslator,
         item: { id: post.id, revision: post.editedAt ?? "", type: "thread_post", isPublic: true, sourceLang: post.language || null },
         getText: () => post.body, restore: () => { text.textContent = post.body; } });
@@ -9348,7 +9353,7 @@ function renderCommunityDetail(target, data, entry) {
       if (!sectionCurrent()) return;
       panels.join = !panels.join; syncPanels();
       // まだ入っていないなら、開いたその手で参加の案内（ルールと質問）まで進める。
-      if (panels.join && !joinHost.querySelector("form, .card")) [...joinHost.querySelectorAll("button")].find((button) => !button.disabled && /^(参加する|参加を申請する)$/.test(button.textContent))?.click();
+      if (panels.join && !joinHost.querySelector("form, .card")) [...joinHost.querySelectorAll("button")].find((button) => !button.disabled && /^(参加する|参加を申請する)$/.test(globalThis.__hubI18n?.source(button) ?? button.textContent))?.click();
     },
   });
   syncPanels();
@@ -11849,6 +11854,8 @@ const settingsPanels = {
   ai: createAiConnectionsPanel({ document, invoke, storage: safeStorage, listen: window.__TAURI__?.event?.listen ? (name, callback) => window.__TAURI__.event.listen(name, callback) : null }),
   about: createAboutPanel({ document, invoke, getVersion: () => window.__TAURI__.app.getVersion() }),
 };
+// 言語は「表示」の先頭の行（i18n.mjs）。
+settingsPanels.appearance.element.prepend(createLanguageSetting({ document, i18n: hubI18n }));
 for (const [id, panel] of [["appearance", settingsPanels.appearance], ["identity", settingsPanels.identity], ["cache", settingsPanels.cache], ["browser", settingsPanels.browser], ["ai", settingsPanels.ai], ["about", settingsPanels.about]]) {
   document.querySelector(`#settings-${id}`)?.append(panel.element);
 }

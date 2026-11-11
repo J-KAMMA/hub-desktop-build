@@ -346,7 +346,7 @@
 #view-browser #browser-menu .browser-menu-row > .browser-menu-open { flex:1 1 180px; }
 #view-browser #browser-menu .browser-menu-row > button:not(.browser-menu-open) { flex:none; min-height:28px; padding:var(--space-1) var(--space-2); font-size:var(--type-caption); }
 #view-browser #browser-menu input[type=file] { max-width:100%; min-width:0; font-size:var(--type-caption); }
-#view-browser #browser-menu section[aria-label="ブラウザーのプライバシー"] > p { flex-basis:100%; }
+#view-browser #browser-menu section:is([aria-label="ブラウザーのプライバシー"], [data-ja-label="ブラウザーのプライバシー"]) > p { flex-basis:100%; }
 #view-browser #browser-menu .browser-permission-request { flex-basis:100%; }
 #view-browser #browser-stage:has(#browser-reader:not([hidden])) { overflow:hidden; }
 #view-browser #browser-reader { height:100%; overflow:auto; overscroll-behavior:contain; padding:clamp(16px,3vw,36px); background:var(--panel); color:var(--text); }

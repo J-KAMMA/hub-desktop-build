@@ -203,7 +203,7 @@ export function createWalletTokens({ document, invoke, status, isCurrent = () =>
       const text = formatUnits(token.balanceRaw, row.decimals);
       row.value.textContent = text === null ? "取得できません" : text;
     }
-    for (const row of rows.values()) { row.value.classList.remove("is-loading"); if (row.value.textContent === "確認中…") row.value.textContent = "取得できません"; }
+    for (const row of rows.values()) { row.value.classList.remove("is-loading"); if ((globalThis.__hubI18n?.source(row.value) ?? row.value.textContent) === "確認中…") row.value.textContent = "取得できません"; }
   }).catch(() => {
     if (!isCurrent()) return;
     for (const row of rows.values()) row.value.textContent = "取得できません";

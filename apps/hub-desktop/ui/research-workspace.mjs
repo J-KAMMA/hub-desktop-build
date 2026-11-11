@@ -22,7 +22,7 @@ function form(d,parent,options,label,run) {
   let pending=false;
   f.onsubmit=async event=>{event.preventDefault();if(pending||!f.reportValidity())return;pending=true;
     const controls=[...f.elements];controls.forEach(n=>{n.disabled=true;});status.textContent='保存しています…';
-    try {const saved=await run(status);if(saved===false)status.textContent='変更を中止しました。';else if(status.textContent==='保存しています…')status.textContent='保存しました。';status.classList.remove('warning');}
+    try {const saved=await run(status);if(saved===false)status.textContent='変更を中止しました。';else if((globalThis.__hubI18n?.source(status)??status.textContent)==='保存しています…')status.textContent='保存しました。';status.classList.remove('warning');}
     catch(error){status.textContent=options.friendlyError?.(error)??String(error);status.classList.add('warning');}
     finally {pending=false;controls.forEach(n=>{n.disabled=false;});}
   };
