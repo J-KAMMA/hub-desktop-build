@@ -157,3 +157,7 @@
 .rail-chat-more-list:empty { display: none; }
 .rail-chat-open.is-item { display: flex; align-items: center; width: 100%; height: auto; min-height: 36px; margin-left: 0; padding: 0 var(--space-3); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text); font: inherit; white-space: nowrap; cursor: pointer; }
 .rail-chat-open.is-item:hover { background: var(--interactive); }
+
+/* 並び（おすすめ・参加中・人気）の段は、種類の段のすぐ下に詰める。1段にまとめるには 356px 要り、右列の中身は 316px しかない。 */
+#hub-shell .rail-tl .page-tabs.rail-subtabs--chips:not(#_):not(#_) { padding-block: var(--space-2) var(--space-1); }
+.rail-tl-list > .rail-state--empty:not(#_) { margin-block: var(--space-6); }

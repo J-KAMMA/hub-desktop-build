@@ -118,3 +118,16 @@
 .rail-row-kind--reply { color: var(--action); }
 /* 投稿の行の下の小さな事実（返信・リポスト・いいねの数、画像の枚数） */
 .rail-row-facts { color: var(--muted); font-size: var(--type-caption); line-height: 16px; font-variant-numeric: tabular-nums; }
+
+/* 空の知らせは、本文側と同じ形にする：囲みの箱をやめ、中央に短い言葉だけ（記号があればその下）。
+   2026-11-12 所有者「右列のUIを使いやすくして」「触って」。失敗と未接続の知らせは、押す先があるので箱のまま。 */
+.rail-view .rail-state--empty:not(#_) {
+  justify-items: center;
+  gap: var(--space-2);
+  margin: var(--space-6) var(--space-3);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: center;
+}
+.rail-view .rail-state--empty:not(#_) strong { color: var(--muted); font-weight: var(--weight-regular); }
