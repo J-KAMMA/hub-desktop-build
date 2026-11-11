@@ -606,3 +606,8 @@ html[data-material] #hub-shell.rail-open .rail .rail-activity-head:not(#_):not(#
     box-shadow: 0 calc(-1 * (var(--tap-compact) + 5px)) 0 0 var(--panel);
   }
 }
+
+/* 右のアイコンの列は、左のアイコンの列と同じ間隔にする（2026-11-11 所有者「左列と右列の間隔揃えてほしい左に」）。
+   左: 上下の余白 8、ボタンの高さ 36、間 2（38 刻み）。右は 12・44・4（48 刻み）だった。 */
+#hub-shell .rail .rail-marks:not(#_):not(#_):not(#_) { padding-block: var(--space-2); gap: 2px; }
+#hub-shell .rail .rail-marks .rail-mark:not(#_):not(#_):not(#_) { height: 36px; min-height: 36px; padding-block: 0; }
