@@ -107,3 +107,33 @@ html:is([data-template="paper"], [data-template="charcoal"]) #sidebar-ai-history
   padding-inline: var(--space-3);
   border-radius: var(--ds-radius-pill);
 }
+
+/* 右列のウォレットも、ほかの面と同じ静かな見た目に合わせる（2026-11-12 所有者「ウォレットのデザインも合わせよう」）。
+   2026-10-25 の「高級感」の層（金の細線・字間を広げた細い字）は、paper / charcoal では使わない。文言と並びは変えない。 */
+html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell #rail-wallet :is(.wallet-network-pill, .rail-wallet-account, .wallet-unit, .wallet-balance-state, .rail-wallet-action-label, .rail-wallet-tab, .wallet-token-name strong, .rail-wallet-label, .rail-wallet-field, .rail-wallet-submit):not(#_) { letter-spacing: 0; }
+html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell #rail-wallet .wallet-network-pill:not(#_) { border-color: transparent; background: var(--interactive); color: var(--text); }
+html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell #rail-wallet .rail-wallet-account:not(#_) { border-color: transparent; background: var(--interactive); color: var(--muted); }
+html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell #rail-wallet .wallet-balance:not(#_) { font-weight: var(--weight-bold); }
+html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell #rail-wallet .wallet-unit:not(#_) { color: var(--muted); font-size: var(--type-subhead); opacity: 1; }
+html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell #rail-wallet .wallet-balance-state:not(#_) { color: var(--muted); }
+html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell #rail-wallet .wallet-actions:not(#_) { border-top-color: var(--line); }
+html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell #rail-wallet .rail-wallet-action-icon:not(#_) { border-color: transparent; background: var(--interactive); color: var(--text); }
+html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell #rail-wallet .rail-wallet-action:hover:not(:disabled) .rail-wallet-action-icon:not(#_) { border-color: transparent; background: var(--selected); }
+html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell #rail-wallet .rail-wallet-action-label:not(#_) { color: var(--text); }
+html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell #rail-wallet .rail-wallet-tabs:not(#_) { border-bottom-color: var(--line); }
+html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell #rail-wallet .rail-wallet-tab:not(#_) { color: var(--muted); font-size: var(--type-subhead); }
+html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell #rail-wallet .rail-wallet-tab.is-selected:not(#_) { color: var(--text); font-weight: var(--weight-bold); }
+html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell #rail-wallet .rail-wallet-tab.is-selected:not(#_)::after { border-top: 2px solid var(--emphasis); }
+html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell #rail-wallet .wallet-list-row:not(#_) { border-bottom-color: var(--line); }
+html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell #rail-wallet .wallet-token-avatar:not(#_) { border-color: transparent; background: var(--interactive); color: var(--text); }
+html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell #rail-wallet .wallet-token-name .wallet-note:not(#_) { color: var(--muted); }
+html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell #rail-wallet .wallet-token-balance:not(#_) { color: var(--text); }
+html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell #rail-wallet .rail-wallet-send-sheet:not(#_) { border-top-color: var(--line); }
+html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell #rail-wallet :is(.rail-wallet-label, .rail-wallet-field):not(#_) { color: var(--muted); }
+html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell #rail-wallet .rail-wallet-input:not(#_) { border-bottom-color: var(--line-strong); }
+html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell #rail-wallet .rail-wallet-input:focus:not(#_) { border-bottom-color: var(--emphasis); }
+html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell #rail-wallet .rail-wallet-send-sheet .wallet-mainnet-warning:not(#_) { color: var(--muted); }
+/* 履歴：更新の押し手は控えめに、空の知らせはほかの面と同じく囲みなしで中央に。 */
+html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell #rail-wallet .wallet-history-refresh:not(#_):not(#_):not(#_):not(#_) { color: var(--muted); font-size: var(--type-caption); font-weight: var(--weight-regular); }
+html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell #rail-wallet .wallet-history .state-panel.is-compact:not(#_) { padding: var(--space-6) 0 0; border: 0; background: transparent; text-align: center; }
+html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell #rail-wallet .wallet-history .state-panel.is-compact .state-body:not(#_) { color: var(--muted); }
