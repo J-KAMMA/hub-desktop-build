@@ -96,10 +96,166 @@ fn account_api(hub_origin: &str) -> String {
 }
 
 fn approval_url(hub_origin: &str, request_id: &str) -> String {
-    format!(
+    let base = format!(
         "{}/account/desktop?request={request_id}",
         hub_origin.trim_end_matches('/')
-    )
+    );
+    match APPROVAL_PORT.load(std::sync::atomic::Ordering::SeqCst) {
+        0 => base,
+        port => format!("{base}#port={port}"),
+    }
+}
+
+// ── 承認ページへ確認コードを手渡す受け口 ──────────────────────────────
+// 利用者が4桁を手で写さなくて済むように、承認ページ（Hub の Web）がこのPCの中の
+// Hub Desktop へ直接コードを取りに来る。守ること：
+//   ・127.0.0.1 にだけ開く（外のPCからは届かない）。
+//   ・Origin が、この Desktop がつないでいる Hub と完全に一致する要求にだけ答える
+//     （ほかのサイトのページからは読めない）。
+//   ・Host がこの受け口そのものであること（名前を付け替えて届く要求を断る）。
+//   ・要求の番号が、いま承認待ちのものと一致し、期限内であること。
+// 送りつけられた承認リンクは、開いた人のPCに承認待ちが無いのでコードを取れず、承認に進めない。
+static APPROVAL_PORT: std::sync::atomic::AtomicU16 = std::sync::atomic::AtomicU16::new(0);
+const APPROVAL_REQUEST_BYTES: usize = 4096;
+
+fn web_origin(hub_origin: &str) -> Option<String> {
+    let url = reqwest::Url::parse(hub_origin).ok()?;
+    match url.scheme() {
+        "https" | "http" => Some(url.origin().ascii_serialization()),
+        _ => None,
+    }
+}
+
+fn approval_http(status: &str, cors_origin: Option<&str>, body: &str) -> String {
+    let mut head = format!(
+        "HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nCache-Control: no-store\r\nConnection: close\r\n",
+        body.len()
+    );
+    if let Some(origin) = cors_origin {
+        head.push_str(&format!(
+            "Access-Control-Allow-Origin: {origin}\r\nVary: Origin\r\nAccess-Control-Allow-Methods: GET\r\nAccess-Control-Allow-Private-Network: true\r\nAccess-Control-Max-Age: 60\r\n"
+        ));
+    }
+    format!("{head}\r\n{body}")
+}
+
+/// 受け口の応答を決める。通信も保管庫も触らない（テストできる形）。
+/// `pending` は、いま承認待ちで期限内の（要求の番号, 確認コード）。
+fn approval_response(
+    request: &str,
+    allowed_origin: &str,
+    port: u16,
+    pending: Option<(&str, &str)>,
+) -> String {
+    use subtle::ConstantTimeEq;
+    let mut lines = request.split("\r\n");
+    let mut first = lines.next().unwrap_or("").split(' ');
+    let (method, target) = (first.next().unwrap_or(""), first.next().unwrap_or(""));
+    let header = |name: &str| {
+        request.split("\r\n").skip(1).take_while(|line| !line.is_empty()).find_map(|line| {
+            let (key, value) = line.split_once(':')?;
+            key.trim().eq_ignore_ascii_case(name).then(|| value.trim())
+        })
+    };
+    if header("host") != Some(format!("127.0.0.1:{port}").as_str()) {
+        return approval_http("403 Forbidden", None, "{}");
+    }
+    if header("origin") != Some(allowed_origin) {
+        return approval_http("403 Forbidden", None, "{}");
+    }
+    let Some(query) = target.strip_prefix("/desktop-approval?request=") else {
+        return approval_http("404 Not Found", Some(allowed_origin), "{}");
+    };
+    if method == "OPTIONS" {
+        return approval_http("204 No Content", Some(allowed_origin), "");
+    }
+    if method != "GET" {
+        return approval_http("405 Method Not Allowed", Some(allowed_origin), "{}");
+    }
+    match pending {
+        Some((request_id, user_code))
+            if bool::from(query.as_bytes().ct_eq(request_id.as_bytes()))
+                && user_code.len() == 4
+                && user_code.bytes().all(|byte| byte.is_ascii_digit()) =>
+        {
+            approval_http(
+                "200 OK",
+                Some(allowed_origin),
+                &format!("{{\"userCode\":\"{user_code}\"}}"),
+            )
+        }
+        _ => approval_http("404 Not Found", Some(allowed_origin), "{}"),
+    }
+}
+
+fn active_pending() -> Option<PendingEnrollment> {
+    let stored = load().ok()??;
+    if stored.device_id.is_some() {
+        return None;
+    }
+    stored.pending.filter(pending_is_active)
+}
+
+/// 承認待ちの間だけ受け口を開く。すでに開いていれば何もしない。開けなくても接続は続けられる
+/// （承認ページが手入力に切り替わる）ので、失敗は返さない。
+pub async fn ensure_approval_responder(hub_origin: &str) {
+    use std::sync::atomic::Ordering;
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    if APPROVAL_PORT.load(Ordering::SeqCst) != 0 || active_pending().is_none() {
+        return;
+    }
+    let Some(allowed_origin) = web_origin(hub_origin) else {
+        return;
+    };
+    let Ok(listener) = tokio::net::TcpListener::bind(("127.0.0.1", 0)).await else {
+        return;
+    };
+    let Ok(port) = listener.local_addr().map(|address| address.port()) else {
+        return;
+    };
+    if APPROVAL_PORT.compare_exchange(0, port, Ordering::SeqCst, Ordering::SeqCst).is_err() {
+        return;
+    }
+    tokio::spawn(async move {
+        loop {
+            let accepted = tokio::time::timeout(std::time::Duration::from_secs(20), listener.accept()).await;
+            let Some(pending) = active_pending() else {
+                break;
+            };
+            let Ok(Ok((mut stream, _))) = accepted else {
+                continue;
+            };
+            let mut buffer = vec![0u8; APPROVAL_REQUEST_BYTES];
+            let mut filled = 0;
+            let complete = tokio::time::timeout(std::time::Duration::from_secs(3), async {
+                while filled < buffer.len() {
+                    match stream.read(&mut buffer[filled..]).await {
+                        Ok(0) | Err(_) => return false,
+                        Ok(read) => filled += read,
+                    }
+                    if buffer[..filled].windows(4).any(|window| window == b"\r\n\r\n") {
+                        return true;
+                    }
+                }
+                false
+            })
+            .await
+            .unwrap_or(false);
+            if !complete {
+                continue;
+            }
+            let request = String::from_utf8_lossy(&buffer[..filled]);
+            let response = approval_response(
+                &request,
+                &allowed_origin,
+                port,
+                Some((&pending.request_id, &pending.user_code)),
+            );
+            let _ = stream.write_all(response.as_bytes()).await;
+            let _ = stream.shutdown().await;
+        }
+        APPROVAL_PORT.store(0, Ordering::SeqCst);
+    });
 }
 
 fn pending_is_active(pending: &PendingEnrollment) -> bool {
@@ -470,6 +626,99 @@ mod tests {
         assert_eq!(scoped_auth_error("desktop_account_unavailable"), "desktop_account_unavailable");
         assert_eq!(scoped_auth_error("desktop_account_network_unavailable"), "desktop_account_unavailable");
         assert_eq!(scoped_auth_error("desktop_account_request_failed"), "desktop_account_unavailable");
+    }
+
+    const HUB: &str = "https://hub.example";
+    fn ask(method: &str, target: &str, host: &str, origin: Option<&str>) -> String {
+        let origin = origin.map(|value| format!("Origin: {value}\r\n")).unwrap_or_default();
+        format!("{method} {target} HTTP/1.1\r\nHost: {host}\r\n{origin}\r\n")
+    }
+    const PENDING: Option<(&str, &str)> = Some(("request-1", "4821"));
+
+    #[test]
+    fn the_approval_page_of_this_hub_gets_the_code_for_the_pending_request() {
+        let reply = approval_response(
+            &ask("GET", "/desktop-approval?request=request-1", "127.0.0.1:5000", Some(HUB)),
+            HUB, 5000, PENDING,
+        );
+        assert!(reply.starts_with("HTTP/1.1 200 OK\r\n"));
+        assert!(reply.ends_with("\r\n\r\n{\"userCode\":\"4821\"}"));
+        assert!(reply.contains("Access-Control-Allow-Origin: https://hub.example\r\n"));
+        assert!(reply.contains("Cache-Control: no-store\r\n"));
+    }
+
+    #[test]
+    fn another_site_or_no_origin_never_gets_the_code() {
+        for origin in [Some("https://evil.example"), Some("https://hub.example.evil.test"), Some("null"), None] {
+            let reply = approval_response(
+                &ask("GET", "/desktop-approval?request=request-1", "127.0.0.1:5000", origin),
+                HUB, 5000, PENDING,
+            );
+            assert!(reply.starts_with("HTTP/1.1 403 "), "{origin:?}");
+            assert!(!reply.contains("4821"), "{origin:?}");
+            assert!(!reply.contains("Access-Control-Allow-Origin"), "{origin:?}");
+        }
+    }
+
+    #[test]
+    fn a_request_that_reached_the_port_under_another_name_is_refused() {
+        for host in ["rebind.evil.test:5000", "localhost:5000", "127.0.0.1:5001", "127.0.0.1"] {
+            let reply = approval_response(
+                &ask("GET", "/desktop-approval?request=request-1", host, Some(HUB)),
+                HUB, 5000, PENDING,
+            );
+            assert!(reply.starts_with("HTTP/1.1 403 "), "{host}");
+            assert!(!reply.contains("4821"), "{host}");
+        }
+    }
+
+    #[test]
+    fn a_link_for_someone_elses_request_gets_no_code() {
+        for (target, pending) in [
+            ("/desktop-approval?request=request-2", PENDING),
+            ("/desktop-approval?request=request-1x", PENDING),
+            ("/desktop-approval?request=", PENDING),
+            ("/desktop-approval?request=request-1", None),
+            ("/other?request=request-1", PENDING),
+            ("/", PENDING),
+        ] {
+            let reply = approval_response(&ask("GET", target, "127.0.0.1:5000", Some(HUB)), HUB, 5000, pending);
+            assert!(reply.starts_with("HTTP/1.1 404 "), "{target}");
+            assert!(!reply.contains("4821"), "{target}");
+        }
+    }
+
+    #[test]
+    fn the_browser_preflight_is_answered_and_other_methods_are_not() {
+        let preflight = approval_response(
+            &ask("OPTIONS", "/desktop-approval?request=request-1", "127.0.0.1:5000", Some(HUB)),
+            HUB, 5000, PENDING,
+        );
+        assert!(preflight.starts_with("HTTP/1.1 204 "));
+        assert!(preflight.contains("Access-Control-Allow-Private-Network: true\r\n"));
+        assert!(!preflight.contains("4821"));
+        let post = approval_response(
+            &ask("POST", "/desktop-approval?request=request-1", "127.0.0.1:5000", Some(HUB)),
+            HUB, 5000, PENDING,
+        );
+        assert!(post.starts_with("HTTP/1.1 405 "));
+        assert!(!post.contains("4821"));
+    }
+
+    #[test]
+    fn a_stored_code_that_is_not_four_digits_is_never_written_into_the_reply() {
+        let reply = approval_response(
+            &ask("GET", "/desktop-approval?request=request-1", "127.0.0.1:5000", Some(HUB)),
+            HUB, 5000, Some(("request-1", "12\"}")),
+        );
+        assert!(reply.starts_with("HTTP/1.1 404 "));
+    }
+
+    #[test]
+    fn the_allowed_origin_is_the_hub_origin_without_its_path() {
+        assert_eq!(web_origin("https://hub.example/v2/").as_deref(), Some("https://hub.example"));
+        assert_eq!(web_origin("http://localhost:3020").as_deref(), Some("http://localhost:3020"));
+        assert_eq!(web_origin("file:///c:/x"), None);
     }
 
     #[test]

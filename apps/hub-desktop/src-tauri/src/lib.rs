@@ -4297,11 +4297,14 @@ async fn begin_desktop_account(
     label: String,
 ) -> Result<desktop_account::DesktopAccountStatus, String> {
     let base = hub_window::hub_url(std::env::var("HUB_APP_URL").ok().as_deref());
-    desktop_account::begin(&base, &label).await
+    desktop_account::begin(&base, &label).await?;
+    desktop_account::ensure_approval_responder(&base).await;
+    desktop_account::status(&base)
 }
 #[tauri::command]
 async fn poll_desktop_account() -> Result<desktop_account::DesktopAccountStatus, String> {
     let base = hub_window::hub_url(std::env::var("HUB_APP_URL").ok().as_deref());
+    desktop_account::ensure_approval_responder(&base).await;
     desktop_account::poll(&base).await
 }
 #[tauri::command]

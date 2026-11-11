@@ -1171,6 +1171,7 @@ export const PATTERNS = Object.freeze([
   [/^(.+) · 接続済み$/, "$1 · Connected"],
   [/^(.+) で作業します$/, "Working in $1"],
   [/^この中だけで動きます: (.+)$/, "Runs only inside: $1"],
+  [/^ブラウザで承認してください。コードを聞かれたら (\d{4})$/, "Approve in your browser. If it asks for a code: $1"],
   [/^(.+)に戻る$/, "Back to $1"],
 ]);
 // 同じ日本語でも、置き場で訳が変わる文言。[セレクタ, { 日本語: 訳 }]。EXACT より先に見る。

@@ -34,7 +34,7 @@ test('registered but the Hub rejects the device: confirm, drop the key, start a 
   const f = harness({ timeline: 'desktop_not_connected' });
   await f.run();
   assert.deepEqual(f.calls.filter((name) => !name.startsWith('confirm')), ['hub_detail', 'logout_desktop_account', 'begin_desktop_account', 'refresh', 'open_external']);
-  assert.equal(f.calls.filter((name) => name.startsWith('confirm')).length, 2, 'one confirm to redo, one showing the code');
+  assert.equal(f.calls.filter((name) => name.startsWith('confirm')).length, 1, 'only the confirm to redo; no window asking to copy a code');
   assert.deepEqual(f.opened, ['http://localhost:3020/v2/account/desktop?request=r1']);
 });
 
@@ -58,4 +58,16 @@ test('the message the Hub client actually returns for a rejected device (ハブ�
   assert.ok(f.calls.includes('logout_desktop_account'));
   assert.ok(source.includes('const accountNeeded = (error) => isReadAccessDenied(error) || String(error?.message ?? error).includes("ハブが 401 を返しています");'));
   assert.equal(isReadAccessDenied(new Error('ハブが 401 を返しています')), false, 'other Hubs keep their own 401 handling');
+});
+
+test('an approval that is already pending just opens the approval page again: no window to copy a code from', async () => {
+  // 2026-11-12 所有者「デスクトップ側にコードでない、そもそもこんなことしなくて済むようにしてほしい」。
+  const f = harness({ state: 'pending' });
+  const pending = { state: 'pending', approvalUrl: 'http://localhost:3020/v2/account/desktop?request=r1#port=50123', userCode: '1234' };
+  const run = new Function('invoke', 'window', 'desktopAccount', `${cut('async function connectDesktopAccount() {')}\nreturn connectDesktopAccount;`)(
+    async (name, args) => { f.calls.push(name); if (name === 'open_external') f.opened.push(args.url); return {}; },
+    { confirm: () => { f.calls.push('confirm'); return true; } }, pending);
+  await run();
+  assert.deepEqual(f.calls, ['open_external']);
+  assert.deepEqual(f.opened, [pending.approvalUrl], 'the # part carrying the local port is passed through untouched');
 });

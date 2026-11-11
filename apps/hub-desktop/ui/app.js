@@ -462,7 +462,7 @@ function renderDesktopAccount(status) {
   for (const el of document.querySelectorAll('[data-account="copy"]')) {
     el.textContent = registered
       ? "端末鍵の所持証明で短時間の認証票を取得します。ブラウザCookieは使用しません。"
-      : pending ? `確認コード ${status.userCode} を承認画面へ入力してください。` : "Hubプロフィールの機能を使うにはDesktop端末を接続してください。";
+      : pending ? `ブラウザで承認してください。コードを聞かれたら ${status.userCode}` : "Hubプロフィールの機能を使うにはDesktop端末を接続してください。";
   }
   for (const el of document.querySelectorAll('[data-account="state"]')) {
     // Keep this self-contained (tests evaluate this function in isolation); the
@@ -532,8 +532,9 @@ async function connectDesktopAccount() {
     status = await invoke("begin_desktop_account", { label: "このPC" });
     void refreshDesktopAccount();
   }
-  if (status.state !== "pending" || !status.approvalUrl || !status.userCode) return;
-  if (!window.confirm(`確認コードは ${status.userCode} です。\n\n既定のブラウザで開く承認ページで端末名と鍵の指紋を確認し、この4桁を入力してください。`)) return;
+  if (status.state !== "pending" || !status.approvalUrl) return;
+  // 確認コードは、承認ページが同じPCのこのアプリから直接受け取る（承認URLの # の後ろに受け口の番号が付く）。
+  // 4桁を写させる窓は出さない。受け取れなかったときのために、コードは接続の案内に出したままにする。
   // 承認はWeb版のページなので既定ブラウザへ——アプリ内ブラウザは
   // Web版Hubを開かない。
   void invoke("open_external", { url: status.approvalUrl }).catch(() => undefined);
