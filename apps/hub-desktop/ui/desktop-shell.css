@@ -615,3 +615,14 @@ html[data-material] #hub-shell.rail-open .rail .rail-activity-head:not(#_):not(#
    左: 上下の余白 8、ボタンの高さ 36、間 2（38 刻み）。右は 12・44・4（48 刻み）だった。 */
 #hub-shell .rail .rail-marks:not(#_):not(#_):not(#_) { padding-block: var(--space-2); gap: 2px; }
 #hub-shell .rail .rail-marks .rail-mark:not(#_):not(#_):not(#_) { height: 36px; min-height: 36px; padding-block: 0; }
+
+/* 右列のウォレットを使いやすく（2026-11-12 所有者「ウォレットのデザイン使いやすいようにして」、実物で測った）。
+   測った値：タブが y455 から始まり、752px の窓でトークンの一覧に使える高さが 245px しか無かった。
+   上の余白と段の間を詰めて、一覧を 56px 上へ上げる（札2つは幅が足りず1行に並ばないが、並べられる幅では並ぶ）。文言と並びは変えない。 */
+#hub-shell #rail-wallet .rail-wallet-body:not(#_) { gap: var(--space-3); padding-top: var(--space-3); }
+#hub-shell #rail-wallet .rail-wallet-hero:not(#_) { padding: var(--space-3) var(--space-4) var(--space-4); }
+#hub-shell #rail-wallet .rail-wallet-head:not(#_) { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+#hub-shell #rail-wallet .wallet-balance-row:not(#_) { margin-top: var(--space-5); }
+#hub-shell #rail-wallet .wallet-actions:not(#_) { margin-top: var(--space-4); padding-top: var(--space-4); }
+/* 受取アドレスは4桁の組の途中で折り返さない（「1fb」「7」に割れていた）。組の切れ目でだけ折る。 */
+#hub-shell #rail-wallet .wallet-address:not(#_) { overflow-wrap: normal; word-break: keep-all; }
