@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { isReadAccessDenied } from './hub-read-recovery.mjs';
 
 // 「Desktopを接続」：Account には登録済みでも Hub がこの端末を知らないとき、つなぎ直す道があること。
 const source = readFileSync(new URL('./app.js', import.meta.url), 'utf8');
@@ -16,9 +17,10 @@ function harness({ state = 'registered', timeline = 'ok', confirm = true } = {})
     return {};
   };
   const window = { confirm: (text) => { calls.push('confirm:' + text.slice(0, 12)); return confirm; } };
-  const run = new Function('invoke', 'window', 'desktopAccount', 'loadFeed', 'refreshDesktopAccount',
+  const accountNeeded = (error) => isReadAccessDenied(error) || String(error?.message ?? error).includes('ハブが 401 を返しています');
+  const run = new Function('accountNeeded', 'invoke', 'window', 'desktopAccount', 'loadFeed', 'refreshDesktopAccount',
     `${cut('async function desktopLinkMissing() {')}\n${cut('async function connectDesktopAccount() {')}\nreturn connectDesktopAccount;`)(
-    invoke, window, { state }, async () => { calls.push('loadFeed'); }, async () => { calls.push('refresh'); });
+    accountNeeded, invoke, window, { state }, async () => { calls.push('loadFeed'); }, async () => { calls.push('refresh'); });
   return { run, calls, opened };
 }
 
@@ -47,4 +49,13 @@ test('another failure (the Hub is down) is not treated as a missing link', async
   const f = harness({ timeline: 'hub_unreachable' });
   await f.run();
   assert.deepEqual(f.calls, ['hub_detail', 'loadFeed']);
+});
+
+test('the message the Hub client actually returns for a rejected device (ハブが 401 を返しています) starts the redo', async () => {
+  // 入れてある版を実物で測ったら、読み出しはこの文で返っていた（2026-11-11）。
+  const f = harness({ timeline: 'ハブが 401 を返しています' });
+  await f.run();
+  assert.ok(f.calls.includes('logout_desktop_account'));
+  assert.ok(source.includes('const accountNeeded = (error) => isReadAccessDenied(error) || String(error?.message ?? error).includes("ハブが 401 を返しています");'));
+  assert.equal(isReadAccessDenied(new Error('ハブが 401 を返しています')), false, 'other Hubs keep their own 401 handling');
 });

@@ -24,3 +24,21 @@
 .local-translate-label[hidden] { display: none; }
 .local-translate-host .local-translate-label { position: absolute; top: 100%; inset-inline-start: 0; margin: 18px 0 0; z-index: 1; }
 .local-translate-panel .lt-api select, .local-translate-panel .lt-api input[type="text"] { max-width: 100%; }
+/* 端末内翻訳の設定（2026-11-11 所有者「翻訳のUI改善して」）。文言は変えず、読める形に組む。 */
+.local-translate-panel { gap: var(--space-5); }
+.local-translate-panel .lt-family { gap: var(--space-3); padding-block: var(--space-4) 0; }
+.local-translate-panel .lt-licence { display: grid; gap: var(--space-2); padding: var(--space-4); background: var(--surface-raised); color: var(--text); font-size: var(--type-subhead); line-height: 1.7; }
+.local-translate-panel .lt-licence p { margin: 0; }
+/* 規約の文は1つずつ、頭に点を置いて区切る。 */
+.local-translate-panel .lt-licence .lt-notice { position: relative; padding-inline-start: var(--space-4); }
+.local-translate-panel .lt-licence .lt-notice::before { content: ""; position: absolute; inset-inline-start: var(--space-1); top: .75em; width: 4px; height: 4px; border-radius: 50%; background: var(--muted); }
+.local-translate-panel .lt-licence .lt-notice ~ p:not(.lt-notice):not(.lt-links) { padding-top: var(--space-2); border-top: 1px solid var(--divider); color: var(--muted); font-size: var(--type-caption); }
+.local-translate-panel .lt-links { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); font-size: var(--type-caption); }
+.local-translate-panel .lt-links a { color: var(--link-color); text-underline-offset: 2px; }
+/* 同意は右端の主ボタン（横幅いっぱいの灰色の帯にしない）。 */
+.local-translate-panel .lt-agree { justify-self: end; width: auto; min-height: var(--control-h); padding: 0 var(--space-4); }
+/* API の段：名前の付いた欄を縦に並べ、切り替えは印と字を1行に揃える。 */
+.local-translate-panel .lt-field { display: grid; gap: var(--space-1); }
+.local-translate-panel .lt-field-name { color: var(--muted); font-size: var(--type-caption); }
+.local-translate-panel .lt-toggle { display: flex; align-items: center; gap: var(--space-2); font-size: var(--type-subhead); }
+.local-translate-panel .lt-toggle input { margin: 0; flex: none; }

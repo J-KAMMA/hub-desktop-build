@@ -89,3 +89,15 @@ html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell #view-fe
 html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell :is(#toolbar-search-form, #toolbar-search-input):not(#_):not(#_) {
   border-radius: var(--ds-radius-pill);
 }
+
+/* ブラウザのアドレス欄も、Hub の検索欄と同じ丸い帯にする（2026-11-11 所有者「ブラウザのUIも」）。枠の線は打っている間だけ出す。 */
+html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell.browser-active #browser-form:not(#_):not(#_) {
+  border-radius: var(--ds-radius-pill);
+}
+html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell.browser-active #browser-url:not(#_):not(#_) {
+  border-color: transparent;
+  border-radius: var(--ds-radius-pill);
+}
+html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell.browser-active #browser-form:focus-within:not(#_):not(#_) {
+  border-color: var(--line-strong);
+}

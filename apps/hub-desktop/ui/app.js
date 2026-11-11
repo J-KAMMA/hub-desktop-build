@@ -518,7 +518,7 @@ async function refreshDesktopAccount(poll = false) {
 // Account には登録済みでも、Hub がこの端末を知らない（401）ことがある。読める一覧を1つ引いて確かめる。
 async function desktopLinkMissing() {
   try { await invoke("hub_detail", { name: "posts_place", ids: ["timeline"] }); return false; }
-  catch (error) { return /desktop_not_connected|unauthorized/.test(String(error?.message ?? error)); }
+  catch (error) { return accountNeeded(error) || /unauthorized/.test(String(error?.message ?? error)); }
 }
 async function connectDesktopAccount() {
   let status = desktopAccount;
@@ -13400,9 +13400,11 @@ async function loadFeed({automatic=false,observeStartup=false}={}) {
   } catch (error) {
     if(!current()){markOutcome("feedSuperseded");return;}
     markOutcome("feedFailed");
-    feedLoadFailed = !isReadAccessDenied(error);
+    // 主のHubがこの端末を断ったとき（「ハブが 401 を返しています」）も、接続の案内を出す。
+    const feedDenied = isReadAccessDenied(error) || String(error?.message ?? error).includes("ハブが 401 を返しています");
+    feedLoadFailed = !feedDenied;
     feed.state.textContent = "";
-    if (isReadAccessDenied(error)) {
+    if (feedDenied) {
       feedVisibleKey='';feedSnapshot=null;feed.list.replaceChildren(connectState());
     } else {
       const waiting=feedRecovery.schedule(error);
@@ -14023,7 +14025,8 @@ composer.form.onsubmit = event => {
 // ここは公開面と違って本人のデータを扱う。Desktop接続が無いとき hub_client は
 // "desktop_not_connected" で失敗する——それは壊れではなく「接続してください」の
 // 合図なので、接続ボタン付きの案内に変える。
-const accountNeeded = (error) => String(error).includes("desktop_not_connected");
+// 主のHubがこの端末を断ると、読み出しは「ハブが 401 を返しています」で返る（実物で確認、2026-11-11）。これも「接続が要る」と扱う。ほかのHubの 401 は別の道（social-stream）が扱うので、isReadAccessDenied 自体は変えない。
+const accountNeeded = (error) => isReadAccessDenied(error) || String(error?.message ?? error).includes("ハブが 401 を返しています");
 
 // 内部コードをそのまま出すと判読できないので、知っているコードだけ
 // 人向けの文言へ写す。知らないものは原文のまま——隠さない。

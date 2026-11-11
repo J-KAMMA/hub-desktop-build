@@ -50,16 +50,19 @@ export function renderTranslateSettings({doc = document, root, invoke, onChange 
       const models = s.models.filter((m) => m.family === fam.family);
       if (!fam.licenceAccepted) {
         const box = el('div', undefined, 'lt-licence');
-        for (const line of meta.notice) box.append(el('p', line));
+        for (const line of meta.notice) box.append(el('p', line, 'lt-notice'));
         box.append(el('p', `取得できるモデル: ${models.map((m) => `${m.id} ${fmt(m.bytes)}${m.thirdParty ? '（第三者の変換物）' : ''}`).join(' / ')}`));
         const links = fam.family === 'gemma'
           ? [['Gemma 利用規約', fam.licenceUrlJa || GEMMA_TERMS_URL], ['Gemma 禁止使用方針', fam.prohibitedUseUrl || GEMMA_PROHIBITED_USE_URL]]
           : [['ライセンス全文', fam.licenceUrlJa], ['License (English)', fam.licenceUrlEn]];
+        const linkRow = el('p', undefined, 'lt-links');
         for (const [label, href] of links) {
           if (!href) continue;
-          const a = el('a', label); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; box.append(a, doc.createTextNode(' '));
+          const a = el('a', label); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; linkRow.append(a, doc.createTextNode(' '));
         }
-        const agree = el('button', meta.agree);
+        if (linkRow.childNodes.length) box.append(linkRow);
+        const agree = el('button', meta.agree, 'approve lt-agree');
+        agree.type = 'button';
         agree.dataset.action = 'accept';
         agree.addEventListener('click', async () => { await invoke('local_translate_accept_licence', {family: fam.family, accept: true}); await draw(); onChange(); });
         section.append(box, agree);
@@ -172,14 +175,15 @@ export function renderTranslateSettings({doc = document, root, invoke, onChange 
     const model = el('input'); model.type = 'text'; model.value = api.model || ''; model.placeholder = 'モデル名（空なら接続の既定）'; model.disabled = !api.connectionId;
     model.setAttribute('aria-label', '翻訳に使う API のモデル名');
     const allow = el('input'); allow.type = 'checkbox'; allow.checked = api.allowPrivate === true; allow.disabled = !api.connectionId;
-    const allowLabel = el('label'); allowLabel.append(allow, doc.createTextNode(' 非公開の中身もAPIで訳す'));
+    const allowLabel = el('label', undefined, 'lt-toggle'); allowLabel.append(allow, doc.createTextNode(' 非公開の中身もAPIで訳す'));
+    const field = (name, control) => { const wrap = el('label', undefined, 'lt-field'); wrap.append(el('span', name, 'lt-field-name'), control); return wrap; };
     const warn = el('p', 'オンにすると、DM・フォロワー限定・非公開グループ・ゲート付きの本文が、選んだ提供元に送られます。オフなら、これらは端末の中だけで訳します。', 'meta');
     const fail = (error) => { note.textContent = String(error?.message ?? error ?? '').startsWith('byok_') ? 'この接続は使えません。「AIの接続」で有効にしてください' : '保存できませんでした'; };
     const save = async () => { try { await invoke('local_translate_api_set', {connectionId: pick.value || null, model: model.value.trim() || null}); await draw(); onChange(); } catch (error) { fail(error); } };
     pick.addEventListener('change', save);
     model.addEventListener('change', save);
     allow.addEventListener('change', async () => { try { await invoke('local_translate_api_allow_private', {allow: allow.checked}); await draw(); onChange(); } catch (error) { fail(error); } });
-    section.append(pick, model, allowLabel, warn, note);
+    section.append(field('接続', pick), field('モデル名', model), allowLabel, warn, note);
     if (!(api.choices || []).length) note.textContent = '使える接続がありません。「AIの接続」で API キーを登録してください。';
     return section;
   }
