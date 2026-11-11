@@ -146,7 +146,12 @@ export function createWalletNetwork({ document, invoke, status, isCurrent = () =
     pill.onclick = () => {
       chooser.hidden = !chooser.hidden;
       pill.setAttribute("aria-expanded", String(!chooser.hidden));
-      if (!chooser.hidden) select.focus();
+      if (!chooser.hidden) {
+        select.focus();
+        // 札を押したら一覧までそのまま開く（札 → 選ぶ、の2手。以前は 札 → 欄 → 選ぶ の3手）。
+        // 開くだけで、切り替えるのは利用者が一覧から選んだときだけ（select.onchange）。開けない環境では欄に焦点だけ移す。
+        try { select.showPicker?.(); } catch { /* 焦点だけ */ }
+      }
     };
     root.append(pill, chooser);
   } else {

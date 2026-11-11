@@ -282,3 +282,25 @@ test('the wallet styles honour reduced motion and use no raw type or radius px',
   assert.ok(reduced.includes('rail-wallet-panel.is-entering'));
   assert.ok(css.includes('width: 48px; height: 48px'));
 });
+
+test('pressing the network pill opens the list itself, and still switches nothing until a network is chosen', async (t) => {
+  // 2026-11-12 所有者「直す」: 札 → 欄 → 選ぶ の3手を、札 → 選ぶ の2手に。
+  const f = fixture();
+  t.after(() => f.dom.window.close());
+  await settle(f.wallet);
+  const root = f.wallet.element, select = root.querySelector('.wallet-network-select');
+  let opened = 0;
+  select.showPicker = () => { opened += 1; };
+  const before = select.value;
+  root.querySelector('.wallet-network-pill').click();
+  assert.equal(root.querySelector('.wallet-network-chooser').hidden, false);
+  assert.equal(opened, 1, 'the list opens with the same press');
+  assert.equal(select.value, before, 'opening the list selects nothing');
+  root.querySelector('.wallet-network-pill').click();
+  assert.equal(root.querySelector('.wallet-network-chooser').hidden, true);
+  assert.equal(opened, 1, 'closing does not reopen the list');
+  // 一覧を開けない環境でも、札は欄を出して止まらない。
+  select.showPicker = () => { throw new Error('NotAllowedError'); };
+  root.querySelector('.wallet-network-pill').click();
+  assert.equal(root.querySelector('.wallet-network-chooser').hidden, false);
+});
