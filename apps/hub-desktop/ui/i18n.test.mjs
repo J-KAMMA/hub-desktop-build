@@ -27,6 +27,8 @@ test('a translator replaces exact UI strings and number patterns, keeps surround
   assert.equal(t('  設定\n'), '  Settings\n');
   assert.equal(t('返信 12件'), '12 replies');
   assert.equal(t('設定を開く'), null, 'no partial replacement');
+  assert.equal(t('設定 13'), 'Settings 13', 'a known label followed by a count');
+  assert.equal(t('未知 13'), null);
   assert.equal(t('Settings'), null);
   assert.equal(t(''), null);
 });

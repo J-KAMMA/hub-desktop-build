@@ -12,6 +12,7 @@ export const USER_CONTENT = [
   '.post-body', '.post-author', '.post-handle', '.thread-row-title', '.thread-head-row > h3', '.thread-post', '.sidebar-detail-current',
   '.community-card-name', '.community-card-desc', '.community-head-name', '.community-head-desc', '.community-row-title', '.nav-community-name',
   '.article-title', '.article-reader-body', '.browser-bookmark-row', '.sidebar-tab', '.rail-chat-message', '.message-body', '.profile-name', '.profile-bio',
+  '.piw-history-list', '.piw-title', '.piw-messages', '.card.history', '.community-card-icon', '.nav-community-face', '.community-head-icon', '.post-avatar', '.thread-tags',
 ].join(', ');
 
 export const normalizeLocale = (value) => (LOCALES.some(([id]) => id === value) ? value : DEFAULT_LOCALE);
@@ -30,6 +31,9 @@ export function createTranslator({ exact = {}, patterns = [], scoped = [] } = {}
     if (element?.closest) for (const [selector, entries] of scoped) if (Object.hasOwn(entries, core) && element.closest(selector)) return lead + entries[core] + tail;
     if (table.has(core)) return lead + table.get(core) + tail;
     for (const [pattern, replacement] of patterns) if (pattern.test(core)) return lead + core.replace(pattern, replacement) + tail;
+    // 「分類 件数」（雑談 13）の形：前の言葉が辞書にあれば、数はそのままで訳す。
+    const counted = core.match(/^(.+?) ([\d,]+)$/);
+    if (counted && table.has(counted[1])) return lead + table.get(counted[1]) + ' ' + counted[2] + tail;
     return null;
   };
 }

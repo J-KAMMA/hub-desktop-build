@@ -515,10 +515,23 @@ async function refreshDesktopAccount(poll = false) {
   }
 }
 
+// Account には登録済みでも、Hub がこの端末を知らない（401）ことがある。読める一覧を1つ引いて確かめる。
+async function desktopLinkMissing() {
+  try { await invoke("hub_detail", { name: "posts_place", ids: ["timeline"] }); return false; }
+  catch (error) { return /desktop_not_connected|unauthorized/.test(String(error?.message ?? error)); }
+}
 async function connectDesktopAccount() {
   let status = desktopAccount;
   if (status.state === "signed_out" || status.state === "expired") status = await invoke("begin_desktop_account", { label: "このPC" });
-  if (status.state === "registered") { await loadFeed(); return; }
+  if (status.state === "registered") {
+    // 鍵は登録済みなのに「接続が必要」と出ている：このHubのプロフィールとの結び付きが無い（Hubのデータを作り直した後など）。
+    // 以前はここで何も起きず、つなぎ直す道が無かった。確かめてから、鍵を作り直して承認をやり直す。
+    if (!(await desktopLinkMissing())) { await loadFeed(); return; }
+    if (!window.confirm("この端末は、いまのHubのプロフィールに結び付いていません。\n\n接続をやり直しますか？ この端末の接続用の鍵を作り直し、ブラウザで承認し直します。")) return;
+    await invoke("logout_desktop_account");
+    status = await invoke("begin_desktop_account", { label: "このPC" });
+    void refreshDesktopAccount();
+  }
   if (status.state !== "pending" || !status.approvalUrl || !status.userCode) return;
   if (!window.confirm(`確認コードは ${status.userCode} です。\n\n既定のブラウザで開く承認ページで端末名と鍵の指紋を確認し、この4桁を入力してください。`)) return;
   // 承認はWeb版のページなので既定ブラウザへ——アプリ内ブラウザは
