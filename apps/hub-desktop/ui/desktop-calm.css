@@ -101,3 +101,9 @@ html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell.browser-
 html:is([data-template="paper"], [data-template="charcoal"]) #hub-shell.browser-active #browser-form:focus-within:not(#_):not(#_) {
   border-color: var(--line-strong);
 }
+
+/* AI の履歴の検索欄も、ほかの検索欄と同じ丸い帯にする。 */
+html:is([data-template="paper"], [data-template="charcoal"]) #sidebar-ai-history .piw-history-search:not(#_):not(#_) {
+  padding-inline: var(--space-3);
+  border-radius: var(--ds-radius-pill);
+}

@@ -205,3 +205,11 @@
 #rail-ai-workspace-host .piw-composer .piw-stop:not([hidden]) { margin-right: 36px; }
 #rail-ai-workspace-host .piw-composer .piw-send[hidden], #rail-ai-workspace-host .piw-composer .piw-stop[hidden] { display: none; }
 #rail-ai-workspace-host .piw-composer .piw-popover { right: 0; left: 0; width: auto; bottom: calc(100% + var(--space-1)); }
+
+/* モデルの一覧（2026-11-11 実物で確認）：説明が長いと名前が幅0に潰れ、どのモデルの行か読めなかった。
+   名前は必ず出し、入り切らない説明は名前の下へ折り返して2行まで。横の送りは出さない。 */
+.piw-popover { overflow-x: hidden; scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--text) 16%, transparent) transparent; }
+.piw-model-option { flex-wrap: wrap; row-gap: 0; text-align: start; }
+.piw-popover, .piw-model-options, .piw-model-group { grid-template-columns: minmax(0, 1fr); }
+.piw-model-option > span { min-width: 0; max-width: 100%; flex: 1 1 auto; }
+.piw-model-option > small { display: -webkit-box; min-width: 0; max-width: 100%; flex: 0 1 auto; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-height: 1.5; text-align: start; white-space: normal; }

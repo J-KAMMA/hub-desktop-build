@@ -144,3 +144,9 @@
 #node-sync-body { min-width: 0; }
 #node-sync-body .detail-p, #node-sync-body .meta { overflow-wrap: anywhere; }
 #node-sync-body button { min-height: 32px; padding: var(--space-1) var(--space-2); font-size: var(--type-caption); }
+
+/* 環境とツール（2026-11-11 実物で確認）：使用量の札は字が枠に付き、見出しだけ大きかった。札に余白、見出しはほかの段と同じ大きさ。 */
+#ai-more #subscription-usage-list .agent-card { display: grid; gap: var(--space-1); padding: var(--space-3); border-bottom: 1px solid var(--line); }
+#ai-more #subscription-usage-list .agent-card :is(p, strong) { margin: 0; }
+#ai-more #subscription-usage-title { margin: 0; font-size: var(--type-subhead); font-weight: var(--weight-bold); }
+#ai-more #workspace-path { font-family: inherit; }

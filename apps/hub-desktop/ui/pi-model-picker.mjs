@@ -71,7 +71,7 @@ export function createPiModelPicker(document, { input, list, refreshButton, stat
       const node = document.createElement('button'); node.type = 'button'; node.className = 'piw-model-option'; node.setAttribute('role', 'option');
       node.setAttribute('aria-selected', String(input.value.trim() === model)); node.dataset.model = model; node.title = model || label;
       const name = document.createElement('span'); name.textContent = label; node.append(name);
-      if (detail) { const small = document.createElement('small'); small.textContent = detail; node.append(small); }
+      if (detail) { const small = document.createElement('small'); small.textContent = detail; node.append(small); node.title = `${model || label}\n${detail}`; }
       node.onclick = () => pick(model); return node;
     };
     if (!query) nodes.push(row('', shown?.defaultModel ? `既定（${shown.defaultModel}）` : '既定のモデル', ''));

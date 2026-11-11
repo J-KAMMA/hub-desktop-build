@@ -87,3 +87,7 @@
 /* 権限の注記は小さく静かに（文言は変えない） */
 #hub-shell #pi-work-finished-text:not(#_):not(#_), #hub-shell #pi-work-resume-text:not(#_):not(#_) { font-size: var(--type-caption); color: var(--muted); }
 #sidebar-ai-history .piw-history-badge { flex: none; padding: 0 var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-sm); color: var(--muted); font-size: var(--type-caption); line-height: 18px; }
+
+/* 履歴の送り：矢印つきの太い帯にしない（ほかの列と同じ細い帯）。 */
+#sidebar-ai-history > .harness-history { scrollbar-color: color-mix(in srgb, var(--text) 16%, transparent) transparent; }
+#sidebar-ai-history > .harness-history::-webkit-scrollbar-button { display: none; }
