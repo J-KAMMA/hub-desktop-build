@@ -195,7 +195,7 @@ test('notifications: a failed load replaces the list with a state panel and a re
   assert.equal(loads, 1);
 });
 
-test('notifications: an empty list uses the shared state panel with a retry', () => {
+test('notifications: an empty list uses the shared state panel and offers no retry', () => {
   let loads = 0;
   const { ctx, document } = notificationFixture({
     notificationsData: { notifications: [], unreadCount: 0 },
@@ -212,11 +212,9 @@ test('notifications: an empty list uses the shared state panel with a retry', ()
   const panel = document.querySelector('#notifications-list .state-panel');
   assert.ok(panel, 'the empty state uses .state-panel');
   assert.equal(panel.querySelector('.state-title').textContent, '通知はありません');
-  const retry = panel.querySelector('.state-action');
-  assert.ok(retry, 'the empty state has a retry');
-  assert.ok(retry.classList.contains('btn-primary'));
-  retry.onclick();
-  assert.equal(loads, 1);
+  // 空は失敗ではない：「再試行」は置かない（2026-11-12 所有者「外す」）。読み直しは見出しの更新の印が持つ。
+  assert.equal(panel.querySelector('.state-action'), null, 'an empty list is not an error, so it offers no retry');
+  assert.equal(loads, 0);
 });
 
 test('notifications and sidebar conversations get the specified avatar and type sizes', () => {

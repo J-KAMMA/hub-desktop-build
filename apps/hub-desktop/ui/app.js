@@ -14651,8 +14651,8 @@ function renderNotifications() {
     ? groups.map(notificationCard)
     : [pageState("bell",
         notifTab === "unread" ? "未読の通知はありません" : notifTab === "mention" ? "自分宛ての通知はありません" : "通知はありません",
-        notifTab === "all" ? "返信・いいね・フォローがあるとここに来ます。" : undefined,
-        () => loadNotifications())]));
+        notifTab === "all" ? "返信・いいね・フォローがあるとここに来ます。" : undefined)]));
+  // 空は失敗ではないので「再試行」は置かない（2026-11-12 所有者「外す」）。読み直しは見出しの更新の印から。
   renderSidebarContext("notifications"); // 件数と選択中の行（列は同じ木のまま作り直す）
 }
 

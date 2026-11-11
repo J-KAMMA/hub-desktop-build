@@ -777,3 +777,7 @@ html:is([data-template="noir"], [data-template="ivory"]) #hub-shell :is(.btn-pri
 #hub-shell .sidebar-chip-track > .sidebar-chip.is-sort + .sidebar-chip:not(.is-sort):not(#_) { margin-inline-start: var(--space-4); }
 /* スレッドとコミュニティ：並び替えと分類のチップは、「＋」のある頭の帯の中、操作の左（帯を2段にしない。線も1本）。 */
 #hub-shell :is(#view-threads, #view-community) > .view-head > .view-head-chips:not(#_):not(#_):not(#_):not(#_) { flex: 1 1 auto; min-width: 0; margin: 0; padding: 0; border: 0; }
+
+/* 「フォロー中」：自分の投稿が並んでいるのに、その下へ「まだフォローしていません」も出ていた（2026-11-12 実物）。
+   投稿が1つでも並んでいるあいだは、空の知らせを出さない。 */
+#feed-list:has(> .post) > .state-panel { display: none; }
