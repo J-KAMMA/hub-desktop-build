@@ -462,7 +462,7 @@ function renderDesktopAccount(status) {
   for (const el of document.querySelectorAll('[data-account="copy"]')) {
     el.textContent = registered
       ? "端末鍵の所持証明で短時間の認証票を取得します。ブラウザCookieは使用しません。"
-      : pending ? `ブラウザで承認してください。コードを聞かれたら ${status.userCode}` : "Hubプロフィールの機能を使うにはDesktop端末を接続してください。";
+      : pending ? `開いた窓で承認してください。コードを聞かれたら ${status.userCode}` : "Hubプロフィールの機能を使うにはDesktop端末を接続してください。";
   }
   for (const el of document.querySelectorAll('[data-account="state"]')) {
     // Keep this self-contained (tests evaluate this function in isolation); the
@@ -527,7 +527,7 @@ async function connectDesktopAccount() {
     // 鍵は登録済みなのに「接続が必要」と出ている：このHubのプロフィールとの結び付きが無い（Hubのデータを作り直した後など）。
     // 以前はここで何も起きず、つなぎ直す道が無かった。確かめてから、鍵を作り直して承認をやり直す。
     if (!(await desktopLinkMissing())) { await loadFeed(); return; }
-    if (!window.confirm("この端末は、いまのHubのプロフィールに結び付いていません。\n\n接続をやり直しますか？ この端末の接続用の鍵を作り直し、ブラウザで承認し直します。")) return;
+    if (!window.confirm("この端末は、いまのHubのプロフィールに結び付いていません。\n\n接続をやり直しますか？ この端末の接続用の鍵を作り直し、承認し直します。")) return;
     await invoke("logout_desktop_account");
     status = await invoke("begin_desktop_account", { label: "このPC" });
     void refreshDesktopAccount();
@@ -535,9 +535,27 @@ async function connectDesktopAccount() {
   if (status.state !== "pending" || !status.approvalUrl) return;
   // 確認コードは、承認ページが同じPCのこのアプリから直接受け取る（承認URLの # の後ろに受け口の番号が付く）。
   // 4桁を写させる窓は出さない。受け取れなかったときのために、コードは接続の案内に出したままにする。
-  // 承認はWeb版のページなので既定ブラウザへ——アプリ内ブラウザは
-  // Web版Hubを開かない。
-  void invoke("open_external", { url: status.approvalUrl }).catch(() => undefined);
+  // 承認はアプリの中の小さな窓で済ませる（外のブラウザへ出さない）。窓を開けなかったときだけ既定ブラウザへ。
+  try { await invoke("open_account_approval"); }
+  catch { void invoke("open_external", { url: status.approvalUrl }).catch(() => undefined); }
+  void watchDesktopApproval();
+}
+// 承認を開いたあと、接続が済むまで見張る。Account への登録と、Hub のプロフィールへの結び付きの両方が
+// 済んでから窓を閉じる（登録だけで閉じると、承認ページが結び付けを送る前に消えてしまう）。
+let desktopApprovalWatch = 0;
+async function watchDesktopApproval() {
+  const run = ++desktopApprovalWatch;
+  for (let turn = 0; turn < 240 && run === desktopApprovalWatch; turn += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+    if (run !== desktopApprovalWatch) return;
+    const status = await refreshDesktopAccount(true);
+    if (!status || status.state === "expired" || status.state === "signed_out") return;
+    if (status.state === "registered" && !(await desktopLinkMissing())) {
+      void invoke("close_account_approval").catch(() => undefined);
+      await loadFeed();
+      return;
+    }
+  }
 }
 
 for (const button of document.querySelectorAll('[data-account="login"]')) {

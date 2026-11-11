@@ -4307,6 +4307,48 @@ async fn poll_desktop_account() -> Result<desktop_account::DesktopAccountStatus,
     desktop_account::ensure_approval_responder(&base).await;
     desktop_account::poll(&base).await
 }
+const ACCOUNT_APPROVAL_LABEL: &str = "account-approval";
+/// 端末の承認を、外のブラウザへ出さずアプリの中の小さな窓で済ませる（2026-11-12 所有者「アプリの中で済ませる方にして」）。
+/// 行き先は窓から受け取らず、保管している承認待ちから組み立てる。窓は Hub と Google のログイン以外へ進めない。
+#[tauri::command]
+async fn open_account_approval(app: tauri::AppHandle) -> Result<(), String> {
+    let base = hub_window::hub_url(std::env::var("HUB_APP_URL").ok().as_deref());
+    desktop_account::ensure_approval_responder(&base).await;
+    let url = desktop_account::status(&base)?
+        .approval_url
+        .ok_or("desktop_account_not_pending")?;
+    let parsed = tauri::Url::parse(&url).map_err(|_| "desktop_account_state_invalid")?;
+    if let Some(existing) = app.get_webview_window(ACCOUNT_APPROVAL_LABEL) {
+        let _ = existing.close();
+    }
+    let guard = base.clone();
+    let mut builder = tauri::WebviewWindowBuilder::new(
+        &app,
+        ACCOUNT_APPROVAL_LABEL,
+        tauri::WebviewUrl::External(parsed),
+    )
+    .title("Hubに接続")
+    .inner_size(520.0, 760.0)
+    .min_inner_size(380.0, 520.0)
+    .center()
+    .on_navigation(move |target| desktop_account::approval_window_allows(target.as_str(), &guard));
+    if let Some(main) = app.get_webview_window("main") {
+        builder = builder
+            .parent(&main)
+            .map_err(|_| "account_approval_window_unavailable")?;
+    }
+    builder
+        .build()
+        .map(|_| ())
+        .map_err(|_| "account_approval_window_unavailable".to_owned())
+}
+#[tauri::command]
+async fn close_account_approval(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window(ACCOUNT_APPROVAL_LABEL) {
+        let _ = window.close();
+    }
+    Ok(())
+}
 #[tauri::command]
 async fn logout_desktop_account(app: tauri::AppHandle) -> Result<(), String> {
     use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind};
@@ -4785,6 +4827,8 @@ pub fn run() {
             ai_video_content,
             desktop_account_status,
             begin_desktop_account,
+            open_account_approval,
+            close_account_approval,
             poll_desktop_account,
             logout_desktop_account,
             desktop_agent_usage,

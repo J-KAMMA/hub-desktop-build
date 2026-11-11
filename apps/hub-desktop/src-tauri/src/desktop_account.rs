@@ -188,6 +188,20 @@ fn approval_response(
     }
 }
 
+/// アプリの中の承認の窓が開いてよい行き先か。つないでいる Hub（ログインと承認のページ）と、
+/// Google でログインするときの Google のログイン画面だけ。ほかのサイトへは進ませない。
+/// この窓には Tauri の権限を一切渡さない（capabilities に載せない）ので、ページからアプリは操作できない。
+pub fn approval_window_allows(target: &str, hub_origin: &str) -> bool {
+    let (Ok(url), Some(hub)) = (reqwest::Url::parse(target), web_origin(hub_origin)) else {
+        return false;
+    };
+    if !url.username().is_empty() || url.password().is_some() {
+        return false;
+    }
+    let origin = url.origin().ascii_serialization();
+    origin == hub || origin == "https://accounts.google.com" || origin == "https://accounts.youtube.com"
+}
+
 fn active_pending() -> Option<PendingEnrollment> {
     let stored = load().ok()??;
     if stored.device_id.is_some() {
@@ -712,6 +726,30 @@ mod tests {
             HUB, 5000, Some(("request-1", "12\"}")),
         );
         assert!(reply.starts_with("HTTP/1.1 404 "));
+    }
+
+    #[test]
+    fn the_approval_window_stays_on_the_hub_and_the_google_sign_in() {
+        for target in [
+            "https://hub.example/account/desktop?request=r1#port=5000",
+            "https://hub.example/v2/auth?reauth=1",
+            "https://accounts.google.com/o/oauth2/v2/auth?client_id=x",
+        ] {
+            assert!(approval_window_allows(target, "https://hub.example/v2"), "{target}");
+        }
+        for target in [
+            "https://evil.example/",
+            "https://hub.example.evil.test/",
+            "http://hub.example/",
+            "https://user@hub.example/",
+            "https://google.com/",
+            "javascript:alert(1)",
+            "file:///c:/x",
+            "not a url",
+        ] {
+            assert!(!approval_window_allows(target, "https://hub.example/v2"), "{target}");
+        }
+        assert!(approval_window_allows("http://localhost:3020/v2/account/desktop?request=r1", "http://localhost:3020"));
     }
 
     #[test]
