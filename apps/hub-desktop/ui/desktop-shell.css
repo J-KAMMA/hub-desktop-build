@@ -601,9 +601,13 @@ html[data-material] #hub-shell.rail-open .rail .rail-activity-head:not(#_):not(#
     height: calc(100vh - var(--toolbar-height) - var(--tap-compact) - 5px);
     align-self: start;
   }
-  /* 閉じた細い列の上（バーの段の左）は、窓の裏が見える穴にしない。ブックマークバーと同じ地で塗る。 */
-  #hub-shell.browser-tabs-peek:not(.browser-tabs-peek-open):not(.browser-tabs-overlay-unavailable):has(#browser-bookmark-bar:not([hidden])) .sidebar:not(#_) {
-    box-shadow: 0 calc(-1 * (var(--tap-compact) + 5px)) 0 0 var(--panel);
+  /* 閉じた細い列は、上の帯のすぐ下から始める（2026-11-11 所有者「ブックマークバーとタブの位置おかしくね」）。
+     細い列はバーの左に並ぶだけで重ならないので、バーの段ぶん下げる必要が無い。下げると左上に空の四角ができ、最初のタブが左のアイコンとずれた。
+     広げて重ねる列（peek-open）だけ、バーの段の下から始める。 */
+  #hub-shell.browser-tabs-peek:not(.browser-tabs-peek-open):not(.browser-tabs-overlay-unavailable):has(#browser-bookmark-bar:not([hidden])) .sidebar:not(#_):not(#_) {
+    margin-top: 0;
+    height: calc(100vh - var(--toolbar-height));
+    box-shadow: none;
   }
 }
 
